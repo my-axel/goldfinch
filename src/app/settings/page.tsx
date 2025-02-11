@@ -1,18 +1,19 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useApp } from "@/context/AppContext"
 
 export default function SettingsPage() {
-  const [currency, setCurrency] = useState("USD")
-  const [locale, setLocale] = useState("en-US")
+  const { settings, updateSettings } = useApp()
 
-  const handleSave = () => {
-    // Save settings logic here
-    console.log("Saving settings:", { currency, locale })
+  const handleCurrencyChange = (value: string) => {
+    updateSettings({ currency: value })
+  }
+
+  const handleLocaleChange = (value: string) => {
+    updateSettings({ locale: value })
   }
 
   return (
@@ -26,7 +27,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="currency">Default Currency</Label>
-            <Select value={currency} onValueChange={setCurrency}>
+            <Select value={settings.currency} onValueChange={handleCurrencyChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Currency" />
               </SelectTrigger>
@@ -39,7 +40,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <Label htmlFor="locale">Locale</Label>
-            <Select value={locale} onValueChange={setLocale}>
+            <Select value={settings.locale} onValueChange={handleLocaleChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Locale" />
               </SelectTrigger>
@@ -50,7 +51,6 @@ export default function SettingsPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={handleSave}>Save Settings</Button>
         </CardContent>
       </Card>
     </div>
