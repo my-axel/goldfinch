@@ -76,7 +76,7 @@ export function MemberList({ members, onDelete, onEdit }: MemberListProps) {
                 <dl className="space-y-2 text-sm">
                   <div>
                     <dt className="text-muted-foreground">Birthday</dt>
-                    <dd>{format(member.birthday, 'dd.MM.yyyy', { locale: de })}</dd>
+                    <dd>{format(member.birthday, 'dd. MMMM yyyy', { locale: de })}</dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Age</dt>

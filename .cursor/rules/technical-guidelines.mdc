@@ -49,7 +49,7 @@ Before responding to any request, follow these steps:
 
 - Write concise, readable TypeScript and Python code
 - Use **functional and declarative programming patterns**; avoid classes unless absolutely necessary.
-- Prefer **iteration and modularization** over code duplication.
+- Prefer **iteration and modularization** over code duplication, follow the DRY principle - Don't Repeat yourself!
 - Implement early returns for better readability
 - Use descriptive variable names with auxiliary verbs (e.g., `is_active`, `has_permission`, `isLoading`, `hasError`).
 - Follow proper **naming conventions**:  
