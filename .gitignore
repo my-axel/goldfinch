@@ -13,6 +13,12 @@
 # testing
 /coverage
 
+# data
+/src/data
+
+# vscode
+/.vscode/
+
 # next.js
 /.next/
 /out/

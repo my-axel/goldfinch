@@ -35,7 +35,7 @@ import {
                         <TooltipTrigger asChild>
                             <Link
                             href={item.href}
-                            className="flex items-center rounded-md px-4 py-3.5 text-md hover:bg-gray-200/50 dark:hover:bg-gray-800/50"
+                            className="flex items-center rounded-md px-4 py-3.5 text-md hover:bg-sidebar-accent"
                             >   
                                 <div className="flex items-center">
                                     <item.icon />
@@ -60,7 +60,7 @@ import {
                             <TooltipTrigger asChild>
                             <Link
                             href="/settings"
-                            className="flex items-center justify-between rounded-md px-4 py-2 text-md hover:bg-gray-200/50 dark:hover:bg-gray-800/50"
+                            className="flex items-center justify-between rounded-md px-4 py-2 text-md hover:bg-sidebar-accent"
                             >
                                 <div className="flex items-center">
                                     <Settings />

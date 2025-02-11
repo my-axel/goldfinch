@@ -1,3 +1,7 @@
+---
+description: If the context of the app is necessary to create something new or extend something. It contains mainly a description of the app and explains the functionality as well as the roadmap.
+globs: 
+---
 # 🐦 Goldfinch
 
 A software to manage the essential but often overlooked aspects of financial planning... your retirement. The goal is to have a complete overview of your different retirement planning efforts.

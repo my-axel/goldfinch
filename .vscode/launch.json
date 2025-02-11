@@ -38,16 +38,6 @@
             "env": {
                 "NODE_ENV": "development"
             },
-            "serverReadyAction": {
-                "pattern": "- Local:.+(https?://\\S+)",
-                "uriFormat": "%s",
-                "action": "debugWithChrome"
-            },
-            "console": "integratedTerminal",
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/**",
-                "!**/node_modules/**"
-            ]
         },
         {
             "name": "Frontend Prod",

@@ -34,7 +34,7 @@
   --sidebar-foreground: hsl(0 0% 9%);
   --sidebar-primary: hsl(263.4 70% 41%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(0 0% 93%);
+  --sidebar-accent: hsl(263.4 50% 87%);
   --sidebar-accent-foreground: hsl(0 0% 9%);
   --sidebar-border: hsl(0 0% 89%);
   --sidebar-ring: hsl(263.4 70% 41%);
@@ -69,7 +69,7 @@
   --sidebar-foreground: hsl(0 0% 95%);
   --sidebar-primary: hsl(263.4 70% 41%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(0 0% 13%);
+  --sidebar-accent: hsl(263.4 50% 25%);
   --sidebar-accent-foreground: hsl(0 0% 95%);
   --sidebar-border: hsl(0 0% 15%);
   --sidebar-ring: hsl(263.4 70% 41%);
