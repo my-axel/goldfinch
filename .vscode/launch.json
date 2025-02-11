@@ -1,0 +1,65 @@
+{
+    "version": "0.2.0",
+    // "compounds": [
+    //     {
+    //         "name": "Frontend + Backend",
+    //         "configurations": ["Frontend Dev", "Backend"],
+    //         "stopAll": true
+    //     },
+    //     {
+    //         "name": "Frontend Prod + Backend",
+    //         "configurations": ["Frontend Prod", "Backend"],
+    //         "stopAll": true
+    //     }
+    // ],
+    "configurations": [
+        // {
+        //     "name": "Backend",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "module": "uvicorn",
+        //     "args": [
+        //         "app.main:app",
+        //         "--host",
+        //         "0.0.0.0",
+        //         "--port",
+        //         "8000",
+        //         "--reload"
+        //     ],
+        //     "cwd": "${workspaceFolder}/backend"
+        // },
+        {
+            "name": "Frontend Dev",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "serverReadyAction": {
+                "pattern": "- Local:.+(https?://\\S+)",
+                "uriFormat": "%s",
+                "action": "debugWithChrome"
+            },
+            "console": "integratedTerminal",
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
+        },
+        {
+            "name": "Frontend Prod",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "preLaunchTask": "npm: build",
+            "runtimeArgs": ["run", "start"],
+            "env": {
+                "NODE_ENV": "production"
+            },
+        }
+    ]
+} 
