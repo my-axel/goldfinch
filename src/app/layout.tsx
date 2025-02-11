@@ -1,6 +1,7 @@
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ModeToggle } from "@/components/mode-toggle";
+import "./styles/globals.css";
+import { ThemeProvider } from "@/components/layout/theme-provider";
+import { SidebarProvider } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/layout/AppSidebar";
 
 export default function RootLayout({
   children,
@@ -16,10 +17,14 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-          <div className="relative flex min-h-screen flex-col">
-            {children}
-            <ModeToggle />
-          </div>
+        <SidebarProvider>
+          <AppSidebar />
+          <main className="ml-[100px] min-h-screen px-16">     
+            <div className="mx-auto h-full w-full max-w-[1440px] py-16">
+              {children}
+            </div>
+          </main>
+          </SidebarProvider>
         </ThemeProvider>      
       </body>
     </html>
