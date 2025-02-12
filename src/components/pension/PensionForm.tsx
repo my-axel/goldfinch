@@ -35,6 +35,7 @@ export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEdi
     member_id: "",
     initial_capital: 0,
     start_date: new Date(),
+    contribution_plan: [],
     ...(type === PensionType.ETF_PLAN && { automatic_rebalancing: false }),
     ...(type === PensionType.INSURANCE && { provider: "", contract_number: "" }),
     ...(type === PensionType.COMPANY && { employer: "", vesting_period: 0 }),

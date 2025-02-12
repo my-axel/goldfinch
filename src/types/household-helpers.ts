@@ -73,4 +73,16 @@ export function validateRetirementAges(member: HouseholdMember): boolean {
  */
 export function formatMemberName(member: HouseholdMember): string {
   return `${member.first_name} ${member.last_name}`
+}
+
+/**
+ * Calculates the planned retirement date based on birth date and retirement age
+ * @param birthDate Date of birth
+ * @param retirementAge Age at which the person plans to retire (default: 67)
+ * @returns Date of planned retirement
+ */
+export function calculatePlannedRetirementDate(birthday: Date, retirementAgePlanned: number = 67): Date {
+  const retirementDate = new Date(birthday)
+  retirementDate.setFullYear(birthday.getFullYear() + retirementAgePlanned)
+  return retirementDate
 } 

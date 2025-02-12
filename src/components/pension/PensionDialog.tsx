@@ -23,7 +23,20 @@ interface PensionDialogProps {
  * TODO: Add confirmation when closing with unsaved changes
  */
 export function PensionDialog({ open, onOpenChange, onSubmit, pension }: PensionDialogProps) {
-  const [pensionType, setPensionType] = useState<PensionType>(PensionType.ETF_PLAN)
+  const [pensionType, setPensionType] = useState<PensionType>(
+    pension?.type ?? PensionType.ETF_PLAN
+  )
+
+  // Transform pension data to match form structure
+  const formDefaultValues = pension ? {
+    ...pension,
+    contribution_plan: pension.contribution_plan?.steps.map(step => ({
+      amount: step.amount,
+      frequency: step.frequency,
+      start_date: step.start_date,
+      end_date: step.end_date
+    })) || []
+  } : undefined
 
   // Update pension type when editing an existing pension
   useEffect(() => {
@@ -41,7 +54,7 @@ export function PensionDialog({ open, onOpenChange, onSubmit, pension }: Pension
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-[900px]">
         <DialogHeader>
           <DialogTitle>{pension ? 'Edit' : 'Add'} Pension Plan</DialogTitle>
         </DialogHeader>
@@ -49,7 +62,7 @@ export function PensionDialog({ open, onOpenChange, onSubmit, pension }: Pension
           type={pensionType} 
           onTypeChange={setPensionType}
           onSubmit={onSubmit}
-          defaultValues={pension}
+          defaultValues={formDefaultValues}
           isEditing={!!pension}
         />
       </DialogContent>
