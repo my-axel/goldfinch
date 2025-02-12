@@ -4,18 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PensionType } from "@/types/pension"
 import { useState } from "react"
 import { PensionForm } from "./PensionForm"
-
-type FormData = {
-  type: PensionType
-  name: string
-  member_id: string
-  start_date: Date
-  initial_capital: number
-} & (
-  | { type: PensionType.ETF_PLAN, automatic_rebalancing: boolean }
-  | { type: PensionType.INSURANCE, provider: string, contract_number: string }
-  | { type: PensionType.COMPANY, employer: string, vesting_period: number }
-)
+import { FormData } from "@/types/pension-form"
 
 interface PensionDialogProps {
   open: boolean
@@ -23,6 +12,14 @@ interface PensionDialogProps {
   onSubmit: (data: FormData) => void
 }
 
+/**
+ * Dialog component for adding new pension plans.
+ * Manages the pension type state and renders the appropriate form.
+ * 
+ * TODO: Add loading state during form submission
+ * TODO: Add error handling for failed submissions
+ * TODO: Add form validation feedback
+ */
 export function PensionDialog({ open, onOpenChange, onSubmit }: PensionDialogProps) {
   const [pensionType, setPensionType] = useState<PensionType>(PensionType.ETF_PLAN)
 

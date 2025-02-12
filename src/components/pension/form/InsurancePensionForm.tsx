@@ -9,6 +9,16 @@ interface InsurancePensionFormProps {
   form: UseFormReturn<FormData>
 }
 
+/**
+ * Insurance-specific form fields for pension plans.
+ * Includes provider and contract number fields.
+ * 
+ * TODO: Add guaranteed interest rate field
+ * TODO: Add expected return rate field
+ * TODO: Add insurance type selection
+ * TODO: Add contract duration field
+ * TODO: Add validation for contract number format
+ */
 export function InsurancePensionForm({ form }: InsurancePensionFormProps) {
   return (
     <div className="grid gap-4 grid-cols-2">

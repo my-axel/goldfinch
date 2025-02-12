@@ -12,6 +12,15 @@ interface BasePensionFieldsProps {
   form: UseFormReturn<FormData>
 }
 
+/**
+ * Base form fields that are common to all pension types.
+ * Includes name, member selection, start date, and initial capital.
+ * 
+ * TODO: Replace mockHouseholdMembers with API data
+ * TODO: Add validation for initial capital (min/max values)
+ * TODO: Add validation for start date (not in future)
+ * TODO: Add tooltips/descriptions for fields
+ */
 export function BasePensionFields({ form }: BasePensionFieldsProps) {
   return (
     <div className="grid gap-4 grid-cols-2">

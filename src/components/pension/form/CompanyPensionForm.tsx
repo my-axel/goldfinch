@@ -9,6 +9,16 @@ interface CompanyPensionFormProps {
   form: UseFormReturn<FormData>
 }
 
+/**
+ * Company-specific form fields for pension plans.
+ * Includes employer and vesting period fields.
+ * 
+ * TODO: Add matching percentage field
+ * TODO: Add maximum employer contribution field
+ * TODO: Add contribution frequency selection
+ * TODO: Add validation for vesting period (min/max values)
+ * TODO: Add support for different vesting schedules
+ */
 export function CompanyPensionForm({ form }: CompanyPensionFormProps) {
   return (
     <div className="grid gap-4 grid-cols-2">

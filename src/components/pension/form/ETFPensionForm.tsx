@@ -9,6 +9,15 @@ interface ETFPensionFormProps {
   form: UseFormReturn<FormData>
 }
 
+/**
+ * ETF-specific form fields for pension plans.
+ * Currently only includes automatic rebalancing toggle.
+ * 
+ * TODO: Add ETF allocation fields with percentages
+ * TODO: Add ETF selection from available ETFs
+ * TODO: Add rebalancing frequency selection when automatic_rebalancing is true
+ * TODO: Add validation for total allocation (must sum to 100%)
+ */
 export function ETFPensionForm({ form }: ETFPensionFormProps) {
   return (
     <FormField

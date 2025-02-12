@@ -17,7 +17,18 @@ interface PensionFormProps {
   onSubmit: (data: FormData) => void
 }
 
+/**
+ * Form component for creating and editing pension plans.
+ * Renders different form fields based on the selected pension type.
+ * 
+ * TODO: Add form validation with proper error messages
+ * TODO: Add field descriptions/tooltips
+ * TODO: Add support for editing existing pensions
+ * TODO: Add support for contribution plans
+ * TODO: Add support for ETF allocations
+ */
 export function PensionForm({ type, onTypeChange, onSubmit }: PensionFormProps) {
+  // Initialize form with type-specific default values
   const defaultValues = {
     type,
     name: "",
@@ -30,6 +41,9 @@ export function PensionForm({ type, onTypeChange, onSubmit }: PensionFormProps) 
 
   const form = useForm<FormData>({ defaultValues })
 
+  /**
+   * Renders the type-specific form fields based on the selected pension type
+   */
   const renderTypeSpecificForm = () => {
     switch (type) {
       case PensionType.ETF_PLAN:
