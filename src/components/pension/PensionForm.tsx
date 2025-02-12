@@ -29,25 +29,35 @@ interface PensionFormProps {
  * TODO: Add support for ETF allocations
  */
 export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEditing }: PensionFormProps) {
-  const initialValues = {
-    type,
-    name: "",
-    member_id: "",
-    initial_capital: 0,
-    start_date: new Date(),
-    contribution_plan: [],
-    ...(type === PensionType.ETF_PLAN && { automatic_rebalancing: false }),
-    ...(type === PensionType.INSURANCE && { provider: "", contract_number: "" }),
-    ...(type === PensionType.COMPANY && { employer: "", vesting_period: 0 }),
-    ...defaultValues
-  } as FormData
-
-  const form = useForm<FormData>({ 
-    defaultValues: initialValues,
-    resetOptions: {
-      keepDirtyValues: isEditing
-    }
+  const form = useForm<FormData>({
+    defaultValues: {
+      type,
+      name: "",
+      member_id: "",
+      initial_capital: 0,
+      ...(type === PensionType.ETF_PLAN && { 
+        automatic_rebalancing: false,
+        contribution_plan: []
+      }),
+      ...(type === PensionType.INSURANCE && { 
+        provider: "", 
+        contract_number: "",
+        start_date: new Date()
+      }),
+      ...(type === PensionType.COMPANY && { 
+        employer: "", 
+        vesting_period: 0,
+        start_date: new Date()
+      }),
+      ...defaultValues
+    } as FormData
   })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const data = form.getValues()
+    onSubmit(data)
+  }
 
   /**
    * Renders the type-specific form fields based on the selected pension type
@@ -60,12 +70,14 @@ export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEdi
         return <InsurancePensionForm form={form} />
       case PensionType.COMPANY:
         return <CompanyPensionForm form={form} />
+      default:
+        return null
     }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <FormItem>
           <FormLabel>Pension Type</FormLabel>
           <Select 

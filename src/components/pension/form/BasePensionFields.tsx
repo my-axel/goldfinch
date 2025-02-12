@@ -81,75 +81,55 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 grid-cols-2">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Name</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="member_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Member</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <Input {...field} />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select member" />
+                </SelectTrigger>
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="member_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Household Member</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select member" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {mockHouseholdMembers.map(member => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {formatMemberName(member)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="start_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Start Date</FormLabel>
-              <FormControl>
-                <Input 
-                  type="date" 
-                  {...field} 
-                  value={field.value ? field.value.toISOString().split('T')[0] : ''} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="initial_capital"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Initial Capital (€)</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+              <SelectContent>
+                {mockHouseholdMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {formatMemberName(member)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="initial_capital"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Initial Capital (€)</FormLabel>
+            <FormControl>
+              <Input type="number" {...field} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">

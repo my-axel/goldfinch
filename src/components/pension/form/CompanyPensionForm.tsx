@@ -21,7 +21,25 @@ interface CompanyPensionFormProps {
  */
 export function CompanyPensionForm({ form }: CompanyPensionFormProps) {
   return (
-    <div className="grid gap-4 grid-cols-2">
+    <div className="space-y-6">
+      <FormField
+        control={form.control}
+        name="start_date"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Start Date</FormLabel>
+            <FormControl>
+              <Input 
+                type="date" 
+                {...field}
+                value={field.value ? field.value.toISOString().split('T')[0] : ''} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="employer"
@@ -35,6 +53,7 @@ export function CompanyPensionForm({ form }: CompanyPensionFormProps) {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="vesting_period"
