@@ -1,7 +1,8 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { HouseholdMember, calculateMemberFields } from "@/types/household"
+import { HouseholdMember } from "@/types/household"
+import { calculateMemberFields, formatMemberName } from "@/types/household-helpers"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import { Trash2, Pencil } from "lucide-react"
@@ -54,7 +55,7 @@ export function MemberList({ members, onDelete, onEdit }: MemberListProps) {
           return (
             <Card key={member.id}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle>{`${member.first_name} ${member.last_name}`}</CardTitle>
+                <CardTitle>{formatMemberName(member)}</CardTitle>
                 <div className="flex space-x-1">
                   <Button
                     variant="ghost"
@@ -84,11 +85,11 @@ export function MemberList({ members, onDelete, onEdit }: MemberListProps) {
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Planned Retirement</dt>
-                    <dd>In {computed.years_to_planned_retirement} years (age {member.retirement_age_planned})</dd>
+                    <dd>In {computed.years_to_retirement_planned} years (age {member.retirement_age_planned})</dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Possible Retirement</dt>
-                    <dd>In {computed.years_to_possible_retirement} years (age {member.retirement_age_possible})</dd>
+                    <dd>In {computed.years_to_retirement_possible} years (age {member.retirement_age_possible})</dd>
                   </div>
                 </dl>
               </CardContent>

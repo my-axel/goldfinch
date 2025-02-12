@@ -10,14 +10,24 @@
  * fields based on the member's data
  */
 
-// TODO: Update id type to match backend primary key type (UUID, int, etc.)
+//  TODO: Update id type to match backend primary key type (UUID, int, etc.)
+
+/** 
+ * Represents a member of the household. Contains personal information
+ * and retirement planning details. Used as the foundation for financial
+ * planning calculations.
+ * 
+ * TODO: Update id type to match backend primary key type (UUID/number)
+ * TODO: Add validation decorators for backend ORM (e.g., @Column for TypeORM)
+ * TODO: Consider adding created_at and updated_at timestamps
+ */
 export interface HouseholdMember {
-  id: string  // Might need to change based on backend ID type
+  id: string
   first_name: string
   last_name: string
   birthday: Date
-  retirement_age_planned: number
-  retirement_age_possible: number
+  retirement_age_planned: number    // Age at which member plans to retire
+  retirement_age_possible: number    // Earliest possible retirement age
 }
 
 // TODO: Add API response types
@@ -27,12 +37,30 @@ export interface HouseholdMember {
 //   status: number
 // }
 
-// Computed properties interface
+/**
+ * Extends HouseholdMember with computed fields based on the member's
+ * age and retirement plans. These fields are calculated on demand
+ * rather than stored in the database.
+ * 
+ * TODO: Consider moving to a backend DTO (Data Transfer Object)
+ * TODO: Add serialization logic for Date objects
+ */
 export interface HouseholdMemberWithComputedFields extends HouseholdMember {
-  age: number
-  years_to_planned_retirement: number
-  years_to_possible_retirement: number
+  age: number                       // Current age
+  years_to_retirement_planned: number    // Years until planned retirement
+  years_to_retirement_possible: number   // Years until earliest possible retirement
+  retirement_year_planned: number        // Calendar year of planned retirement
+  retirement_year_possible: number       // Calendar year of earliest possible retirement
 }
+
+/**
+ * Helper type for creating new household members. Omits system-generated
+ * fields like 'id' which are set during creation.
+ * 
+ * TODO: Add validation schema for API requests
+ * TODO: Consider adding backend validation pipe type
+ */
+export type NewHouseholdMember = Omit<HouseholdMember, 'id'>
 
 // Helper functions for computed fields
 export const calculateMemberFields = (member: HouseholdMember): HouseholdMemberWithComputedFields => {
@@ -42,7 +70,9 @@ export const calculateMemberFields = (member: HouseholdMember): HouseholdMemberW
   return {
     ...member,
     age,
-    years_to_planned_retirement: member.retirement_age_planned - age,
-    years_to_possible_retirement: member.retirement_age_possible - age
+    years_to_retirement_planned: member.retirement_age_planned - age,
+    years_to_retirement_possible: member.retirement_age_possible - age,
+    retirement_year_planned: member.retirement_age_planned,
+    retirement_year_possible: member.retirement_age_possible
   }
 } 
