@@ -23,6 +23,7 @@ export default function PensionPage() {
   const [pensions, setPensions] = useState<Pension[]>(mockPensions)
   const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedPension, setSelectedPension] = useState<Pension | undefined>()
 
   /**
    * Handles the deletion of a pension plan.
@@ -45,28 +46,37 @@ export default function PensionPage() {
   }
 
   /**
-   * Handles editing of an existing pension plan.
+   * Opens the edit dialog for a pension plan
    * 
-   * TODO: Implement edit functionality
    * TODO: Add API call to update pension
    * TODO: Add form validation
    * TODO: Add optimistic updates
    */
   const handleEdit = (pension: Pension) => {
-    console.log('Edit pension:', pension)
+    setSelectedPension(pension)
+    setDialogOpen(true)
   }
 
   /**
-   * Handles the creation of a new pension plan.
+   * Handles both creation and updates of pension plans
    * 
-   * TODO: Add API call to create pension
+   * TODO: Add API calls for create/update
    * TODO: Add error handling with user feedback
    * TODO: Add optimistic updates
    * TODO: Add form data transformation to match API requirements
    */
-  const handleAdd = (data: FormData) => {
-    console.log('New pension data:', data)
+  const handleSubmit = (data: FormData) => {
+    if (selectedPension) {
+      // Update existing pension
+      console.log('Update pension:', data)
+      // TODO: Add API call to update pension
+    } else {
+      // Create new pension
+      console.log('Create pension:', data)
+      // TODO: Add API call to create pension
+    }
     setDialogOpen(false)
+    setSelectedPension(undefined)
   }
 
   return (
@@ -93,8 +103,12 @@ export default function PensionPage() {
 
       <PensionDialog 
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSubmit={handleAdd}
+        onOpenChange={(open) => {
+          setDialogOpen(open)
+          if (!open) setSelectedPension(undefined)
+        }}
+        onSubmit={handleSubmit}
+        pension={selectedPension}
       />
     </div>
   )

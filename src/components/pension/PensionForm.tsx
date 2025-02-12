@@ -15,6 +15,8 @@ interface PensionFormProps {
   type: PensionType
   onTypeChange: (type: PensionType) => void
   onSubmit: (data: FormData) => void
+  defaultValues?: Partial<FormData>
+  isEditing?: boolean
 }
 
 /**
@@ -23,23 +25,28 @@ interface PensionFormProps {
  * 
  * TODO: Add form validation with proper error messages
  * TODO: Add field descriptions/tooltips
- * TODO: Add support for editing existing pensions
  * TODO: Add support for contribution plans
  * TODO: Add support for ETF allocations
  */
-export function PensionForm({ type, onTypeChange, onSubmit }: PensionFormProps) {
-  // Initialize form with type-specific default values
-  const defaultValues = {
+export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEditing }: PensionFormProps) {
+  const initialValues = {
     type,
     name: "",
     member_id: "",
     initial_capital: 0,
+    start_date: new Date(),
     ...(type === PensionType.ETF_PLAN && { automatic_rebalancing: false }),
     ...(type === PensionType.INSURANCE && { provider: "", contract_number: "" }),
-    ...(type === PensionType.COMPANY && { employer: "", vesting_period: 0 })
+    ...(type === PensionType.COMPANY && { employer: "", vesting_period: 0 }),
+    ...defaultValues
   } as FormData
 
-  const form = useForm<FormData>({ defaultValues })
+  const form = useForm<FormData>({ 
+    defaultValues: initialValues,
+    resetOptions: {
+      keepDirtyValues: isEditing
+    }
+  })
 
   /**
    * Renders the type-specific form fields based on the selected pension type
@@ -60,7 +67,11 @@ export function PensionForm({ type, onTypeChange, onSubmit }: PensionFormProps) 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormItem>
           <FormLabel>Pension Type</FormLabel>
-          <Select value={type} onValueChange={onTypeChange}>
+          <Select 
+            value={type} 
+            onValueChange={onTypeChange}
+            disabled={isEditing}
+          >
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder="Select pension type" />
@@ -77,7 +88,9 @@ export function PensionForm({ type, onTypeChange, onSubmit }: PensionFormProps) 
         <BasePensionFields form={form} />
         {renderTypeSpecificForm()}
         
-        <Button type="submit">Create Pension</Button>
+        <Button type="submit">
+          {isEditing ? 'Update' : 'Create'} Pension
+        </Button>
       </form>
     </Form>
   )
