@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Plus, Trash2, ChevronDownIcon } from "lucide-react"
 import { ContributionFrequency } from "@/types/pension"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useState } from "react"
+import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 
 interface BasePensionFieldsProps {
   form: UseFormReturn<FormData>
@@ -30,6 +32,8 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
     control: form.control,
     name: "contribution_plan"
   })
+
+  const [open, setOpen] = useState<number | null>(null)
 
   const getLatestEndDate = () => {
     const existingDates = fields
@@ -64,6 +68,7 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
       const member = mockHouseholdMembers.find(m => m.id === memberId)
       if (!member?.birthday) {
         form.setValue(`contribution_plan.${index}.end_date`, undefined)
+        setOpen(null)
         return
       }
       const retirementDate = calculatePlannedRetirementDate(
@@ -71,12 +76,14 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
         member.retirement_age_planned
       )
       form.setValue(`contribution_plan.${index}.end_date`, retirementDate)
+      setOpen(null)
       return
     }
 
     const endDate = new Date(startDate)
     endDate.setFullYear(endDate.getFullYear() + years)
     form.setValue(`contribution_plan.${index}.end_date`, endDate)
+    setOpen(null)
   }
 
   return (
@@ -146,7 +153,7 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
         </div>
 
         {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_2fr_auto] gap-4 items-end">
+          <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 items-end">
             <FormField
               control={form.control}
               name={`contribution_plan.${index}.amount`}
@@ -166,7 +173,10 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Frequency</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select frequency" />
@@ -205,7 +215,7 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Duration</FormLabel>
-                  <Popover>
+                  <Popover open={open === index} onOpenChange={(isOpen) => setOpen(isOpen ? index : null)}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -219,34 +229,38 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
                         <ChevronDownIcon className="h-4 w-4 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-56" align="start">
-                      <div className="grid gap-2">
-                        <Button
-                          variant="ghost"
-                          className="justify-start"
-                          onClick={() => handleDurationSelect(index, undefined)}
-                        >
-                          until planned retirement
-                        </Button>
-                        {[5, 10, 15, 20, 25, 30].map(years => (
-                          <Button
-                            key={years}
-                            variant="ghost"
-                            className="justify-start"
-                            onClick={() => handleDurationSelect(index, years)}
-                          >
-                            {years} years
-                          </Button>
-                        ))}
-                        <Input
-                          type="date"
-                          className="mt-2"
-                          onChange={(e) => {
-                            const date = e.target.value ? new Date(e.target.value) : undefined
-                            form.setValue(`contribution_plan.${index}.end_date`, date)
-                          }}
-                        />
-                      </div>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command className="w-full">
+                        <CommandList>
+                          <CommandGroup>
+                            <CommandItem
+                              className="px-2 py-1.5 cursor-pointer"
+                              onSelect={() => handleDurationSelect(index, undefined)}
+                            >
+                              until planned retirement
+                            </CommandItem>
+                            {[5, 10, 15, 20, 25, 30].map(years => (
+                              <CommandItem
+                                key={years}
+                                className="px-2 py-1.5 cursor-pointer"
+                                onSelect={() => handleDurationSelect(index, years)}
+                              >
+                                {years} years
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                        <div className="p-1 border-t">
+                          <Input
+                            type="date"
+                            className="h-8"
+                            onChange={(e) => {
+                              const date = e.target.value ? new Date(e.target.value) : undefined
+                              form.setValue(`contribution_plan.${index}.end_date`, date)
+                            }}
+                          />
+                        </div>
+                      </Command>
                     </PopoverContent>
                   </Popover>
                   <FormMessage />

@@ -1,6 +1,13 @@
-import { PensionType, ContributionStep } from "./pension"
+import { PensionType, ContributionFrequency } from "./pension"
 
-// Base form data type without start date
+type ContributionStep = {
+  amount: number
+  frequency: ContributionFrequency
+  start_date: Date
+  end_date?: Date
+}
+
+// Base form data type
 type BaseFormData = {
   type: PensionType
   name: string
@@ -12,8 +19,7 @@ type BaseFormData = {
 export type FormData = BaseFormData & (
   | { 
       type: PensionType.ETF_PLAN
-      automatic_rebalancing: boolean
-      target_allocation?: { etf_id: string; percentage: number }[]
+      etf_id: string  // Single ETF instead of allocation
       contribution_plan: ContributionStep[]
     }
   | { 

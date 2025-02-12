@@ -1,9 +1,9 @@
 "use client"
 
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form"
-import { Switch } from "@/components/ui/switch"
+import { FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { UseFormReturn } from "react-hook-form"
 import { FormData } from "@/types/pension-form"
+import { ETFSearchCombobox } from "@/components/etf/ETFSearchCombobox"
 
 interface ETFPensionFormProps {
   form: UseFormReturn<FormData>
@@ -20,22 +20,22 @@ interface ETFPensionFormProps {
  */
 export function ETFPensionForm({ form }: ETFPensionFormProps) {
   return (
-    <FormField
-      control={form.control}
-      name="automatic_rebalancing"
-      render={({ field }) => (
-        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <FormLabel>Automatic Rebalancing</FormLabel>
-          </div>
-          <FormControl>
-            <Switch
-              checked={field.value}
-              onCheckedChange={field.onChange}
+    <div className="space-y-6">
+      <FormField
+        control={form.control}
+        name="etf_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>ETF Selection</FormLabel>
+            <ETFSearchCombobox 
+              value={field.value}
+              onSelect={(etf) => {
+                field.onChange(etf.id)
+              }}
             />
-          </FormControl>
-        </FormItem>
-      )}
-    />
+          </FormItem>
+        )}
+      />
+    </div>
   )
 } 
