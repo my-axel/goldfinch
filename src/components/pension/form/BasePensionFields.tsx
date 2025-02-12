@@ -4,7 +4,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
-import { mockHouseholdMembers } from "@/data/mockData"
+import { mockHouseholdMembers } from "@/data/mockEtfs"
 import { formatMemberName, calculatePlannedRetirementDate } from "@/types/household-helpers"
 import { FormData } from "@/types/pension-form"
 import { Button } from "@/components/ui/button"

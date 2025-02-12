@@ -11,7 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { mockEtfs } from "@/data/mockData"
+import { mockEtfs } from "@/data/mockEtfs"
 
 interface ETF {
   id: string

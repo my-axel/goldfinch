@@ -4,7 +4,7 @@ import { useState } from "react"
 import { MemberList } from "@/components/household/MemberList"
 import { AddMemberDialog } from "@/components/household/AddMemberDialog"
 import { EditMemberDialog } from "@/components/household/EditMemberDialog"
-import { mockHouseholdMembers } from "@/data/mockData"
+import { mockHouseholdMembers } from "@/data/mockEtfs"
 import { HouseholdMember } from "@/types/household"
 
 /**

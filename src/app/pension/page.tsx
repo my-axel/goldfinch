@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { Pension } from "@/types/pension"
-import { mockPensions, mockEtfPrices, mockHouseholdMembers } from "@/data/mockData"
+import { mockPensions, mockEtfPrices, mockHouseholdMembers } from "@/data/mockEtfs"
 import { FormData } from "@/types/pension-form"
 
 /**

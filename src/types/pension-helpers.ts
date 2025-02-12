@@ -119,23 +119,3 @@ export function calculateAveragePrice(
 
   return total_units > 0 ? total_amount / total_units : 0
 }
-
-/**
- * Calculates the current value of ETF holdings based on the latest price.
- * This is separate from average price as it uses current market value.
- * 
- * TODO: Move to backend service for real-time prices
- * TODO: Add price update timestamp
- * TODO: Add currency conversion support
- */
-export function calculateCurrentValue(
-  etf_id: string,
-  total_units: number,
-  etf_prices: ETFDailyPrice[]
-): number {
-  const latest_price = etf_prices
-    .filter(p => p.etf_id === etf_id)
-    .sort((a, b) => b.date.getTime() - a.date.getTime())[0]
-
-  return latest_price ? total_units * latest_price.price : 0
-} 

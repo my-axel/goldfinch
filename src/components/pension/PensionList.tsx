@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Pension, PensionType, ETFPension, InsurancePension, CompanyPension } from "@/types/pension"
-import { calculateCurrentValue } from "@/types/pension-helpers"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import { Trash2, Pencil, PiggyBank, Building, Shield } from "lucide-react"
@@ -21,6 +20,7 @@ import { useState } from "react"
 import { ETFDailyPrice } from "@/types/etf"
 import { HouseholdMember } from "@/types/household"
 import { formatMemberName } from "@/types/household-helpers"
+import { mockEtfs } from "@/data/mockEtfs"
 
 interface PensionListProps {
   pensions: Pension[]
@@ -37,10 +37,8 @@ const PensionTypeIcons = {
 } as const
 
 function ETFPensionContent({ pension, etfPrices }: { pension: ETFPension, etfPrices: ETFDailyPrice[] }) {
-  const marketValue = pension.etfs.reduce((total, etf) => {
-    const currentValue = calculateCurrentValue(etf.etf_id, etf.total_units, etfPrices)
-    return total + currentValue
-  }, 0)
+
+  const etf = mockEtfs.find(e => e.id === pension.etf_id)
 
   return (
     <>
@@ -49,36 +47,12 @@ function ETFPensionContent({ pension, etfPrices }: { pension: ETFPension, etfPri
         <dd>{pension.initial_capital.toLocaleString('de-DE')} €</dd>
       </div>
       <div>
-        <dt className="text-muted-foreground">Book Value</dt>
+        <dt className="text-muted-foreground">Current Value</dt>
         <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
       </div>
       <div>
-        <dt className="text-muted-foreground">Market Value</dt>
-        <dd>{marketValue.toLocaleString('de-DE')} €</dd>
-      </div>
-      <div>
-        <dt className="text-muted-foreground">ETFs</dt>
-        <dd>
-          {pension.etfs.map(etf => {
-            const currentPrice = etfPrices
-              .filter(p => p.etf_id === etf.etf_id)
-              .sort((a, b) => b.date.getTime() - a.date.getTime())[0]?.price
-            return (
-              <div key={etf.etf_id} className="flex justify-between">
-                <span>ETF {etf.etf_id}:</span>
-                <span>
-                  {etf.total_units} units @ {currentPrice?.toLocaleString('de-DE')} €
-                </span>
-              </div>
-            )
-          })}
-        </dd>
-      </div>
-      <div>
-        <dt className="text-muted-foreground">Rebalancing</dt>
-        <dd>{pension.automatic_rebalancing ? 
-          `Automatic (${pension.rebalancing_frequency})` : 
-          'Manual'}</dd>
+        <dt className="text-muted-foreground">ETF</dt>
+        <dd>{etf ? `${etf.symbol} - ${etf.name}` : 'Unknown ETF'}</dd>
       </div>
     </>
   )
