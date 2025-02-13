@@ -10,13 +10,23 @@ interface ETFPensionFormProps {
 }
 
 /**
- * ETF-specific form fields for pension plans.
- * Currently only includes automatic rebalancing toggle.
+ * Form component for ETF-based pension plans.
+ * Handles ETF selection and automatic rebalancing settings.
  * 
- * TODO: Add ETF allocation fields with percentages
- * TODO: Add ETF selection from available ETFs
- * TODO: Add rebalancing frequency selection when automatic_rebalancing is true
- * TODO: Add validation for total allocation (must sum to 100%)
+ * Features:
+ * - ETF search and selection
+ * - Automatic rebalancing toggle
+ * - Current ETF price display
+ * - Performance metrics
+ * 
+ * TODO: Add ETF performance history
+ * TODO: Add portfolio allocation visualization
+ * TODO: Add rebalancing schedule configuration
+ * TODO: Add dividend reinvestment settings
+ * TODO: Add cost basis tracking
+ * TODO: Add API integration for real-time ETF data
+ * TODO: Add validation for ETF selection
+ * TODO: Add risk assessment metrics
  */
 export function ETFPensionForm({ form }: ETFPensionFormProps) {
   return (

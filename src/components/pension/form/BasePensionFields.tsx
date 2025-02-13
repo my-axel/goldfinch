@@ -19,22 +19,45 @@ interface BasePensionFieldsProps {
 }
 
 /**
- * Base form fields that are common to all pension types.
- * Includes name, member selection, start date, and initial capital.
+ * Base form fields component that are common to all pension types.
+ * Handles member selection, contribution plans, and basic pension information.
+ * 
+ * Features:
+ * - Member selection from household
+ * - Initial capital input
+ * - Dynamic contribution plan management
+ * - Duration selection with retirement calculation
  * 
  * TODO: Replace mockHouseholdMembers with API data
  * TODO: Add validation for initial capital (min/max values)
  * TODO: Add validation for start date (not in future)
  * TODO: Add tooltips/descriptions for fields
+ * TODO: Add API integration for member data
+ * TODO: Add data persistence for contribution plans
  */
 export function BasePensionFields({ form }: BasePensionFieldsProps) {
+  /**
+   * Field array for managing multiple contribution plan entries
+   * TODO: Add validation for overlapping dates
+   * TODO: Add sorting by date
+   */
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "contribution_plan"
   })
 
+  /**
+   * State for managing the duration selection popover
+   * TODO: Add keyboard navigation
+   */
   const [open, setOpen] = useState<number | null>(null)
 
+  /**
+   * Gets the latest end date from existing contribution plans
+   * Used to set the start date for new contributions
+   * TODO: Add validation for date gaps
+   * TODO: Add optimization for large datasets
+   */
   const getLatestEndDate = () => {
     const existingDates = fields
       .map(field => form.getValues(`contribution_plan`)[fields.indexOf(field)]?.end_date)
@@ -45,6 +68,12 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
     return new Date(Math.max(...existingDates.map(date => date.getTime())))
   }
 
+  /**
+   * Handles adding a new contribution plan entry
+   * Sets the start date to the day after the latest end date
+   * TODO: Add validation for maximum number of contributions
+   * TODO: Add default values based on previous entries
+   */
   const handleAddContribution = () => {
     const startDate = getLatestEndDate()
     // If we found an end date, add one day to it for the new start date
@@ -58,6 +87,17 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
     })
   }
 
+  /**
+   * Handles duration selection for contribution plans
+   * Calculates end date based on years or retirement age
+   * 
+   * @param index - Index of the contribution plan entry
+   * @param years - Optional number of years for duration
+   * 
+   * TODO: Add validation for retirement age
+   * TODO: Add support for custom durations
+   * TODO: Add validation for maximum duration
+   */
   const handleDurationSelect = (index: number, years?: number) => {
     const startDate = form.getValues(`contribution_plan.${index}.start_date`)
     const memberId = form.getValues('member_id')

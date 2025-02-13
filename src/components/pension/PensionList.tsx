@@ -22,6 +22,14 @@ import { HouseholdMember } from "@/types/household"
 import { formatMemberName } from "@/types/household-helpers"
 import { mockEtfs } from "@/data/mockEtfs"
 
+/**
+ * Props for the PensionList component
+ * @property pensions - Array of all pension plans
+ * @property etfPrices - Array of ETF daily prices for value calculation
+ * @property members - Array of household members
+ * @property onDelete - Callback when a pension is deleted
+ * @property onEdit - Callback when a pension is edited
+ */
 interface PensionListProps {
   pensions: Pension[]
   etfPrices: ETFDailyPrice[]
@@ -30,14 +38,21 @@ interface PensionListProps {
   onEdit: (pension: Pension) => void
 }
 
+/**
+ * Mapping of pension types to their respective icons
+ */
 const PensionTypeIcons = {
   [PensionType.ETF_PLAN]: PiggyBank,
   [PensionType.INSURANCE]: Shield,
   [PensionType.COMPANY]: Building,
 } as const
 
+/**
+ * Displays ETF pension specific information
+ * TODO: Add performance metrics
+ * TODO: Add contribution plan overview
+ */
 function ETFPensionContent({ pension, etfPrices }: { pension: ETFPension, etfPrices: ETFDailyPrice[] }) {
-
   const etf = mockEtfs.find(e => e.id === pension.etf_id)
 
   return (
@@ -58,6 +73,10 @@ function ETFPensionContent({ pension, etfPrices }: { pension: ETFPension, etfPri
   )
 }
 
+/**
+ * Displays insurance pension specific information
+ * TODO: Add expected value calculation
+ */
 function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
   return (
     <>
@@ -81,6 +100,11 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
   )
 }
 
+/**
+ * Displays company pension specific information
+ * TODO: Add vesting period progress
+ * TODO: Add employer contribution calculation
+ */
 function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
   return (
     <>
@@ -104,6 +128,13 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
   )
 }
 
+/**
+ * Displays a single pension plan card with type-specific content
+ * @param pension - The pension plan to display
+ * @param etfPrices - Array of ETF daily prices (only used for ETF pensions)
+ * @param onEdit - Callback when edit button is clicked
+ * @param onDelete - Callback when delete button is clicked
+ */
 function PensionCard({ 
   pension, 
   etfPrices, 
@@ -167,6 +198,12 @@ function PensionCard({
   )
 }
 
+/**
+ * Displays pension plans grouped by household member
+ * TODO: Add sorting options (by name, value, start date)
+ * TODO: Add filtering options (by type, status)
+ * TODO: Add summary statistics per member
+ */
 function MemberPensionGroup({
   member,
   pensions,
@@ -202,6 +239,13 @@ function MemberPensionGroup({
   )
 }
 
+/**
+ * Main component for displaying all pension plans
+ * Organizes pensions by household member and handles delete confirmation
+ * TODO: Add total portfolio value
+ * TODO: Add pension type distribution chart
+ * TODO: Add performance overview
+ */
 export function PensionList({ pensions, etfPrices, members, onDelete, onEdit }: PensionListProps) {
   const [pensionToDelete, setPensionToDelete] = useState<string | null>(null)
 

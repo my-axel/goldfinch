@@ -14,20 +14,40 @@ interface PensionDialogProps {
 }
 
 /**
- * Dialog component for adding and editing pension plans.
+ * Dialog component for managing pension plans.
  * Manages the pension type state and renders the appropriate form.
+ * 
+ * Features:
+ * - Modal dialog for pension management
+ * - Type selection
+ * - Form state management
+ * - Edit mode support
  * 
  * TODO: Add loading state during form submission
  * TODO: Add error handling for failed submissions
  * TODO: Add form validation feedback
  * TODO: Add confirmation when closing with unsaved changes
+ * TODO: Add keyboard shortcuts
+ * TODO: Add transition animations
+ * TODO: Add API integration for data persistence
+ * TODO: Add audit logging for changes
  */
 export function PensionDialog({ open, onOpenChange, onSubmit, pension }: PensionDialogProps) {
+  /**
+   * State for managing the current pension type.
+   * Defaults to ETF_PLAN for new pensions.
+   * TODO: Add validation for pension type changes
+   */
   const [pensionType, setPensionType] = useState<PensionType>(
     pension?.type ?? PensionType.ETF_PLAN
   )
 
-  // Transform pension data to match form structure
+  /**
+   * Transform pension data to match form structure.
+   * Maps contribution plan steps to form-compatible format.
+   * TODO: Add validation for transformed data
+   * TODO: Add error handling for malformed data
+   */
   const formDefaultValues = pension ? {
     ...pension,
     contribution_plan: pension.contribution_plan?.steps.map(step => ({

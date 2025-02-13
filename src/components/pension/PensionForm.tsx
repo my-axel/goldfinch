@@ -11,6 +11,14 @@ import { CompanyPensionForm } from "./form/CompanyPensionForm"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormData } from "@/types/pension-form"
 
+/**
+ * Props for the PensionForm component
+ * @property type - The type of pension (ETF, Insurance, Company)
+ * @property onTypeChange - Callback when pension type changes
+ * @property onSubmit - Callback when form is submitted
+ * @property defaultValues - Optional initial values for the form
+ * @property isEditing - Whether the form is in edit mode
+ */
 interface PensionFormProps {
   type: PensionType
   onTypeChange: (type: PensionType) => void
@@ -23,10 +31,21 @@ interface PensionFormProps {
  * Form component for creating and editing pension plans.
  * Renders different form fields based on the selected pension type.
  * 
- * TODO: Add form validation with proper error messages
- * TODO: Add field descriptions/tooltips
- * TODO: Add support for contribution plans
- * TODO: Add support for ETF allocations
+ * Features:
+ * - Type selection (disabled in edit mode)
+ * - Base fields (name, member, initial capital)
+ * - Type-specific fields:
+ *   - ETF: ETF selection and contribution plan
+ *   - Insurance: Provider, contract number, start date
+ *   - Company: Employer, vesting period, start date
+ * 
+ * TODO: Add form validation messages
+ * TODO: Add loading states during submission
+ * TODO: Add progress indicator for multi-step forms
+ * TODO: Add preview of pension details
+ * TODO: Add form autosave
+ * TODO: Add API integration for form submission
+ * TODO: Add data validation layer
  */
 export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEditing }: PensionFormProps) {
   const form = useForm<FormData>({
@@ -53,6 +72,13 @@ export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEdi
     } as FormData
   })
 
+  /**
+   * Handles form submission.
+   * Prevents default form behavior and calls onSubmit with form data.
+   * TODO: Add form validation before submission
+   * TODO: Add error handling
+   * TODO: Add loading state during submission
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const data = form.getValues()
@@ -60,7 +86,10 @@ export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEdi
   }
 
   /**
-   * Renders the type-specific form fields based on the selected pension type
+   * Renders the type-specific form fields based on the selected pension type.
+   * Returns the appropriate form component based on pension type.
+   * TODO: Add error boundary for form components
+   * TODO: Add loading states for dynamic imports
    */
   const renderTypeSpecificForm = () => {
     switch (type) {
