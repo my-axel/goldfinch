@@ -2,7 +2,7 @@
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/frontend/components/ui/tooltip"
 import Link from "next/link"
-import { Home, Users, PiggyBank, Settings } from "lucide-react"
+import { Users, PiggyBank, Settings, LayoutDashboard } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -12,9 +12,10 @@ import {
     SidebarMenuItem,
   } from "@/frontend/components/ui/sidebar"
   import { ModeToggle } from "@/frontend/components/layout/mode-toggle"
+  import Image from "next/image"
 
   const navItems = [
-    { name: "Home", href: "/", icon: Home },
+    { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Household", href: "/household", icon: Users },
     { name: "Pension", href: "/pension", icon: PiggyBank },
   ]
@@ -23,7 +24,15 @@ import {
     return (
       <Sidebar>
         <SidebarHeader>
-            <h2 className="group-data-[collapsible=icon]:hidden text-2xl font-bold p-2">Goldfinch</h2>
+            <div className="flex items-center gap-2 p-2">
+                <Image 
+                    src="/goldfinch_logo.jpg" 
+                    alt="Goldfinch Logo" 
+                    width={72} 
+                    height={72}
+                />
+                <h2 className="group-data-[collapsible=icon]:hidden text-2xl font-bold">Goldfinch</h2>
+            </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
