@@ -1,25 +1,42 @@
 /** 
- * Represents an Exchange Traded Fund (ETF) with its core data and historical prices.
- * Historical prices are stored per day and can include trading volume.
+ * Represents an Exchange Traded Fund (ETF) as returned by the API
  */
 export interface ETF {
+  // Basic Information
   id: string
   isin: string
-  wkn?: string
   symbol: string
   name: string
-  description?: string
   currency: string
-  historical_prices: ETFDailyPrice[]
+  
+  // Fund Details
+  asset_class: 'Equity' | 'Fixed Income' | 'Commodity' | 'Real Estate' | 'Mixed'
+  domicile: string
+  inception_date: Date
+  fund_size: number  // in millions
+  ter: number        // Total Expense Ratio as decimal
+  distribution_policy: 'Accumulating' | 'Distributing'
+  
+  // Latest Metrics
+  last_price: number
+  last_update: Date
+  ytd_return: number
+  one_year_return: number
+  volatility_30d: number
+  sharpe_ratio: number
 }
 
-/** 
- * Daily price record for an ETF. Used for both historical tracking
- * and current value calculations.
+/**
+ * Monthly performance data for an ETF holding in a pension plan
+ * All calculations are done by the backend
  */
-export interface ETFDailyPrice {
+export interface ETFHoldingPerformance {
+  pension_id: string
   etf_id: string
   date: Date
-  price: number
-  volume?: number
+  units: number
+  value: number
+  total_invested: number
+  total_return: number
+  return_percentage: number
 } 

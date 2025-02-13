@@ -65,17 +65,6 @@ export interface ContributionPlan {
   historical_contributions: HistoricalContribution[]  // Past contributions
 }
 
-/** 
- * Tracks an ETF within a pension plan, including its target allocation
- * percentage and the total units currently owned. Used to monitor
- * portfolio composition and calculate rebalancing needs.
- */
-export interface PensionETF {
-  etf_id: string
-  allocation_percentage: number  // Target percentage in portfolio
-  total_units: number           // Total units owned of this ETF
-}
-
 /**
  * TODO: Consider moving enums to shared backend/frontend constants
  * TODO: Add API response types for all interfaces
@@ -107,8 +96,7 @@ interface BasePension {
 
 /** 
  * ETF-based pension plan. Extends BasePension with features specific
- * to self-managed ETF portfolios, including automatic rebalancing
- * and target allocations for each ETF in the portfolio.
+ * to self-managed ETF portfolios.
  * 
  * TODO: Add ETF price update timestamp
  * TODO: Add transaction logging
@@ -116,13 +104,7 @@ interface BasePension {
  */
 export interface ETFPension extends BasePension {
   type: PensionType.ETF_PLAN
-  etfs: PensionETF[]         // Current ETF holdings
-  target_allocation: {        // Target portfolio composition
-    etf_id: string
-    percentage: number
-  }[]
-  rebalancing_frequency?: 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
-  automatic_rebalancing: boolean
+  etf_id: string              // Single ETF identifier
 }
 
 /** 

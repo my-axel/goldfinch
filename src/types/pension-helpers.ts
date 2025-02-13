@@ -5,7 +5,6 @@
  * TODO: Add performance monitoring for calculations
  */
 
-import { ETFDailyPrice } from './etf'
 import { 
   HistoricalContribution, 
   ContributionStep, 
@@ -19,7 +18,8 @@ import {
  * Generic type ensures correct pension subtype is created.
  * 
  * TODO: Add validation schema for API requests
- * TODO: Add backend validation pipe type
+ * TODO: Add validation pipe for request data
+ * TODO: Add response serialization
  */
 export type NewPension<T extends PensionType> = Omit<
   Extract<Pension, { type: T }>,
@@ -28,67 +28,23 @@ export type NewPension<T extends PensionType> = Omit<
 
 /**
  * Generates actual contribution records based on the contribution plan.
- * Only generates contributions up to the current date and preserves any
- * manual overrides that exist in the historical record.
+ * Only generates contributions up to the current date. Will be replaced
+ * by backend processing for production use.
  * 
- * TODO: Move to backend service for consistent date handling
- * TODO: Add timezone support
- * TODO: Add transaction support for bulk updates
- * TODO: Add audit logging for generated contributions
- * 
- * @param plan - Array of planned contribution steps
- * @param existingContributions - Already recorded contributions to preserve
- * @returns Array of contributions including both generated and existing ones
+ * TODO: Create scheduled task for contribution processing
+ * TODO: Implement contribution to ETF unit conversion
+ * TODO: Add timezone support for date calculations
+ * TODO: Add transaction support for contributions
+ * TODO: Add audit logging for contributions
+ * TODO: Add error handling for failed contributions
+ * TODO: Add notification system for processed contributions
  */
 export function generateActualContributions(
   plan: ContributionStep[],
   existingContributions: HistoricalContribution[] = []
 ): HistoricalContribution[] {
-  const today = new Date()
-  const contributions: HistoricalContribution[] = [...existingContributions]
-  
-  plan.forEach(step => {
-    let currentDate = new Date(step.start_date)
-    const endDate = step.end_date ? new Date(step.end_date) : today
-    
-    while (currentDate <= endDate && currentDate <= today) {
-      // Check if we already have a manual contribution for this date
-      const existingContribution = contributions.find(
-        c => c.date.getTime() === currentDate.getTime()
-      )
-      
-      if (!existingContribution) {
-        contributions.push({
-          date: new Date(currentDate),
-          amount: step.amount,
-          planned_amount: step.amount,
-          is_manual_override: false,
-          etf_allocations: []  // To be filled based on target allocation
-        })
-      }
-      
-      // Move to next contribution date based on frequency
-      switch (step.frequency) {
-        case 'MONTHLY':
-          currentDate.setMonth(currentDate.getMonth() + 1)
-          break
-        case 'QUARTERLY':
-          currentDate.setMonth(currentDate.getMonth() + 3)
-          break
-        case 'SEMI_ANNUALLY':
-          currentDate.setMonth(currentDate.getMonth() + 6)
-          break
-        case 'ANNUALLY':
-          currentDate.setFullYear(currentDate.getFullYear() + 1)
-          break
-        case 'ONE_TIME':
-          currentDate = new Date(endDate)
-          break
-      }
-    }
-  })
-  
-  return contributions.sort((a, b) => a.date.getTime() - b.date.getTime())
+  // This function should be removed once backend handles contributions
+  return []
 }
 
 /**
@@ -119,3 +75,52 @@ export function calculateAveragePrice(
 
   return total_units > 0 ? total_amount / total_units : 0
 }
+
+/** 
+ * Formats a pension for display in the UI. Provides a consistent
+ * string representation based on pension type.
+ */
+export function formatPensionSummary(pension: Pension): string {
+  switch (pension.type) {
+    case PensionType.ETF_PLAN:
+      return `ETF Plan: ${pension.current_value.toLocaleString('de-DE')} €`
+    case PensionType.INSURANCE:
+      return `Insurance: ${pension.provider}`
+    case PensionType.COMPANY:
+      return `Company: ${pension.employer}`
+  }
+}
+
+/** 
+ * Calculates the planned retirement date based on birthday and 
+ * planned retirement age. Used for contribution plan end dates
+ * and retirement planning.
+ * 
+ * TODO: Add retirement date calculation endpoint
+ * TODO: Consider regional retirement rules
+ * TODO: Add support for pension type specific rules
+ * TODO: Add validation for legal retirement constraints
+ */
+export function calculatePlannedRetirementDate(
+  birthday: Date,
+  retirementAge: number
+): Date {
+  const retirementDate = new Date(birthday)
+  retirementDate.setFullYear(retirementDate.getFullYear() + retirementAge)
+  return retirementDate
+}
+
+/** 
+ * Backend service implementation TODOs
+ * 
+ * TODO: Implement ETF data fetching service
+ * TODO: Add ETF price caching layer
+ * TODO: Create price history aggregation
+ * TODO: Implement performance calculations
+ * TODO: Add portfolio rebalancing logic
+ * TODO: Create tax document reporting
+ * TODO: Add dividend processing system
+ * TODO: Implement currency conversion
+ * TODO: Add market holiday handling
+ * TODO: Create financial data backup system
+ */

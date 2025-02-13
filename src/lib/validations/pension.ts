@@ -11,12 +11,7 @@ const basePensionSchema = z.object({
 
 export const etfPensionSchema = basePensionSchema.extend({
   type: z.literal(PensionType.ETF_PLAN),
-  automatic_rebalancing: z.boolean(),
-  rebalancing_frequency: z.enum(["MONTHLY", "QUARTERLY", "YEARLY"]).optional(),
-  target_allocation: z.array(z.object({
-    etf_id: z.string(),
-    percentage: z.number().min(0).max(100)
-  }))
+  etf_id: z.string().min(1, "ETF selection is required")
 })
 
 export const insurancePensionSchema = basePensionSchema.extend({

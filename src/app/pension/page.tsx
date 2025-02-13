@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { Pension } from "@/types/pension"
-import { mockPensions, mockEtfPrices, mockHouseholdMembers } from "@/data/mockEtfs"
+import { mockPensions, mockHouseholdMembers } from "@/data/mockEtfs"
 import { FormData } from "@/types/pension-form"
 
 /**
@@ -21,9 +21,9 @@ import { FormData } from "@/types/pension-form"
  */
 export default function PensionPage() {
   const [pensions, setPensions] = useState<Pension[]>(mockPensions)
-  const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedPension, setSelectedPension] = useState<Pension | undefined>()
+  const [selectedPension, setSelectedPension] = useState<Pension>()
+  const [isLoading, setIsLoading] = useState(false)
 
   /**
    * Handles the deletion of a pension plan.
@@ -94,7 +94,6 @@ export default function PensionPage() {
       ) : (
         <PensionList
           pensions={pensions}
-          etfPrices={mockEtfPrices}
           members={mockHouseholdMembers}
           onDelete={handleDelete}
           onEdit={handleEdit}

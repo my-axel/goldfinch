@@ -17,7 +17,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useState } from "react"
-import { ETFDailyPrice } from "@/types/etf"
 import { HouseholdMember } from "@/types/household"
 import { formatMemberName } from "@/types/household-helpers"
 import { mockEtfs } from "@/data/mockEtfs"
@@ -25,14 +24,12 @@ import { mockEtfs } from "@/data/mockEtfs"
 /**
  * Props for the PensionList component
  * @property pensions - Array of all pension plans
- * @property etfPrices - Array of ETF daily prices for value calculation
  * @property members - Array of household members
  * @property onDelete - Callback when a pension is deleted
  * @property onEdit - Callback when a pension is edited
  */
 interface PensionListProps {
   pensions: Pension[]
-  etfPrices: ETFDailyPrice[]
   members: HouseholdMember[]
   onDelete: (id: string) => void
   onEdit: (pension: Pension) => void
@@ -52,7 +49,7 @@ const PensionTypeIcons = {
  * TODO: Add performance metrics
  * TODO: Add contribution plan overview
  */
-function ETFPensionContent({ pension, etfPrices }: { pension: ETFPension, etfPrices: ETFDailyPrice[] }) {
+function ETFPensionContent({ pension }: { pension: ETFPension }) {
   const etf = mockEtfs.find(e => e.id === pension.etf_id)
 
   return (
@@ -131,18 +128,15 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
 /**
  * Displays a single pension plan card with type-specific content
  * @param pension - The pension plan to display
- * @param etfPrices - Array of ETF daily prices (only used for ETF pensions)
  * @param onEdit - Callback when edit button is clicked
  * @param onDelete - Callback when delete button is clicked
  */
 function PensionCard({ 
   pension, 
-  etfPrices, 
   onEdit, 
   onDelete 
 }: { 
   pension: Pension
-  etfPrices: ETFDailyPrice[]
   onEdit: (pension: Pension) => void
   onDelete: (id: string) => void
 }) {
@@ -151,7 +145,7 @@ function PensionCard({
   const renderContent = () => {
     switch (pension.type) {
       case PensionType.ETF_PLAN:
-        return <ETFPensionContent pension={pension} etfPrices={etfPrices} />
+        return <ETFPensionContent pension={pension} />
       case PensionType.INSURANCE:
         return <InsurancePensionContent pension={pension} />
       case PensionType.COMPANY:
@@ -207,13 +201,11 @@ function PensionCard({
 function MemberPensionGroup({
   member,
   pensions,
-  etfPrices,
   onEdit,
   onDelete
 }: {
   member: HouseholdMember
   pensions: Pension[]
-  etfPrices: ETFDailyPrice[]
   onEdit: (pension: Pension) => void
   onDelete: (id: string) => void
 }) {
@@ -229,7 +221,6 @@ function MemberPensionGroup({
           <PensionCard
             key={pension.id}
             pension={pension}
-            etfPrices={etfPrices}
             onEdit={onEdit}
             onDelete={onDelete}
           />
@@ -246,7 +237,7 @@ function MemberPensionGroup({
  * TODO: Add pension type distribution chart
  * TODO: Add performance overview
  */
-export function PensionList({ pensions, etfPrices, members, onDelete, onEdit }: PensionListProps) {
+export function PensionList({ pensions, members, onDelete, onEdit }: PensionListProps) {
   const [pensionToDelete, setPensionToDelete] = useState<string | null>(null)
 
   return (
@@ -257,7 +248,6 @@ export function PensionList({ pensions, etfPrices, members, onDelete, onEdit }: 
             key={member.id}
             member={member}
             pensions={pensions}
-            etfPrices={etfPrices}
             onEdit={onEdit}
             onDelete={(id) => setPensionToDelete(id)}
           />
