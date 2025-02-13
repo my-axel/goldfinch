@@ -49,3 +49,8 @@ next-env.d.ts
 # cursor
 .cursorrules
 /.cursor/
+
+# Virtual Environment
+venv/
+__pycache__/
+.pytest_cache/

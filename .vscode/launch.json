@@ -1,33 +1,39 @@
 {
     "version": "0.2.0",
-    // "compounds": [
-    //     {
-    //         "name": "Frontend + Backend",
-    //         "configurations": ["Frontend Dev", "Backend"],
-    //         "stopAll": true
-    //     },
-    //     {
-    //         "name": "Frontend Prod + Backend",
-    //         "configurations": ["Frontend Prod", "Backend"],
-    //         "stopAll": true
-    //     }
-    // ],
+    "compounds": [
+        {
+            "name": "Frontend Dev + Backend",
+            "configurations": ["Frontend Dev", "Backend"],
+            "stopAll": true
+        },
+        {
+            "name": "Frontend Prod + Backend",
+            "configurations": ["Frontend Prod", "Backend"],
+            "stopAll": true
+        }
+    ],
     "configurations": [
-        // {
-        //     "name": "Backend",
-        //     "type": "debugpy",
-        //     "request": "launch",
-        //     "module": "uvicorn",
-        //     "args": [
-        //         "app.main:app",
-        //         "--host",
-        //         "0.0.0.0",
-        //         "--port",
-        //         "8000",
-        //         "--reload"
-        //     ],
-        //     "cwd": "${workspaceFolder}/backend"
-        // },
+        {
+            "name": "Backend",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app.main:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--reload"
+            ],
+            "cwd": "${workspaceFolder}/src/backend",
+            "python": "${workspaceFolder}/src/backend/venv/bin/python",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"  // Added to suppress warning
+            }
+        },
         {
             "name": "Frontend Dev",
             "type": "node",

@@ -23,30 +23,25 @@ interface MemberListProps {
   members: HouseholdMember[]
   onDelete: (id: string) => void
   onEdit: (member: HouseholdMember) => void
+  isLoading?: boolean
 }
 
-/**
- * Component for displaying the list of household members
- * 
- * Features:
- * - Grid layout of member cards
- * - Each card shows member details and computed fields
- * - Edit and delete buttons for each member
- * - Delete confirmation dialog
- * - Handles member actions (edit/delete)
- */ 
-export function MemberList({ members, onDelete, onEdit }: MemberListProps) {
+export function MemberList({ members = [], onDelete, onEdit, isLoading = false }: MemberListProps) {
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null)
 
-  // TODO: Add loading state handling
-  // if (isLoading) return <LoadingSpinner />
-  
-  // TODO: Add error state handling
-  // if (error) return <ErrorMessage message={error} />
+  if (isLoading) {
+    return <div className="text-center p-4">Loading household members...</div>
+  }
 
-  // TODO: Add empty state handling
-  // if (members.length === 0) return <EmptyState />
-  
+  if (!members || members.length === 0) {
+    return (
+      <Card className="p-6 text-center text-muted-foreground">
+        <p>No household members found.</p>
+        <p className="text-sm">Add your first household member to get started.</p>
+      </Card>
+    )
+  }
+
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -77,7 +72,7 @@ export function MemberList({ members, onDelete, onEdit }: MemberListProps) {
                 <dl className="space-y-2 text-sm">
                   <div>
                     <dt className="text-muted-foreground">Birthday</dt>
-                    <dd>{format(member.birthday, 'dd. MMMM yyyy', { locale: de })}</dd>
+                    <dd>{format(new Date(member.birthday), 'dd. MMMM yyyy', { locale: de })}</dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Age</dt>
