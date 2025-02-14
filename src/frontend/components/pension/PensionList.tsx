@@ -20,6 +20,8 @@ import { useState } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
 import { PensionDialogRouter } from "./PensionDialogRouter"
+import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
+import { ContributionFrequency } from '@/frontend/types/pension'
 
 interface DialogState {
   open: boolean
@@ -49,6 +51,26 @@ const PensionTypeIcons = {
 } as const
 
 /**
+ * Formats the contribution frequency in a human-readable way
+ */
+function formatFrequency(frequency: ContributionFrequency): string {
+  switch (frequency) {
+    case ContributionFrequency.MONTHLY:
+      return 'monthly'
+    case ContributionFrequency.QUARTERLY:
+      return 'quarterly'
+    case ContributionFrequency.SEMI_ANNUALLY:
+      return 'semi-annually'
+    case ContributionFrequency.ANNUALLY:
+      return 'annually'
+    case ContributionFrequency.ONE_TIME:
+      return 'one-time'
+    default:
+      return frequency.toLowerCase()
+  }
+}
+
+/**
  * Displays ETF pension specific information
  */
 function ETFPensionContent({ pension }: { pension: ETFPension }) {
@@ -56,6 +78,8 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
     console.error('Missing ETF data in pension:', pension)
     return <div>Error: Missing ETF data</div>
   }
+
+  const currentStep = getCurrentContributionStep(pension.contribution_plan)
 
   return (
     <>
@@ -75,6 +99,12 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
         <dt className="text-muted-foreground">Last Price</dt>
         <dd>{pension.etf.last_price.toLocaleString('de-DE')} {pension.etf.currency}</dd>
       </div>
+      {currentStep && (
+        <div>
+          <dt className="text-muted-foreground">Current Contribution</dt>
+          <dd>{currentStep.amount.toLocaleString('de-DE')} € {formatFrequency(currentStep.frequency)}</dd>
+        </div>
+      )}
     </>
   )
 }

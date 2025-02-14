@@ -110,6 +110,28 @@ export function calculatePlannedRetirementDate(
   return retirementDate
 }
 
+/**
+ * Finds the current active contribution step based on the current date.
+ * Returns undefined if no active step is found.
+ * 
+ * @param steps Array of contribution steps
+ * @param currentDate Optional date to check against (defaults to now)
+ * @returns The currently active contribution step or undefined
+ */
+export function getCurrentContributionStep(
+  steps: ContributionStep[],
+  currentDate: Date = new Date()
+): ContributionStep | undefined {
+  return steps
+    .sort((a, b) => a.start_date.getTime() - b.start_date.getTime())
+    .find(step => {
+      const startTime = new Date(step.start_date).getTime()
+      const endTime = step.end_date ? new Date(step.end_date).getTime() : Infinity
+      const currentTime = currentDate.getTime()
+      return currentTime >= startTime && currentTime <= endTime
+    })
+}
+
 /** 
  * Backend service implementation TODOs
  * 

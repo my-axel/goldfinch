@@ -146,13 +146,13 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       await put<Pension>(`/pension/etf/${id}`, {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
-        start_date: pension.start_date.toISOString().split('T')[0],
+        start_date: new Date(pension.start_date).toISOString().split('T')[0],
         initial_capital: Number(pension.initial_capital),
         contribution_plan: (pension.contribution_plan || []).map((step: ContributionStep) => ({
           amount: Number(step.amount),
           frequency: step.frequency,
-          start_date: step.start_date.toISOString().split('T')[0],
-          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
+          start_date: new Date(step.start_date).toISOString().split('T')[0],
+          end_date: step.end_date ? new Date(step.end_date).toISOString().split('T')[0] : null
         }))
       })
       

@@ -13,9 +13,10 @@ import { useDebounce } from "@/frontend/hooks/useDebounce"
 interface ETFSearchComboboxProps {
   value?: string
   onSelect: (etf: { id: string, name: string }) => void
+  readOnly?: boolean
 }
 
-export function ETFSearchCombobox({ value, onSelect }: ETFSearchComboboxProps) {
+export function ETFSearchCombobox({ value, onSelect, readOnly = false }: ETFSearchComboboxProps) {
   const [showSearch, setShowSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [yfinanceResults, setYfinanceResults] = useState<YFinanceETF[]>([])
@@ -100,22 +101,24 @@ export function ETFSearchCombobox({ value, onSelect }: ETFSearchComboboxProps) {
 
   return (
     <div className="flex gap-2 relative">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={() => setShowSearch(!showSearch)}
-      >
-        <Search className="h-4 w-4" />
-      </Button>
+      {!readOnly && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => setShowSearch(!showSearch)}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+      )}
       <Input
         readOnly
         value={selectedEtf ? `${selectedEtf.symbol} - ${displayName}` : ""}
-        placeholder="Select an ETF..."
+        placeholder={readOnly ? "" : "Select an ETF..."}
         className="flex-1"
       />
 
-      {showSearch && (
+      {showSearch && !readOnly && (
         <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-[400px] rounded-md border bg-popover shadow-md">
           <Command>
             <CommandInput

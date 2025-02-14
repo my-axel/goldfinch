@@ -113,6 +113,7 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
             name: data.name,
             member_id: memberId,
             initial_capital: Number(data.initial_capital),
+            start_date: data.start_date,
             etf_id: data.etf_id,
             contribution_plan: data.contribution_plan
           })
@@ -148,7 +149,7 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
   const renderTypeSpecificForm = () => {
     switch (pension.type) {
       case PensionType.ETF_PLAN:
-        return <ETFPensionForm form={form} />
+        return <ETFPensionForm form={form} isEditing={true} />
       case PensionType.INSURANCE:
         return <InsurancePensionForm form={form} />
       case PensionType.COMPANY:
