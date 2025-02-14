@@ -26,45 +26,43 @@ interface AddPensionDialogProps {
  */
 export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) {
   const [step, setStep] = useState(1)
-  const [pensionType, setPensionType] = useState<PensionType>(PensionType.ETF_PLAN)
+  const [pensionType, setPensionType] = useState<PensionType | null>(null)
   const { createEtfPension, createInsurancePension, createCompanyPension } = usePension()
 
   const form = useForm<FormData>({
     defaultValues: {
-      type: pensionType,
+      type: undefined,
       name: "",
       member_id: "",
       initial_capital: 0,
       start_date: new Date(),
-      ...(pensionType === PensionType.ETF_PLAN && {
-        etf_id: "",
-        contribution_plan: []
-      }),
-      ...(pensionType === PensionType.INSURANCE && {
-        provider: "",
-        contract_number: "",
-        guaranteed_interest: 0,
-        expected_return: 0
-      }),
-      ...(pensionType === PensionType.COMPANY && {
-        employer: "",
-        vesting_period: 0,
-        matching_percentage: undefined,
-        max_employer_contribution: undefined
-      })
+      // ETF Plan fields
+      etf_id: "",
+      contribution_plan: [],
+      // Insurance fields
+      provider: "",
+      contract_number: "",
+      guaranteed_interest: 0,
+      expected_return: 0,
+      // Company fields
+      employer: "",
+      vesting_period: 0,
+      matching_percentage: undefined,
+      max_employer_contribution: undefined
     }
   })
 
   const handleClose = () => {
     setStep(1)
-    setPensionType(PensionType.ETF_PLAN)
+    setPensionType(null)
     form.reset()
     onOpenChange(false)
   }
 
   const handleNextStep = async () => {
     const isValid = await form.trigger(['name', 'member_id', 'initial_capital', 'start_date'])
-    if (!isValid) return
+    if (!isValid || !pensionType) return
+    form.setValue('type', pensionType)
     setStep(2)
   }
 
@@ -83,12 +81,13 @@ export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) 
         start_date: data.start_date
       }
 
-      switch (data.type) {
+      switch (pensionType) {
         case PensionType.ETF_PLAN:
           await createEtfPension({
             ...baseData,
             type: PensionType.ETF_PLAN,
-            etf_id: data.etf_id
+            etf_id: data.etf_id,
+            contribution_plan: data.contribution_plan
           })
           break
         case PensionType.INSURANCE:
@@ -120,6 +119,8 @@ export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) 
   }
 
   const renderTypeSpecificForm = () => {
+    if (!pensionType) return null
+
     switch (pensionType) {
       case PensionType.ETF_PLAN:
         return <ETFPensionForm form={form} />
@@ -146,8 +147,12 @@ export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) 
                   <div>
                     <label className="text-sm font-medium">Pension Type</label>
                     <Select
-                      value={pensionType}
-                      onValueChange={(value) => setPensionType(value as PensionType)}
+                      value={pensionType ?? undefined}
+                      onValueChange={(value) => {
+                        const type = value as PensionType
+                        setPensionType(type)
+                        form.setValue('type', type)
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select pension type" />
@@ -162,7 +167,11 @@ export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) 
                   <BasePensionFields form={form} />
                 </div>
                 <div className="flex justify-end">
-                  <Button type="button" onClick={handleNextStep}>
+                  <Button 
+                    type="button" 
+                    onClick={handleNextStep}
+                    disabled={!pensionType}
+                  >
                     Next
                   </Button>
                 </div>

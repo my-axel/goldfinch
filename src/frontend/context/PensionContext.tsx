@@ -7,6 +7,8 @@ import {
   type ETFPension,
   type InsurancePension,
   type CompanyPension,
+  type ContributionStep,
+  PensionType
 } from '@/frontend/types/pension'
 import { toast } from 'sonner'
 
@@ -28,12 +30,12 @@ interface PensionContextType {
   contributions: PensionContribution[]
   fetchPensions: (memberId?: number) => Promise<void>
   fetchPension: (id: number) => Promise<void>
-  createEtfPension: (pension: Omit<ETFPension, 'id' | 'contribution_plan' | 'current_value'>) => Promise<void>
-  createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'contribution_plan' | 'current_value'>) => Promise<void>
-  createCompanyPension: (pension: Omit<CompanyPension, 'id' | 'contribution_plan' | 'current_value'>) => Promise<void>
-  updateEtfPension: (id: number, pension: Omit<ETFPension, 'id' | 'contribution_plan' | 'current_value'>) => Promise<void>
-  updateInsurancePension: (id: number, pension: Omit<InsurancePension, 'id' | 'contribution_plan' | 'current_value'>) => Promise<void>
-  updateCompanyPension: (id: number, pension: Omit<CompanyPension, 'id' | 'contribution_plan' | 'current_value'>) => Promise<void>
+  createEtfPension: (pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
+  createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>
+  createCompanyPension: (pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<void>
+  updateEtfPension: (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
+  updateInsurancePension: (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>
+  updateCompanyPension: (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<void>
   deletePension: (id: number) => Promise<void>
   fetchContributions: (pensionId: number) => Promise<void>
   addContribution: (pensionId: number, contribution: Omit<PensionContribution, 'id' | 'pension_id'>) => Promise<void>
@@ -48,31 +50,51 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   const [contributions, setContributions] = useState<PensionContribution[]>([])
 
   const fetchPensions = useCallback(async (memberId?: number) => {
-    const url = memberId ? `/api/v1/pension?member_id=${memberId}` : '/api/v1/pension'
+    const url = memberId ? `/pension?member_id=${memberId}` : '/pension'
     const response = await get<Pension[]>(url)
     setPensions(response.map(p => ({
       ...p,
-      start_date: new Date(p.start_date)
+      start_date: new Date(p.start_date),
+      ...(p.type === PensionType.ETF_PLAN && {
+        contribution_plan: (p as ETFPension).contribution_plan?.map((step: ContributionStep) => ({
+          ...step,
+          start_date: new Date(step.start_date),
+          end_date: step.end_date ? new Date(step.end_date) : undefined
+        })) || []
+      })
     })))
   }, [get])
 
   const fetchPension = useCallback(async (id: number) => {
-    const response = await get<Pension>(`/api/v1/pension/${id}`)
+    const response = await get<Pension>(`/pension/${id}`)
     setSelectedPension({
       ...response,
-      start_date: new Date(response.start_date)
+      start_date: new Date(response.start_date),
+      ...(response.type === PensionType.ETF_PLAN && {
+        contribution_plan: (response as ETFPension).contribution_plan?.map((step: ContributionStep) => ({
+          ...step,
+          start_date: new Date(step.start_date),
+          end_date: step.end_date ? new Date(step.end_date) : undefined
+        })) || []
+      })
     })
   }, [get])
 
-  const createEtfPension = useCallback(async (pension: Omit<ETFPension, 'id' | 'contribution_plan' | 'current_value'>) => {
+  const createEtfPension = useCallback(async (pension: Omit<ETFPension, 'id' | 'current_value'>) => {
     try {
       // Send all data to backend and let it handle ETF creation if needed
-      await post<Pension>('/api/v1/pension/etf', {
+      await post<Pension>('/pension/etf', {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: pension.start_date.toISOString().split('T')[0],
         initial_capital: Number(pension.initial_capital),
-        current_value: Number(pension.initial_capital)
+        current_value: Number(pension.initial_capital),
+        contribution_plan: (pension.contribution_plan || []).map((step: ContributionStep) => ({
+          amount: Number(step.amount),
+          frequency: step.frequency,
+          start_date: step.start_date.toISOString().split('T')[0],
+          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
+        }))
       })
       
       fetchPensions()
@@ -85,16 +107,16 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [post, fetchPensions])
 
-  const createInsurancePension = useCallback(async (pension: Omit<InsurancePension, 'id' | 'contribution_plan' | 'current_value'>) => {
-    await post<Pension>('/api/v1/pension/insurance', {
+  const createInsurancePension = useCallback(async (pension: Omit<InsurancePension, 'id' | 'current_value'>) => {
+    await post<Pension>('/pension/insurance', {
       ...pension,
       start_date: pension.start_date.toISOString()
     } as Record<string, unknown>)
     fetchPensions()
   }, [post, fetchPensions])
 
-  const createCompanyPension = useCallback(async (pension: Omit<CompanyPension, 'id' | 'contribution_plan' | 'current_value'>) => {
-    await post<Pension>('/api/v1/pension/company', {
+  const createCompanyPension = useCallback(async (pension: Omit<CompanyPension, 'id' | 'current_value'>) => {
+    await post<Pension>('/pension/company', {
       ...pension,
       start_date: pension.start_date.toISOString()
     } as Record<string, unknown>)
@@ -102,7 +124,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   }, [post, fetchPensions])
 
   const deletePension = useCallback(async (id: number) => {
-    await del(`/api/v1/pension/${id}`)
+    await del(`/pension/${id}`)
     fetchPensions()
     if (selectedPension?.id === id) {
       setSelectedPension(null)
@@ -110,22 +132,28 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   }, [del, fetchPensions, selectedPension])
 
   const fetchContributions = useCallback(async (pensionId: number) => {
-    const response = await get<PensionContribution[]>(`/api/v1/pension/${pensionId}/contributions`)
+    const response = await get<PensionContribution[]>(`/pension/${pensionId}/contributions`)
     setContributions(response)
   }, [get])
 
   const addContribution = useCallback(async (pensionId: number, contribution: Omit<PensionContribution, 'id' | 'pension_id'>) => {
-    await post<PensionContribution>(`/api/v1/pension/${pensionId}/contributions`, contribution as Record<string, unknown>)
+    await post<PensionContribution>(`/pension/${pensionId}/contributions`, contribution as Record<string, unknown>)
     fetchContributions(pensionId)
   }, [post, fetchContributions])
 
-  const updateEtfPension = useCallback(async (id: number, pension: Omit<ETFPension, 'id' | 'contribution_plan' | 'current_value'>) => {
+  const updateEtfPension = useCallback(async (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>) => {
     try {
-      await put<Pension>(`/api/v1/pension/etf/${id}`, {
+      await put<Pension>(`/pension/etf/${id}`, {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: pension.start_date.toISOString().split('T')[0],
-        initial_capital: Number(pension.initial_capital)
+        initial_capital: Number(pension.initial_capital),
+        contribution_plan: (pension.contribution_plan || []).map((step: ContributionStep) => ({
+          amount: Number(step.amount),
+          frequency: step.frequency,
+          start_date: step.start_date.toISOString().split('T')[0],
+          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
+        }))
       })
       
       fetchPensions()
@@ -141,9 +169,9 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [put, fetchPensions, fetchPension, selectedPension])
 
-  const updateInsurancePension = useCallback(async (id: number, pension: Omit<InsurancePension, 'id' | 'contribution_plan' | 'current_value'>) => {
+  const updateInsurancePension = useCallback(async (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>) => {
     try {
-      await put<Pension>(`/api/v1/pension/insurance/${id}`, {
+      await put<Pension>(`/pension/insurance/${id}`, {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: pension.start_date.toISOString().split('T')[0],
@@ -165,9 +193,9 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [put, fetchPensions, fetchPension, selectedPension])
 
-  const updateCompanyPension = useCallback(async (id: number, pension: Omit<CompanyPension, 'id' | 'contribution_plan' | 'current_value'>) => {
+  const updateCompanyPension = useCallback(async (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => {
     try {
-      await put<Pension>(`/api/v1/pension/company/${id}`, {
+      await put<Pension>(`/pension/company/${id}`, {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: pension.start_date.toISOString().split('T')[0],

@@ -30,10 +30,11 @@ export enum PensionType {
  * plan changing contribution patterns over time.
  */
 export interface ContributionStep {
+  id?: number
   amount: number              // Amount per contribution
   frequency: ContributionFrequency
   start_date: Date
-  end_date?: Date            // If undefined, continues indefinitely
+  end_date?: Date | null      // If undefined, continues indefinitely
 }
 
 /** 
@@ -84,13 +85,12 @@ export interface ContributionPlan {
  */
 interface BasePension {
   id: number
+  type: PensionType
   name: string
   member_id: number           // Links to household member
-  type: PensionType
   start_date: Date
   initial_capital: number     // Initial investment amount
   current_value: number       // Current total value of the pension
-  contribution_plan?: ContributionPlan
   notes?: string
 }
 
@@ -131,6 +131,7 @@ export interface ETFPension extends BasePension {
   type: PensionType.ETF_PLAN
   etf_id: string
   etf?: ETF
+  contribution_plan: ContributionStep[]
 }
 
 /** 
@@ -154,7 +155,6 @@ export interface InsurancePension extends BasePension {
 export interface CompanyPension extends BasePension {
   type: PensionType.COMPANY
   employer: string
-  employer_contribution?: ContributionStep  // Employer's contribution pattern
   vesting_period: number                   // Years until fully vested
   matching_percentage?: number             // Percentage of employee contribution matched
   max_employer_contribution?: number       // Maximum employer contribution

@@ -24,10 +24,25 @@ class ContributionStepBase(BaseModel):
     start_date: date
     end_date: Optional[date] = None
 
+class ContributionStepCreate(ContributionStepBase):
+    pass
+
+class ContributionStepResponse(ContributionStepBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
 class ETFAllocationBase(BaseModel):
     etf_id: str
     amount: float
     units_bought: float
+
+class ContributionStatus(str, Enum):
+    PLANNED = "PLANNED"
+    REALIZED = "REALIZED"
+    SKIPPED = "SKIPPED"
+    MODIFIED = "MODIFIED"
 
 class ContributionBase(BaseModel):
     date: date
@@ -36,6 +51,7 @@ class ContributionBase(BaseModel):
     is_manual_override: bool = False
     etf_allocations: List[ETFAllocationBase]
     note: Optional[str] = None
+    status: ContributionStatus = ContributionStatus.PLANNED
 
 class PensionBase(BaseModel):
     name: str
@@ -49,6 +65,7 @@ class PensionBase(BaseModel):
 class ETFPensionCreate(PensionBase):
     type: PensionType = PensionType.ETF_PLAN
     etf_id: str
+    contribution_plan: List[ContributionStepBase] = []
 
 class InsurancePensionCreate(PensionBase):
     type: PensionType = PensionType.INSURANCE
@@ -74,7 +91,8 @@ class ETFPensionResponse(PensionBase):
     id: int
     type: PensionType = PensionType.ETF_PLAN
     etf_id: str
-    etf: Optional[ETFResponse] = None  # Will contain ETF details
+    etf: Optional[ETFResponse] = None
+    contribution_plan: List[ContributionStepResponse] = []
 
     class Config:
         from_attributes = True
@@ -108,6 +126,7 @@ class ETFPensionUpdate(BaseModel):
     initial_capital: Optional[float] = Field(ge=0, default=None)
     notes: Optional[str] = None
     etf_id: Optional[str] = None
+    contribution_plan: Optional[List[ContributionStepBase]] = None
 
 class InsurancePensionUpdate(BaseModel):
     name: Optional[str] = None

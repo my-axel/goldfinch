@@ -8,6 +8,7 @@ import { FormData } from "@/frontend/types/pension-form"
 import { usePension } from "@/frontend/context/PensionContext"
 import { Button } from "@/frontend/components/ui/button"
 import { Form } from "@/frontend/components/ui/form"
+import { useEffect } from "react"
 
 interface EditPensionDialogProps {
   open: boolean
@@ -31,7 +32,7 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
       start_date: new Date(pension.start_date),
       ...(pension.type === PensionType.ETF_PLAN && {
         etf_id: pension.etf_id,
-        contribution_plan: pension.contribution_plan?.steps.map(step => ({
+        contribution_plan: pension.contribution_plan?.map((step: { amount: number; frequency: ContributionFrequency; start_date: string; end_date?: string | null }) => ({
           amount: step.amount,
           frequency: step.frequency,
           start_date: new Date(step.start_date),
@@ -52,6 +53,38 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
       })
     }
   })
+
+  // Reset form when pension changes
+  useEffect(() => {
+    form.reset({
+      type: pension.type,
+      name: pension.name,
+      member_id: pension.member_id.toString(),
+      initial_capital: pension.initial_capital,
+      start_date: new Date(pension.start_date),
+      ...(pension.type === PensionType.ETF_PLAN && {
+        etf_id: pension.etf_id,
+        contribution_plan: pension.contribution_plan?.map((step: { amount: number; frequency: ContributionFrequency; start_date: string; end_date?: string | null }) => ({
+          amount: step.amount,
+          frequency: step.frequency,
+          start_date: new Date(step.start_date),
+          end_date: step.end_date ? new Date(step.end_date) : undefined
+        })) || []
+      }),
+      ...(pension.type === PensionType.INSURANCE && {
+        provider: pension.provider,
+        contract_number: pension.contract_number,
+        guaranteed_interest: pension.guaranteed_interest,
+        expected_return: pension.expected_return
+      }),
+      ...(pension.type === PensionType.COMPANY && {
+        employer: pension.employer,
+        vesting_period: pension.vesting_period,
+        matching_percentage: pension.matching_percentage,
+        max_employer_contribution: pension.max_employer_contribution
+      })
+    })
+  }, [pension, form])
 
   const handleClose = () => {
     form.reset()
@@ -76,9 +109,12 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
       switch (data.type) {
         case PensionType.ETF_PLAN:
           await updateEtfPension(pension.id, {
-            ...baseData,
             type: PensionType.ETF_PLAN,
-            etf_id: data.etf_id
+            name: data.name,
+            member_id: memberId,
+            initial_capital: Number(data.initial_capital),
+            etf_id: data.etf_id,
+            contribution_plan: data.contribution_plan
           })
           break
         case PensionType.INSURANCE:

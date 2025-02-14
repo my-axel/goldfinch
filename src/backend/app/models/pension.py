@@ -11,12 +11,31 @@ class ContributionFrequency(str, Enum):
     ANNUALLY = "ANNUALLY"
     ONE_TIME = "ONE_TIME"
 
+class ContributionStatus(str, Enum):
+    PLANNED = "PLANNED"
+    REALIZED = "REALIZED"
+    SKIPPED = "SKIPPED"
+    MODIFIED = "MODIFIED"
+
 class PensionType(str, Enum):
     ETF_PLAN = "ETF_PLAN"
     INSURANCE = "INSURANCE"
     COMPANY = "COMPANY"
     GOVERNMENT = "GOVERNMENT"
     OTHER = "OTHER"
+
+class ContributionStep(Base):
+    __tablename__ = "contribution_steps"
+
+    id = Column(Integer, primary_key=True, index=True)
+    pension_id = Column(Integer, ForeignKey("pensions.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    frequency = Column(SQLEnum(ContributionFrequency), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=True)
+
+    # Relationships
+    pension = relationship("BasePension", back_populates="contribution_plan")
 
 class BasePension(Base):
     __tablename__ = "pensions"
@@ -32,7 +51,8 @@ class BasePension(Base):
 
     # Relationships
     member = relationship("HouseholdMember", back_populates="pensions")
-    contributions = relationship("PensionContribution", back_populates="pension")
+    contributions = relationship("PensionContribution", back_populates="pension", cascade="all, delete-orphan")
+    contribution_plan = relationship("ContributionStep", back_populates="pension", cascade="all, delete-orphan")
 
     __mapper_args__ = {
         "polymorphic_on": type,
@@ -77,14 +97,15 @@ class PensionContribution(Base):
     id = Column(Integer, primary_key=True, index=True)
     pension_id = Column(Integer, ForeignKey("pensions.id"), nullable=False)
     date = Column(Date, nullable=False)
-    amount = Column(Float, nullable=False)
-    planned_amount = Column(Float, nullable=False)
+    amount = Column(Float, nullable=False)  # Actual amount if realized, planned amount if planned
+    planned_amount = Column(Float, nullable=False)  # Original planned amount
+    status = Column(SQLEnum(ContributionStatus), nullable=False, default=ContributionStatus.PLANNED)
     is_manual_override = Column(Boolean, default=False)
     note = Column(String, nullable=True)
 
     # Relationships
     pension = relationship("BasePension", back_populates="contributions")
-    etf_allocations = relationship("ETFAllocation", back_populates="contribution")
+    etf_allocations = relationship("ETFAllocation", back_populates="contribution", cascade="all, delete-orphan")
 
 class ETFAllocation(Base):
     __tablename__ = "etf_allocations"

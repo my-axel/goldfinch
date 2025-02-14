@@ -32,8 +32,6 @@ def get_pensions(
     """
     filters = {"member_id": member_id} if member_id is not None else None
     pensions = pension_crud.get_pension_with_details(db, skip=skip, limit=limit, filters=filters)
-    if not pensions:
-        raise HTTPException(status_code=404, detail="No pensions found")
     return pensions
 
 @router.get("/{pension_id}", response_model=Union[ETFPensionResponse, InsurancePensionResponse, CompanyPensionResponse])

@@ -9,6 +9,7 @@ from app.models.pension import (
     InsurancePension,
     CompanyPension,
     PensionContribution,
+    ContributionStep,
     PensionType
 )
 from app.schemas.pension import (
@@ -17,6 +18,7 @@ from app.schemas.pension import (
     InsurancePensionCreate,
     CompanyPensionCreate,
     ContributionBase,
+    ContributionStepBase,
     ETFPensionUpdate,
     InsurancePensionUpdate,
     CompanyPensionUpdate
@@ -47,7 +49,6 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
                 currency=yf_data.get("currency", "USD"),
                 asset_class="Equity",  # Default value
                 domicile="Unknown",    # Default value
-                # inception_date and last_update will use defaults if not provided
                 fund_size=yf_data.get("fund_size", 0),
                 ter=yf_data.get("ter", 0),
                 distribution_policy="Unknown",
@@ -59,9 +60,15 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
             )
             etf = etf_crud.create(db, obj_in=etf_in)
 
-        # Now create the pension
+        # Create the pension
         obj_in_data = jsonable_encoder(obj_in)
+        contribution_plan = obj_in_data.pop("contribution_plan", [])
         db_obj = ETFPension(**obj_in_data)
+        
+        # Add contribution steps
+        for step in contribution_plan:
+            db_obj.contribution_plan.append(ContributionStep(**step))
+
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -120,9 +127,10 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
             for field, value in filters.items():
                 query = query.filter(getattr(BasePension, field) == value)
         
-        # For ETF pensions, load the ETF relationship
+        # For ETF pensions, load the ETF relationship and contribution plan
         query = query.options(
-            selectinload(ETFPension.etf)
+            selectinload(ETFPension.etf),
+            selectinload(BasePension.contribution_plan)
         )
         
         return query.offset(skip).limit(limit).all()
@@ -135,6 +143,16 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
+
+        # Handle contribution plan updates if present
+        if "contribution_plan" in update_data:
+            contribution_plan = update_data.pop("contribution_plan")
+            # Remove existing steps
+            for step in db_obj.contribution_plan:
+                db.delete(step)
+            # Add new steps
+            for step in contribution_plan:
+                db_obj.contribution_plan.append(ContributionStep(**step))
 
         # If ETF ID is being updated, verify the new ETF exists or create it
         if "etf_id" in update_data:
