@@ -47,31 +47,34 @@ interface PensionFormProps {
  * TODO: Add API integration for form submission
  * TODO: Add data validation layer
  */
-export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEditing }: PensionFormProps) {
+export function PensionForm({ type, onTypeChange, onSubmit, defaultValues, isEditing }: PensionFormProps) { 
   const form = useForm<FormData>({
     defaultValues: {
       type,
-      name: "",
-      member_id: "",
-      initial_capital: 0,
+      name: defaultValues?.name ?? "",
+      member_id: defaultValues?.member_id?.toString() ?? "",
+      initial_capital: defaultValues?.initial_capital ?? 0,
       ...(type === PensionType.ETF_PLAN && { 
-        automatic_rebalancing: false,
-        contribution_plan: []
+        etf_id: defaultValues?.etf_id ?? "",
+        contribution_plan: defaultValues?.contribution_plan ?? []
       }),
       ...(type === PensionType.INSURANCE && { 
-        provider: "", 
-        contract_number: "",
-        start_date: new Date()
+        provider: defaultValues?.provider ?? "", 
+        contract_number: defaultValues?.contract_number ?? "",
+        start_date: defaultValues?.start_date ?? new Date(),
+        guaranteed_interest: defaultValues?.guaranteed_interest ?? 0,
+        expected_return: defaultValues?.expected_return ?? 0
       }),
       ...(type === PensionType.COMPANY && { 
-        employer: "", 
-        vesting_period: 0,
-        start_date: new Date()
-      }),
-      ...defaultValues
+        employer: defaultValues?.employer ?? "", 
+        vesting_period: defaultValues?.vesting_period ?? 0,
+        start_date: defaultValues?.start_date ?? new Date(),
+        matching_percentage: defaultValues?.matching_percentage ?? undefined,
+        max_employer_contribution: defaultValues?.max_employer_contribution ?? undefined
+      })
     } as FormData
   })
-
+  
   /**
    * Handles form submission.
    * Prevents default form behavior and calls onSubmit with form data.

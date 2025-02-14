@@ -35,13 +35,13 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
 
   const updateMember = useCallback(async (id: string, member: Partial<HouseholdMember>) => {
     const updatedMember = await apiCall<HouseholdMember>(`/household/${id}`, 'PUT', member)
-    setMembers(prev => prev.map(m => m.id === id ? updatedMember : m))
+    setMembers(prev => prev.map(m => m.id === parseInt(id) ? updatedMember : m))
     return updatedMember
   }, [apiCall])
 
   const deleteMember = useCallback(async (id: string) => {
     await apiCall(`/household/${id}`, 'DELETE')
-    setMembers(prev => prev.filter(m => m.id !== id))
+    setMembers(prev => prev.filter(m => m.id !== parseInt(id)))
   }, [apiCall])
 
   const getMemberWithComputedFields = useCallback((member: HouseholdMember) => {

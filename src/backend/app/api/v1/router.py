@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import household, pensions, etfs
+from app.api.v1.endpoints import household, pension, etf
 
 api_router = APIRouter()
 
@@ -9,12 +9,12 @@ api_router.include_router(
     tags=["household"]
 )
 api_router.include_router(
-    pensions.router, 
-    prefix="/pensions", 
-    tags=["pensions"]
+    pension.router, 
+    prefix="/pension", 
+    tags=["pension"]
 )
 api_router.include_router(
-    etfs.router, 
-    prefix="/etfs", 
-    tags=["etfs"]
+    etf.router, 
+    prefix="/etf", 
+    tags=["etf"]
 ) 

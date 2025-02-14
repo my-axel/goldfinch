@@ -5,7 +5,19 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.core.config import settings
-from app.models.household import Base  # Import all models here
+
+# Import all models here
+from app.db.base_class import Base
+from app.models.etf import ETF, ETFPrice
+from app.models.household import HouseholdMember
+from app.models.pension import (
+    BasePension,
+    ETFPension,
+    InsurancePension,
+    CompanyPension,
+    PensionContribution,
+    ETFAllocation
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

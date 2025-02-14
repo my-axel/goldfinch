@@ -40,7 +40,11 @@ export function ETFPensionForm({ form }: ETFPensionFormProps) {
             <ETFSearchCombobox 
               value={field.value}
               onSelect={(etf) => {
-                field.onChange(etf.id)
+                console.log('Form field change:', etf)
+                if (etf && typeof etf.id === 'string') {
+                  field.onChange(etf.id)
+                  field.onBlur()
+                }
               }}
             />
           </FormItem>

@@ -54,4 +54,4 @@ export type FormData = BaseFormData & (
       matching_percentage?: number
       max_employer_contribution?: number
     }
-) 
+)

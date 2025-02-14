@@ -4,10 +4,13 @@ import { PensionList } from "@/frontend/components/pension/PensionList"
 import { PensionDialog } from "@/frontend/components/pension/PensionDialog"
 import { Button } from "@/frontend/components/ui/button"
 import { Plus } from "lucide-react"
-import { useState } from "react"
-import { Pension } from "@/frontend/types/pension"
-import { mockPensions, mockHouseholdMembers } from "@/data/mockEtfs"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { usePension } from "@/frontend/context/PensionContext"
+import { type Pension, PensionType } from "@/frontend/types/pension"
 import { FormData } from "@/frontend/types/pension-form"
+import { toast } from "sonner"
+import { useETF } from "@/frontend/context/ETFContext"
+import { useHousehold } from "@/frontend/context/HouseholdContext"
 
 /**
  * Main pension management page component. Displays a list of all pension plans
@@ -20,64 +23,184 @@ import { FormData } from "@/frontend/types/pension-form"
  * TODO: Add filtering and sorting options
  */
 export default function PensionPage() {
-  const [pensions, setPensions] = useState<Pension[]>(mockPensions)
+  const { 
+    pensions, 
+    isLoading, 
+    error,
+    fetchPensions,
+    createEtfPension,
+    createInsurancePension,
+    createCompanyPension,
+    updateEtfPension,
+    updateInsurancePension,
+    updateCompanyPension,
+    deletePension,
+  } = usePension()
+  const { fetchETFs } = useETF()
+  const { members, fetchMembers } = useHousehold()
+  const initialized = useRef(false)
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedPension, setSelectedPension] = useState<Pension>()
-  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!initialized.current) {
+      Promise.all([
+        fetchPensions(),
+        fetchETFs(),
+        fetchMembers()
+      ])
+      initialized.current = true
+    }
+  }, [fetchPensions, fetchETFs, fetchMembers])
+
+  // Error handling
+  useEffect(() => {
+    if (error) {
+      toast.error("Error", {
+        description: error,
+      })
+    }
+  }, [error])
 
   /**
    * Handles the deletion of a pension plan.
-   * 
-   * TODO: Add API call to delete pension
-   * TODO: Add confirmation dialog
-   * TODO: Add error handling with user feedback
    */
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: number) => {
     try {
-      setIsLoading(true)
-      // TODO: Add API call to delete pension
-      setPensions(pensions.filter(p => p.id !== id))
+      await deletePension(id)
+      toast.success("Success", {
+        description: "Pension plan deleted successfully",
+      })
     } catch (error) {
+      // Error is already handled by the context
       console.error('Failed to delete pension:', error)
-      // TODO: Add error handling with toast notification
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [deletePension])
 
   /**
    * Opens the edit dialog for a pension plan
-   * 
-   * TODO: Add API call to update pension
-   * TODO: Add form validation
-   * TODO: Add optimistic updates
    */
-  const handleEdit = (pension: Pension) => {
+  const handleEdit = useCallback((pension: Pension) => {
     setSelectedPension(pension)
     setDialogOpen(true)
-  }
+  }, [])
 
   /**
    * Handles both creation and updates of pension plans
-   * 
-   * TODO: Add API calls for create/update
-   * TODO: Add error handling with user feedback
-   * TODO: Add optimistic updates
-   * TODO: Add form data transformation to match API requirements
    */
-  const handleSubmit = (data: FormData) => {
-    if (selectedPension) {
-      // Update existing pension
-      console.log('Update pension:', data)
-      // TODO: Add API call to update pension
-    } else {
-      // Create new pension
-      console.log('Create pension:', data)
-      // TODO: Add API call to create pension
+  const handleSubmit = useCallback(async (data: FormData) => {
+    try {
+      const memberId = parseInt(data.member_id)
+      if (isNaN(memberId)) {
+        toast.error("Error", {
+          description: "Invalid member ID",
+        })
+        return
+      }
+
+      const baseData = {
+        name: data.name,
+        member_id: memberId,
+        initial_capital: data.initial_capital,
+        notes: undefined,
+      }
+
+      if (selectedPension) {
+        // Update existing pension
+        switch (data.type) {
+          case PensionType.ETF_PLAN:
+            await updateEtfPension(selectedPension.id, {
+              ...baseData,
+              type: PensionType.ETF_PLAN,
+              etf_id: data.etf_id,
+              start_date: selectedPension.start_date,
+            })
+            break
+          
+          case PensionType.INSURANCE:
+            await updateInsurancePension(selectedPension.id, {
+              ...baseData,
+              type: PensionType.INSURANCE,
+              provider: data.provider,
+              contract_number: data.contract_number,
+              guaranteed_interest: data.guaranteed_interest,
+              expected_return: data.expected_return,
+              start_date: data.start_date,
+            })
+            break
+          
+          case PensionType.COMPANY:
+            await updateCompanyPension(selectedPension.id, {
+              ...baseData,
+              type: PensionType.COMPANY,
+              employer: data.employer,
+              vesting_period: data.vesting_period,
+              matching_percentage: data.matching_percentage,
+              max_employer_contribution: data.max_employer_contribution,
+              start_date: data.start_date,
+            })
+            break
+        }
+      } else {
+        // Create new pension
+        switch (data.type) {
+          case PensionType.ETF_PLAN:
+            await createEtfPension({
+              ...baseData,
+              type: PensionType.ETF_PLAN,
+              etf_id: data.etf_id,
+              start_date: new Date(), // Using current date for new ETF plans
+            })
+            break
+          
+          case PensionType.INSURANCE:
+            await createInsurancePension({
+              ...baseData,
+              type: PensionType.INSURANCE,
+              provider: data.provider,
+              contract_number: data.contract_number,
+              guaranteed_interest: data.guaranteed_interest,
+              expected_return: data.expected_return,
+              start_date: data.start_date,
+            })
+            break
+          
+          case PensionType.COMPANY:
+            await createCompanyPension({
+              ...baseData,
+              type: PensionType.COMPANY,
+              employer: data.employer,
+              vesting_period: data.vesting_period,
+              matching_percentage: data.matching_percentage,
+              max_employer_contribution: data.max_employer_contribution,
+              start_date: data.start_date,
+            })
+            break
+        }
+      }
+
+      toast.success("Success", {
+        description: selectedPension 
+          ? "Pension plan updated successfully" 
+          : "New pension plan created successfully",
+      })
+      
+      setDialogOpen(false)
+      setSelectedPension(undefined)
+    } catch (error) {
+      // Error is already handled by the context
+      console.error('Failed to save pension:', error)
     }
-    setDialogOpen(false)
-    setSelectedPension(undefined)
-  }
+  }, [
+    createEtfPension, 
+    createInsurancePension, 
+    createCompanyPension,
+    updateEtfPension,
+    updateInsurancePension,
+    updateCompanyPension,
+    selectedPension
+  ])
 
   return (
     <div className="container mx-auto py-10">
@@ -94,7 +217,7 @@ export default function PensionPage() {
       ) : (
         <PensionList
           pensions={pensions}
-          members={mockHouseholdMembers}
+          members={members}
           onDelete={handleDelete}
           onEdit={handleEdit}
         />

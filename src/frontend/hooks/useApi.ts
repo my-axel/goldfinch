@@ -16,12 +16,12 @@ export function useApi() {
     endpoint: string, 
     method: string = 'GET', 
     data?: Record<string, unknown>
-  ) => {
+  ): Promise<T> => {
     setState({ isLoading: true, error: null })
     try {
       const response = await axios<T>({
         method,
-        url: `/api/v1${endpoint}`,
+        url: endpoint.startsWith('/api/v1') ? endpoint : `/api/v1${endpoint}`,
         data,
       })
       setState({ isLoading: false, error: null })
@@ -33,5 +33,10 @@ export function useApi() {
     }
   }
 
-  return { ...state, apiCall }
+  const get = <T = unknown>(endpoint: string) => apiCall<T>(endpoint, 'GET')
+  const post = <T = unknown>(endpoint: string, data: Record<string, unknown>) => apiCall<T>(endpoint, 'POST', data)
+  const put = <T = unknown>(endpoint: string, data: Record<string, unknown>) => apiCall<T>(endpoint, 'PUT', data)
+  const del = <T = unknown>(endpoint: string) => apiCall<T>(endpoint, 'DELETE')
+
+  return { ...state, apiCall, get, post, put, del }
 } 

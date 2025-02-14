@@ -7,6 +7,8 @@ export interface ETF {
   isin: string
   symbol: string
   name: string
+  shortName?: string
+  longName?: string
   currency: string
   
   // Fund Details
@@ -39,4 +41,14 @@ export interface ETFHoldingPerformance {
   total_invested: number
   total_return: number
   return_percentage: number
-} 
+}
+
+export interface YFinanceETF {
+  symbol: string
+  longName?: string
+  shortName?: string
+}
+
+// Add a type guard
+export const isYFinanceETF = (etf: ETF | YFinanceETF): etf is YFinanceETF => 
+  'longName' in etf || 'shortName' in etf; 

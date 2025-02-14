@@ -1,3 +1,9 @@
-from sqlalchemy.ext.declarative import declarative_base
+from app.db.base_class import Base
 
-Base = declarative_base() 
+# Import all models here for SQLAlchemy to recognize them
+from app.models.pension import BasePension, ETFPension, InsurancePension, CompanyPension, PensionContribution, ETFAllocation  # noqa
+from app.models.etf import ETF, ETFPrice  # noqa
+from app.models.household import HouseholdMember  # noqa
+# Import any other models here
+
+# They need to be imported for SQLAlchemy to recognize them during Base.metadata.create_all() 

@@ -83,9 +83,9 @@ export interface ContributionPlan {
  * TODO: Consider adding version tracking for updates
  */
 interface BasePension {
-  id: string
+  id: number
   name: string
-  member_id: string           // Links to household member
+  member_id: number           // Links to household member
   type: PensionType
   start_date: Date
   initial_capital: number     // Initial investment amount
@@ -102,9 +102,35 @@ interface BasePension {
  * TODO: Add transaction logging
  * TODO: Consider adding performance metrics
  */
+export interface ETF {
+  id: string
+  isin: string
+  symbol: string
+  name: string
+  currency: string
+  asset_class: string
+  domicile: string
+  inception_date: string
+  fund_size: number
+  ter: number
+  distribution_policy: string
+  last_price: number
+  last_update: string
+  ytd_return: number
+  one_year_return: number
+  volatility_30d: number
+  sharpe_ratio: number
+  historical_prices: Array<{
+    date: string
+    price: number
+    currency: string
+  }>
+}
+
 export interface ETFPension extends BasePension {
   type: PensionType.ETF_PLAN
-  etf_id: string              // Single ETF identifier
+  etf_id: string
+  etf?: ETF
 }
 
 /** 

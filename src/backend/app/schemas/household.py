@@ -13,7 +13,7 @@ class HouseholdMemberCreate(HouseholdMemberBase):
     pass
 
 class HouseholdMember(HouseholdMemberBase):
-    id: UUID
+    id: int
 
     class Config:
         from_attributes = True 

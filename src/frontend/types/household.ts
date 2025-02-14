@@ -22,7 +22,7 @@
  * TODO: Consider adding created_at and updated_at timestamps
  */
 export interface HouseholdMember {
-  id: string
+  id: number
   first_name: string
   last_name: string
   birthday: Date

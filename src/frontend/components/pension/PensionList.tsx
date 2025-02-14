@@ -19,7 +19,6 @@ import {
 import { useState } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
-import { mockEtfs } from "@/data/mockEtfs"
 
 /**
  * Props for the PensionList component
@@ -30,8 +29,8 @@ import { mockEtfs } from "@/data/mockEtfs"
  */
 interface PensionListProps {
   pensions: Pension[]
-  members: HouseholdMember[]
-  onDelete: (id: string) => void
+  members?: HouseholdMember[]
+  onDelete: (id: number) => void
   onEdit: (pension: Pension) => void
 }
 
@@ -46,11 +45,12 @@ const PensionTypeIcons = {
 
 /**
  * Displays ETF pension specific information
- * TODO: Add performance metrics
- * TODO: Add contribution plan overview
  */
 function ETFPensionContent({ pension }: { pension: ETFPension }) {
-  const etf = mockEtfs.find(e => e.id === pension.etf_id)
+  if (!pension.etf) {
+    console.error('Missing ETF data in pension:', pension)
+    return <div>Error: Missing ETF data</div>
+  }
 
   return (
     <>
@@ -64,7 +64,11 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
       </div>
       <div>
         <dt className="text-muted-foreground">ETF</dt>
-        <dd>{etf ? `${etf.symbol} - ${etf.name}` : 'Unknown ETF'}</dd>
+        <dd>{`${pension.etf.symbol} - ${pension.etf.name}`}</dd>
+      </div>
+      <div>
+        <dt className="text-muted-foreground">Last Price</dt>
+        <dd>{pension.etf.last_price.toLocaleString('de-DE')} {pension.etf.currency}</dd>
       </div>
     </>
   )
@@ -138,7 +142,7 @@ function PensionCard({
 }: { 
   pension: Pension
   onEdit: (pension: Pension) => void
-  onDelete: (id: string) => void
+  onDelete: (id: number) => void
 }) {
   const Icon = PensionTypeIcons[pension.type]
 
@@ -207,9 +211,9 @@ function MemberPensionGroup({
   member: HouseholdMember
   pensions: Pension[]
   onEdit: (pension: Pension) => void
-  onDelete: (id: string) => void
+  onDelete: (id: number) => void
 }) {
-  const memberPensions = pensions.filter(p => p.member_id === member.id)
+  const memberPensions = pensions.filter(p => p.member_id === parseInt(member.id.toString()))
   
   if (memberPensions.length === 0) return null
 
@@ -237,41 +241,52 @@ function MemberPensionGroup({
  * TODO: Add pension type distribution chart
  * TODO: Add performance overview
  */
-export function PensionList({ pensions, members, onDelete, onEdit }: PensionListProps) {
-  const [pensionToDelete, setPensionToDelete] = useState<string | null>(null)
+export function PensionList({ pensions, members = [], onDelete, onEdit }: PensionListProps) {
+  const [pensionToDelete, setPensionToDelete] = useState<number | null>(null)
 
   return (
     <>
       <div className="space-y-8">
-        {members.map((member) => (
-          <MemberPensionGroup
-            key={member.id}
-            member={member}
-            pensions={pensions}
-            onEdit={onEdit}
-            onDelete={(id) => setPensionToDelete(id)}
-          />
-        ))}
+        {members.length > 0 ? (
+          members.map((member) => (
+            <MemberPensionGroup
+              key={member.id}
+              member={member}
+              pensions={pensions}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {pensions.map((pension) => (
+              <PensionCard
+                key={pension.id}
+                pension={pension}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <AlertDialog open={!!pensionToDelete} onOpenChange={() => setPensionToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Pension Plan</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this pension plan? This action cannot be undone.
+              This action cannot be undone. This will permanently delete the pension plan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (pensionToDelete) {
-                  onDelete(pensionToDelete)
-                  setPensionToDelete(null)
-                }
-              }}
-            >
+            <AlertDialogAction onClick={() => {
+              if (pensionToDelete) {
+                onDelete(pensionToDelete)
+                setPensionToDelete(null)
+              }
+            }}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

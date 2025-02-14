@@ -4,7 +4,6 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/fron
 import { Input } from "@/frontend/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
-import { mockHouseholdMembers } from "@/data/mockEtfs"
 import { formatMemberName, calculatePlannedRetirementDate } from "@/frontend/types/household-helpers"
 import { FormData } from "@/frontend/types/pension-form"
 import { Button } from "@/frontend/components/ui/button"
@@ -13,6 +12,7 @@ import { ContributionFrequency } from "@/frontend/types/pension"
 import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover"
 import { useState } from "react"
 import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/components/ui/command"
+import { useHousehold } from "@/frontend/context/HouseholdContext"
 
 interface BasePensionFieldsProps {
   form: UseFormReturn<FormData>
@@ -36,6 +36,8 @@ interface BasePensionFieldsProps {
  * TODO: Add data persistence for contribution plans
  */
 export function BasePensionFields({ form }: BasePensionFieldsProps) {
+  const { members, isLoading, error } = useHousehold()
+
   /**
    * Field array for managing multiple contribution plan entries
    * TODO: Add validation for overlapping dates
@@ -105,7 +107,7 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
     if (!startDate) return
     
     if (years === undefined) {
-      const member = mockHouseholdMembers.find(m => m.id === memberId)
+      const member = members.find(m => m.id === parseInt(memberId))
       if (!member?.birthday) {
         form.setValue(`contribution_plan.${index}.end_date`, undefined)
         setOpen(null)
@@ -150,17 +152,24 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select member" />
+                  <SelectValue placeholder={isLoading ? "Loading..." : "Select member"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {mockHouseholdMembers.map(member => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {formatMemberName(member)}
+                {error ? (
+                  <SelectItem value="error" disabled>
+                    Error loading members
                   </SelectItem>
-                ))}
+                ) : (
+                  members.map(member => (
+                    <SelectItem key={member.id} value={member.id.toString()}>
+                      {formatMemberName(member)}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
+            <FormMessage />
           </FormItem>
         )}
       />
