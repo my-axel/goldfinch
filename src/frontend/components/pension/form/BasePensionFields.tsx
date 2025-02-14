@@ -3,15 +3,9 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/frontend/components/ui/form"
 import { Input } from "@/frontend/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select"
-import { UseFormReturn, useFieldArray } from "react-hook-form"
-import { formatMemberName, calculatePlannedRetirementDate } from "@/frontend/types/household-helpers"
+import { UseFormReturn } from "react-hook-form"
+import { formatMemberName } from "@/frontend/types/household-helpers"
 import { FormData } from "@/frontend/types/pension-form"
-import { Button } from "@/frontend/components/ui/button"
-import { Plus, Trash2, ChevronDownIcon } from "lucide-react"
-import { ContributionFrequency } from "@/frontend/types/pension"
-import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover"
-import { useState } from "react"
-import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/components/ui/command"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 
 interface BasePensionFieldsProps {
@@ -20,113 +14,16 @@ interface BasePensionFieldsProps {
 
 /**
  * Base form fields component that are common to all pension types.
- * Handles member selection, contribution plans, and basic pension information.
+ * These fields are immutable after pension creation.
  * 
- * Features:
- * - Member selection from household
- * - Initial capital input
- * - Dynamic contribution plan management
- * - Duration selection with retirement calculation
- * 
- * TODO: Replace mockHouseholdMembers with API data
- * TODO: Add validation for initial capital (min/max values)
- * TODO: Add validation for start date (not in future)
- * TODO: Add tooltips/descriptions for fields
- * TODO: Add API integration for member data
- * TODO: Add data persistence for contribution plans
+ * Fields:
+ * - Name
+ * - Member selection
+ * - Initial capital
+ * - Start date
  */
 export function BasePensionFields({ form }: BasePensionFieldsProps) {
   const { members, isLoading, error } = useHousehold()
-
-  /**
-   * Field array for managing multiple contribution plan entries
-   * TODO: Add validation for overlapping dates
-   * TODO: Add sorting by date
-   */
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "contribution_plan"
-  })
-
-  /**
-   * State for managing the duration selection popover
-   * TODO: Add keyboard navigation
-   */
-  const [open, setOpen] = useState<number | null>(null)
-
-  /**
-   * Gets the latest end date from existing contribution plans
-   * Used to set the start date for new contributions
-   * TODO: Add validation for date gaps
-   * TODO: Add optimization for large datasets
-   */
-  const getLatestEndDate = () => {
-    const existingDates = fields
-      .map(field => form.getValues(`contribution_plan`)[fields.indexOf(field)]?.end_date)
-      .filter(Boolean) as Date[]
-
-    if (existingDates.length === 0) return new Date()
-
-    return new Date(Math.max(...existingDates.map(date => date.getTime())))
-  }
-
-  /**
-   * Handles adding a new contribution plan entry
-   * Sets the start date to the day after the latest end date
-   * TODO: Add validation for maximum number of contributions
-   * TODO: Add default values based on previous entries
-   */
-  const handleAddContribution = () => {
-    const startDate = getLatestEndDate()
-    // If we found an end date, add one day to it for the new start date
-    startDate.setDate(startDate.getDate() + 1)
-
-    append({ 
-      amount: 0, 
-      frequency: ContributionFrequency.MONTHLY,
-      start_date: startDate,
-      end_date: undefined
-    })
-  }
-
-  /**
-   * Handles duration selection for contribution plans
-   * Calculates end date based on years or retirement age
-   * 
-   * @param index - Index of the contribution plan entry
-   * @param years - Optional number of years for duration
-   * 
-   * TODO: Add validation for retirement age
-   * TODO: Add support for custom durations
-   * TODO: Add validation for maximum duration
-   */
-  const handleDurationSelect = (index: number, years?: number) => {
-    const startDate = form.getValues(`contribution_plan.${index}.start_date`)
-    const memberId = form.getValues('member_id')
-    
-    if (!startDate) return
-    
-    if (years === undefined) {
-      const member = members.find(m => m.id === parseInt(memberId))
-      if (!member?.birthday) {
-        form.setValue(`contribution_plan.${index}.end_date`, undefined)
-        setOpen(null)
-        return
-      }
-      const retirementDate = calculatePlannedRetirementDate(
-        new Date(member.birthday),
-        member.retirement_age_planned
-      )
-      form.setValue(`contribution_plan.${index}.end_date`, retirementDate)
-      setOpen(null)
-      return
-    }
-
-    const endDate = new Date(startDate)
-    endDate.setFullYear(endDate.getFullYear() + years)
-    form.setValue(`contribution_plan.${index}.end_date`, endDate)
-    setOpen(null)
-  }
 
   return (
     <div className="space-y-6">
@@ -139,6 +36,7 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
             <FormControl>
               <Input {...field} />
             </FormControl>
+            <FormMessage />
           </FormItem>
         )}
       />
@@ -183,150 +81,29 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
             <FormControl>
               <Input type="number" {...field} />
             </FormControl>
+            <FormMessage />
           </FormItem>
         )}
       />
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Contribution Plan</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleAddContribution}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contribution
-          </Button>
-        </div>
-
-        {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 items-end">
-            <FormField
-              control={form.control}
-              name={`contribution_plan.${index}.amount`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Amount (€)</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={`contribution_plan.${index}.frequency`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Frequency</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select frequency" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={ContributionFrequency.MONTHLY}>Monthly</SelectItem>
-                      <SelectItem value={ContributionFrequency.QUARTERLY}>Quarterly</SelectItem>
-                      <SelectItem value={ContributionFrequency.ANNUALLY}>Yearly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={`contribution_plan.${index}.start_date`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Date</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="date" 
-                      {...field}
-                      value={field.value ? field.value.toISOString().split('T')[0] : ''} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={`contribution_plan.${index}.end_date`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration</FormLabel>
-                  <Popover open={open === index} onOpenChange={(isOpen) => setOpen(isOpen ? index : null)}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        {field.value ? (
-                          `until ${field.value.toLocaleDateString()}`
-                        ) : (
-                          "until planned retirement"
-                        )}
-                        <ChevronDownIcon className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command className="w-full">
-                        <CommandList>
-                          <CommandGroup>
-                            <CommandItem
-                              className="px-2 py-1.5 cursor-pointer"
-                              onSelect={() => handleDurationSelect(index, undefined)}
-                            >
-                              until planned retirement
-                            </CommandItem>
-                            {[5, 10, 15, 20, 25, 30].map(years => (
-                              <CommandItem
-                                key={years}
-                                className="px-2 py-1.5 cursor-pointer"
-                                onSelect={() => handleDurationSelect(index, years)}
-                              >
-                                {years} years
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                        <div className="p-1 border-t">
-                          <Input
-                            type="date"
-                            className="h-8"
-                            onChange={(e) => {
-                              const date = e.target.value ? new Date(e.target.value) : undefined
-                              form.setValue(`contribution_plan.${index}.end_date`, date)
-                            }}
-                          />
-                        </div>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => remove(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-      </div>
+      <FormField
+        control={form.control}
+        name="start_date"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Start Date</FormLabel>
+            <FormControl>
+              <Input
+                type="date"
+                {...field}
+                value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                onChange={(e) => field.onChange(new Date(e.target.value))}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   )
 } 

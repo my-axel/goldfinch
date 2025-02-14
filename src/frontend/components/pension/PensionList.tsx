@@ -19,19 +19,24 @@ import {
 import { useState } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
+import { PensionDialogRouter } from "./PensionDialogRouter"
+
+interface DialogState {
+  open: boolean
+  mode: "add" | "edit"
+  pension?: Pension
+}
 
 /**
  * Props for the PensionList component
  * @property pensions - Array of all pension plans
  * @property members - Array of household members
  * @property onDelete - Callback when a pension is deleted
- * @property onEdit - Callback when a pension is edited
  */
 interface PensionListProps {
   pensions: Pension[]
   members?: HouseholdMember[]
   onDelete: (id: number) => void
-  onEdit: (pension: Pension) => void
 }
 
 /**
@@ -131,9 +136,6 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
 
 /**
  * Displays a single pension plan card with type-specific content
- * @param pension - The pension plan to display
- * @param onEdit - Callback when edit button is clicked
- * @param onDelete - Callback when delete button is clicked
  */
 function PensionCard({ 
   pension, 
@@ -187,7 +189,7 @@ function PensionCard({
         <dl className="space-y-2 text-sm">
           <div>
             <dt className="text-muted-foreground">Start Date</dt>
-            <dd>{format(pension.start_date, 'dd. MMMM yyyy', { locale: de })}</dd>
+            <dd>{format(new Date(pension.start_date), 'dd. MMMM yyyy', { locale: de })}</dd>
           </div>
           {renderContent()}
         </dl>
@@ -198,9 +200,6 @@ function PensionCard({
 
 /**
  * Displays pension plans grouped by household member
- * TODO: Add sorting options (by name, value, start date)
- * TODO: Add filtering options (by type, status)
- * TODO: Add summary statistics per member
  */
 function MemberPensionGroup({
   member,
@@ -237,12 +236,28 @@ function MemberPensionGroup({
 /**
  * Main component for displaying all pension plans
  * Organizes pensions by household member and handles delete confirmation
- * TODO: Add total portfolio value
- * TODO: Add pension type distribution chart
- * TODO: Add performance overview
  */
-export function PensionList({ pensions, members = [], onDelete, onEdit }: PensionListProps) {
+export function PensionList({ pensions, members = [], onDelete }: PensionListProps) {
   const [pensionToDelete, setPensionToDelete] = useState<number | null>(null)
+  const [dialog, setDialog] = useState<DialogState>({
+    open: false,
+    mode: "add"
+  })
+
+  const handleEdit = (pension: Pension) => {
+    setDialog({
+      open: true,
+      mode: "edit",
+      pension
+    })
+  }
+
+  const handleCloseDialog = () => {
+    setDialog(prev => ({
+      ...prev,
+      open: false
+    }))
+  }
 
   return (
     <>
@@ -253,8 +268,8 @@ export function PensionList({ pensions, members = [], onDelete, onEdit }: Pensio
               key={member.id}
               member={member}
               pensions={pensions}
-              onEdit={onEdit}
-              onDelete={onDelete}
+              onEdit={handleEdit}
+              onDelete={setPensionToDelete}
             />
           ))
         ) : (
@@ -263,30 +278,39 @@ export function PensionList({ pensions, members = [], onDelete, onEdit }: Pensio
               <PensionCard
                 key={pension.id}
                 pension={pension}
-                onEdit={onEdit}
-                onDelete={onDelete}
+                onEdit={handleEdit}
+                onDelete={setPensionToDelete}
               />
             ))}
           </div>
         )}
       </div>
 
+      <PensionDialogRouter
+        open={dialog.open}
+        onOpenChange={handleCloseDialog}
+        mode={dialog.mode}
+        pension={dialog.pension}
+      />
+
       <AlertDialog open={!!pensionToDelete} onOpenChange={() => setPensionToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Pension Plan</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the pension plan.
+              Are you sure you want to delete this pension plan? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (pensionToDelete) {
-                onDelete(pensionToDelete)
-                setPensionToDelete(null)
-              }
-            }}>
+            <AlertDialogAction
+              onClick={() => {
+                if (pensionToDelete) {
+                  onDelete(pensionToDelete)
+                  setPensionToDelete(null)
+                }
+              }}
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
