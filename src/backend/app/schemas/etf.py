@@ -58,16 +58,26 @@ class ETFInDB(ETF):
 
 class ETFPriceBase(BaseModel):
     date: date
-    price: float = Field(gt=0)
-    currency: str
+    price: float = Field(gt=0)  # Close price
+    currency: str = "EUR"
+    volume: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    open: Optional[float] = None
+    original_currency: Optional[str] = None
 
 class ETFPriceCreate(ETFPriceBase):
     etf_id: str
 
 class ETFPriceResponse(BaseModel):
     date: date
-    price: float
+    price: float  # Close price in EUR
     currency: str
+    volume: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    open: Optional[float] = None
+    original_currency: Optional[str] = None
 
     class Config:
         from_attributes = True

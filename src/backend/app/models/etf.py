@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Boolean, JSON, Integer, Date, ForeignKey, DateTime, Numeric
+from sqlalchemy import Column, String, Float, Boolean, JSON, Integer, Date, ForeignKey, DateTime, Numeric, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from datetime import date, datetime
@@ -35,8 +35,22 @@ class ETFPrice(Base):
     id = Column(Integer, primary_key=True)
     etf_id = Column(String, ForeignKey("etfs.id"), nullable=False)
     date = Column(Date, nullable=False)
-    price = Column(Numeric(20, 2), nullable=False)
+    price = Column(Numeric(20, 2), nullable=False)  # Close price
     currency = Column(String, nullable=False, default="EUR")
+    
+    # Additional price information
+    volume = Column(Numeric(20, 2), nullable=True)
+    high = Column(Numeric(20, 2), nullable=True)
+    low = Column(Numeric(20, 2), nullable=True)
+    open = Column(Numeric(20, 2), nullable=True)
+    
+    # Metadata
+    original_currency = Column(String, nullable=True)  # The currency the price was in before conversion to EUR
+    
+    __table_args__ = (
+        # Ensure we don't have duplicate prices for the same ETF and date
+        UniqueConstraint('etf_id', 'date', name='uix_etf_price_date'),
+    )
 
     # Relationship
     etf = relationship("ETF", back_populates="historical_prices") 

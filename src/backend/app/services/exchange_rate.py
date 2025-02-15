@@ -9,6 +9,7 @@ from app.schemas.exchange_rate import ExchangeRateCreate
 from fastapi import HTTPException
 import json
 from urllib.parse import urlencode
+import decimal
 
 class ExchangeRateService:
     # ECB Statistical Data Warehouse API
@@ -22,12 +23,14 @@ class ExchangeRateService:
         """Build URL for ECB Statistical Data Warehouse API"""
         resource = "data"
         flowRef = "EXR"
-        key = f"D.{currency}.EUR.SP00.A"  # Daily rate, CURRENCY vs EUR, Foreign exchange reference rates
+        key = f"D.{currency}.EUR.SP00.A"
         
         parameters = {
             'startPeriod': start_date.isoformat(),
             'endPeriod': end_date.isoformat(),
-            'format': 'jsondata'  # Request JSON format
+            'format': 'jsondata',
+            'detail': 'dataonly',
+            'updatedAfter': '2000-01-01'
         }
         
         url = f"{ExchangeRateService.SDW_BASE_URL}{resource}/{flowRef}/{key}"
@@ -41,38 +44,108 @@ class ExchangeRateService:
         """Fetch historical exchange rates from ECB Statistical Data Warehouse"""
         url = ExchangeRateService.build_sdw_url(currency, start_date, end_date)
         
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=503,
-                    detail=f"Failed to fetch exchange rates from ECB SDW for {currency}"
-                )
-            
-            data = response.json()
-            
-            # Extract the time series data
+        async with httpx.AsyncClient(
+            timeout=30.0,
+            follow_redirects=True,
+            headers={
+                'Accept': 'application/json',
+                'User-Agent': 'Goldfinch/1.0'
+            }
+        ) as client:
             try:
-                observations = data['dataSets'][0]['series']['0:0:0:0']['observations']
-                time_periods = data['structure']['dimensions']['observation'][0]['values']
+                response = await client.get(url)
                 
-                result = []
-                for i, period_info in enumerate(time_periods):
-                    if str(i) in observations:
-                        rate_date = date.fromisoformat(period_info['id'])
-                        rate_value = Decimal(str(observations[str(i)][0]))
-                        # Convert from EUR/Currency to Currency/EUR
-                        rate = Decimal('1') / rate_value
-                        result.append({
-                            'date': rate_date,
-                            'currency': currency,
-                            'rate': rate
-                        })
-                return result
-            except (KeyError, IndexError) as e:
+                if response.status_code != 200:
+                    raise HTTPException(
+                        status_code=503,
+                        detail=f"Failed to fetch rates for {currency}. Status: {response.status_code}"
+                    )
+                
+                try:
+                    data = response.json()
+                except json.JSONDecodeError as e:
+                    raise HTTPException(
+                        status_code=503,
+                        detail=f"Invalid JSON response for {currency}"
+                    )
+                
+                try:
+                    if 'dataSets' not in data:
+                        raise ValueError("No datasets found in response")
+
+                    dataset = data['dataSets'][0]
+                    if 'series' not in dataset:
+                        raise ValueError("No series found in dataset")
+
+                    series_keys = list(dataset['series'].keys())
+                    if not series_keys:
+                        raise ValueError("No series data found")
+                    
+                    series_key = series_keys[0]
+                    observations = dataset['series'][series_key]['observations']
+                    time_periods = data['structure']['dimensions']['observation'][0]['values']
+                    
+                    result = []
+                    skipped_count = 0
+                    
+                    for i, period_info in enumerate(time_periods):
+                        period_id = str(i)
+                        if period_id in observations:
+                            try:
+                                rate_date = date.fromisoformat(period_info['id'])
+                                raw_value = observations[period_id][0]
+                                
+                                # Skip None values (weekends/holidays) without error
+                                if raw_value is None:
+                                    skipped_count += 1
+                                    continue
+                                
+                                # Handle potential string values and clean them
+                                if isinstance(raw_value, str):
+                                    raw_value = raw_value.strip().replace(',', '.')
+                                
+                                try:
+                                    rate_value = Decimal(str(raw_value))
+                                except (decimal.InvalidOperation, decimal.ConversionSyntax):
+                                    skipped_count += 1
+                                    continue
+                                
+                                if rate_value == 0:
+                                    skipped_count += 1
+                                    continue
+                                
+                                # ECB provides rates as EUR/Currency, we store as Currency/EUR
+                                rate = Decimal('1') / rate_value
+                                
+                                result.append({
+                                    'date': rate_date,
+                                    'currency': currency,
+                                    'rate': rate
+                                })
+                            except (ValueError, KeyError, IndexError):
+                                skipped_count += 1
+                                continue
+                    
+                    if not result:
+                        raise ValueError("No valid rates found in the response")
+                    
+                    return result
+                    
+                except (KeyError, IndexError, ValueError) as e:
+                    raise HTTPException(
+                        status_code=503,
+                        detail=f"Failed to parse response for {currency}: {str(e)}"
+                    )
+                    
+            except httpx.TimeoutException:
                 raise HTTPException(
                     status_code=503,
-                    detail=f"Failed to parse ECB SDW response for {currency}: {str(e)}"
+                    detail=f"Timeout while fetching rates for {currency}"
+                )
+            except Exception as e:
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Error fetching rates for {currency}: {str(e)}"
                 )
 
     @staticmethod

@@ -10,7 +10,8 @@ from app.models.pension import (
     CompanyPension,
     PensionContribution,
     ContributionStep,
-    PensionType
+    PensionType,
+    ETFAllocation
 )
 from app.schemas.pension import (
     PensionBase,
@@ -25,10 +26,35 @@ from app.schemas.pension import (
 )
 from app.crud.etf import etf_crud
 from app.services.yfinance import get_etf_data
-from app.schemas.etf import ETFCreate
+from app.schemas.etf import ETFCreate, ETFPriceCreate
 from sqlalchemy.types import Enum
+from decimal import Decimal
+from datetime import datetime, date
+from fastapi import HTTPException
 
 class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
+    def _save_historical_prices(
+        self, db: Session, etf_id: str, yf_data: Dict[str, Any], currency: str
+    ) -> None:
+        """
+        Save historical prices for an ETF.
+        Converts all prices to EUR before saving.
+        """
+        historical_prices = yf_data.get("historical_prices", [])
+        
+        for price_data in historical_prices:
+            price_in = ETFPriceCreate(
+                etf_id=etf_id,
+                date=price_data["date"],
+                price=Decimal(str(price_data["price"])),
+                volume=price_data["volume"],
+                high=price_data["high"],
+                low=price_data["low"],
+                open=price_data["open"],
+                original_currency=currency
+            )
+            etf_crud.add_price(db, etf_id=etf_id, obj_in=price_in)
+
     def create_etf_pension(
         self, db: Session, *, obj_in: ETFPensionCreate
     ) -> BasePension:
@@ -36,8 +62,8 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         etf = etf_crud.get(db, id=obj_in.etf_id)
         
         if not etf:
-            # Fetch ETF data from YFinance
-            yf_data = get_etf_data(obj_in.etf_id)
+            # Fetch ETF data from YFinance with complete history
+            yf_data = get_etf_data(obj_in.etf_id, interval="1d")
             if not yf_data:
                 raise ValueError(f"ETF {obj_in.etf_id} not found in YFinance")
             
@@ -53,12 +79,16 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
                 ter=yf_data.get("ter", 0),
                 distribution_policy="Unknown",
                 last_price=yf_data.get("regularMarketPrice", 0),
+                last_update=datetime.utcnow(),
                 ytd_return=yf_data.get("ytd_return", 0),
                 one_year_return=yf_data.get("one_year_return", 0),
                 volatility_30d=yf_data.get("volatility_30d", 0),
                 sharpe_ratio=yf_data.get("sharpe_ratio", 0)
             )
             etf = etf_crud.create(db, obj_in=etf_in)
+            
+            # Save all historical prices
+            self._save_historical_prices(db, etf.id, yf_data, etf.currency)
 
         # Create the pension
         obj_in_data = jsonable_encoder(obj_in)
@@ -68,7 +98,7 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         # Add contribution steps
         for step in contribution_plan:
             db_obj.contribution_plan.append(ContributionStep(**step))
-
+            
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -94,11 +124,62 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         db.refresh(db_obj)
         return db_obj
 
+    def _calculate_etf_units(
+        self, db: Session, etf_id: str, amount: Decimal, contribution_date: date
+    ) -> Decimal:
+        """
+        Calculate how many ETF units can be bought for a given amount on a specific date.
+        Uses the ETF price from that date for the calculation.
+        """
+        # Get the ETF price for the contribution date
+        price = etf_crud.get_price_for_date(db, etf_id=etf_id, date=contribution_date)
+        if not price:
+            raise HTTPException(
+                status_code=400,
+                detail=f"No price found for ETF {etf_id} on {contribution_date}"
+            )
+            
+        # Calculate units (amount in EUR / price in EUR)
+        return amount / Decimal(str(price.price))
+
     def add_contribution(
         self, db: Session, *, pension_id: int, obj_in: ContributionBase
     ) -> PensionContribution:
+        # Get the pension to check its type
+        pension = db.query(BasePension).filter(BasePension.id == pension_id).first()
+        if not pension:
+            raise HTTPException(status_code=404, detail="Pension not found")
+            
         obj_in_data = jsonable_encoder(obj_in)
         db_obj = PensionContribution(**obj_in_data, pension_id=pension_id)
+        
+        # For ETF pensions, calculate and store units bought
+        if isinstance(pension, ETFPension):
+            # Calculate units based on contribution amount and ETF price
+            units = self._calculate_etf_units(
+                db,
+                pension.etf_id,
+                Decimal(str(obj_in.amount)),
+                obj_in.date
+            )
+            
+            # Create ETF allocation
+            allocation = ETFAllocation(
+                contribution_id=db_obj.id,
+                etf_id=pension.etf_id,
+                amount=obj_in.amount,
+                units_bought=units
+            )
+            db_obj.etf_allocations.append(allocation)
+            
+            # Update total units in the pension
+            pension.total_units += units
+            
+            # Update current value based on latest ETF price
+            latest_price = etf_crud.get_latest_price(db, etf_id=pension.etf_id)
+            if latest_price:
+                pension.current_value = pension.total_units * Decimal(str(latest_price.price))
+        
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

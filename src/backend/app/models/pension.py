@@ -64,6 +64,7 @@ class ETFPension(BasePension):
 
     id = Column(Integer, ForeignKey("pensions.id"), primary_key=True)
     etf_id = Column(String, ForeignKey("etfs.id"), nullable=False)
+    total_units = Column(Numeric(20, 6), nullable=False, default=0)  # Total ETF units owned
     
     etf = relationship("ETF", back_populates="pensions")
 
