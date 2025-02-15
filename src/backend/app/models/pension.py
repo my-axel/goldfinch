@@ -1,5 +1,5 @@
 from enum import Enum
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Enum as SQLEnum, Boolean
+from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Enum as SQLEnum, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from datetime import date
@@ -29,7 +29,7 @@ class ContributionStep(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     pension_id = Column(Integer, ForeignKey("pensions.id"), nullable=False)
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(20, 2), nullable=False)
     frequency = Column(SQLEnum(ContributionFrequency), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)
@@ -45,8 +45,8 @@ class BasePension(Base):
     name = Column(String, nullable=False)
     member_id = Column(Integer, ForeignKey("household_members.id"), nullable=False)
     start_date = Column(Date, nullable=False)
-    initial_capital = Column(Float, nullable=False)
-    current_value = Column(Float, nullable=False)
+    initial_capital = Column(Numeric(20, 2), nullable=False)
+    current_value = Column(Numeric(20, 2), nullable=False)
     notes = Column(String, nullable=True)
 
     # Relationships
@@ -78,8 +78,8 @@ class InsurancePension(BasePension):
     id = Column(Integer, ForeignKey("pensions.id"), primary_key=True)
     provider = Column(String, nullable=False)
     contract_number = Column(String, nullable=False)
-    guaranteed_interest = Column(Float, nullable=False)
-    expected_return = Column(Float, nullable=False)
+    guaranteed_interest = Column(Numeric(10, 4), nullable=False)
+    expected_return = Column(Numeric(10, 4), nullable=False)
 
 class CompanyPension(BasePension):
     __tablename__ = "company_pensions"
@@ -88,8 +88,8 @@ class CompanyPension(BasePension):
     id = Column(Integer, ForeignKey("pensions.id"), primary_key=True)
     employer = Column(String, nullable=False)
     vesting_period = Column(Integer, nullable=False)
-    matching_percentage = Column(Float, nullable=True)
-    max_employer_contribution = Column(Float, nullable=True)
+    matching_percentage = Column(Numeric(10, 4), nullable=True)
+    max_employer_contribution = Column(Numeric(20, 2), nullable=True)
 
 class PensionContribution(Base):
     __tablename__ = "pension_contributions"
@@ -97,8 +97,8 @@ class PensionContribution(Base):
     id = Column(Integer, primary_key=True, index=True)
     pension_id = Column(Integer, ForeignKey("pensions.id"), nullable=False)
     date = Column(Date, nullable=False)
-    amount = Column(Float, nullable=False)  # Actual amount if realized, planned amount if planned
-    planned_amount = Column(Float, nullable=False)  # Original planned amount
+    amount = Column(Numeric(20, 2), nullable=False)  # Actual amount if realized, planned amount if planned
+    planned_amount = Column(Numeric(20, 2), nullable=False)  # Original planned amount
     status = Column(SQLEnum(ContributionStatus), nullable=False, default=ContributionStatus.PLANNED)
     is_manual_override = Column(Boolean, default=False)
     note = Column(String, nullable=True)
@@ -113,8 +113,8 @@ class ETFAllocation(Base):
     id = Column(Integer, primary_key=True, index=True)
     contribution_id = Column(Integer, ForeignKey("pension_contributions.id"), nullable=False)
     etf_id = Column(String, ForeignKey("etfs.id"), nullable=False)
-    amount = Column(Float, nullable=False)
-    units_bought = Column(Float, nullable=False)
+    amount = Column(Numeric(20, 2), nullable=False)
+    units_bought = Column(Numeric(20, 6), nullable=False)  # Using 6 decimals for precise unit tracking
 
     # Relationships
     contribution = relationship("PensionContribution", back_populates="etf_allocations")

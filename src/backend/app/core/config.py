@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Goldfinch"
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     DATABASE_URL: str
+    BASE_CURRENCY: str = "EUR"
+    CURRENCY_DECIMALS: int = 2  # Number of decimal places for currency values
 
     class Config:
         env_file = ".env"

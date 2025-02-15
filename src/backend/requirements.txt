@@ -45,3 +45,4 @@ urllib3==2.3.0
 uvicorn==0.34.0
 webencodings==0.5.1
 yfinance==0.2.52
+xmltodict==0.13.0

@@ -18,6 +18,7 @@ from app.models.pension import (
     PensionContribution,
     ETFAllocation
 )
+from app.models.exchange_rate import ExchangeRate
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
