@@ -7,14 +7,77 @@ from sqlalchemy.orm import Session
 from app.models.exchange_rate import ExchangeRate
 from app.schemas.exchange_rate import ExchangeRateCreate
 from fastapi import HTTPException
+import json
+from urllib.parse import urlencode
 
 class ExchangeRateService:
+    # ECB Statistical Data Warehouse API
+    SDW_BASE_URL = "https://sdw-wsrest.ecb.europa.eu/service/"
+    
+    # We'll keep the daily XML endpoint as a fallback for latest rates
     ECB_DAILY_RATES_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
-    ECB_HISTORICAL_RATES_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml"
+
+    @staticmethod
+    def build_sdw_url(currency: str, start_date: date, end_date: date) -> str:
+        """Build URL for ECB Statistical Data Warehouse API"""
+        resource = "data"
+        flowRef = "EXR"
+        key = f"D.{currency}.EUR.SP00.A"  # Daily rate, CURRENCY vs EUR, Foreign exchange reference rates
+        
+        parameters = {
+            'startPeriod': start_date.isoformat(),
+            'endPeriod': end_date.isoformat(),
+            'format': 'jsondata'  # Request JSON format
+        }
+        
+        url = f"{ExchangeRateService.SDW_BASE_URL}{resource}/{flowRef}/{key}"
+        if parameters:
+            url += "?" + urlencode(parameters)
+        
+        return url
+
+    @staticmethod
+    async def fetch_sdw_rates(currency: str, start_date: date, end_date: date) -> List[Dict]:
+        """Fetch historical exchange rates from ECB Statistical Data Warehouse"""
+        url = ExchangeRateService.build_sdw_url(currency, start_date, end_date)
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Failed to fetch exchange rates from ECB SDW for {currency}"
+                )
+            
+            data = response.json()
+            
+            # Extract the time series data
+            try:
+                observations = data['dataSets'][0]['series']['0:0:0:0']['observations']
+                time_periods = data['structure']['dimensions']['observation'][0]['values']
+                
+                result = []
+                for i, period_info in enumerate(time_periods):
+                    if str(i) in observations:
+                        rate_date = date.fromisoformat(period_info['id'])
+                        rate_value = Decimal(str(observations[str(i)][0]))
+                        # Convert from EUR/Currency to Currency/EUR
+                        rate = Decimal('1') / rate_value
+                        result.append({
+                            'date': rate_date,
+                            'currency': currency,
+                            'rate': rate
+                        })
+                return result
+            except (KeyError, IndexError) as e:
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Failed to parse ECB SDW response for {currency}: {str(e)}"
+                )
 
     @staticmethod
     async def fetch_latest_rates() -> Dict[str, Decimal]:
-        """Fetch the latest exchange rates from ECB"""
+        """Fetch the latest exchange rates from ECB daily feed"""
         async with httpx.AsyncClient() as client:
             response = await client.get(ExchangeRateService.ECB_DAILY_RATES_URL)
             if response.status_code != 200:
@@ -29,29 +92,51 @@ class ExchangeRateService:
             }
 
     @staticmethod
-    async def fetch_historical_rates() -> List[Dict]:
-        """Fetch historical exchange rates from ECB (last 90 days)"""
-        async with httpx.AsyncClient() as client:
-            response = await client.get(ExchangeRateService.ECB_HISTORICAL_RATES_URL)
-            if response.status_code != 200:
-                raise HTTPException(status_code=503, detail="Failed to fetch historical rates from ECB")
+    async def backfill_historical_rates(
+        db: Session,
+        start_date: date,
+        end_date: date = None,
+        currencies: List[str] = None
+    ) -> None:
+        """
+        Backfill historical exchange rates from ECB Statistical Data Warehouse.
+        
+        Args:
+            db: Database session
+            start_date: Start date for historical data
+            end_date: End date for historical data (defaults to today)
+            currencies: List of currencies to fetch (defaults to common currencies)
+        """
+        if end_date is None:
+            end_date = date.today()
             
-            data = xmltodict.parse(response.text)
-            daily_rates = data['gesmes:Envelope']['Cube']['Cube']
-            
-            result = []
-            for day_data in daily_rates:
-                day_date = date.fromisoformat(day_data['@time'])
-                rates = {
-                    rate['@currency']: Decimal(rate['@rate'])
-                    for rate in day_data['Cube']
-                }
-                result.append({
-                    'date': day_date,
-                    'rates': rates
-                })
-            
-            return result
+        if currencies is None:
+            currencies = ['USD', 'CHF', 'GBP', 'JPY']  # Add more default currencies as needed
+        
+        for currency in currencies:
+            try:
+                rates = await ExchangeRateService.fetch_sdw_rates(currency, start_date, end_date)
+                
+                for rate_data in rates:
+                    existing_rate = ExchangeRateService.get_rate(
+                        db, rate_data['currency'], rate_data['date']
+                    )
+                    
+                    if not existing_rate:
+                        new_rate = ExchangeRate(
+                            date=rate_data['date'],
+                            currency=rate_data['currency'],
+                            rate=rate_data['rate']
+                        )
+                        db.add(new_rate)
+                
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Failed to backfill rates for {currency}: {str(e)}"
+                )
 
     @staticmethod
     def get_rate(db: Session, currency: str, rate_date: date) -> Optional[ExchangeRate]:
@@ -72,11 +157,9 @@ class ExchangeRateService:
     @staticmethod
     async def update_rates(db: Session) -> None:
         """Update exchange rates in the database with latest data"""
-        # Fetch latest rates
         rates = await ExchangeRateService.fetch_latest_rates()
         today = date.today()
         
-        # Store each rate
         for currency, rate in rates.items():
             existing_rate = ExchangeRateService.get_rate(db, currency, today)
             if existing_rate:
@@ -88,24 +171,5 @@ class ExchangeRateService:
                     rate=rate
                 )
                 db.add(new_rate)
-        
-        db.commit()
-
-    @staticmethod
-    async def backfill_historical_rates(db: Session) -> None:
-        """Backfill historical exchange rates from ECB"""
-        historical_data = await ExchangeRateService.fetch_historical_rates()
-        
-        for day_data in historical_data:
-            day_date = day_data['date']
-            for currency, rate in day_data['rates'].items():
-                existing_rate = ExchangeRateService.get_rate(db, currency, day_date)
-                if not existing_rate:
-                    new_rate = ExchangeRate(
-                        date=day_date,
-                        currency=currency,
-                        rate=rate
-                    )
-                    db.add(new_rate)
         
         db.commit() 

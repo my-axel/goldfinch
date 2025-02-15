@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import date
 from app.api.v1 import deps
 from app.services.exchange_rate import ExchangeRateService
@@ -33,7 +33,11 @@ async def get_historical_rates(
     
     if not rates:
         # If no rates for the requested date, try to backfill
-        await ExchangeRateService.backfill_historical_rates(db)
+        await ExchangeRateService.backfill_historical_rates(
+            db,
+            start_date=rate_date,
+            end_date=rate_date
+        )
         rates = ExchangeRateService.get_rates_for_date(db, rate_date)
         
         if not rates:
@@ -44,18 +48,35 @@ async def get_historical_rates(
     
     return {"date": rate_date, "rates": rates}
 
+@router.post("/backfill")
+async def backfill_rates(
+    start_date: date,
+    end_date: Optional[date] = None,
+    currencies: Optional[List[str]] = Query(None),
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Backfill historical exchange rates for a date range.
+    If no end_date is provided, it will fetch until today.
+    If no currencies are provided, it will fetch common currencies (USD, CHF, GBP, JPY).
+    """
+    await ExchangeRateService.backfill_historical_rates(
+        db,
+        start_date=start_date,
+        end_date=end_date,
+        currencies=currencies
+    )
+    return {
+        "message": "Historical exchange rates backfilled successfully",
+        "start_date": start_date,
+        "end_date": end_date or date.today(),
+        "currencies": currencies or ['USD', 'CHF', 'GBP', 'JPY']
+    }
+
 @router.post("/update")
 async def update_rates(
     db: Session = Depends(deps.get_db)
 ):
-    """Manually trigger an update of exchange rates"""
+    """Manually trigger an update of latest exchange rates"""
     await ExchangeRateService.update_rates(db)
-    return {"message": "Exchange rates updated successfully"}
-
-@router.post("/backfill")
-async def backfill_rates(
-    db: Session = Depends(deps.get_db)
-):
-    """Manually trigger a backfill of historical exchange rates"""
-    await ExchangeRateService.backfill_historical_rates(db)
-    return {"message": "Historical exchange rates backfilled successfully"} 
+    return {"message": "Exchange rates updated successfully"} 
