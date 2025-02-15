@@ -38,7 +38,11 @@ interface PensionContextType {
   updateCompanyPension: (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<void>
   deletePension: (id: number) => Promise<void>
   fetchContributions: (pensionId: number) => Promise<void>
-  addContribution: (pensionId: number, contribution: Omit<PensionContribution, 'id' | 'pension_id'>) => Promise<void>
+  addOneTimeInvestment: (pensionId: number, data: { 
+    amount: number, 
+    investment_date: string, 
+    note?: string 
+  }) => Promise<void>
 }
 
 const PensionContext = createContext<PensionContextType | undefined>(undefined)
@@ -136,10 +140,26 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     setContributions(response)
   }, [get])
 
-  const addContribution = useCallback(async (pensionId: number, contribution: Omit<PensionContribution, 'id' | 'pension_id'>) => {
-    await post<PensionContribution>(`/pension/${pensionId}/contributions`, contribution as Record<string, unknown>)
-    fetchContributions(pensionId)
-  }, [post, fetchContributions])
+  const addOneTimeInvestment = useCallback(async (
+    pensionId: number,
+    data: { amount: number, investment_date: string, note?: string }
+  ) => {
+    try {
+      await post(`/pension/${pensionId}/one-time-investment`, {
+        amount: data.amount,
+        investment_date: data.investment_date,
+        note: data.note || undefined
+      })
+      await fetchPension(pensionId)
+      await fetchContributions(pensionId)
+    } catch (err) {
+      console.error('Failed to add one-time investment:', err)
+      toast.error('Error', {
+        description: 'Failed to add one-time investment'
+      })
+      throw err
+    }
+  }, [post, fetchPension, fetchContributions])
 
   const updateEtfPension = useCallback(async (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>) => {
     try {
@@ -232,7 +252,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       createCompanyPension,
       deletePension,
       fetchContributions,
-      addContribution,
+      addOneTimeInvestment,
       updateEtfPension,
       updateInsurancePension,
       updateCompanyPension,

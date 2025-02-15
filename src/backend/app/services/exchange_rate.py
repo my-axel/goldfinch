@@ -11,6 +11,10 @@ import json
 from urllib.parse import urlencode
 import decimal
 
+class ExchangeRateNotFoundError(Exception):
+    """Raised when an exchange rate is not found for a specific currency and date."""
+    pass
+
 class ExchangeRateService:
     # ECB Statistical Data Warehouse API
     SDW_BASE_URL = "https://sdw-wsrest.ecb.europa.eu/service/"
@@ -114,8 +118,12 @@ class ExchangeRateService:
                                     skipped_count += 1
                                     continue
                                 
-                                # ECB provides rates as EUR/Currency, we store as Currency/EUR
-                                rate = Decimal('1') / rate_value
+                                # Store rate in EUR/XXX format (how many XXX you get for 1 EUR)
+                                # If we receive XXX/EUR, we need to invert it
+                                if rate_value < 1 and currency in ['USD', 'GBP', 'CHF']:  # Common currencies that should be > 1
+                                    rate = Decimal('1') / rate_value
+                                else:
+                                    rate = rate_value
                                 
                                 result.append({
                                     'date': rate_date,
@@ -212,12 +220,48 @@ class ExchangeRateService:
                 )
 
     @staticmethod
-    def get_rate(db: Session, currency: str, rate_date: date) -> Optional[ExchangeRate]:
-        """Get exchange rate for a specific currency and date"""
-        return db.query(ExchangeRate).filter(
-            ExchangeRate.currency == currency,
-            ExchangeRate.date == rate_date
-        ).first()
+    def get_closest_rate(db: Session, currency: str, target_date: date) -> Optional[ExchangeRate]:
+        """
+        Try to find an exchange rate for the target date, or the closest date within +/- 1 day.
+        Returns None if no rate is found within the range.
+        """
+        # First try exact date
+        rate = (
+            db.query(ExchangeRate)
+            .filter(
+                ExchangeRate.currency == currency,
+                ExchangeRate.date == target_date
+            )
+            .first()
+        )
+        if rate:
+            return rate
+            
+        # Try +/- 1 day, ordered by closeness to target date
+        next_day = target_date + timedelta(days=1)
+        prev_day = target_date - timedelta(days=1)
+        
+        return (
+            db.query(ExchangeRate)
+            .filter(
+                ExchangeRate.currency == currency,
+                ExchangeRate.date.in_([prev_day, next_day])
+            )
+            .order_by(
+                # Order by absolute difference from target date
+                ExchangeRate.date.desc()
+            )
+            .first()
+        )
+
+    @staticmethod
+    def get_rate(db: Session, currency: str, date_needed: date) -> Optional[ExchangeRate]:
+        """
+        Get the exchange rate for a currency on a specific date.
+        First tries exact date, then +/- 1 day.
+        Returns None if no rate is found within the range.
+        """
+        return ExchangeRateService.get_closest_rate(db, currency, date_needed)
 
     @staticmethod
     def get_rates_for_date(db: Session, rate_date: date) -> Dict[str, Decimal]:

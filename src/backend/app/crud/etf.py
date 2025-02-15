@@ -1,23 +1,57 @@
 from typing import List, Optional, Dict, Any
-from datetime import date
+from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from fastapi.encoders import jsonable_encoder
 from app.crud.base import CRUDBase
-from app.models.etf import ETF, ETFPrice
+from app.models.etf import ETF, ETFPrice, ExchangeRateError
 from app.schemas.etf import ETFCreate, ETFUpdate, ETFPriceCreate
-from app.services.exchange_rate import ExchangeRateService
+from app.services.exchange_rate import ExchangeRateService, ExchangeRateNotFoundError
 from decimal import Decimal
 from fastapi import HTTPException
+from app.services.yfinance import get_etf_data
+from app.db.session import SessionLocal
 
 class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
+    def _log_exchange_rate_error(
+        self, db: Session, currency: str, date_needed: date, context: str
+    ) -> None:
+        """Log a missing exchange rate to the database for later resolution.
+        This is a best-effort operation - if it fails, we just log to console and continue."""
+        try:
+            # Create a new session for error logging to avoid affecting the main transaction
+            error_db = SessionLocal()
+            try:
+                error_log = ExchangeRateError(
+                    source_currency=currency,
+                    date=date_needed,
+                    context=context
+                )
+                error_db.add(error_log)
+                error_db.commit()
+            except Exception as e:
+                # If we fail to log the error, just print it and continue
+                print(f"Failed to log exchange rate error: {str(e)}")
+                error_db.rollback()
+            finally:
+                error_db.close()
+        except Exception as e:
+            # Catch any other errors that might occur
+            print(f"Error in exchange rate error logging: {str(e)}")
+
     def _convert_to_eur(
         self, db: Session, price: Decimal, currency: str, price_date: date
-    ) -> Decimal:
+    ) -> tuple[Decimal, bool]:
         """Convert a price from given currency to EUR using stored exchange rates.
-        Special handling for GBp (British pence) to convert to GBP first."""
+        Special handling for GBp (British pence) to convert to GBP first.
+        
+        Returns:
+            tuple: (converted_price, used_fallback)
+            - converted_price: The price in EUR
+            - used_fallback: True if a fallback rate was used due to missing exchange rate
+        """
         if currency == "EUR":
-            return price
+            return price, False
             
         # Handle GBp (British pence) special case
         if currency == "GBp":
@@ -26,15 +60,43 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             # Use GBP for the exchange rate lookup
             currency = "GBP"
             
-        rate = ExchangeRateService.get_rate(db, currency, price_date)
-        if not rate:
-            raise HTTPException(
-                status_code=400,
-                detail=f"No exchange rate found for {currency} on {price_date}"
-            )
+        try:
+            rate = ExchangeRateService.get_closest_rate(db, currency, price_date)
+            if not rate:
+                # Log the missing rate for later resolution
+                self._log_exchange_rate_error(
+                    db, 
+                    currency, 
+                    price_date,
+                    f"No exchange rate found within +/- 1 day when converting ETF price from {currency}"
+                )
+                # Use 1:1 as last resort fallback rate
+                return price, True
+                
+            # If we're using a rate from a different date, log it but don't mark as fallback
+            if rate.date != price_date:
+                self._log_exchange_rate_error(
+                    db,
+                    currency,
+                    price_date,
+                    f"Using exchange rate from {rate.date} for {currency}"
+                )
+                
+            # Rate is stored as XXX/EUR (how many EUR you get for 1 XXX)
+            # To convert XXX to EUR, we multiply by the rate
+            # Example: 100 USD with rate 0.954381 (1 USD = 0.954381 EUR)
+            # 100 USD * 0.954381 = 95.4381 EUR
+            return price * rate.rate, False
             
-        # For EUR/XXX rates, we need to divide by the rate to get XXX/EUR
-        return price / rate.rate
+        except Exception as e:
+            # Log any errors but continue with fallback rate
+            self._log_exchange_rate_error(
+                db, 
+                currency, 
+                price_date,
+                f"Error getting exchange rate: {str(e)}"
+            )
+            return price, True
 
     def add_price(
         self, db: Session, *, etf_id: str, obj_in: ETFPriceCreate
@@ -45,7 +107,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             raise HTTPException(status_code=404, detail="ETF not found")
 
         # Convert price to EUR if necessary
-        price_in_eur = self._convert_to_eur(
+        price_in_eur, used_fallback = self._convert_to_eur(
             db,
             Decimal(str(obj_in.price)),
             etf.currency,
@@ -72,7 +134,8 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                 etf_id=etf_id,
                 date=obj_in.date,
                 price=price_in_eur,
-                currency="EUR"  # Always store in EUR
+                currency="EUR",  # Always store in EUR
+                original_currency=etf.currency  # Store original currency for reference
             )
             db.add(db_obj)
             
@@ -158,5 +221,123 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             .order_by(ETFPrice.date.desc())
             .first()
         )
+
+    def _find_price_gaps(
+        self, db: Session, etf_id: str, min_gap_days: int = 5
+    ) -> List[tuple[date, date]]:
+        """
+        Find gaps in the ETF price history.
+        Returns a list of (start_date, end_date) tuples representing gaps.
+        
+        Args:
+            db: Database session
+            etf_id: ETF ID to check
+            min_gap_days: Minimum number of days to consider as a gap
+        """
+        prices = (
+            db.query(ETFPrice)
+            .filter(ETFPrice.etf_id == etf_id)
+            .order_by(ETFPrice.date.asc())
+            .all()
+        )
+        
+        if not prices:
+            return []
+            
+        gaps = []
+        prev_date = prices[0].date
+        
+        for price in prices[1:]:
+            date_diff = (price.date - prev_date).days
+            if date_diff > min_gap_days:
+                # Found a gap
+                gap_start = prev_date + timedelta(days=1)
+                gap_end = price.date - timedelta(days=1)
+                gaps.append((gap_start, gap_end))
+            prev_date = price.date
+            
+        return gaps
+
+    def _fetch_missing_prices(
+        self, db: Session, etf: ETF, force_full_history: bool = False
+    ) -> None:
+        """
+        Fetch missing historical prices for an ETF.
+        
+        Args:
+            db: Database session
+            etf: ETF to fetch prices for
+            force_full_history: If True, fetches the full history from YFinance
+                              If False, only fills gaps in existing data
+        """
+        if force_full_history:
+            # Fetch full history from YFinance
+            price_data = get_etf_data(etf.id)
+            if not price_data or not price_data.get("historical_prices"):
+                return
+                
+            for price in price_data["historical_prices"]:
+                price_in = ETFPriceCreate(
+                    etf_id=etf.id,
+                    date=price["date"],
+                    price=Decimal(str(price["price"])),
+                    volume=price.get("volume"),
+                    high=price.get("high"),
+                    low=price.get("low"),
+                    open=price.get("open")
+                )
+                # add_price handles checking for existing prices
+                self.add_price(db, etf_id=etf.id, obj_in=price_in)
+        else:
+            # Find and fill gaps
+            gaps = self._find_price_gaps(db, etf.id)
+            
+            for gap_start, gap_end in gaps:
+                # Fetch prices for each gap
+                price_data = get_etf_data(
+                    etf.id,
+                    start_date=gap_start,
+                    end_date=gap_end
+                )
+                
+                if price_data and price_data.get("historical_prices"):
+                    for price in price_data["historical_prices"]:
+                        price_in = ETFPriceCreate(
+                            etf_id=etf.id,
+                            date=price["date"],
+                            price=Decimal(str(price["price"])),
+                            volume=price.get("volume"),
+                            high=price.get("high"),
+                            low=price.get("low"),
+                            open=price.get("open")
+                        )
+                        self.add_price(db, etf_id=etf.id, obj_in=price_in)
+
+    def get(self, db: Session, id: Any) -> Optional[ETF]:
+        """Get an ETF by ID and fill any gaps in its price history."""
+        etf = super().get(db, id)
+        if etf:
+            self._fetch_missing_prices(db, etf)
+        return etf
+
+    def get_multi(
+        self, db: Session, *, skip: int = 0, limit: int = 100
+    ) -> List[ETF]:
+        """Get multiple ETFs and fill any gaps in their price histories."""
+        etfs = super().get_multi(db, skip=skip, limit=limit)
+        for etf in etfs:
+            self._fetch_missing_prices(db, etf)
+        return etfs
+
+    def refresh_full_history(
+        self, db: Session, etf_id: str
+    ) -> None:
+        """
+        Force refresh the complete price history for an ETF.
+        This will fetch all historical data from YFinance.
+        """
+        etf = self.get(db, etf_id)
+        if etf:
+            self._fetch_missing_prices(db, etf, force_full_history=True)
 
 etf_crud = CRUDETF(ETF) 

@@ -14,9 +14,14 @@ from app.schemas.pension import (
     ETFPensionUpdate,
     InsurancePensionUpdate,
     CompanyPensionUpdate,
-    PensionType
+    PensionType,
+    OneTimeInvestmentCreate
 )
 from app.crud.pension import pension_crud
+import logging
+from decimal import Decimal, InvalidOperation
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -91,20 +96,6 @@ def delete_pension(
     pension_crud.remove(db, id=pension_id)
     return {"message": "Pension deleted successfully"}
 
-@router.post("/{pension_id}/contributions", response_model=ContributionBase)
-def add_contribution(
-    pension_id: int,
-    contribution_in: ContributionBase,
-    db: Session = Depends(deps.get_db)
-):
-    """
-    Add a new contribution to a pension plan.
-    """
-    pension = pension_crud.get(db, id=pension_id)
-    if not pension:
-        raise HTTPException(status_code=404, detail="Pension not found")
-    return pension_crud.add_contribution(db, pension_id=pension_id, obj_in=contribution_in)
-
 @router.get("/{pension_id}/contributions", response_model=List[ContributionBase])
 def get_contributions(
     pension_id: int,
@@ -119,6 +110,59 @@ def get_contributions(
     if not pension:
         raise HTTPException(status_code=404, detail="Pension not found")
     return pension_crud.get_contributions(db, pension_id=pension_id, skip=skip, limit=limit)
+
+@router.post("/{pension_id}/one-time-investment", response_model=ContributionBase)
+def add_one_time_investment(
+    pension_id: int,
+    investment_in: OneTimeInvestmentCreate,
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Add a one-time investment to an ETF pension plan.
+    This is useful for special cases like investing bonuses or making extra investments.
+    
+    The investment will be:
+    - Marked as realized (immediate investment)
+    - Have a note indicating it's a one-time investment
+    - Calculate units based on the investment date's price
+    - Update the pension's total units and current value
+    """
+    try:
+        logger.info(f"Processing one-time investment for pension {pension_id}: {investment_in}")
+        
+        # Validate amount is positive
+        if investment_in.amount <= 0:
+            raise ValueError("Investment amount must be positive")
+
+        contribution = pension_crud.add_one_time_investment(
+            db,
+            pension_id=pension_id,
+            amount=investment_in.amount,
+            investment_date=investment_in.investment_date,
+            user_note=investment_in.note
+        )
+        return contribution
+    except HTTPException as e:
+        logger.error(f"HTTP error processing one-time investment: {str(e)}")
+        raise
+    except InvalidOperation as e:
+        logger.error(f"Invalid decimal operation: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid amount format: {str(e)}"
+        )
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error processing one-time investment: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )
 
 @router.put("/etf/{pension_id}", response_model=ETFPensionResponse)
 def update_etf_pension(

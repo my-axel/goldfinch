@@ -10,6 +10,7 @@ from app.models.pension import (
     CompanyPension,
     PensionContribution,
     ContributionStep,
+    ContributionStatus,
     PensionType,
     ETFAllocation
 )
@@ -93,7 +94,65 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         # Create the pension
         obj_in_data = jsonable_encoder(obj_in)
         contribution_plan = obj_in_data.pop("contribution_plan", [])
+        
+        # Remove fields that shouldn't go into the pension model
+        is_existing = obj_in_data.pop("is_existing_investment", False)
+        existing_units = obj_in_data.pop("existing_units", None)
+        reference_date = obj_in_data.pop("reference_date", None)
+        
         db_obj = ETFPension(**obj_in_data)
+        
+        # Handle existing investment
+        if is_existing and existing_units is not None:
+            db_obj.total_units = Decimal(str(existing_units))
+            
+            # Create an initial contribution to record the existing investment
+            latest_price = etf_crud.get_price_for_date(db, etf_id=etf.id, date=reference_date)
+            if not latest_price:
+                # Try to fetch and save the price for reference date
+                price_data = get_etf_data(etf.id, start_date=reference_date, end_date=reference_date)
+                if price_data and price_data.get("historical_prices"):
+                    price_in = ETFPriceCreate(
+                        etf_id=etf.id,
+                        date=reference_date,
+                        price=Decimal(str(price_data["historical_prices"][0]["price"]))
+                    )
+                    latest_price = etf_crud.add_price(db, etf_id=etf.id, obj_in=price_in)
+                else:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"No price found for ETF {etf.id} on {reference_date}"
+                    )
+            
+            initial_value = existing_units * Decimal(str(latest_price.price))
+            
+            # Create a contribution record for the existing investment
+            initial_contribution = PensionContribution(
+                pension_id=db_obj.id,
+                date=reference_date,
+                amount=initial_value,
+                planned_amount=initial_value,
+                status=ContributionStatus.REALIZED,
+                is_manual_override=True,
+                note="Initial balance (existing units on reference date)"
+            )
+            
+            # Create an allocation record
+            initial_allocation = ETFAllocation(
+                contribution=initial_contribution,
+                etf_id=etf.id,
+                amount=initial_value,
+                units_bought=existing_units
+            )
+            
+            initial_contribution.etf_allocations.append(initial_allocation)
+            db_obj.contributions.append(initial_contribution)
+            
+            # Set initial capital and current value
+            db_obj.initial_capital = initial_value
+            latest_price = etf_crud.get_latest_price(db, etf_id=etf.id)
+            if latest_price:
+                db_obj.current_value = existing_units * Decimal(str(latest_price.price))
         
         # Add contribution steps
         for step in contribution_plan:
@@ -304,5 +363,79 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    def add_one_time_investment(
+        self, 
+        db: Session, 
+        *, 
+        pension_id: int, 
+        amount: Decimal,
+        investment_date: date,
+        user_note: Optional[str] = None
+    ) -> PensionContribution:
+        """
+        Add a one-time investment to an ETF pension.
+        This is used for special cases like bonuses or extra investments.
+        
+        Args:
+            pension_id: ID of the pension plan
+            amount: Amount to invest (in EUR)
+            investment_date: When the investment was/will be made
+            user_note: Optional note from the user explaining the investment
+        """
+        # Get the pension to check its type
+        pension = db.query(BasePension).filter(BasePension.id == pension_id).first()
+        if not pension:
+            raise HTTPException(status_code=404, detail="Pension not found")
+            
+        if not isinstance(pension, ETFPension):
+            raise HTTPException(
+                status_code=400,
+                detail="One-time investments are only supported for ETF pensions"
+            )
+            
+        # Calculate units that can be bought
+        units = self._calculate_etf_units(
+            db,
+            pension.etf_id,
+            amount,
+            investment_date
+        )
+        
+        # Create the contribution
+        note = f"One-time investment"
+        if user_note:
+            note += f" - {user_note}"
+            
+        contribution = PensionContribution(
+            pension_id=pension_id,
+            date=investment_date,
+            amount=amount,
+            planned_amount=amount,  # Same as amount since it's a direct investment
+            status=ContributionStatus.REALIZED,
+            is_manual_override=True,
+            note=note
+        )
+        
+        # Create the allocation
+        allocation = ETFAllocation(
+            contribution=contribution,
+            etf_id=pension.etf_id,
+            amount=amount,
+            units_bought=units
+        )
+        
+        contribution.etf_allocations.append(allocation)
+        
+        # Update pension's total units and current value
+        pension.total_units += units
+        latest_price = etf_crud.get_latest_price(db, etf_id=pension.etf_id)
+        if latest_price:
+            pension.current_value = pension.total_units * Decimal(str(latest_price.price))
+        
+        db.add(contribution)
+        db.commit()
+        db.refresh(contribution)
+        return contribution
 
 pension_crud = CRUDPension(BasePension)

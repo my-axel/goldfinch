@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/
 import { Pension, PensionType, ETFPension, InsurancePension, CompanyPension } from "@/frontend/types/pension"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { Trash2, Pencil, PiggyBank, Building, Shield } from "lucide-react"
+import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle } from "lucide-react"
 import { Button } from "@/frontend/components/ui/button"
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import { formatMemberName } from "@/frontend/types/household-helpers"
 import { PensionDialogRouter } from "./PensionDialogRouter"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
 import { ContributionFrequency } from '@/frontend/types/pension'
+import { OneTimeInvestmentModal } from "./OneTimeInvestmentModal"
 
 interface DialogState {
   open: boolean
@@ -66,7 +67,7 @@ function formatFrequency(frequency: ContributionFrequency): string {
     case ContributionFrequency.ONE_TIME:
       return 'one-time'
     default:
-      return frequency.toLowerCase()
+      return String(frequency).toLowerCase()
   }
 }
 
@@ -74,37 +75,43 @@ function formatFrequency(frequency: ContributionFrequency): string {
  * Displays ETF pension specific information
  */
 function ETFPensionContent({ pension }: { pension: ETFPension }) {
-  if (!pension.etf) {
-    console.error('Missing ETF data in pension:', pension)
-    return <div>Error: Missing ETF data</div>
-  }
-
+  const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
   const currentStep = getCurrentContributionStep(pension.contribution_plan)
 
   return (
     <>
       <div>
-        <dt className="text-muted-foreground">Initial Investment</dt>
-        <dd>{pension.initial_capital.toLocaleString('de-DE')} €</dd>
+        <dt className="text-muted-foreground">ETF</dt>
+        <dd>{pension.etf?.name || pension.etf_id}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
         <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
       </div>
-      <div>
-        <dt className="text-muted-foreground">ETF</dt>
-        <dd>{`${pension.etf.symbol} - ${pension.etf.name}`}</dd>
-      </div>
-      <div>
-        <dt className="text-muted-foreground">Last Price</dt>
-        <dd>{pension.etf.last_price.toLocaleString('de-DE')} {pension.etf.currency}</dd>
-      </div>
       {currentStep && (
         <div>
           <dt className="text-muted-foreground">Current Contribution</dt>
-          <dd>{currentStep.amount.toLocaleString('de-DE')} € {formatFrequency(currentStep.frequency)}</dd>
+          <dd>
+            {currentStep.amount.toLocaleString('de-DE')} € {formatFrequency(currentStep.frequency)}
+          </dd>
         </div>
       )}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowOneTimeInvestment(true)}
+        >
+          <PlusCircle className="h-4 w-4 mr-2" />
+          One-Time Investment
+        </Button>
+      </div>
+      <OneTimeInvestmentModal
+        open={showOneTimeInvestment}
+        onOpenChange={setShowOneTimeInvestment}
+        pensionId={pension.id}
+        pensionName={pension.name}
+      />
     </>
   )
 }
