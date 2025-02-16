@@ -44,6 +44,11 @@ class ETFPrice(Base):
     low = Column(Numeric(20, 2), nullable=True)
     open = Column(Numeric(20, 2), nullable=True)
     
+    # Corporate actions
+    dividends = Column(Numeric(20, 6), nullable=True)  # Using higher precision for dividends
+    stock_splits = Column(Numeric(10, 6), nullable=True)  # Stock splits are often expressed as ratios
+    capital_gains = Column(Numeric(20, 6), nullable=True)  # Capital gains distributions
+    
     # Metadata
     original_currency = Column(String, nullable=True)  # The currency the price was in before conversion to EUR
     

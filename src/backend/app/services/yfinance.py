@@ -35,14 +35,26 @@ def get_historical_prices(
         # Convert the data to a list of dictionaries
         price_data = []
         for index, row in hist.iterrows():
-            price_data.append({
-                "date": index.date(),
-                "price": float(row["Close"]),
-                "volume": float(row["Volume"]),
-                "high": float(row["High"]),
-                "low": float(row["Low"]),
-                "open": float(row["Open"])
-            })
+            try:
+                price_entry = {
+                    "date": index.date(),
+                    "price": float(row["Close"]) if not pd.isna(row["Close"]) else None,
+                }
+                
+                # Add optional fields only if they exist and are not NaN
+                optional_fields = ["Volume", "High", "Low", "Open", "Dividends", "Stock Splits", "Capital Gains"]
+                for field in optional_fields:
+                    field_key = field.lower().replace(" ", "_")
+                    if field in row and not pd.isna(row[field]):
+                        price_entry[field_key] = float(row[field])
+                    else:
+                        price_entry[field_key] = None
+                
+                price_data.append(price_entry)
+            except Exception as row_error:
+                print(f"Error processing row for date {index.date()}: {row_error}")
+                continue
+                
         return price_data
     except Exception as e:
         print(f"Error fetching historical prices: {e}")

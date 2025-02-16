@@ -64,6 +64,9 @@ class ETFPriceBase(BaseModel):
     high: Optional[float] = None
     low: Optional[float] = None
     open: Optional[float] = None
+    dividends: Optional[float] = None
+    stock_splits: Optional[float] = None
+    capital_gains: Optional[float] = None
     original_currency: Optional[str] = None
 
 class ETFPriceCreate(ETFPriceBase):
@@ -77,6 +80,9 @@ class ETFPriceResponse(BaseModel):
     high: Optional[float] = None
     low: Optional[float] = None
     open: Optional[float] = None
+    dividends: Optional[float] = None
+    stock_splits: Optional[float] = None
+    capital_gains: Optional[float] = None
     original_currency: Optional[str] = None
 
     class Config:

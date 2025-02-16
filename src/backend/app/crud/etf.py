@@ -98,6 +98,20 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             )
             return price, True
 
+    def _convert_field_to_eur(
+        self, db: Session, value: Optional[float], currency: str, date: date
+    ) -> Optional[Decimal]:
+        """Helper method to convert a field value to EUR if it exists."""
+        if value is not None:
+            converted_value, _ = self._convert_to_eur(
+                db,
+                Decimal(str(value)),
+                currency,
+                date
+            )
+            return converted_value
+        return None
+
     def add_price(
         self, db: Session, *, etf_id: str, obj_in: ETFPriceCreate
     ) -> ETFPrice:
@@ -106,13 +120,20 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         if not etf:
             raise HTTPException(status_code=404, detail="ETF not found")
 
-        # Convert price to EUR if necessary
-        price_in_eur, used_fallback = self._convert_to_eur(
-            db,
-            Decimal(str(obj_in.price)),
-            etf.currency,
-            obj_in.date
-        )
+        # Convert all price-related fields to EUR
+        price_fields = {
+            'price': obj_in.price,  # Required field
+            'high': obj_in.high,
+            'low': obj_in.low,
+            'open': obj_in.open,
+            'dividends': obj_in.dividends,
+            'capital_gains': obj_in.capital_gains
+        }
+        
+        converted_fields = {
+            field: self._convert_field_to_eur(db, value, etf.currency, obj_in.date)
+            for field, value in price_fields.items()
+        }
 
         # Check if a price already exists for this date
         existing_price = (
@@ -126,21 +147,26 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         
         if existing_price:
             # Update existing price
-            existing_price.price = price_in_eur
+            for field, value in converted_fields.items():
+                setattr(existing_price, field, value)
+            existing_price.volume = obj_in.volume  # Volume doesn't need conversion
+            existing_price.stock_splits = obj_in.stock_splits  # Ratios don't need conversion
             db_obj = existing_price
         else:
             # Create new price entry
             db_obj = ETFPrice(
                 etf_id=etf_id,
                 date=obj_in.date,
-                price=price_in_eur,
                 currency="EUR",  # Always store in EUR
-                original_currency=etf.currency  # Store original currency for reference
+                volume=obj_in.volume,  # Volume doesn't need conversion
+                stock_splits=obj_in.stock_splits,  # Ratios don't need conversion
+                original_currency=etf.currency,  # Store original currency for reference
+                **converted_fields  # Unpack all converted fields
             )
             db.add(db_obj)
             
         # Update the ETF's last_price
-        etf.last_price = price_in_eur
+        etf.last_price = converted_fields['price']
         etf.last_update = obj_in.date
             
         db.commit()
@@ -285,7 +311,10 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                     volume=price.get("volume"),
                     high=price.get("high"),
                     low=price.get("low"),
-                    open=price.get("open")
+                    open=price.get("open"),
+                    dividends=price.get("dividends"),
+                    stock_splits=price.get("stock_splits"),
+                    capital_gains=price.get("capital_gains")
                 )
                 # add_price handles checking for existing prices
                 self.add_price(db, etf_id=etf.id, obj_in=price_in)
@@ -310,7 +339,10 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                             volume=price.get("volume"),
                             high=price.get("high"),
                             low=price.get("low"),
-                            open=price.get("open")
+                            open=price.get("open"),
+                            dividends=price.get("dividends"),
+                            stock_splits=price.get("stock_splits"),
+                            capital_gains=price.get("capital_gains")
                         )
                         self.add_price(db, etf_id=etf.id, obj_in=price_in)
 
