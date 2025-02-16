@@ -3,10 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import { Label } from "@/frontend/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select"
-import { useApp } from "@/context/AppContext"
+import { useSettings } from "@/frontend/context/SettingsContext"
 
 export default function SettingsPage() {
-  const { settings, updateSettings } = useApp()
+  const { settings, updateSettings } = useSettings()
 
   const handleCurrencyChange = (value: string) => {
     updateSettings({ currency: value })

@@ -12,8 +12,10 @@ from app.models.pension import (
     ContributionStep,
     ContributionStatus,
     PensionType,
-    ETFAllocation
+    ETFAllocation,
+    ContributionFrequency
 )
+from app.models.etf import ETFPrice
 from app.schemas.pension import (
     PensionBase,
     ETFPensionCreate,
@@ -56,14 +58,76 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
             )
             etf_crud.add_price(db, etf_id=etf_id, obj_in=price_in)
 
+    def _create_planned_contributions_from_steps(
+        self,
+        db: Session,
+        pension_id: int,
+        contribution_steps: List[ContributionStep]
+    ) -> None:
+        """
+        Create planned contributions in the pension_contributions table based on contribution steps.
+        This ensures that historical contributions can be realized later.
+        """
+        # Get the pension to determine retirement date
+        pension = (
+            db.query(ETFPension)
+            .filter(ETFPension.id == pension_id)
+            .options(joinedload(ETFPension.member))
+            .first()
+        )
+        if not pension:
+            raise HTTPException(status_code=404, detail="Pension not found")
+            
+        # Get member's retirement date
+        if not pension.member:
+            raise HTTPException(status_code=404, detail="Member not found")
+            
+        # Calculate retirement date (default to 67 years if not set)
+        retirement_age = pension.member.retirement_age_planned or 67
+        retirement_date = pension.member.birthday.replace(year=pension.member.birthday.year + retirement_age)
+
+        for step in contribution_steps:
+            current_date = step.start_date
+            # If no end date is provided, use retirement date
+            end_date = step.end_date or retirement_date
+            
+            while current_date <= end_date:
+                # Create a planned contribution for this date
+                contribution = PensionContribution(
+                    pension_id=pension_id,
+                    date=current_date,
+                    amount=step.amount,
+                    planned_amount=step.amount,
+                    status=ContributionStatus.PLANNED,
+                    is_manual_override=False,
+                    note=f"Generated from {step.frequency.lower()} contribution plan"
+                )
+                db.add(contribution)
+                
+                # Move to next contribution date based on frequency
+                if step.frequency == ContributionFrequency.MONTHLY:
+                    if current_date.month == 12:
+                        current_date = current_date.replace(year=current_date.year + 1, month=1)
+                    else:
+                        current_date = current_date.replace(month=current_date.month + 1)
+                elif step.frequency == ContributionFrequency.QUARTERLY:
+                    if current_date.month >= 10:
+                        current_date = current_date.replace(year=current_date.year + 1, month=(current_date.month + 3) % 12 or 12)
+                    else:
+                        current_date = current_date.replace(month=current_date.month + 3)
+                elif step.frequency == ContributionFrequency.ANNUALLY:
+                    current_date = current_date.replace(year=current_date.year + 1)
+        
+        db.commit()
+
     def create_etf_pension(
-        self, db: Session, *, obj_in: ETFPensionCreate
+        self, db: Session, *, obj_in: ETFPensionCreate, background_tasks = None
     ) -> BasePension:
         # First check if ETF exists
         etf = etf_crud.get(db, id=obj_in.etf_id)
         
         if not etf:
-            # Fetch ETF data from YFinance with complete history
+            # Fetch basic ETF data from YFinance (without full history)
             yf_data = get_etf_data(obj_in.etf_id, interval="1d")
             if not yf_data:
                 raise ValueError(f"ETF {obj_in.etf_id} not found in YFinance")
@@ -88,8 +152,27 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
             )
             etf = etf_crud.create(db, obj_in=etf_in)
             
-            # Save all historical prices
-            self._save_historical_prices(db, etf.id, yf_data, etf.currency)
+            # Save only the latest price for immediate use
+            if yf_data.get("historical_prices"):
+                latest_price = yf_data["historical_prices"][-1]
+                price_in = ETFPriceCreate(
+                    etf_id=etf.id,
+                    date=latest_price["date"],
+                    price=Decimal(str(latest_price["price"])),
+                    volume=latest_price.get("volume"),
+                    high=latest_price.get("high"),
+                    low=latest_price.get("low"),
+                    open=latest_price.get("open")
+                )
+                etf_crud.add_price(db, etf_id=etf.id, obj_in=price_in)
+            
+            # Schedule historical price fetching as background task if provided
+            if background_tasks is not None:
+                background_tasks.add_task(
+                    etf_crud.refresh_full_history,
+                    db,
+                    etf.id
+                )
 
         # Create the pension
         obj_in_data = jsonable_encoder(obj_in)
@@ -98,12 +181,23 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         # Remove fields that shouldn't go into the pension model
         is_existing = obj_in_data.pop("is_existing_investment", False)
         existing_units = obj_in_data.pop("existing_units", None)
-        reference_date = obj_in_data.pop("reference_date", None)
+        reference_date_str = obj_in_data.pop("reference_date", None)
+        reference_date = date.fromisoformat(reference_date_str) if reference_date_str else None
         
         db_obj = ETFPension(**obj_in_data)
         
+        # First add and commit the pension to get an ID
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        
         # Handle existing investment
         if is_existing and existing_units is not None:
+            if not reference_date:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Reference date is required for existing investments"
+                )
             db_obj.total_units = Decimal(str(existing_units))
             
             # Create an initial contribution to record the existing investment
@@ -112,10 +206,15 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
                 # Try to fetch and save the price for reference date
                 price_data = get_etf_data(etf.id, start_date=reference_date, end_date=reference_date)
                 if price_data and price_data.get("historical_prices"):
+                    latest_price = price_data["historical_prices"][0]
                     price_in = ETFPriceCreate(
                         etf_id=etf.id,
-                        date=reference_date,
-                        price=Decimal(str(price_data["historical_prices"][0]["price"]))
+                        date=latest_price["date"],
+                        price=latest_price["price"],
+                        volume=latest_price.get("volume"),
+                        high=latest_price.get("high"),
+                        low=latest_price.get("low"),
+                        open=latest_price.get("open")
                     )
                     latest_price = etf_crud.add_price(db, etf_id=etf.id, obj_in=price_in)
                 else:
@@ -123,44 +222,48 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
                         status_code=400,
                         detail=f"No price found for ETF {etf.id} on {reference_date}"
                     )
-            
-            initial_value = existing_units * Decimal(str(latest_price.price))
-            
-            # Create a contribution record for the existing investment
-            initial_contribution = PensionContribution(
-                pension_id=db_obj.id,
+
+            # Calculate initial value based on units and price
+            initial_value = Decimal(str(existing_units)) * latest_price.price
+            db_obj.initial_capital = initial_value
+            db_obj.current_value = initial_value
+
+            # Create an initial contribution for the existing investment
+            contribution = PensionContribution(
+                pension_id=db_obj.id,  # Now we have a valid ID
                 date=reference_date,
                 amount=initial_value,
                 planned_amount=initial_value,
                 status=ContributionStatus.REALIZED,
                 is_manual_override=True,
-                note="Initial balance (existing units on reference date)"
+                note="Initial contribution for existing investment"
             )
-            
-            # Create an allocation record
-            initial_allocation = ETFAllocation(
-                contribution=initial_contribution,
+            db.add(contribution)
+            db.flush()  # Ensure contribution has an ID before creating allocation
+
+            # Record the ETF allocation
+            allocation = ETFAllocation(
+                contribution_id=contribution.id,
                 etf_id=etf.id,
                 amount=initial_value,
-                units_bought=existing_units
+                units_bought=Decimal(str(existing_units))
             )
-            
-            initial_contribution.etf_allocations.append(initial_allocation)
-            db_obj.contributions.append(initial_contribution)
-            
-            # Set initial capital and current value
-            db_obj.initial_capital = initial_value
-            latest_price = etf_crud.get_latest_price(db, etf_id=etf.id)
-            if latest_price:
-                db_obj.current_value = existing_units * Decimal(str(latest_price.price))
+            db.add(allocation)
         
         # Add contribution steps
         for step in contribution_plan:
             db_obj.contribution_plan.append(ContributionStep(**step))
             
-        db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
+        
+        # Create planned contributions from the contribution steps
+        self._create_planned_contributions_from_steps(
+            db,
+            db_obj.id,
+            db_obj.contribution_plan
+        )
+        
         return db_obj
 
     def create_insurance_pension(
@@ -188,14 +291,23 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
     ) -> Decimal:
         """
         Calculate how many ETF units can be bought for a given amount on a specific date.
-        Uses the ETF price from that date for the calculation.
+        If no price is available for the exact date, uses the next available price.
         """
-        # Get the ETF price for the contribution date
-        price = etf_crud.get_price_for_date(db, etf_id=etf_id, date=contribution_date)
+        # Get the ETF price for the contribution date or the next available date
+        price = (
+            db.query(ETFPrice)
+            .filter(
+                ETFPrice.etf_id == etf_id,
+                ETFPrice.date >= contribution_date
+            )
+            .order_by(ETFPrice.date)  # Get the earliest date after or equal to contribution_date
+            .first()
+        )
+        
         if not price:
             raise HTTPException(
                 status_code=400,
-                detail=f"No price found for ETF {etf_id} on {contribution_date}"
+                detail=f"No price found for ETF {etf_id} on or after {contribution_date}"
             )
             
         # Calculate units (amount in EUR / price in EUR)
@@ -256,10 +368,16 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         )
 
     def get_pension_with_details(
-        self, db: Session, *, skip: int = 0, limit: int = 100, filters: Dict = None
+        self, db: Session, *, skip: int = 0, limit: int = 100, filters: Dict = None, include_historical_prices: bool = False
     ) -> List[BasePension]:
         """
-        Get pensions with their type-specific details using polymorphic loading
+        Get pensions with their type-specific details using polymorphic loading.
+        
+        Args:
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            filters: Dictionary of field-value pairs to filter by
+            include_historical_prices: Whether to include historical ETF prices (defaults to False)
         """
         query = db.query(BasePension)
         
@@ -268,10 +386,17 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
                 query = query.filter(getattr(BasePension, field) == value)
         
         # For ETF pensions, load the ETF relationship and contribution plan
-        query = query.options(
-            selectinload(ETFPension.etf),
-            selectinload(BasePension.contribution_plan)
-        )
+        if include_historical_prices:
+            query = query.options(
+                selectinload(ETFPension.etf).selectinload(ETF.historical_prices),
+                selectinload(BasePension.contribution_plan)
+            )
+        else:
+            # Only load the ETF basic info and contribution plan when not including historical prices
+            query = query.options(
+                selectinload(ETFPension.etf),
+                selectinload(BasePension.contribution_plan)
+            )
         
         return query.offset(skip).limit(limit).all()
 
@@ -437,5 +562,137 @@ class CRUDPension(CRUDBase[BasePension, PensionBase, PensionBase]):
         db.commit()
         db.refresh(contribution)
         return contribution
+
+    def get_planned_contributions(
+        self,
+        db: Session,
+        *,
+        pension_id: int,
+        end_date: date = None
+    ) -> List[PensionContribution]:
+        """
+        Get all planned contributions for a pension up to a specific date.
+        If no end_date is provided, uses current date.
+        Only returns contributions that are still in PLANNED status.
+        """
+        if end_date is None:
+            end_date = date.today()
+
+        return (
+            db.query(PensionContribution)
+            .filter(
+                PensionContribution.pension_id == pension_id,
+                PensionContribution.status == ContributionStatus.PLANNED,
+                PensionContribution.date <= end_date
+            )
+            .order_by(PensionContribution.date)
+            .all()
+        )
+
+    def realize_historical_contributions(
+        self,
+        db: Session,
+        *,
+        pension_id: int,
+        end_date: date = None
+    ) -> List[PensionContribution]:
+        """
+        Realize all planned contributions up to a specific date.
+        If no end_date is provided, uses current date.
+        
+        For each contribution:
+        1. Calculates units based on historical prices (using next available price if needed)
+        2. Updates contribution status to REALIZED
+        3. Creates ETF allocations
+        4. Updates pension's total units and current value
+        
+        Returns the list of realized contributions.
+        """
+        # Get the pension and verify it's an ETF pension
+        pension = db.query(ETFPension).filter(ETFPension.id == pension_id).first()
+        if not pension:
+            raise HTTPException(
+                status_code=404,
+                detail="ETF Pension not found"
+            )
+            
+        # Get all planned contributions up to end_date
+        planned_contributions = self.get_planned_contributions(
+            db,
+            pension_id=pension_id,
+            end_date=end_date
+        )
+        
+        realized_contributions = []
+        total_new_units = Decimal('0')
+        
+        for contribution in planned_contributions:
+            try:
+                # Get the actual price date that will be used
+                price = (
+                    db.query(ETFPrice)
+                    .filter(
+                        ETFPrice.etf_id == pension.etf_id,
+                        ETFPrice.date >= contribution.date
+                    )
+                    .order_by(ETFPrice.date)
+                    .first()
+                )
+                
+                if not price:
+                    # Skip if no price is available at all
+                    continue
+                
+                # Calculate units for this contribution
+                units = self._calculate_etf_units(
+                    db,
+                    pension.etf_id,
+                    Decimal(str(contribution.amount)),
+                    contribution.date
+                )
+                
+                # Create ETF allocation
+                allocation = ETFAllocation(
+                    contribution_id=contribution.id,
+                    etf_id=pension.etf_id,
+                    amount=contribution.amount,
+                    units_bought=units
+                )
+                
+                # Update contribution status and note
+                contribution.status = ContributionStatus.REALIZED
+                note_parts = []
+                if contribution.note:
+                    note_parts.append(contribution.note)
+                    
+                if price.date > contribution.date:
+                    note_parts.append(f"Realized using price from {price.date}")
+                else:
+                    note_parts.append("Automatically realized")
+                    
+                contribution.note = " - ".join(note_parts)
+                
+                # Add allocation to contribution
+                contribution.etf_allocations.append(allocation)
+                
+                total_new_units += units
+                realized_contributions.append(contribution)
+                
+            except HTTPException as e:
+                # If we can't get price data at all, skip it
+                continue
+                
+        if realized_contributions:
+            # Update pension's total units
+            pension.total_units += total_new_units
+            
+            # Update current value based on latest ETF price
+            latest_price = etf_crud.get_latest_price(db, etf_id=pension.etf_id)
+            if latest_price:
+                pension.current_value = pension.total_units * Decimal(str(latest_price.price))
+            
+            db.commit()
+            
+        return realized_contributions
 
 pension_crud = CRUDPension(BasePension)

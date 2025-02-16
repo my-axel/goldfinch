@@ -23,6 +23,7 @@ import { PensionDialogRouter } from "./PensionDialogRouter"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
 import { ContributionFrequency } from '@/frontend/types/pension'
 import { OneTimeInvestmentModal } from "./OneTimeInvestmentModal"
+import { AddPensionDialog } from "./AddPensionDialog"
 
 interface DialogState {
   open: boolean
@@ -236,6 +237,20 @@ function PensionCard({
 }
 
 /**
+ * Empty card with plus sign to add a new pension for a specific member
+ */
+function AddPensionCard({ onClick }: { onClick: () => void }) {
+  return (
+    <Card className="flex flex-col items-center justify-center min-h-[140px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+      <CardContent className="flex flex-col items-center justify-center py-6 w-full">
+        <PlusCircle className="h-6 w-6 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Add New Pension Plan</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+/**
  * Displays pension plans grouped by household member
  */
 function MemberPensionGroup({
@@ -249,13 +264,12 @@ function MemberPensionGroup({
   onEdit: (pension: Pension) => void
   onDelete: (id: number) => void
 }) {
-  const memberPensions = pensions.filter(p => p.member_id === parseInt(member.id.toString()))
-  
-  if (memberPensions.length === 0) return null
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const memberPensions = pensions.filter(pension => pension.member_id === member.id)
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">{formatMemberName(member)}</h2>
+      <h3 className="text-lg font-semibold">{formatMemberName(member)}</h3>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {memberPensions.map((pension) => (
           <PensionCard
@@ -265,7 +279,15 @@ function MemberPensionGroup({
             onDelete={onDelete}
           />
         ))}
+        <AddPensionCard 
+          onClick={() => setShowAddDialog(true)} 
+        />
       </div>
+      <AddPensionDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        memberId={String(member.id)}
+      />
     </div>
   )
 }

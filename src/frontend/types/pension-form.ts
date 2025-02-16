@@ -26,23 +26,28 @@ type BaseFormData = {
   name: string
   member_id: string
   initial_capital: number
+  start_date: Date
 }
 
 /**
  * Complete form data type with pension-specific fields
  * Uses discriminated union based on pension type to ensure type safety
  */
-export type FormData = BaseFormData & (
+export type FormData = (
   | { 
       type: PensionType.ETF_PLAN
       etf_id: string  // Single ETF instead of allocation
+      is_existing_investment: boolean
+      existing_units: number  // Changed from optional to required with default 0
+      reference_date: Date    // Changed from optional to required with default current date
+      realize_historical_contributions: boolean  // Whether to automatically realize past contributions
+      initialization_method: "none" | "existing" | "historical"  // The selected initialization method
       contribution_plan: ContributionStep[]
     }
   | { 
       type: PensionType.INSURANCE
       provider: string
       contract_number: string
-      start_date: Date
       guaranteed_interest: number
       expected_return: number
     }
@@ -50,8 +55,7 @@ export type FormData = BaseFormData & (
       type: PensionType.COMPANY
       employer: string
       vesting_period: number
-      start_date: Date
-      matching_percentage?: number
-      max_employer_contribution?: number
+      matching_percentage: number        // Changed from optional to required with default 0
+      max_employer_contribution: number  // Changed from optional to required with default 0
     }
-)
+) & BaseFormData

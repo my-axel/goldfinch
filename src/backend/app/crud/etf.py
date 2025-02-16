@@ -199,17 +199,18 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         ).all()
 
     def get_price_for_date(
-        self, db: Session, *, etf_id: str, date: date
+        self, db: Session, *, etf_id: str, date: Optional[date] = None
     ) -> Optional[ETFPrice]:
-        """Get the ETF price for a specific date."""
-        return (
-            db.query(ETFPrice)
-            .filter(
-                ETFPrice.etf_id == etf_id,
-                ETFPrice.date == date
-            )
-            .first()
-        )
+        """Get the ETF price for a specific date.
+        If no date is provided or no price is found for the exact date,
+        returns the most recent price before that date.
+        """
+        query = db.query(ETFPrice).filter(ETFPrice.etf_id == etf_id)
+        
+        if date is not None:
+            query = query.filter(ETFPrice.date <= date)
+            
+        return query.order_by(ETFPrice.date.desc()).first()
 
     def get_latest_price(
         self, db: Session, *, etf_id: str

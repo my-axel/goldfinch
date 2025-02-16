@@ -10,6 +10,7 @@ import { useHousehold } from "@/frontend/context/HouseholdContext"
 
 interface BasePensionFieldsProps {
   form: UseFormReturn<FormData>
+  disableMemberSelection?: boolean
 }
 
 /**
@@ -18,11 +19,11 @@ interface BasePensionFieldsProps {
  * 
  * Fields:
  * - Name
- * - Member selection
+ * - Member selection (can be disabled if member is pre-selected)
  * - Initial capital
  * - Start date
  */
-export function BasePensionFields({ form }: BasePensionFieldsProps) {
+export function BasePensionFields({ form, disableMemberSelection }: BasePensionFieldsProps) {
   const { members, isLoading, error } = useHousehold()
 
   return (
@@ -47,7 +48,11 @@ export function BasePensionFields({ form }: BasePensionFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Member</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select 
+              onValueChange={field.onChange} 
+              defaultValue={field.value}
+              disabled={disableMemberSelection}
+            >
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder={isLoading ? "Loading..." : "Select member"} />

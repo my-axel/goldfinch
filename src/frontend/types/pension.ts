@@ -131,6 +131,10 @@ export interface ETFPension extends BasePension {
   type: PensionType.ETF_PLAN
   etf_id: string
   etf?: ETF
+  is_existing_investment: boolean
+  existing_units?: number
+  reference_date?: Date
+  realize_historical_contributions?: boolean  // Whether to automatically realize past contributions
   contribution_plan: ContributionStep[]
 }
 

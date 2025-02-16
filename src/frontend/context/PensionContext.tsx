@@ -43,6 +43,7 @@ interface PensionContextType {
     investment_date: string, 
     note?: string 
   }) => Promise<void>
+  realizeHistoricalContributions: (pensionId: number) => Promise<void>
 }
 
 const PensionContext = createContext<PensionContextType | undefined>(undefined)
@@ -54,7 +55,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   const [contributions, setContributions] = useState<PensionContribution[]>([])
 
   const fetchPensions = useCallback(async (memberId?: number) => {
-    const url = memberId ? `/pension?member_id=${memberId}` : '/pension'
+    const url = memberId ? `/pension?member_id=${memberId}&include_historical_prices=false` : '/pension?include_historical_prices=false'
     const response = await get<Pension[]>(url)
     setPensions(response.map(p => ({
       ...p,
@@ -70,7 +71,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   }, [get])
 
   const fetchPension = useCallback(async (id: number) => {
-    const response = await get<Pension>(`/pension/${id}`)
+    const response = await get<Pension>(`/pension/${id}?include_historical_prices=true`)
     setSelectedPension({
       ...response,
       start_date: new Date(response.start_date),
@@ -84,32 +85,71 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     })
   }, [get])
 
-  const createEtfPension = useCallback(async (pension: Omit<ETFPension, 'id' | 'current_value'>) => {
+  const fetchContributions = useCallback(async (pensionId: number) => {
+    const response = await get<PensionContribution[]>(`/pension/${pensionId}/contributions`)
+    setContributions(response)
+  }, [get])
+
+  const realizeHistoricalContributions = useCallback(async (pensionId: number) => {
     try {
-      // Send all data to backend and let it handle ETF creation if needed
-      await post<Pension>('/pension/etf', {
-        ...pension,
+      await post<PensionContribution[]>(`/pension/${pensionId}/realize-historical`, {})
+      await fetchPension(pensionId)
+      await fetchContributions(pensionId)
+      toast.success('Success', {
+        description: 'Historical contributions have been realized'
+      })
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to realize historical contributions'
+      })
+      throw err
+    }
+  }, [post, fetchPension, fetchContributions])
+
+  const createEtfPension = useCallback(async (pension: Omit<ETFPension, 'id' | 'current_value'>): Promise<void> => {
+    try {
+      // Extract only the base fields we always need
+      const pensionData = {
+        type: pension.type,
+        name: pension.name,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: pension.start_date.toISOString().split('T')[0],
         initial_capital: Number(pension.initial_capital),
         current_value: Number(pension.initial_capital),
+        etf_id: pension.etf_id,
+        is_existing_investment: pension.is_existing_investment,
+        realize_historical_contributions: pension.realize_historical_contributions,
         contribution_plan: (pension.contribution_plan || []).map((step: ContributionStep) => ({
           amount: Number(step.amount),
           frequency: step.frequency,
           start_date: step.start_date.toISOString().split('T')[0],
           end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
         }))
-      })
+      }
+
+      // Only include existing investment fields if is_existing_investment is true
+      if (pension.is_existing_investment) {
+        Object.assign(pensionData, {
+          existing_units: pension.existing_units,
+          reference_date: pension.reference_date?.toISOString().split('T')[0]
+        })
+      }
       
-      fetchPensions()
+      const { id } = await post<Pension>('/pension/etf', pensionData)
+      
+      // If historical contributions should be realized, do it after creating the pension
+      if (pensionData.realize_historical_contributions && id) {
+        await realizeHistoricalContributions(id)
+      }
+      
+      await fetchPensions()
     } catch (err) {
-      console.error('Failed to create ETF pension:', err)
       toast.error('Error', {
         description: 'Failed to create ETF pension'
       })
       throw err
     }
-  }, [post, fetchPensions])
+  }, [post, fetchPensions, realizeHistoricalContributions])
 
   const createInsurancePension = useCallback(async (pension: Omit<InsurancePension, 'id' | 'current_value'>) => {
     await post<Pension>('/pension/insurance', {
@@ -135,11 +175,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [del, fetchPensions, selectedPension])
 
-  const fetchContributions = useCallback(async (pensionId: number) => {
-    const response = await get<PensionContribution[]>(`/pension/${pensionId}/contributions`)
-    setContributions(response)
-  }, [get])
-
   const addOneTimeInvestment = useCallback(async (
     pensionId: number,
     data: { amount: number, investment_date: string, note?: string }
@@ -153,7 +188,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       await fetchPension(pensionId)
       await fetchContributions(pensionId)
     } catch (err) {
-      console.error('Failed to add one-time investment:', err)
       toast.error('Error', {
         description: 'Failed to add one-time investment'
       })
@@ -181,7 +215,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         fetchPension(id)
       }
     } catch (err) {
-      console.error('Failed to update ETF pension:', err)
       toast.error('Error', {
         description: 'Failed to update ETF pension'
       })
@@ -205,7 +238,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         fetchPension(id)
       }
     } catch (err) {
-      console.error('Failed to update insurance pension:', err)
       toast.error('Error', {
         description: 'Failed to update insurance pension'
       })
@@ -230,7 +262,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         fetchPension(id)
       }
     } catch (err) {
-      console.error('Failed to update company pension:', err)
       toast.error('Error', {
         description: 'Failed to update company pension'
       })
@@ -256,6 +287,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       updateEtfPension,
       updateInsurancePension,
       updateCompanyPension,
+      realizeHistoricalContributions
     }}>
       {children}
     </PensionContext.Provider>

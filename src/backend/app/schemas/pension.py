@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, validator
 from datetime import date
 from typing import Optional, List
 from enum import Enum
-from app.schemas.etf import ETFResponse
+from app.schemas.etf import ETFResponse, ETFResponseWithHistory
 from decimal import Decimal
 
 class ContributionFrequency(str, Enum):
@@ -124,6 +124,12 @@ class ETFPensionResponse(PensionBase):
     etf_id: str
     etf: Optional[ETFResponse] = None
     contribution_plan: List[ContributionStepResponse] = []
+
+    class Config:
+        from_attributes = True
+
+class ETFPensionResponseWithHistory(ETFPensionResponse):
+    etf: Optional[ETFResponseWithHistory] = None
 
     class Config:
         from_attributes = True

@@ -32,7 +32,10 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
       start_date: new Date(pension.start_date),
       ...(pension.type === PensionType.ETF_PLAN && {
         etf_id: pension.etf_id,
-        contribution_plan: pension.contribution_plan?.map((step: { amount: number; frequency: ContributionFrequency; start_date: string; end_date?: string | null }) => ({
+        is_existing_investment: pension.is_existing_investment,
+        existing_units: pension.existing_units || 0,
+        reference_date: pension.reference_date ? new Date(pension.reference_date) : new Date(),
+        contribution_plan: pension.contribution_plan?.map(step => ({
           amount: step.amount,
           frequency: step.frequency,
           start_date: new Date(step.start_date),
@@ -48,10 +51,10 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
       ...(pension.type === PensionType.COMPANY && {
         employer: pension.employer,
         vesting_period: pension.vesting_period,
-        matching_percentage: pension.matching_percentage,
-        max_employer_contribution: pension.max_employer_contribution
+        matching_percentage: pension.matching_percentage || 0,
+        max_employer_contribution: pension.max_employer_contribution || 0
       })
-    }
+    } as FormData
   })
 
   // Reset form when pension changes
@@ -64,6 +67,9 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
       start_date: new Date(pension.start_date),
       ...(pension.type === PensionType.ETF_PLAN && {
         etf_id: pension.etf_id,
+        is_existing_investment: pension.is_existing_investment,
+        existing_units: pension.existing_units,
+        reference_date: pension.reference_date,
         contribution_plan: pension.contribution_plan?.map((step: { amount: number; frequency: ContributionFrequency; start_date: string; end_date?: string | null }) => ({
           amount: step.amount,
           frequency: step.frequency,
@@ -115,6 +121,9 @@ export function EditPensionDialog({ open, onOpenChange, pension }: EditPensionDi
             initial_capital: Number(data.initial_capital),
             start_date: data.start_date,
             etf_id: data.etf_id,
+            is_existing_investment: data.is_existing_investment,
+            existing_units: data.existing_units,
+            reference_date: data.reference_date,
             contribution_plan: data.contribution_plan
           })
           break

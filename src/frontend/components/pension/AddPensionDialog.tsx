@@ -17,6 +17,7 @@ import { Form } from "@/frontend/components/ui/form"
 interface AddPensionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  memberId?: string
 }
 
 /**
@@ -24,20 +25,25 @@ interface AddPensionDialogProps {
  * Step 1: Select type and fill base fields
  * Step 2: Fill type-specific fields
  */
-export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) {
+export function AddPensionDialog({ open, onOpenChange, memberId }: AddPensionDialogProps) {
   const [step, setStep] = useState(1)
   const [pensionType, setPensionType] = useState<PensionType | null>(null)
-  const { createEtfPension, createInsurancePension, createCompanyPension } = usePension()
+  const { createEtfPension, createInsurancePension, createCompanyPension, realizeHistoricalContributions } = usePension()
 
   const form = useForm<FormData>({
     defaultValues: {
-      type: undefined,
+      type: PensionType.ETF_PLAN,
       name: "",
-      member_id: "",
+      member_id: memberId || "",
       initial_capital: 0,
       start_date: new Date(),
       // ETF Plan fields
       etf_id: "",
+      is_existing_investment: false,
+      existing_units: 0,
+      reference_date: new Date(),
+      realize_historical_contributions: false,
+      initialization_method: "none",
       contribution_plan: [],
       // Insurance fields
       provider: "",
@@ -47,8 +53,8 @@ export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) 
       // Company fields
       employer: "",
       vesting_period: 0,
-      matching_percentage: undefined,
-      max_employer_contribution: undefined
+      matching_percentage: 0,
+      max_employer_contribution: 0
     }
   })
 
@@ -81,14 +87,26 @@ export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) 
         start_date: data.start_date
       }
 
+      let newPensionId: number | undefined
+
       switch (pensionType) {
         case PensionType.ETF_PLAN:
-          await createEtfPension({
+          const response = await createEtfPension({
             ...baseData,
             type: PensionType.ETF_PLAN,
             etf_id: data.etf_id,
-            contribution_plan: data.contribution_plan
+            is_existing_investment: data.is_existing_investment,
+            existing_units: data.existing_units,
+            reference_date: data.reference_date,
+            contribution_plan: data.contribution_plan,
+            realize_historical_contributions: data.initialization_method === "historical"
           })
+          newPensionId = response?.id
+          
+          // If historical contributions should be realized, do it after creating the pension
+          if (data.realize_historical_contributions && newPensionId) {
+            await realizeHistoricalContributions(newPensionId)
+          }
           break
         case PensionType.INSURANCE:
           await createInsurancePension({
@@ -164,7 +182,7 @@ export function AddPensionDialog({ open, onOpenChange }: AddPensionDialogProps) 
                       </SelectContent>
                     </Select>
                   </div>
-                  <BasePensionFields form={form} />
+                  <BasePensionFields form={form} disableMemberSelection={!!memberId} />
                 </div>
                 <div className="flex justify-end">
                   <Button 

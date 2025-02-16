@@ -100,6 +100,11 @@ class ETFResponse(BaseModel):
     one_year_return: float
     volatility_30d: float
     sharpe_ratio: float
+
+    class Config:
+        from_attributes = True
+
+class ETFResponseWithHistory(ETFResponse):
     historical_prices: List[ETFPriceResponse] = []
 
     class Config:

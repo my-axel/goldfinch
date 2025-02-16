@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional, Union
 from app.api.v1 import deps
@@ -9,6 +9,7 @@ from app.schemas.pension import (
     CompanyPensionCreate,
     ContributionBase,
     ETFPensionResponse,
+    ETFPensionResponseWithHistory,
     InsurancePensionResponse,
     CompanyPensionResponse,
     ETFPensionUpdate,
@@ -20,6 +21,7 @@ from app.schemas.pension import (
 from app.crud.pension import pension_crud
 import logging
 from decimal import Decimal, InvalidOperation
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -31,23 +33,46 @@ def get_pensions(
     skip: int = 0,
     limit: int = 100,
     member_id: Optional[int] = None,
+    include_historical_prices: bool = False,
 ):
     """
     Retrieve pensions with their type-specific details.
+    
+    Args:
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+        member_id: Optional member ID to filter by
+        include_historical_prices: Whether to include historical ETF prices (defaults to False)
     """
     filters = {"member_id": member_id} if member_id is not None else None
-    pensions = pension_crud.get_pension_with_details(db, skip=skip, limit=limit, filters=filters)
+    pensions = pension_crud.get_pension_with_details(
+        db, 
+        skip=skip, 
+        limit=limit, 
+        filters=filters,
+        include_historical_prices=include_historical_prices
+    )
     return pensions
 
-@router.get("/{pension_id}", response_model=Union[ETFPensionResponse, InsurancePensionResponse, CompanyPensionResponse])
+@router.get("/{pension_id}", response_model=Union[ETFPensionResponseWithHistory, InsurancePensionResponse, CompanyPensionResponse])
 def get_pension(
     pension_id: int,
+    include_historical_prices: bool = False,
     db: Session = Depends(deps.get_db)
 ):
     """
     Get a specific pension by ID with its type-specific details.
+    
+    Args:
+        pension_id: ID of the pension to retrieve
+        include_historical_prices: Whether to include historical ETF prices (defaults to False)
     """
-    pensions = pension_crud.get_pension_with_details(db, filters={"id": pension_id}, limit=1)
+    pensions = pension_crud.get_pension_with_details(
+        db, 
+        filters={"id": pension_id}, 
+        limit=1,
+        include_historical_prices=include_historical_prices
+    )
     if not pensions:
         raise HTTPException(status_code=404, detail="Pension not found")
     return pensions[0]
@@ -55,12 +80,18 @@ def get_pension(
 @router.post("/etf", response_model=ETFPensionResponse)
 def create_etf_pension(
     pension_in: ETFPensionCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(deps.get_db)
 ):
     """
     Create a new ETF-based pension plan.
+    The ETF's historical prices will be fetched asynchronously in the background.
     """
-    return pension_crud.create_etf_pension(db, obj_in=pension_in)
+    return pension_crud.create_etf_pension(
+        db, 
+        obj_in=pension_in,
+        background_tasks=background_tasks
+    )
 
 @router.post("/insurance", response_model=PensionResponse)
 def create_insurance_pension(
@@ -210,4 +241,43 @@ def update_company_pension(
         raise HTTPException(status_code=404, detail="Pension not found")
     if pension.type != PensionType.COMPANY:
         raise HTTPException(status_code=400, detail="Pension is not a company plan")
-    return pension_crud.update_company_pension(db, db_obj=pension, obj_in=pension_in) 
+    return pension_crud.update_company_pension(db, db_obj=pension, obj_in=pension_in)
+
+@router.post("/{pension_id}/realize-historical", response_model=List[ContributionBase])
+def realize_historical_contributions(
+    pension_id: int,
+    end_date: Optional[date] = None,
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Realize all planned contributions up to a specific date.
+    If no end_date is provided, uses current date.
+    
+    This will:
+    1. Find all planned contributions up to the specified date
+    2. Calculate units based on historical prices
+    3. Mark contributions as realized
+    4. Update pension's total units and current value
+    
+    Returns the list of realized contributions.
+    """
+    try:
+        logger.info(f"Realizing historical contributions for pension {pension_id} up to {end_date or 'today'}")
+        
+        realized = pension_crud.realize_historical_contributions(
+            db,
+            pension_id=pension_id,
+            end_date=end_date
+        )
+        
+        return realized
+        
+    except HTTPException as e:
+        logger.error(f"HTTP error realizing historical contributions: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error realizing historical contributions: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        ) 

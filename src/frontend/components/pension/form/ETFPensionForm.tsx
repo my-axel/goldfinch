@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/u
 import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/components/ui/command"
 import { useState } from "react"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
+import { RadioGroup, RadioGroupItem } from "@/frontend/components/ui/radio-group"
 
 interface ETFPensionFormProps {
   form: UseFormReturn<FormData>
@@ -31,19 +32,30 @@ export function ETFPensionForm({ form, isEditing = false }: ETFPensionFormProps)
   const [open, setOpen] = useState<number | null>(null)
   const { members } = useHousehold()
 
-  const getLatestEndDate = () => {
-    const existingDates = fields
-      .map(field => form.getValues(`contribution_plan`)[fields.indexOf(field)]?.end_date)
-      .filter(Boolean) as Date[]
+  // Watch initialization method to conditionally show fields
+  const isExistingInvestment = form.watch("is_existing_investment")
 
-    if (existingDates.length === 0) return new Date()
-
-    return new Date(Math.max(...existingDates.map(date => date.getTime())))
+  const handleInitializationMethodChange = (value: string) => {
+    if (value === "existing") {
+      form.setValue("is_existing_investment", true)
+      form.setValue("realize_historical_contributions", false)
+    } else if (value === "historical") {
+      form.setValue("is_existing_investment", false)
+      form.setValue("realize_historical_contributions", true)
+      // Reset existing investment fields
+      form.setValue("existing_units", 0)
+      form.setValue("reference_date", new Date())
+    } else {
+      form.setValue("is_existing_investment", false)
+      form.setValue("realize_historical_contributions", false)
+      // Reset existing investment fields
+      form.setValue("existing_units", 0)
+      form.setValue("reference_date", new Date())
+    }
   }
 
   const handleAddContribution = () => {
-    const startDate = getLatestEndDate()
-    startDate.setDate(startDate.getDate() + 1)
+    const startDate = new Date()
 
     append({
       amount: 0,
@@ -98,6 +110,116 @@ export function ETFPensionForm({ form, isEditing = false }: ETFPensionFormProps)
           </FormItem>
         )}
       />
+
+      {!isEditing && (
+        <div className="space-y-4">
+          <div className="rounded-md border p-4">
+            <FormLabel className="mb-4 block">Initialization Method</FormLabel>
+            <FormField
+              control={form.control}
+              name="initialization_method"
+              defaultValue="none"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={value => {
+                        field.onChange(value)
+                        handleInitializationMethodChange(value)
+                      }}
+                      className="space-y-4"
+                      defaultValue="none"
+                    >
+                      <FormItem className="flex items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="none" />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Start fresh</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Start with no existing investment
+                          </p>
+                        </div>
+                      </FormItem>
+                      <FormItem className="flex items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="existing" />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Existing investment</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Enter the number of units you already own
+                          </p>
+                        </div>
+                      </FormItem>
+                      <FormItem className="flex items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="historical" />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Realize historical contributions</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Automatically realize all contributions in the past based on historical prices
+                          </p>
+                        </div>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {isExistingInvestment && (
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="existing_units"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Units Owned</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.000001"
+                        min="0"
+                        placeholder="0.000000"
+                        value={field.value || 0}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="reference_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reference Date</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          // Create a new date at midnight UTC to ensure clean date
+                          const date = new Date(e.target.value);
+                          date.setUTCHours(0, 0, 0, 0);
+                          field.onChange(date);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
