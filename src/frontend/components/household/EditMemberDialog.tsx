@@ -13,7 +13,7 @@ interface EditMemberDialogProps {
   member: HouseholdMember
   open: boolean
   onOpenChange: (open: boolean) => void
-  onEdit: (id: string, updatedMember: Omit<HouseholdMember, "id">) => void
+  onEdit: (id: number, updatedMember: Omit<HouseholdMember, "id">) => void
 }
 
 /**

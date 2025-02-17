@@ -1,7 +1,9 @@
 from app.db.base_class import Base
 
 # Import all models here for SQLAlchemy to recognize them
-from app.models.pension import BasePension, ETFPension, InsurancePension, CompanyPension, PensionContribution, ETFAllocation  # noqa
+from app.models.pension_etf import PensionETF, PensionETFContributionPlanStep, PensionETFContributionPlan, PensionETFContributionHistory, PensionETFAllocationPlan, PensionETFAllocationHistory  # noqa
+from app.models.pension_insurance import PensionInsurance, PensionInsuranceContributionPlanStep, PensionInsuranceContributionPlan, PensionInsuranceContributionHistory  # noqa
+from app.models.pension_company import PensionCompany, PensionCompanyContributionPlanStep, PensionCompanyContributionPlan, PensionCompanyContributionHistory  # noqa
 from app.models.etf import ETF, ETFPrice  # noqa
 from app.models.household import HouseholdMember  # noqa
 from app.models.exchange_rate import ExchangeRate  # noqa

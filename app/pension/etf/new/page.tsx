@@ -1,0 +1,107 @@
+"use client"
+
+import { useForm } from "react-hook-form"
+import { useRouter } from "next/navigation"
+import { ETFPensionForm } from "@/frontend/components/pension/form/ETFPensionForm"
+import { Form } from "@/frontend/components/ui/form"
+import { Button } from "@/frontend/components/ui/button"
+import { FormData } from "@/frontend/types/pension-form"
+import { PensionType } from "@/frontend/types/pension"
+import { usePension } from "@/frontend/context/PensionContext"
+import { toast } from "sonner"
+
+export default function NewETFPensionPage() {
+  const router = useRouter()
+  const { createEtfPension, realizeHistoricalContributions } = usePension()
+
+  const form = useForm<FormData>({
+    defaultValues: {
+      type: PensionType.ETF_PLAN,
+      name: "",
+      member_id: "",
+      initial_capital: 0,
+      start_date: new Date(),
+      // ETF Plan fields
+      etf_id: "",
+      is_existing_investment: false,
+      existing_units: 0,
+      reference_date: new Date(),
+      realize_historical_contributions: false,
+      initialization_method: "none",
+      contribution_plan: [],
+    }
+  })
+
+  const handleSubmit = async (data: FormData) => {
+    try {
+      const memberId = parseInt(data.member_id)
+      if (isNaN(memberId)) {
+        toast.error("Error", { description: "Invalid member ID" })
+        return
+      }
+
+      const response = await createEtfPension({
+        name: data.name,
+        member_id: memberId,
+        initial_capital: Number(data.initial_capital),
+        start_date: data.start_date,
+        type: PensionType.ETF_PLAN,
+        etf_id: data.etf_id,
+        is_existing_investment: data.is_existing_investment,
+        existing_units: data.existing_units,
+        reference_date: data.reference_date,
+        contribution_plan: data.contribution_plan,
+        realize_historical_contributions: data.initialization_method === "historical"
+      })
+
+      const newPensionId = response?.id
+      
+      // If historical contributions should be realized, do it after creating the pension
+      if (data.realize_historical_contributions && newPensionId) {
+        await realizeHistoricalContributions(newPensionId)
+      }
+
+      toast.success("Success", { description: "ETF pension created successfully" })
+      router.push("/pension")
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to create pension:', error)
+      // Error is handled by the context
+    }
+  }
+
+  return (
+    <div className="container max-w-2xl mx-auto py-10">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Create ETF Pension Plan</h1>
+          <p className="text-muted-foreground mt-2">
+            Set up a new ETF-based pension plan. You&apos;ll need to provide basic information
+            and set up your contribution plan.
+          </p>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+            <div className="space-y-8 p-6 bg-card rounded-lg border">
+              <ETFPensionForm form={form} />
+            </div>
+
+            <div className="flex justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                Create Pension
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </div>
+  )
+} 

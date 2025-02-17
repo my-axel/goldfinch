@@ -7,7 +7,6 @@ import {
   type ETFPension,
   type InsurancePension,
   type CompanyPension,
-  type ContributionStep,
   PensionType
 } from '@/frontend/types/pension'
 import { toast } from 'sonner'
@@ -55,44 +54,148 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   const [contributions, setContributions] = useState<PensionContribution[]>([])
 
   const fetchPensions = useCallback(async (memberId?: number) => {
-    const url = memberId ? `/pension?member_id=${memberId}&include_historical_prices=false` : '/pension?include_historical_prices=false'
-    const response = await get<Pension[]>(url)
-    setPensions(response.map(p => ({
-      ...p,
-      start_date: new Date(p.start_date),
-      ...(p.type === PensionType.ETF_PLAN && {
-        contribution_plan: (p as ETFPension).contribution_plan?.map((step: ContributionStep) => ({
-          ...step,
-          start_date: new Date(step.start_date),
-          end_date: step.end_date ? new Date(step.end_date) : undefined
-        })) || []
+    try {
+      const [etfResponse, insuranceResponse, companyResponse] = await Promise.all([
+        get<ETFPension[]>(`/pension/etf${memberId ? `?member_id=${memberId}` : ''}`),
+        get<InsurancePension[]>(`/pension/insurance${memberId ? `?member_id=${memberId}` : ''}`),
+        get<CompanyPension[]>(`/pension/company${memberId ? `?member_id=${memberId}` : ''}`)
+      ])
+
+      const allPensions = [
+        ...etfResponse.map(p => ({
+          ...p,
+          start_date: new Date(p.start_date),
+          contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
+            ...step,
+            start_date: new Date(step.start_date),
+            end_date: step.end_date ? new Date(step.end_date) : undefined
+          })) || []
+        })),
+        ...insuranceResponse.map(p => ({
+          ...p,
+          start_date: new Date(p.start_date),
+          contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
+            ...step,
+            start_date: new Date(step.start_date),
+            end_date: step.end_date ? new Date(step.end_date) : undefined
+          })) || []
+        })),
+        ...companyResponse.map(p => ({
+          ...p,
+          start_date: new Date(p.start_date),
+          contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
+            ...step,
+            start_date: new Date(step.start_date),
+            end_date: step.end_date ? new Date(step.end_date) : undefined
+          })) || []
+        }))
+      ]
+
+      setPensions(allPensions)
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to fetch pensions'
       })
-    })))
+      throw err
+    }
   }, [get])
 
   const fetchPension = useCallback(async (id: number) => {
-    const response = await get<Pension>(`/pension/${id}?include_historical_prices=true`)
-    setSelectedPension({
-      ...response,
-      start_date: new Date(response.start_date),
-      ...(response.type === PensionType.ETF_PLAN && {
-        contribution_plan: (response as ETFPension).contribution_plan?.map((step: ContributionStep) => ({
+    try {
+      // First, find the pension type from our local state
+      const pension = pensions.find(p => p.id === id)
+      if (!pension) {
+        throw new Error('Pension not found')
+      }
+
+      // Then fetch from the appropriate endpoint
+      let response: Pension
+      switch (pension.type) {
+        case PensionType.ETF_PLAN:
+          response = await get<ETFPension>(`/pension/etf/${id}`)
+          break
+        case PensionType.INSURANCE:
+          response = await get<InsurancePension>(`/pension/insurance/${id}`)
+          break
+        case PensionType.COMPANY:
+          response = await get<CompanyPension>(`/pension/company/${id}`)
+          break
+        default:
+          throw new Error('Unknown pension type')
+      }
+
+      setSelectedPension({
+        ...response,
+        start_date: new Date(response.start_date),
+        contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
           ...step,
           start_date: new Date(step.start_date),
           end_date: step.end_date ? new Date(step.end_date) : undefined
         })) || []
       })
-    })
-  }, [get])
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to fetch pension details'
+      })
+      throw err
+    }
+  }, [get, pensions])
 
   const fetchContributions = useCallback(async (pensionId: number) => {
-    const response = await get<PensionContribution[]>(`/pension/${pensionId}/contributions`)
-    setContributions(response)
-  }, [get])
+    try {
+      // First, find the pension type from our local state
+      const pension = pensions.find(p => p.id === pensionId)
+      if (!pension) {
+        throw new Error('Pension not found')
+      }
+
+      // Then fetch from the appropriate endpoint
+      let response: PensionContribution[]
+      switch (pension.type) {
+        case PensionType.ETF_PLAN:
+          response = await get<PensionContribution[]>(`/pension/etf/${pensionId}/contributions`)
+          break
+        case PensionType.INSURANCE:
+          response = await get<PensionContribution[]>(`/pension/insurance/${pensionId}/contributions`)
+          break
+        case PensionType.COMPANY:
+          response = await get<PensionContribution[]>(`/pension/company/${pensionId}/contributions`)
+          break
+        default:
+          throw new Error('Unknown pension type')
+      }
+      setContributions(response)
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to fetch contributions'
+      })
+      throw err
+    }
+  }, [get, pensions])
 
   const realizeHistoricalContributions = useCallback(async (pensionId: number) => {
     try {
-      await post<PensionContribution[]>(`/pension/${pensionId}/realize-historical`, {})
+      // First, find the pension type from our local state
+      const pension = pensions.find(p => p.id === pensionId)
+      if (!pension) {
+        throw new Error('Pension not found')
+      }
+
+      // Then use the appropriate endpoint
+      switch (pension.type) {
+        case PensionType.ETF_PLAN:
+          await post(`/pension/etf/${pensionId}/realize-historical`, {})
+          break
+        case PensionType.INSURANCE:
+          await post(`/pension/insurance/${pensionId}/realize-historical`, {})
+          break
+        case PensionType.COMPANY:
+          await post(`/pension/company/${pensionId}/realize-historical`, {})
+          break
+        default:
+          throw new Error('Unknown pension type')
+      }
+
       await fetchPension(pensionId)
       await fetchContributions(pensionId)
       toast.success('Success', {
@@ -104,44 +207,24 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       })
       throw err
     }
-  }, [post, fetchPension, fetchContributions])
+  }, [post, fetchPension, fetchContributions, pensions])
 
   const createEtfPension = useCallback(async (pension: Omit<ETFPension, 'id' | 'current_value'>): Promise<void> => {
     try {
-      // Extract only the base fields we always need
       const pensionData = {
-        type: pension.type,
         name: pension.name,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
-        start_date: pension.start_date.toISOString().split('T')[0],
-        initial_capital: Number(pension.initial_capital),
-        current_value: Number(pension.initial_capital),
+        notes: pension.notes,
         etf_id: pension.etf_id,
-        is_existing_investment: pension.is_existing_investment,
-        realize_historical_contributions: pension.realize_historical_contributions,
-        contribution_plan: (pension.contribution_plan || []).map((step: ContributionStep) => ({
+        contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
           amount: Number(step.amount),
           frequency: step.frequency,
           start_date: step.start_date.toISOString().split('T')[0],
           end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
         }))
       }
-
-      // Only include existing investment fields if is_existing_investment is true
-      if (pension.is_existing_investment) {
-        Object.assign(pensionData, {
-          existing_units: pension.existing_units,
-          reference_date: pension.reference_date?.toISOString().split('T')[0]
-        })
-      }
       
-      const { id } = await post<Pension>('/pension/etf', pensionData)
-      
-      // If historical contributions should be realized, do it after creating the pension
-      if (pensionData.realize_historical_contributions && id) {
-        await realizeHistoricalContributions(id)
-      }
-      
+      await post<ETFPension>('/pension/etf', pensionData)
       await fetchPensions()
     } catch (err) {
       toast.error('Error', {
@@ -149,22 +232,64 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       })
       throw err
     }
-  }, [post, fetchPensions, realizeHistoricalContributions])
-
-  const createInsurancePension = useCallback(async (pension: Omit<InsurancePension, 'id' | 'current_value'>) => {
-    await post<Pension>('/pension/insurance', {
-      ...pension,
-      start_date: pension.start_date.toISOString()
-    } as Record<string, unknown>)
-    fetchPensions()
   }, [post, fetchPensions])
 
-  const createCompanyPension = useCallback(async (pension: Omit<CompanyPension, 'id' | 'current_value'>) => {
-    await post<Pension>('/pension/company', {
-      ...pension,
-      start_date: pension.start_date.toISOString()
-    } as Record<string, unknown>)
-    fetchPensions()
+  const createInsurancePension = useCallback(async (pension: Omit<InsurancePension, 'id' | 'current_value'>): Promise<void> => {
+    try {
+      const pensionData = {
+        name: pension.name,
+        member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
+        notes: pension.notes,
+        provider: pension.provider,
+        contract_number: pension.contract_number,
+        start_date: pension.start_date.toISOString().split('T')[0],
+        guaranteed_interest: Number(pension.guaranteed_interest),
+        expected_return: Number(pension.expected_return),
+        contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
+          amount: Number(step.amount),
+          frequency: step.frequency,
+          start_date: step.start_date.toISOString().split('T')[0],
+          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
+        }))
+      }
+      
+      await post<InsurancePension>('/pension/insurance', pensionData)
+      await fetchPensions()
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to create insurance pension'
+      })
+      throw err
+    }
+  }, [post, fetchPensions])
+
+  const createCompanyPension = useCallback(async (pension: Omit<CompanyPension, 'id' | 'current_value'>): Promise<void> => {
+    try {
+      const pensionData = {
+        name: pension.name,
+        member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
+        notes: pension.notes,
+        employer: pension.employer,
+        start_date: pension.start_date.toISOString().split('T')[0],
+        vesting_period: Number(pension.vesting_period),
+        matching_percentage: Number(pension.matching_percentage),
+        max_employer_contribution: Number(pension.max_employer_contribution),
+        contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
+          amount: Number(step.amount),
+          frequency: step.frequency,
+          start_date: step.start_date.toISOString().split('T')[0],
+          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
+        }))
+      }
+      
+      await post<CompanyPension>('/pension/company', pensionData)
+      await fetchPensions()
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to create company pension'
+      })
+      throw err
+    }
   }, [post, fetchPensions])
 
   const deletePension = useCallback(async (id: number) => {
@@ -202,7 +327,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: new Date(pension.start_date).toISOString().split('T')[0],
         initial_capital: Number(pension.initial_capital),
-        contribution_plan: (pension.contribution_plan || []).map((step: ContributionStep) => ({
+        contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
           amount: Number(step.amount),
           frequency: step.frequency,
           start_date: new Date(step.start_date).toISOString().split('T')[0],

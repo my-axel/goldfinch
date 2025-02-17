@@ -11,30 +11,34 @@ router = APIRouter()
 
 @router.get("", response_model=List[HouseholdMember])
 def read_members(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    members = household.get_members(db, skip=skip, limit=limit)
-    return members
+    try:
+        return household.get_multi(db, skip=skip, limit=limit)
+    except Exception as e:
+        # Log the error here if you have logging set up
+        return []
 
 @router.post("", response_model=HouseholdMember)
 def create_member(member: HouseholdMemberCreate, db: Session = Depends(get_db)):
-    return household.create_member(db, member)
+    return household.create(db=db, obj_in=member)
 
 @router.get("/{member_id}", response_model=HouseholdMember)
 def read_member(member_id: int, db: Session = Depends(get_db)):
-    db_member = household.get_member(db, member_id)
+    db_member = household.get(db=db, id=member_id)
     if db_member is None:
         raise HTTPException(status_code=404, detail="Member not found")
     return db_member
 
 @router.put("/{member_id}", response_model=HouseholdMember)
 def update_member(member_id: int, member: HouseholdMemberCreate, db: Session = Depends(get_db)):
-    db_member = household.update_member(db, member_id, member)
+    db_member = household.get(db=db, id=member_id)
     if db_member is None:
         raise HTTPException(status_code=404, detail="Member not found")
-    return db_member
+    return household.update(db=db, db_obj=db_member, obj_in=member)
 
 @router.delete("/{member_id}")
 def delete_member(member_id: int, db: Session = Depends(get_db)):
-    success = household.delete_member(db, member_id)
-    if not success:
+    db_member = household.get(db=db, id=member_id)
+    if db_member is None:
         raise HTTPException(status_code=404, detail="Member not found")
+    household.remove(db=db, id=member_id)
     return {"ok": True} 

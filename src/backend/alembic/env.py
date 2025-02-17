@@ -10,13 +10,25 @@ from app.core.config import settings
 from app.db.base_class import Base
 from app.models.etf import ETF, ETFPrice
 from app.models.household import HouseholdMember
-from app.models.pension import (
-    BasePension,
-    ETFPension,
-    InsurancePension,
-    CompanyPension,
-    PensionContribution,
-    ETFAllocation
+from app.models.pension_etf import (
+    PensionETF,
+    PensionETFContributionPlanStep,
+    PensionETFContributionPlan,
+    PensionETFContributionHistory,
+    PensionETFAllocationPlan,
+    PensionETFAllocationHistory
+)
+from app.models.pension_insurance import (
+    PensionInsurance,
+    PensionInsuranceContributionPlanStep,
+    PensionInsuranceContributionPlan,
+    PensionInsuranceContributionHistory
+)
+from app.models.pension_company import (
+    PensionCompany,
+    PensionCompanyContributionPlanStep,
+    PensionCompanyContributionPlan,
+    PensionCompanyContributionHistory
 )
 from app.models.exchange_rate import ExchangeRate
 

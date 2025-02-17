@@ -56,16 +56,6 @@ export interface HistoricalContribution {
   note?: string            // Optional note explaining overrides or special circumstances
 }
 
-/** 
- * Combines the forward-looking contribution plan with the historical
- * record of actual contributions. This allows tracking both what
- * was planned and what actually happened, including any deviations.
- */
-export interface ContributionPlan {
-  steps: ContributionStep[]              // Future contribution plans
-  historical_contributions: HistoricalContribution[]  // Past contributions
-}
-
 /**
  * TODO: Consider moving enums to shared backend/frontend constants
  * TODO: Add API response types for all interfaces
@@ -75,27 +65,7 @@ export interface ContributionPlan {
  */
 
 /** 
- * Base interface for all pension types. Contains common fields
- * that every pension plan must have, regardless of its specific type.
- * Specific pension types extend this with their unique features.
- * 
- * TODO: Update id type to match backend primary key type
- * TODO: Add foreign key constraints for member_id
- * TODO: Consider adding version tracking for updates
- */
-interface BasePension {
-  id: number
-  type: PensionType
-  name: string
-  member_id: number           // Links to household member
-  start_date: Date
-  initial_capital: number     // Initial investment amount
-  current_value: number       // Current total value of the pension
-  notes?: string
-}
-
-/** 
- * ETF-based pension plan. Extends BasePension with features specific
+ * ETF-based pension plan interface with features specific
  * to self-managed ETF portfolios.
  * 
  * TODO: Add ETF price update timestamp
@@ -127,15 +97,22 @@ export interface ETF {
   }>
 }
 
-export interface ETFPension extends BasePension {
+export interface ETFPension {
+  id: number
   type: PensionType.ETF_PLAN
+  name: string
+  member_id: number           // Links to household member
+  start_date: Date
+  initial_capital: number     // Initial investment amount
+  current_value: number       // Current total value of the pension
+  notes?: string
   etf_id: string
   etf?: ETF
   is_existing_investment: boolean
   existing_units?: number
   reference_date?: Date
   realize_historical_contributions?: boolean  // Whether to automatically realize past contributions
-  contribution_plan: ContributionStep[]
+  contribution_plan_steps: ContributionStep[]
 }
 
 /** 
@@ -143,12 +120,20 @@ export interface ETFPension extends BasePension {
  * features. Typically managed by an insurance company with specific
  * contractual terms and guarantees.
  */
-export interface InsurancePension extends BasePension {
+export interface InsurancePension {
+  id: number
   type: PensionType.INSURANCE
+  name: string
+  member_id: number           // Links to household member
+  start_date: Date
+  initial_capital: number     // Initial investment amount
+  current_value: number       // Current total value of the pension
+  notes?: string
   provider: string           // Insurance company name
   contract_number: string
   guaranteed_interest: number // Minimum guaranteed return
   expected_return: number    // Expected return including non-guaranteed portions
+  contribution_plan_steps: ContributionStep[]
 }
 
 /** 
@@ -156,12 +141,20 @@ export interface InsurancePension extends BasePension {
  * vesting rules. May include matching contributions up to a
  * certain percentage or amount.
  */
-export interface CompanyPension extends BasePension {
+export interface CompanyPension {
+  id: number
   type: PensionType.COMPANY
+  name: string
+  member_id: number           // Links to household member
+  start_date: Date
+  initial_capital: number     // Initial investment amount
+  current_value: number       // Current total value of the pension
+  notes?: string
   employer: string
   vesting_period: number                   // Years until fully vested
   matching_percentage?: number             // Percentage of employee contribution matched
   max_employer_contribution?: number       // Maximum employer contribution
+  contribution_plan_steps: ContributionStep[]
 }
 
 /** 

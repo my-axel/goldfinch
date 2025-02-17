@@ -9,7 +9,6 @@ from app.schemas.etf import (
     ETFUpdate,
     ETFPriceCreate,
     ETFPriceResponse,
-    ETF
 )
 from app.crud.etf import etf_crud
 import yfinance as yf
@@ -52,27 +51,21 @@ async def search_yfinance(
             print(f"Second attempt failed: {str(e2)}")
         return []
 
-@router.get("", response_model=List[ETF])
-def search_etfs(
-    query: Optional[str] = None,
-    db: Session = Depends(deps.get_db)
-):
-    """Search ETFs in database"""
-    if query:
-        return etf_crud.search(db, query=query)
-    return etf_crud.get_multi(db)
-
 @router.get("", response_model=List[ETFResponse])
 def get_etfs(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
+    query: Optional[str] = None,
     is_active: Optional[bool] = None,
     provider: Optional[str] = None
 ):
     """
-    Retrieve all ETFs with optional filtering.
+    Retrieve ETFs with optional filtering and search.
     """
+    if query:
+        return etf_crud.search(db, query=query)
+        
     filters = {}
     if is_active is not None:
         filters["is_active"] = is_active

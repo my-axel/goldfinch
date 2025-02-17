@@ -1,14 +1,13 @@
 from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.crud.household import get_member
-from uuid import UUID
+from app.crud.household import household
 
 async def validate_member_exists(
-    member_id: UUID,
+    member_id: int,
     db: Session = Depends(get_db)
 ) -> None:
-    member = get_member(db, member_id)
+    member = household.get(db=db, id=member_id)
     if not member:
         raise HTTPException(
             status_code=404,

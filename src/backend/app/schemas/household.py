@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import date
 from uuid import UUID
+from typing import Optional
 
 class HouseholdMemberBase(BaseModel):
     first_name: str
@@ -11,6 +12,13 @@ class HouseholdMemberBase(BaseModel):
 
 class HouseholdMemberCreate(HouseholdMemberBase):
     pass
+
+class HouseholdMemberUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birthday: Optional[date] = None
+    retirement_age_planned: Optional[int] = Field(default=None, ge=40, le=100)
+    retirement_age_possible: Optional[int] = Field(default=None, ge=40, le=100)
 
 class HouseholdMember(HouseholdMemberBase):
     id: int

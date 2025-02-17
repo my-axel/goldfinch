@@ -19,17 +19,11 @@ import {
 import { useState } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
-import { PensionDialogRouter } from "./PensionDialogRouter"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
 import { ContributionFrequency } from '@/frontend/types/pension'
 import { OneTimeInvestmentModal } from "./OneTimeInvestmentModal"
-import { AddPensionDialog } from "./AddPensionDialog"
-
-interface DialogState {
-  open: boolean
-  mode: "add" | "edit"
-  pension?: Pension
-}
+import { PensionTypeSelectionModal } from "./PensionTypeSelectionModal"
+import { useRouter } from "next/navigation"
 
 /**
  * Props for the PensionList component
@@ -77,7 +71,7 @@ function formatFrequency(frequency: ContributionFrequency): string {
  */
 function ETFPensionContent({ pension }: { pension: ETFPension }) {
   const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
-  const currentStep = getCurrentContributionStep(pension.contribution_plan)
+  const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
 
   return (
     <>
@@ -251,7 +245,7 @@ function AddPensionCard({ onClick }: { onClick: () => void }) {
 }
 
 /**
- * Displays pension plans grouped by household member
+ * Displays a list of pension plans grouped by household member
  */
 function MemberPensionGroup({
   member,
@@ -264,12 +258,12 @@ function MemberPensionGroup({
   onEdit: (pension: Pension) => void
   onDelete: (id: number) => void
 }) {
-  const [showAddDialog, setShowAddDialog] = useState(false)
-  const memberPensions = pensions.filter(pension => pension.member_id === member.id)
+  const [typeSelectionOpen, setTypeSelectionOpen] = useState(false)
+  const memberPensions = pensions.filter(p => p.member_id === member.id)
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">{formatMemberName(member)}</h3>
+    <div>
+      <h2 className="text-lg font-semibold mb-4">{formatMemberName(member)}</h2>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {memberPensions.map((pension) => (
           <PensionCard
@@ -279,85 +273,58 @@ function MemberPensionGroup({
             onDelete={onDelete}
           />
         ))}
-        <AddPensionCard 
-          onClick={() => setShowAddDialog(true)} 
-        />
+        <AddPensionCard onClick={() => setTypeSelectionOpen(true)} />
       </div>
-      <AddPensionDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        memberId={String(member.id)}
+      <PensionTypeSelectionModal
+        open={typeSelectionOpen}
+        onOpenChange={setTypeSelectionOpen}
       />
     </div>
   )
 }
 
 /**
- * Main component for displaying all pension plans
- * Organizes pensions by household member and handles delete confirmation
+ * Main pension list component that displays all pensions grouped by member
  */
 export function PensionList({ pensions, members = [], onDelete }: PensionListProps) {
+  const router = useRouter()
   const [pensionToDelete, setPensionToDelete] = useState<number | null>(null)
-  const [dialog, setDialog] = useState<DialogState>({
-    open: false,
-    mode: "add"
-  })
 
   const handleEdit = (pension: Pension) => {
-    setDialog({
-      open: true,
-      mode: "edit",
-      pension
-    })
+    const route = `/pension/${pension.type.toLowerCase()}/${pension.id}/edit`
+    router.push(route)
   }
 
-  const handleCloseDialog = () => {
-    setDialog(prev => ({
-      ...prev,
-      open: false
-    }))
+  if (!members || members.length === 0) {
+    return (
+      <Card className="p-6 text-center text-muted-foreground">
+        <p>No household members found.</p>
+        <p className="text-sm">Add your first household member before adding a pension.</p>
+      </Card>
+    )
   }
 
   return (
     <>
       <div className="space-y-8">
-        {members.length > 0 ? (
-          members.map((member) => (
-            <MemberPensionGroup
-              key={member.id}
-              member={member}
-              pensions={pensions}
-              onEdit={handleEdit}
-              onDelete={setPensionToDelete}
-            />
-          ))
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pensions.map((pension) => (
-              <PensionCard
-                key={pension.id}
-                pension={pension}
-                onEdit={handleEdit}
-                onDelete={setPensionToDelete}
-              />
-            ))}
-          </div>
-        )}
+        {members.map((member) => (
+          <MemberPensionGroup
+            key={member.id}
+            member={member}
+            pensions={pensions}
+            onEdit={handleEdit}
+            onDelete={setPensionToDelete}
+          />
+        ))}
       </div>
 
-      <PensionDialogRouter
-        open={dialog.open}
-        onOpenChange={handleCloseDialog}
-        mode={dialog.mode}
-        pension={dialog.pension}
-      />
-
-      <AlertDialog open={!!pensionToDelete} onOpenChange={() => setPensionToDelete(null)}>
+      <AlertDialog open={pensionToDelete !== null} onOpenChange={() => setPensionToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Pension Plan</AlertDialogTitle>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this pension plan? This action cannot be undone.
+              This action cannot be undone. This will permanently delete the pension
+              plan and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -366,8 +333,8 @@ export function PensionList({ pensions, members = [], onDelete }: PensionListPro
               onClick={() => {
                 if (pensionToDelete) {
                   onDelete(pensionToDelete)
-                  setPensionToDelete(null)
                 }
+                setPensionToDelete(null)
               }}
             >
               Delete

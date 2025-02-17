@@ -1,33 +1,33 @@
+from typing import Dict, Any, Union, List
 from sqlalchemy.orm import Session
+from app.crud.base import CRUDBase
 from app.models.household import HouseholdMember
-from app.schemas.household import HouseholdMemberCreate
+from app.schemas.household import HouseholdMemberCreate, HouseholdMemberUpdate
 
-def get_member(db: Session, member_id: int) -> HouseholdMember:
-    return db.query(HouseholdMember).filter(HouseholdMember.id == member_id).first()
-
-def get_members(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(HouseholdMember).offset(skip).limit(limit).all()
-
-def create_member(db: Session, member: HouseholdMemberCreate) -> HouseholdMember:
-    db_member = HouseholdMember(**member.model_dump())
-    db.add(db_member)
-    db.commit()
-    db.refresh(db_member)
-    return db_member
-
-def delete_member(db: Session, member_id: int) -> bool:
-    member = get_member(db, member_id)
-    if member:
-        db.delete(member)
+class CRUDHouseholdMember(CRUDBase[HouseholdMember, HouseholdMemberCreate, HouseholdMemberUpdate]):
+    def create(self, db: Session, *, obj_in: HouseholdMemberCreate) -> HouseholdMember:
+        db_obj = HouseholdMember(**obj_in.model_dump())
+        db.add(db_obj)
         db.commit()
-        return True
-    return False
+        db.refresh(db_obj)
+        return db_obj
 
-def update_member(db: Session, member_id: int, member: HouseholdMemberCreate) -> HouseholdMember:
-    db_member = get_member(db, member_id)
-    if db_member:
-        for key, value in member.model_dump().items():
-            setattr(db_member, key, value)
-        db.commit()
-        db.refresh(db_member)
-    return db_member 
+    def update(
+        self,
+        db: Session,
+        *,
+        db_obj: HouseholdMember,
+        obj_in: Union[HouseholdMemberUpdate, Dict[str, Any]]
+    ) -> HouseholdMember:
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.model_dump(exclude_unset=True)
+        return super().update(db=db, db_obj=db_obj, obj_in=update_data)
+
+    def get_multi(
+        self, db: Session, *, skip: int = 0, limit: int = 100, filters: Dict = None
+    ) -> List[HouseholdMember]:
+        return super().get_multi(db=db, skip=skip, limit=limit, filters=filters)
+
+household = CRUDHouseholdMember(HouseholdMember) 

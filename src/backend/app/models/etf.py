@@ -1,7 +1,6 @@
-from sqlalchemy import Column, String, Float, Boolean, JSON, Integer, Date, ForeignKey, DateTime, Numeric, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Date, ForeignKey, DateTime, Numeric, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
-from datetime import date, datetime
 
 class ETF(Base):
     __tablename__ = "etfs"
@@ -25,8 +24,9 @@ class ETF(Base):
     sharpe_ratio = Column(Numeric(10, 4))
 
     # Relationships
-    pensions = relationship("ETFPension", back_populates="etf")
-    allocations = relationship("ETFAllocation", back_populates="etf")
+    pensions = relationship("PensionETF", back_populates="etf")
+    allocation_plans = relationship("PensionETFAllocationPlan", back_populates="etf")
+    allocation_history = relationship("PensionETFAllocationHistory", back_populates="etf")
     historical_prices = relationship("ETFPrice", back_populates="etf")
 
 class ETFPrice(Base):
@@ -58,21 +58,4 @@ class ETFPrice(Base):
     )
 
     # Relationship
-    etf = relationship("ETF", back_populates="historical_prices")
-
-class ExchangeRateError(Base):
-    __tablename__ = "exchange_rate_errors"
-
-    id = Column(Integer, primary_key=True)
-    source_currency = Column(String, nullable=False)
-    target_currency = Column(String, nullable=False, default="EUR")
-    date = Column(Date, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    resolved = Column(Boolean, nullable=False, default=False)
-    resolved_at = Column(DateTime, nullable=True)
-    context = Column(String, nullable=True)  # Additional context about where the error occurred
-    
-    __table_args__ = (
-        # Ensure we don't log duplicate errors for the same currency pair and date
-        UniqueConstraint('source_currency', 'target_currency', 'date', name='uix_exchange_rate_error'),
-    ) 
+    etf = relationship("ETF", back_populates="historical_prices") 

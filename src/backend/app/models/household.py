@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Date, Integer, ForeignKey
+from sqlalchemy import Column, Integer, String, Date
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -9,8 +9,19 @@ class HouseholdMember(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     birthday = Column(Date, nullable=False)
-    retirement_age_planned = Column(Integer, nullable=False, default=67)  # Default retirement age
-    retirement_age_possible = Column(Integer, nullable=False, default=63)  # Default earliest possible retirement
+    retirement_age_planned = Column(Integer, nullable=False, default=67)
+    retirement_age_possible = Column(Integer, nullable=False, default=63)
+    
+    # Pension relationships
+    etf_pensions = relationship("PensionETF", back_populates="member", cascade="all, delete-orphan")
+    insurance_pensions = relationship("PensionInsurance", back_populates="member", cascade="all, delete-orphan")
+    company_pensions = relationship("PensionCompany", back_populates="member", cascade="all, delete-orphan")
 
-    # Add the relationship to pensions
-    pensions = relationship("BasePension", back_populates="member") 
+    @property
+    def pensions(self):
+        """Returns all pensions of all types for this member."""
+        return [
+            *self.etf_pensions,
+            *self.insurance_pensions,
+            *self.company_pensions
+        ] 

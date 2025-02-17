@@ -1,10 +1,11 @@
-from typing import List, Optional, Dict, Any
-from datetime import date, datetime, timedelta
+from typing import List, Optional, Any, Dict
+from datetime import date, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import or_
 from fastapi.encoders import jsonable_encoder
 from app.crud.base import CRUDBase
-from app.models.etf import ETF, ETFPrice, ExchangeRateError
+from app.models.etf import ETF, ETFPrice
+from app.models.exchange_rate import ExchangeRate, ExchangeRateError
 from app.schemas.etf import ETFCreate, ETFUpdate, ETFPriceCreate
 from app.services.exchange_rate import ExchangeRateService, ExchangeRateNotFoundError
 from decimal import Decimal
@@ -354,10 +355,10 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         return etf
 
     def get_multi(
-        self, db: Session, *, skip: int = 0, limit: int = 100
+        self, db: Session, *, skip: int = 0, limit: int = 100, filters: Dict = None
     ) -> List[ETF]:
         """Get multiple ETFs and fill any gaps in their price histories."""
-        etfs = super().get_multi(db, skip=skip, limit=limit)
+        etfs = super().get_multi(db, skip=skip, limit=limit, filters=filters)
         for etf in etfs:
             self._fetch_missing_prices(db, etf)
         return etfs

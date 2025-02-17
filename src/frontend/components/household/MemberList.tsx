@@ -21,13 +21,13 @@ import { useState } from "react"
 
 interface MemberListProps {
   members: HouseholdMember[]
-  onDelete: (id: string) => void
+  onDelete: (id: number) => void
   onEdit: (member: HouseholdMember) => void
   isLoading?: boolean
 }
 
 export function MemberList({ members = [], onDelete, onEdit, isLoading = false }: MemberListProps) {
-  const [memberToDelete, setMemberToDelete] = useState<string | null>(null)
+  const [memberToDelete, setMemberToDelete] = useState<number | null>(null)
 
   if (isLoading) {
     return <div className="text-center p-4">Loading household members...</div>

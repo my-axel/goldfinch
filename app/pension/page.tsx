@@ -1,21 +1,14 @@
 "use client"
 
 import { PensionList } from "@/frontend/components/pension/PensionList"
-import { PensionDialogRouter } from "@/frontend/components/pension/PensionDialogRouter"
 import { Button } from "@/frontend/components/ui/button"
 import { Plus } from "lucide-react"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { usePension } from "@/frontend/context/PensionContext"
-import { type Pension } from "@/frontend/types/pension"
 import { useETF } from "@/frontend/context/ETFContext"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { toast } from "sonner"
-
-interface DialogState {
-  open: boolean
-  mode: "add" | "edit"
-  pension?: Pension
-}
+import { PensionTypeSelectionModal } from "@/frontend/components/pension/PensionTypeSelectionModal"
 
 /**
  * Main pension management page component. Displays a list of all pension plans
@@ -39,10 +32,7 @@ export default function PensionPage() {
   const { members, fetchMembers } = useHousehold()
   const initialized = useRef(false)
 
-  const [dialog, setDialog] = useState<DialogState>({
-    open: false,
-    mode: "add"
-  })
+  const [typeSelectionOpen, setTypeSelectionOpen] = useState(false)
 
   useEffect(() => {
     if (!initialized.current) {
@@ -79,25 +69,11 @@ export default function PensionPage() {
     }
   }, [deletePension])
 
-  const handleAdd = () => {
-    setDialog({
-      open: true,
-      mode: "add"
-    })
-  }
-
-  const handleCloseDialog = () => {
-    setDialog(prev => ({
-      ...prev,
-      open: false
-    }))
-  }
-
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Pension Plans</h1>
-        <Button onClick={handleAdd}>
+        <Button onClick={() => setTypeSelectionOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Pension
         </Button>
@@ -113,11 +89,9 @@ export default function PensionPage() {
         />
       )}
 
-      <PensionDialogRouter
-        open={dialog.open}
-        onOpenChange={handleCloseDialog}
-        mode={dialog.mode}
-        pension={dialog.pension}
+      <PensionTypeSelectionModal
+        open={typeSelectionOpen}
+        onOpenChange={setTypeSelectionOpen}
       />
     </div>
   )
