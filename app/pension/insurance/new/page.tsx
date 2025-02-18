@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { InsurancePensionForm } from "@/frontend/components/pension/form/InsurancePensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
-import { FormData } from "@/frontend/types/pension-form"
+import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
@@ -14,7 +14,7 @@ export default function NewInsurancePensionPage() {
   const router = useRouter()
   const { createInsurancePension } = usePension()
 
-  const form = useForm<FormData>({
+  const form = useForm<InsurancePensionFormData>({
     defaultValues: {
       type: PensionType.INSURANCE,
       name: "",
@@ -26,11 +26,11 @@ export default function NewInsurancePensionPage() {
       contract_number: "",
       guaranteed_interest: 0,
       expected_return: 0,
-      contribution_plan: [],
+      contribution_plan_steps: [],
     }
   })
 
-  const handleSubmit = async (data: FormData) => {
+  const handleSubmit = async (data: InsurancePensionFormData) => {
     try {
       const memberId = parseInt(data.member_id)
       if (isNaN(memberId)) {
@@ -48,7 +48,7 @@ export default function NewInsurancePensionPage() {
         contract_number: data.contract_number,
         guaranteed_interest: data.guaranteed_interest,
         expected_return: data.expected_return,
-        contribution_plan: data.contribution_plan,
+        contribution_plan_steps: data.contribution_plan_steps,
       })
 
       toast.success("Success", { description: "Insurance pension created successfully" })

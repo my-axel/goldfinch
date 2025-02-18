@@ -5,7 +5,7 @@ import { HouseholdMember } from "@/frontend/types/household"
 import { calculateMemberFields, formatMemberName } from "@/frontend/types/household-helpers"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { Trash2, Pencil } from "lucide-react"
+import { Trash2, Pencil, PlusCircle } from "lucide-react"
 import { Button } from "@/frontend/components/ui/button"
 import {
   AlertDialog,
@@ -23,10 +23,25 @@ interface MemberListProps {
   members: HouseholdMember[]
   onDelete: (id: number) => void
   onEdit: (member: HouseholdMember) => void
+  onAdd: () => void
   isLoading?: boolean
 }
 
-export function MemberList({ members = [], onDelete, onEdit, isLoading = false }: MemberListProps) {
+/**
+ * Card component for adding a new household member
+ */
+function AddMemberCard({ onClick }: { onClick: () => void }) {
+  return (
+    <Card className="flex flex-col items-center justify-center min-h-[140px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+      <CardContent className="flex flex-col items-center justify-center py-6 w-full">
+        <PlusCircle className="h-6 w-6 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Add New Member</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function MemberList({ members = [], onDelete, onEdit, onAdd, isLoading = false }: MemberListProps) {
   const [memberToDelete, setMemberToDelete] = useState<number | null>(null)
 
   if (isLoading) {
@@ -35,10 +50,9 @@ export function MemberList({ members = [], onDelete, onEdit, isLoading = false }
 
   if (!members || members.length === 0) {
     return (
-      <Card className="p-6 text-center text-muted-foreground">
-        <p>No household members found.</p>
-        <p className="text-sm">Add your first household member to get started.</p>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <AddMemberCard onClick={onAdd} />
+      </div>
     )
   }
 
@@ -91,6 +105,7 @@ export function MemberList({ members = [], onDelete, onEdit, isLoading = false }
             </Card>
           )
         })}
+        <AddMemberCard onClick={onAdd} />
       </div>
 
       <AlertDialog open={!!memberToDelete} onOpenChange={() => setMemberToDelete(null)}>

@@ -1,38 +1,36 @@
 "use client"
 
 import { useForm } from "react-hook-form"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ETFPensionForm } from "@/frontend/components/pension/form/ETFPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
-import { FormData } from "@/frontend/types/pension-form"
+import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
 
 export default function NewETFPensionPage() {
   const router = useRouter()
-  const { createEtfPension, realizeHistoricalContributions } = usePension()
+  const searchParams = useSearchParams()
+  const { createEtfPension } = usePension()
 
-  const form = useForm<FormData>({
+  const form = useForm<ETFPensionFormData>({
     defaultValues: {
       type: PensionType.ETF_PLAN,
       name: "",
-      member_id: "",
-      initial_capital: 0,
-      start_date: new Date(),
-      // ETF Plan fields
+      member_id: searchParams.get('member_id') || "",
       etf_id: "",
       is_existing_investment: false,
       existing_units: 0,
       reference_date: new Date(),
       realize_historical_contributions: false,
       initialization_method: "none",
-      contribution_plan: [],
+      contribution_plan_steps: []
     }
   })
 
-  const handleSubmit = async (data: FormData) => {
+  const handleSubmit = async (data: ETFPensionFormData) => {
     try {
       const memberId = parseInt(data.member_id)
       if (isNaN(memberId)) {
@@ -40,26 +38,17 @@ export default function NewETFPensionPage() {
         return
       }
 
-      const response = await createEtfPension({
+      await createEtfPension({
+        type: PensionType.ETF_PLAN,
         name: data.name,
         member_id: memberId,
-        initial_capital: Number(data.initial_capital),
-        start_date: data.start_date,
-        type: PensionType.ETF_PLAN,
         etf_id: data.etf_id,
         is_existing_investment: data.is_existing_investment,
         existing_units: data.existing_units,
         reference_date: data.reference_date,
-        contribution_plan: data.contribution_plan,
+        contribution_plan_steps: data.contribution_plan_steps,
         realize_historical_contributions: data.initialization_method === "historical"
       })
-
-      const newPensionId = response?.id
-      
-      // If historical contributions should be realized, do it after creating the pension
-      if (data.realize_historical_contributions && newPensionId) {
-        await realizeHistoricalContributions(newPensionId)
-      }
 
       toast.success("Success", { description: "ETF pension created successfully" })
       router.push("/pension")
@@ -83,7 +72,7 @@ export default function NewETFPensionPage() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-            <div className="space-y-8 p-6 bg-card rounded-lg border">
+            <div>
               <ETFPensionForm form={form} />
             </div>
 

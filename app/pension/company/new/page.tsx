@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { CompanyPensionForm } from "@/frontend/components/pension/form/CompanyPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
-import { FormData } from "@/frontend/types/pension-form"
+import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
@@ -14,7 +14,7 @@ export default function NewCompanyPensionPage() {
   const router = useRouter()
   const { createCompanyPension } = usePension()
 
-  const form = useForm<FormData>({
+  const form = useForm<CompanyPensionFormData>({
     defaultValues: {
       type: PensionType.COMPANY,
       name: "",
@@ -26,11 +26,11 @@ export default function NewCompanyPensionPage() {
       vesting_period: 0,
       matching_percentage: 0,
       max_employer_contribution: 0,
-      contribution_plan: [],
+      contribution_plan_steps: [],
     }
   })
 
-  const handleSubmit = async (data: FormData) => {
+  const handleSubmit = async (data: CompanyPensionFormData) => {
     try {
       const memberId = parseInt(data.member_id)
       if (isNaN(memberId)) {
@@ -48,7 +48,7 @@ export default function NewCompanyPensionPage() {
         vesting_period: data.vesting_period,
         matching_percentage: data.matching_percentage,
         max_employer_contribution: data.max_employer_contribution,
-        contribution_plan: data.contribution_plan,
+        contribution_plan_steps: data.contribution_plan_steps,
       })
 
       toast.success("Success", { description: "Company pension created successfully" })

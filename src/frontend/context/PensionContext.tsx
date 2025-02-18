@@ -64,7 +64,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       const allPensions = [
         ...etfResponse.map(p => ({
           ...p,
-          start_date: new Date(p.start_date),
           contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
             ...step,
             start_date: new Date(step.start_date),
@@ -126,7 +125,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
 
       setSelectedPension({
         ...response,
-        start_date: new Date(response.start_date),
         contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
           ...step,
           start_date: new Date(step.start_date),
@@ -211,9 +209,10 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
 
   const createEtfPension = useCallback(async (pension: Omit<ETFPension, 'id' | 'current_value'>): Promise<void> => {
     try {
+      const memberId = typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id
       const pensionData = {
         name: pension.name,
-        member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
+        member_id: memberId,
         notes: pension.notes,
         etf_id: pension.etf_id,
         contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
@@ -325,8 +324,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       await put<Pension>(`/pension/etf/${id}`, {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
-        start_date: new Date(pension.start_date).toISOString().split('T')[0],
-        initial_capital: Number(pension.initial_capital),
         contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
           amount: Number(step.amount),
           frequency: step.frequency,

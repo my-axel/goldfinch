@@ -250,6 +250,28 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             .first()
         )
 
+    def get_next_available_price(
+        self, db: Session, *, etf_id: str, after_date: date
+    ) -> Optional[ETFPrice]:
+        """Get the next available ETF price after a specific date.
+        This is useful for handling non-trading days (weekends, holidays).
+        
+        Args:
+            db: Database session
+            etf_id: ETF ID to get price for
+            after_date: Get the first price after this date
+            
+        Returns:
+            The next available price or None if no future prices exist
+        """
+        return (
+            db.query(ETFPrice)
+            .filter(ETFPrice.etf_id == etf_id)
+            .filter(ETFPrice.date > after_date)
+            .order_by(ETFPrice.date.asc())  # Get the earliest date after after_date
+            .first()
+        )
+
     def _find_price_gaps(
         self, db: Session, etf_id: str, min_gap_days: int = 5
     ) -> List[tuple[date, date]]:

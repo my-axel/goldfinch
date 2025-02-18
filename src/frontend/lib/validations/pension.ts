@@ -1,17 +1,26 @@
 import * as z from "zod"
-import { PensionType } from "@/frontend/types/pension"
+import { PensionType, ContributionFrequency } from "@/frontend/types/pension"
 
 const basePensionSchema = z.object({
   name: z.string().min(1, "Name is required"),
   member_id: z.string().min(1, "Member is required"),
-  start_date: z.string().transform(str => new Date(str)),
-  initial_capital: z.number().min(0),
-  type: z.nativeEnum(PensionType)
+  notes: z.string().optional()
 })
 
 export const etfPensionSchema = basePensionSchema.extend({
   type: z.literal(PensionType.ETF_PLAN),
-  etf_id: z.string().min(1, "ETF selection is required")
+  etf_id: z.string().min(1, "ETF selection is required"),
+  is_existing_investment: z.boolean(),
+  existing_units: z.number(),
+  reference_date: z.date(),
+  realize_historical_contributions: z.boolean(),
+  initialization_method: z.enum(["new", "existing", "historical", "none"]),
+  contribution_plan_steps: z.array(z.object({
+    amount: z.number(),
+    frequency: z.nativeEnum(ContributionFrequency),
+    start_date: z.date(),
+    end_date: z.date().optional()
+  }))
 })
 
 export const insurancePensionSchema = basePensionSchema.extend({

@@ -11,8 +11,8 @@ interface HouseholdContextType {
   error: string | null
   fetchMembers: () => Promise<void>
   addMember: (member: Omit<HouseholdMember, 'id'>) => Promise<HouseholdMember>
-  updateMember: (id: string, member: Partial<HouseholdMember>) => Promise<HouseholdMember>
-  deleteMember: (id: string) => Promise<void>
+  updateMember: (id: number, member: Partial<HouseholdMember>) => Promise<HouseholdMember>
+  deleteMember: (id: number) => Promise<void>
   getMemberWithComputedFields: (member: HouseholdMember) => ReturnType<typeof calculateMemberFields>
 }
 
@@ -33,15 +33,15 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     return newMember
   }, [apiCall])
 
-  const updateMember = useCallback(async (id: string, member: Partial<HouseholdMember>) => {
+  const updateMember = useCallback(async (id: number, member: Partial<HouseholdMember>) => {
     const updatedMember = await apiCall<HouseholdMember>(`/household/${id}`, 'PUT', member)
-    setMembers(prev => prev.map(m => m.id === parseInt(id) ? updatedMember : m))
+    setMembers(prev => prev.map(m => m.id === id ? updatedMember : m))
     return updatedMember
   }, [apiCall])
 
-  const deleteMember = useCallback(async (id: string) => {
+  const deleteMember = useCallback(async (id: number) => {
     await apiCall(`/household/${id}`, 'DELETE')
-    setMembers(prev => prev.filter(m => m.id !== parseInt(id)))
+    setMembers(prev => prev.filter(m => m.id !== id))
   }, [apiCall])
 
   const getMemberWithComputedFields = useCallback((member: HouseholdMember) => {

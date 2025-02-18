@@ -1,4 +1,4 @@
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, List
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.pension_etf import (
@@ -15,6 +15,12 @@ from app.schemas.pension_etf import (
     ContributionPlanCreate,
     ContributionHistoryCreate
 )
+from datetime import date
+from decimal import Decimal
+import logging
+from app.crud.etf import etf_crud
+
+logger = logging.getLogger(__name__)
 
 class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
     def create(
@@ -146,5 +152,142 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    def realize_historical_contributions(
+        self,
+        db: Session,
+        *,
+        pension_id: int
+    ) -> None:
+        """
+        Realize historical contributions for an ETF pension.
+        This will:
+        1. Calculate contribution dates based on plan steps
+        2. Get ETF prices for each contribution date
+        3. Create contribution history entries and update total units
+        """
+        pension = self.get(db=db, id=pension_id)
+        if not pension:
+            raise ValueError(f"ETF Pension {pension_id} not found")
+
+        today = date.today()
+        realized_dates = set(ch.date for ch in pension.contribution_history)
+
+        try:
+            # Process contribution plan steps
+            for step in pension.contribution_plan_steps:
+                # Skip future contributions
+                if step.start_date > today:
+                    continue
+
+                # Calculate contribution dates
+                dates = self._calculate_contribution_dates(
+                    start_date=step.start_date,
+                    end_date=min(step.end_date or today, today),
+                    frequency=step.frequency
+                )
+
+                # Create contribution history for each date
+                for contribution_date in dates:
+                    # Skip if already realized
+                    if contribution_date in realized_dates:
+                        continue
+
+                    # Get ETF price for the date or next available
+                    price = etf_crud.get_price_for_date(
+                        db=db,
+                        etf_id=pension.etf_id,
+                        date=contribution_date
+                    )
+                    
+                    if not price:
+                        # Try to get next available price (e.g., next trading day)
+                        price = etf_crud.get_next_available_price(
+                            db=db,
+                            etf_id=pension.etf_id,
+                            after_date=contribution_date
+                        )
+                        
+                        if not price:
+                            logger.warning(
+                                f"No price found for ETF {pension.etf_id} on or after {contribution_date}. "
+                                "Skipping contribution realization."
+                            )
+                            continue
+                        else:
+                            logger.info(
+                                f"Using next available price from {price.date} for contribution on {contribution_date}"
+                            )
+
+                    # Calculate units based on contribution amount and price
+                    units = Decimal(str(step.amount)) / Decimal(str(price.price))
+                    
+                    # Create contribution history entry
+                    history = PensionETFContributionHistory(
+                        pension_etf_id=pension_id,
+                        date=contribution_date,
+                        amount=step.amount,
+                        is_manual=False,
+                        notes=f"Using ETF price from {price.date}" if price.date != contribution_date else None
+                    )
+                    db.add(history)
+                    db.flush()  # Get the history ID
+
+                    # Create allocation history entry
+                    allocation = PensionETFAllocationHistory(
+                        pension_etf_contribution_history_id=history.id,
+                        etf_id=pension.etf_id,
+                        amount=step.amount,
+                        units=units,
+                        price_per_unit=price.price,
+                        percentage=Decimal('100.0')  # Single ETF gets 100%
+                    )
+                    db.add(allocation)
+
+                    # Update pension totals
+                    pension.total_units += units
+                    pension.current_value = pension.total_units * price.price
+
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error realizing historical contributions: {str(e)}")
+            raise
+
+    def _calculate_contribution_dates(
+        self,
+        *,
+        start_date: date,
+        end_date: date,
+        frequency: str
+    ) -> List[date]:
+        """Calculate contribution dates based on frequency."""
+        dates = []
+        current_date = start_date
+
+        while current_date <= end_date:
+            dates.append(current_date)
+            
+            if frequency == "monthly":
+                if current_date.month == 12:
+                    current_date = date(current_date.year + 1, 1, current_date.day)
+                else:
+                    current_date = date(current_date.year, current_date.month + 1, current_date.day)
+            elif frequency == "quarterly":
+                if current_date.month >= 10:
+                    current_date = date(current_date.year + 1, (current_date.month + 3) % 12 or 12, current_date.day)
+                else:
+                    current_date = date(current_date.year, current_date.month + 3, current_date.day)
+            elif frequency == "semi_annually":
+                if current_date.month > 6:
+                    current_date = date(current_date.year + 1, (current_date.month + 6) % 12 or 12, current_date.day)
+                else:
+                    current_date = date(current_date.year, current_date.month + 6, current_date.day)
+            elif frequency == "annually":
+                current_date = date(current_date.year + 1, current_date.month, current_date.day)
+            elif frequency == "one_time":
+                break
+
+        return dates
 
 pension_etf = CRUDPensionETF(PensionETF) 

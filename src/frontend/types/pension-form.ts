@@ -18,8 +18,12 @@ export type ETFPensionFormData = {
   name: string
   member_id: string
   notes?: string
-  start_date: Date
   etf_id: string
+  is_existing_investment: boolean
+  existing_units: number
+  reference_date: Date
+  realize_historical_contributions: boolean
+  initialization_method: "new" | "existing" | "historical" | "none"
   contribution_plan_steps: ContributionPlanStep[]
 }
 
@@ -33,6 +37,7 @@ export type InsurancePensionFormData = {
   notes?: string
   start_date: Date
   provider: string
+  initial_capital: number
   contract_number: string
   guaranteed_interest: number
   expected_return: number
@@ -49,6 +54,7 @@ export type CompanyPensionFormData = {
   notes?: string
   start_date: Date
   employer: string
+  initial_capital: number
   vesting_period: number
   matching_percentage: number
   max_employer_contribution: number

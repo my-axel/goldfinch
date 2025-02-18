@@ -102,8 +102,6 @@ export interface ETFPension {
   type: PensionType.ETF_PLAN
   name: string
   member_id: number           // Links to household member
-  start_date: Date
-  initial_capital: number     // Initial investment amount
   current_value: number       // Current total value of the pension
   notes?: string
   etf_id: string

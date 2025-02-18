@@ -1,43 +1,32 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/frontend/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/frontend/components/ui/dialog"
 import { HouseholdMember } from "@/frontend/types/household"
-import { UserPlus } from "lucide-react"
 import { MemberForm } from "./MemberForm"
 
 interface AddMemberDialogProps {
   onAdd: (member: Omit<HouseholdMember, "id">) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 /**
  * Dialog component for adding new household members
  * 
  * Provides:
- * - "Add Member" button trigger
  * - Dialog wrapper
  * - Uses shared MemberForm component
- * - Handles dialog open/close state
+ * - Controlled by parent component through open/onOpenChange props
  * - Passes new member data to parent component
  */
-export function AddMemberDialog({ onAdd }: AddMemberDialogProps) {
-  const [open, setOpen] = useState(false)
-
+export function AddMemberDialog({ onAdd, open, onOpenChange }: AddMemberDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Member
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Household Member</DialogTitle>
@@ -45,9 +34,9 @@ export function AddMemberDialog({ onAdd }: AddMemberDialogProps) {
         <MemberForm
           onSubmit={(data) => {
             onAdd(data)
-            setOpen(false)
+            onOpenChange(false)
           }}
-          onCancel={() => setOpen(false)}
+          onCancel={() => onOpenChange(false)}
         />
       </DialogContent>
     </Dialog>

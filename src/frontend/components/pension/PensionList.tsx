@@ -278,6 +278,7 @@ function MemberPensionGroup({
       <PensionTypeSelectionModal
         open={typeSelectionOpen}
         onOpenChange={setTypeSelectionOpen}
+        memberId={member.id.toString()}
       />
     </div>
   )

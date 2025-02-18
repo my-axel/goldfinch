@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from app.api.v1 import deps
 from app.crud.pension_etf import pension_etf
 from app import schemas
+from app.schemas.task import TaskStatusResponse
+from app.tasks.etf_pension import process_new_etf_pension
+from app.models.task import TaskStatus
 
 router = APIRouter(tags=["etf-pensions"])
 
@@ -12,10 +15,25 @@ def create_etf_pension(
     *,
     db: Session = Depends(deps.get_db),
     pension_in: schemas.pension_etf.PensionETFCreate,
-    member_id: int
+    background_tasks: BackgroundTasks
 ) -> schemas.pension_etf.PensionETFResponse:
     """Create a new ETF pension."""
-    return pension_etf.create(db=db, obj_in=pension_in, member_id=member_id)
+    # Create the pension first
+    pension = pension_etf.create(db=db, obj_in=pension_in, member_id=pension_in.member_id)
+    
+    # Create initial task status
+    task = TaskStatus(
+        task_type="etf_pension_processing",
+        status="pending",
+        resource_id=pension.id
+    )
+    db.add(task)
+    db.commit()
+    
+    # Add background task to fetch prices and realize contributions
+    background_tasks.add_task(process_new_etf_pension, pension.id)
+    
+    return pension
 
 @router.get("/{pension_id}", response_model=schemas.pension_etf.PensionETFResponse)
 def get_etf_pension(
@@ -88,4 +106,20 @@ def list_etf_pensions(
     filters = {}
     if member_id is not None:
         filters["member_id"] = member_id
-    return pension_etf.get_multi(db, skip=skip, limit=limit, filters=filters) 
+    return pension_etf.get_multi(db, skip=skip, limit=limit, filters=filters)
+
+@router.get("/{pension_id}/task-status", response_model=TaskStatusResponse)
+def get_pension_task_status(
+    pension_id: int,
+    db: Session = Depends(deps.get_db),
+) -> TaskStatusResponse:
+    """Get the status of the ETF pension processing task."""
+    task = db.query(TaskStatus).filter(
+        TaskStatus.resource_id == pension_id,
+        TaskStatus.task_type == "etf_pension_processing"
+    ).order_by(TaskStatus.created_at.desc()).first()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Task status not found")
+        
+    return task 

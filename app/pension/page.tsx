@@ -1,8 +1,6 @@
 "use client"
 
 import { PensionList } from "@/frontend/components/pension/PensionList"
-import { Button } from "@/frontend/components/ui/button"
-import { Plus } from "lucide-react"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { usePension } from "@/frontend/context/PensionContext"
 import { useETF } from "@/frontend/context/ETFContext"
@@ -70,13 +68,9 @@ export default function PensionPage() {
   }, [deletePension])
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="space-y-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Pension Plans</h1>
-        <Button onClick={() => setTypeSelectionOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Pension
-        </Button>
       </div>
 
       {isLoading ? (

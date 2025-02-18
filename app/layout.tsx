@@ -21,8 +21,8 @@ export default function RootLayout({
           >
             <SidebarProvider>
               <AppSidebar />
-              <main className="ml-[100px] min-h-screen px-16">     
-                <div className="mx-auto h-full w-full max-w-[1440px] py-16">
+              <main className="ml-[50px] min-h-screen px-8">     
+                <div className="mx-auto h-full w-full max-w-[1440px] py-8">
                   {children}
                 </div>
               </main>

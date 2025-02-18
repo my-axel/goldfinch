@@ -33,6 +33,7 @@ export default function HouseholdPage() {
   } = useHousehold()
   
   const [editingMember, setEditingMember] = useState<HouseholdMember | null>(null)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchMembers()
@@ -42,13 +43,14 @@ export default function HouseholdPage() {
   const handleAddMember = async (newMember: Omit<HouseholdMember, "id">) => {
     try {
       await addMember(newMember)
+      setIsAddDialogOpen(false)
     } catch (error) {
       console.error('Failed to add member:', error)
       // TODO: Add error toast notification
     }
   }
 
-  const handleDeleteMember = async (id: string) => {
+  const handleDeleteMember = async (id: number) => {
     try {
       await deleteMember(id)
     } catch (error) {
@@ -57,9 +59,11 @@ export default function HouseholdPage() {
     }
   }
 
-  const handleEditMember = async (id: string, updatedMember: Omit<HouseholdMember, "id">) => {
+  const handleUpdateMember = async (updatedMember: Omit<HouseholdMember, "id">) => {
+    if (!editingMember) return
+    
     try {
-      await updateMember(id, updatedMember)
+      await updateMember(editingMember.id, updatedMember)
       setEditingMember(null)
     } catch (error) {
       console.error('Failed to update member:', error)
@@ -71,12 +75,17 @@ export default function HouseholdPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Household Members</h1>
-        <AddMemberDialog onAdd={handleAddMember} />
+        <AddMemberDialog 
+          onAdd={handleAddMember}
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+        />
       </div>
       <MemberList 
         members={members} 
         onDelete={handleDeleteMember}
         onEdit={setEditingMember}
+        onAdd={() => setIsAddDialogOpen(true)}
         isLoading={contextLoading}
       />
       {editingMember && (
@@ -84,7 +93,7 @@ export default function HouseholdPage() {
           member={editingMember}
           open={!!editingMember}
           onOpenChange={(open) => !open && setEditingMember(null)}
-          onEdit={handleEditMember}
+          onEdit={(id, updatedMember) => handleUpdateMember(updatedMember)}
         />
       )}
     </div>
