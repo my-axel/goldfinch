@@ -2,7 +2,7 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/frontend/components/ui/form"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
-import { InsurancePensionFormData } from "@/frontend/types/pension-form"
+import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { Button } from "@/frontend/components/ui/button"
 import { Plus, Trash2, ChevronDownIcon } from "lucide-react"
 import { ContributionFrequency } from "@/frontend/types/pension"
@@ -13,16 +13,15 @@ import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/comp
 import { useState } from "react"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 
-interface InsurancePensionFormProps {
-  form: UseFormReturn<InsurancePensionFormData>
-  isEditing?: boolean
+interface CompanyPensionFormProps {
+  form: UseFormReturn<CompanyPensionFormData>
 }
 
 /**
- * Form component for insurance-specific pension fields.
- * Handles insurance details and contribution plan management.
+ * Form component for company-specific pension fields.
+ * Handles employer details and contribution plan management.
  */
-export function InsurancePensionForm({ form, isEditing = false }: InsurancePensionFormProps) {
+export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "contribution_plan_steps"
@@ -108,10 +107,10 @@ export function InsurancePensionForm({ form, isEditing = false }: InsurancePensi
 
         <FormField
           control={form.control}
-          name="provider"
+          name="employer"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Provider</FormLabel>
+              <FormLabel>Employer</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -122,12 +121,17 @@ export function InsurancePensionForm({ form, isEditing = false }: InsurancePensi
 
         <FormField
           control={form.control}
-          name="contract_number"
+          name="vesting_period"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contract Number</FormLabel>
+              <FormLabel>Vesting Period (years)</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input
+                  type="number"
+                  min="0"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -136,10 +140,10 @@ export function InsurancePensionForm({ form, isEditing = false }: InsurancePensi
 
         <FormField
           control={form.control}
-          name="guaranteed_interest"
+          name="matching_percentage"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Guaranteed Interest (%)</FormLabel>
+              <FormLabel>Matching Percentage (%)</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -156,10 +160,10 @@ export function InsurancePensionForm({ form, isEditing = false }: InsurancePensi
 
         <FormField
           control={form.control}
-          name="expected_return"
+          name="max_employer_contribution"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Expected Return (%)</FormLabel>
+              <FormLabel>Max Employer Contribution (€)</FormLabel>
               <FormControl>
                 <Input
                   type="number"

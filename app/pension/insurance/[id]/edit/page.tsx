@@ -1,34 +1,66 @@
 "use client"
 
 import { useForm } from "react-hook-form"
-import { useRouter, useSearchParams } from "next/navigation"
-import { AddInsurancePensionForm } from "@/frontend/components/pension/form/AddInsurancePensionForm"
+import { useRouter } from "next/navigation"
+import { EditInsurancePensionForm } from "@/frontend/components/pension/form/EditInsurancePensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
+import { useEffect } from "react"
 
-export default function NewInsurancePensionPage() {
+interface EditInsurancePensionPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function EditInsurancePensionPage({ params }: EditInsurancePensionPageProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { createInsurancePension } = usePension()
+  const { selectedPension, fetchPension, updateInsurancePension } = usePension()
+  const pensionId = parseInt(params.id)
 
   const form = useForm<InsurancePensionFormData>({
     defaultValues: {
       type: PensionType.INSURANCE,
       name: "",
-      member_id: searchParams.get('member_id') || "",
+      member_id: "",
       provider: "",
       contract_number: "",
       start_date: new Date(),
-      initial_capital: 0,
       guaranteed_interest: 0,
       expected_return: 0,
       contribution_plan_steps: []
     }
   })
+
+  useEffect(() => {
+    fetchPension(pensionId)
+  }, [fetchPension, pensionId])
+
+  useEffect(() => {
+    if (selectedPension && selectedPension.type === PensionType.INSURANCE) {
+      form.reset({
+        type: PensionType.INSURANCE,
+        name: selectedPension.name,
+        member_id: selectedPension.member_id.toString(),
+        provider: selectedPension.provider,
+        contract_number: selectedPension.contract_number,
+        start_date: new Date(selectedPension.start_date),
+        guaranteed_interest: selectedPension.guaranteed_interest,
+        expected_return: selectedPension.expected_return,
+        initial_capital: selectedPension.initial_capital,
+        contribution_plan_steps: selectedPension.contribution_plan_steps.map(step => ({
+          amount: step.amount,
+          frequency: step.frequency,
+          start_date: new Date(step.start_date),
+          end_date: step.end_date ? new Date(step.end_date) : undefined
+        }))
+      })
+    }
+  }, [selectedPension, form])
 
   const handleSubmit = async (data: InsurancePensionFormData) => {
     try {
@@ -38,7 +70,7 @@ export default function NewInsurancePensionPage() {
         return
       }
 
-      await createInsurancePension({
+      await updateInsurancePension(pensionId, {
         type: PensionType.INSURANCE,
         name: data.name,
         member_id: memberId,
@@ -51,11 +83,11 @@ export default function NewInsurancePensionPage() {
         contribution_plan_steps: data.contribution_plan_steps
       })
 
-      toast.success("Success", { description: "Insurance pension created successfully" })
+      toast.success("Success", { description: "Insurance pension updated successfully" })
       router.push("/pension")
       router.refresh()
     } catch (error) {
-      console.error('Failed to create pension:', error)
+      console.error('Failed to update pension:', error)
       // Error is handled by the context
     }
   }
@@ -64,17 +96,16 @@ export default function NewInsurancePensionPage() {
     <div className="container max-w-2xl mx-auto py-10">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create Insurance Pension Plan</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Insurance Pension Plan</h1>
           <p className="text-muted-foreground mt-2">
-            Set up a new insurance-based pension plan. You&apos;ll need to provide basic information
-            and set up your contribution plan.
+            Update your insurance pension plan details and contribution schedule.
           </p>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
             <div>
-              <AddInsurancePensionForm form={form} />
+              <EditInsurancePensionForm form={form} />
             </div>
 
             <div className="flex justify-between">
@@ -86,7 +117,7 @@ export default function NewInsurancePensionPage() {
                 Cancel
               </Button>
               <Button type="submit">
-                Create Pension
+                Save Changes
               </Button>
             </div>
           </form>

@@ -24,7 +24,7 @@ interface ETFPensionFormProps {
  * Form component for ETF-specific pension fields.
  * Handles ETF selection and contribution plan management.
  */
-export function ETFPensionForm({ form, isEditing = false }: ETFPensionFormProps) {
+export function AddETFPensionForm({ form, isEditing = false }: ETFPensionFormProps) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "contribution_plan_steps"

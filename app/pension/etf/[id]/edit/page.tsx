@@ -1,29 +1,67 @@
 "use client"
 
 import { useForm } from "react-hook-form"
-import { useRouter, useSearchParams } from "next/navigation"
-import { AddETFPensionForm } from "@/frontend/components/pension/form/AddETFPensionForm"
+import { useRouter } from "next/navigation"
+import { EditETFPensionForm } from "@/frontend/components/pension/form/EditETFPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
+import { useEffect } from "react"
 
-export default function NewETFPensionPage() {
+interface EditETFPensionPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function EditETFPensionPage({ params }: EditETFPensionPageProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { createEtfPension } = usePension()
+  const { selectedPension, fetchPension, updateEtfPension } = usePension()
+  const pensionId = parseInt(params.id)
 
   const form = useForm<ETFPensionFormData>({
     defaultValues: {
       type: PensionType.ETF_PLAN,
       name: "",
-      member_id: searchParams.get('member_id') || "",
+      member_id: "",
       etf_id: "",
+      is_existing_investment: false,
+      existing_units: 0,
+      reference_date: new Date(),
+      realize_historical_contributions: false,
+      initialization_method: "none",
       contribution_plan_steps: []
     }
   })
+
+  useEffect(() => {
+    fetchPension(pensionId)
+  }, [fetchPension, pensionId])
+
+  useEffect(() => {
+    if (selectedPension && selectedPension.type === PensionType.ETF_PLAN) {
+      form.reset({
+        type: PensionType.ETF_PLAN,
+        name: selectedPension.name,
+        member_id: selectedPension.member_id.toString(),
+        etf_id: selectedPension.etf_id,
+        is_existing_investment: selectedPension.is_existing_investment,
+        existing_units: selectedPension.existing_units || 0,
+        reference_date: selectedPension.reference_date || new Date(),
+        realize_historical_contributions: selectedPension.realize_historical_contributions || false,
+        initialization_method: "none",
+        contribution_plan_steps: selectedPension.contribution_plan_steps.map(step => ({
+          amount: step.amount,
+          frequency: step.frequency,
+          start_date: new Date(step.start_date),
+          end_date: step.end_date ? new Date(step.end_date) : undefined
+        }))
+      })
+    }
+  }, [selectedPension, form])
 
   const handleSubmit = async (data: ETFPensionFormData) => {
     try {
@@ -33,7 +71,7 @@ export default function NewETFPensionPage() {
         return
       }
 
-      await createEtfPension({
+      await updateEtfPension(pensionId, {
         type: PensionType.ETF_PLAN,
         name: data.name,
         member_id: memberId,
@@ -45,11 +83,11 @@ export default function NewETFPensionPage() {
         realize_historical_contributions: data.initialization_method === "historical"
       })
 
-      toast.success("Success", { description: "ETF pension created successfully" })
+      toast.success("Success", { description: "ETF pension updated successfully" })
       router.push("/pension")
       router.refresh()
     } catch (error) {
-      console.error('Failed to create pension:', error)
+      console.error('Failed to update pension:', error)
       // Error is handled by the context
     }
   }
@@ -58,17 +96,16 @@ export default function NewETFPensionPage() {
     <div className="container max-w-2xl mx-auto py-10">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create ETF Pension Plan</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Edit ETF Pension Plan</h1>
           <p className="text-muted-foreground mt-2">
-            Set up a new ETF-based pension plan. You&apos;ll need to select an ETF
-            and set up your contribution plan.
+            Update your ETF-based pension plan details and contribution schedule.
           </p>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
             <div>
-              <AddETFPensionForm form={form} />
+              <EditETFPensionForm form={form} />
             </div>
 
             <div className="flex justify-between">
@@ -80,7 +117,7 @@ export default function NewETFPensionPage() {
                 Cancel
               </Button>
               <Button type="submit">
-                Create Pension
+                Save Changes
               </Button>
             </div>
           </form>
