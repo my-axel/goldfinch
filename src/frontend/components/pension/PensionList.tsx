@@ -2,8 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import { Pension, PensionType, ETFPension, InsurancePension, CompanyPension } from "@/frontend/types/pension"
-import { format } from "date-fns"
-import { de } from "date-fns/locale"
 import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle } from "lucide-react"
 import { Button } from "@/frontend/components/ui/button"
 import {
@@ -38,15 +36,6 @@ interface PensionListProps {
 }
 
 /**
- * Mapping of pension types to their respective icons
- */
-const PensionTypeIcons = {
-  [PensionType.ETF_PLAN]: PiggyBank,
-  [PensionType.INSURANCE]: Shield,
-  [PensionType.COMPANY]: Building,
-} as const
-
-/**
  * Formats the contribution frequency in a human-readable way
  */
 function formatFrequency(frequency: ContributionFrequency): string {
@@ -77,7 +66,12 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
     <>
       <div>
         <dt className="text-muted-foreground">ETF</dt>
-        <dd>{pension.etf?.name || pension.etf_id}</dd>
+        <dd className="flex items-center">
+          {pension.etf?.name || pension.etf_id}
+          {!pension.etf && (
+            <span className="ml-2 text-xs text-muted-foreground">(Loading ETF details...)</span>
+          )}
+        </dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
@@ -178,16 +172,40 @@ function PensionCard({
   onEdit: (pension: Pension) => void
   onDelete: (id: number) => void
 }) {
-  const Icon = PensionTypeIcons[pension.type]
-
-  const renderContent = () => {
+  const renderIcon = () => {
     switch (pension.type) {
       case PensionType.ETF_PLAN:
-        return <ETFPensionContent pension={pension} />
+        return <PiggyBank className="h-4 w-4" />;
       case PensionType.INSURANCE:
-        return <InsurancePensionContent pension={pension} />
+        return <Shield className="h-4 w-4" />;
       case PensionType.COMPANY:
-        return <CompanyPensionContent pension={pension} />
+        return <Building className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const renderContent = () => {
+    if (!pension) return null;
+
+    switch (pension.type) {
+      case PensionType.ETF_PLAN:
+        if ('etf_id' in pension) {
+          return <ETFPensionContent pension={pension} />
+        }
+        return null;
+      case PensionType.INSURANCE:
+        if ('provider' in pension) {
+          return <InsurancePensionContent pension={pension} />
+        }
+        return null;
+      case PensionType.COMPANY:
+        if ('employer' in pension) {
+          return <CompanyPensionContent pension={pension} />
+        }
+        return null;
+      default:
+        return null;
     }
   }
 
@@ -195,7 +213,7 @@ function PensionCard({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center space-x-2">
-          <Icon className="h-4 w-4" />
+          {renderIcon()}
           <div>
             <CardTitle>{pension.name}</CardTitle>
           </div>
@@ -220,8 +238,8 @@ function PensionCard({
       <CardContent>
         <dl className="space-y-2 text-sm">
           <div>
-            <dt className="text-muted-foreground">Start Date</dt>
-            <dd>{format(new Date(pension.start_date), 'dd. MMMM yyyy', { locale: de })}</dd>
+            <dt className="text-muted-foreground">Current Value</dt>
+            <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
           </div>
           {renderContent()}
         </dl>
@@ -278,7 +296,7 @@ function MemberPensionGroup({
       <PensionTypeSelectionModal
         open={typeSelectionOpen}
         onOpenChange={setTypeSelectionOpen}
-        memberId={member.id.toString()}
+        memberId={member?.id?.toString() || ""}
       />
     </div>
   )

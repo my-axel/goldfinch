@@ -27,7 +27,7 @@ class ETF(Base):
     pensions = relationship("PensionETF", back_populates="etf")
     allocation_plans = relationship("PensionETFAllocationPlan", back_populates="etf")
     allocation_history = relationship("PensionETFAllocationHistory", back_populates="etf")
-    historical_prices = relationship("ETFPrice", back_populates="etf")
+    historical_prices = relationship("ETFPrice", back_populates="etf", cascade="all, delete-orphan")
 
 class ETFPrice(Base):
     __tablename__ = "etf_prices"

@@ -12,23 +12,41 @@ from decimal import Decimal
 from fastapi import HTTPException
 from app.services.yfinance import get_etf_data
 from app.db.session import SessionLocal
+import yfinance as yf
 
 class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
     def _log_exchange_rate_error(
         self, db: Session, currency: str, date_needed: date, context: str
     ) -> None:
         """Log a missing exchange rate to the database for later resolution.
+        If an error for this currency/date already exists, update its context.
         This is a best-effort operation - if it fails, we just log to console and continue."""
         try:
             # Create a new session for error logging to avoid affecting the main transaction
             error_db = SessionLocal()
             try:
-                error_log = ExchangeRateError(
-                    source_currency=currency,
-                    date=date_needed,
-                    context=context
-                )
-                error_db.add(error_log)
+                # Check if an error already exists
+                existing_error = error_db.query(ExchangeRateError).filter(
+                    ExchangeRateError.source_currency == currency,
+                    ExchangeRateError.target_currency == 'EUR',
+                    ExchangeRateError.date == date_needed
+                ).first()
+
+                if existing_error:
+                    # Update existing error with new context if different
+                    if existing_error.context != context:
+                        existing_error.context = f"{existing_error.context}\n{context}"
+                        error_db.add(existing_error)
+                else:
+                    # Create new error log
+                    error_log = ExchangeRateError(
+                        source_currency=currency,
+                        target_currency='EUR',
+                        date=date_needed,
+                        context=context
+                    )
+                    error_db.add(error_log)
+
                 error_db.commit()
             except Exception as e:
                 # If we fail to log the error, just print it and continue
@@ -121,19 +139,20 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         if not etf:
             raise HTTPException(status_code=404, detail="ETF not found")
 
-        # Convert all price-related fields to EUR
+        # Convert all price-related fields to EUR if they exist
         price_fields = {
             'price': obj_in.price,  # Required field
-            'high': obj_in.high,
-            'low': obj_in.low,
-            'open': obj_in.open,
-            'dividends': obj_in.dividends,
-            'capital_gains': obj_in.capital_gains
+            'high': getattr(obj_in, 'high', None),
+            'low': getattr(obj_in, 'low', None),
+            'open': getattr(obj_in, 'open', None),
+            'dividends': getattr(obj_in, 'dividends', None),
+            'capital_gains': getattr(obj_in, 'capital_gains', None)
         }
         
         converted_fields = {
             field: self._convert_field_to_eur(db, value, etf.currency, obj_in.date)
             for field, value in price_fields.items()
+            if value is not None  # Only convert fields that have values
         }
 
         # Check if a price already exists for this date
@@ -150,11 +169,13 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             # Update existing price
             for field, value in converted_fields.items():
                 setattr(existing_price, field, value)
-            existing_price.volume = obj_in.volume  # Volume doesn't need conversion
-            existing_price.stock_splits = obj_in.stock_splits  # Ratios don't need conversion
+            if obj_in.volume is not None:
+                existing_price.volume = obj_in.volume  # Volume doesn't need conversion
+            if obj_in.stock_splits is not None:
+                existing_price.stock_splits = obj_in.stock_splits  # Ratios don't need conversion
             db_obj = existing_price
         else:
-            # Create new price entry
+            # Create new price entry with only the fields that have values
             db_obj = ETFPrice(
                 etf_id=etf_id,
                 date=obj_in.date,
@@ -395,5 +416,57 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         etf = self.get(db, etf_id)
         if etf:
             self._fetch_missing_prices(db, etf, force_full_history=True)
+
+    def get_or_create(self, db: Session, *, id: str) -> ETF:
+        """Get an ETF by ID, or create it with minimal data if it doesn't exist."""
+        etf = self.get(db, id)
+        if not etf:
+            # Try to get basic info from YFinance without historical data
+            try:
+                ticker = yf.Ticker(id)
+                info = ticker.fast_info  # This is much faster than full info
+                
+                # Create ETF with minimal data
+                etf = self.create(db, obj_in=ETFCreate(
+                    id=id,
+                    symbol=id,
+                    name=info.get('longName', info.get('shortName', id)),
+                    currency=info.get('currency', 'EUR'),
+                    is_active=True
+                ))
+            except Exception as e:
+                print(f"Error getting YFinance data: {e}")
+                # If YFinance fails, create with minimal data
+                etf = self.create(db, obj_in=ETFCreate(
+                    id=id,
+                    symbol=id,
+                    name=id,
+                    currency='EUR',
+                    is_active=True
+                ))
+        
+        return etf
+
+    def update_etf_data(self, db: Session, *, etf: ETF) -> None:
+        """
+        Update ETF data asynchronously.
+        This includes fetching full YFinance info and historical prices.
+        Should be called from a background task.
+        """
+        try:
+            etf_data = get_etf_data(etf.id)
+            if etf_data:
+                # Update ETF info
+                update_data = {
+                    "name": etf_data.get("longName", etf_data.get("shortName", etf.name)),
+                    "currency": etf_data.get("currency", etf.currency),
+                }
+                self.update(db, db_obj=etf, obj_in=ETFUpdate(**update_data))
+                
+                # Fetch full price history
+                self._fetch_missing_prices(db, etf, force_full_history=True)
+        except Exception as e:
+            print(f"Error updating ETF data: {e}")
+            # Don't raise the exception - this is running in background
 
 etf_crud = CRUDETF(ETF) 

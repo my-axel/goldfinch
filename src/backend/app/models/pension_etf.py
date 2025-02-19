@@ -13,8 +13,12 @@ class PensionETF(Base):
     notes = Column(String, nullable=True)
     
     # ETF specific
-    etf_id = Column(String, ForeignKey("etfs.id"), nullable=False, index=True)
+    etf_id = Column(String, ForeignKey("etfs.id", ondelete="RESTRICT"), nullable=False, index=True)
     total_units = Column(Numeric(20, 6), nullable=False, default=0)
+    
+    # Investment initialization
+    existing_units = Column(Numeric(20, 6), nullable=True)
+    reference_date = Column(Date, nullable=True)
 
     # Relationships
     member = relationship("HouseholdMember", back_populates="etf_pensions")

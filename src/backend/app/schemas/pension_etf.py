@@ -7,10 +7,20 @@ class ETFResponse(BaseModel):
     id: str
     name: str
     symbol: str
-    isin: str
+    isin: Optional[str] = None
     currency: str
-    price: Decimal
-    price_date: date
+    last_price: Optional[Decimal] = None
+    last_update: Optional[date] = None
+    asset_class: Optional[str] = None
+    domicile: Optional[str] = None
+    inception_date: Optional[date] = None
+    fund_size: Optional[Decimal] = None
+    ter: Optional[Decimal] = None
+    distribution_policy: Optional[str] = None
+    ytd_return: Optional[Decimal] = None
+    one_year_return: Optional[Decimal] = None
+    volatility_30d: Optional[Decimal] = None
+    sharpe_ratio: Optional[Decimal] = None
 
     class Config:
         from_attributes = True
@@ -101,9 +111,12 @@ class PensionETFBase(BaseModel):
     member_id: int
     notes: Optional[str] = None
     etf_id: str
+    existing_units: Optional[float] = None
+    reference_date: Optional[date] = None
 
 class PensionETFCreate(PensionETFBase):
     contribution_plan_steps: List[ContributionPlanStepCreate]
+    realize_historical_contributions: bool = False
 
 class PensionETFResponse(PensionETFBase):
     id: int

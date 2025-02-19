@@ -26,6 +26,13 @@ export interface ETF {
   one_year_return: number
   volatility_30d: number
   sharpe_ratio: number
+
+  // Historical Data
+  historical_prices?: Array<{
+    date: string
+    price: number
+    currency: string
+  }>
 }
 
 /**

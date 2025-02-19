@@ -44,14 +44,21 @@ async def process_new_etf_pension(pension_id: int) -> None:
         logger.info(f"Fetching historical prices for ETF {etf.id}")
         etf_crud.refresh_full_history(db=db, etf_id=etf.id)
 
-        # If historical contributions should be realized
-        if pension.realize_historical_contributions:
+        # Get the task to check if historical contributions should be realized
+        task = db.query(TaskStatus).filter(
+            TaskStatus.task_type == "etf_pension_processing",
+            TaskStatus.resource_id == pension_id,
+            TaskStatus.status == "processing"
+        ).first()
+
+        if task and task.task_metadata and task.task_metadata.get("realize_historical_contributions"):
             logger.info(f"Realizing historical contributions for pension {pension_id}")
             pension_etf.realize_historical_contributions(db=db, pension_id=pension_id)
 
         # Update task status to completed
-        task.status = "completed"
-        db.commit()
+        if task:
+            task.status = "completed"
+            db.commit()
 
     except Exception as e:
         db.rollback()

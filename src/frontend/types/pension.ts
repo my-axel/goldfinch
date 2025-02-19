@@ -1,3 +1,5 @@
+import { ETF } from './etf'
+
 /** 
  * Defines the frequency at which contributions are made to a pension plan.
  * Used in both planned contributions and actual historical records.
@@ -18,9 +20,7 @@ export enum ContributionFrequency {
 export enum PensionType {
   ETF_PLAN = 'ETF_PLAN',      // Self-managed ETF-based pension
   INSURANCE = 'INSURANCE',     // Insurance company managed pension
-  COMPANY = 'COMPANY',         // Employer-sponsored pension plan
-  GOVERNMENT = 'GOVERNMENT',   // Government pension schemes
-  OTHER = 'OTHER'             // Other types of pension plans
+  COMPANY = 'COMPANY'         // Employer-sponsored pension plan
 }
 
 /** 
@@ -72,31 +72,6 @@ export interface HistoricalContribution {
  * TODO: Add transaction logging
  * TODO: Consider adding performance metrics
  */
-export interface ETF {
-  id: string
-  isin: string
-  symbol: string
-  name: string
-  currency: string
-  asset_class: string
-  domicile: string
-  inception_date: string
-  fund_size: number
-  ter: number
-  distribution_policy: string
-  last_price: number
-  last_update: string
-  ytd_return: number
-  one_year_return: number
-  volatility_30d: number
-  sharpe_ratio: number
-  historical_prices: Array<{
-    date: string
-    price: number
-    currency: string
-  }>
-}
-
 export interface ETFPension {
   id: number
   type: PensionType.ETF_PLAN
@@ -155,9 +130,5 @@ export interface CompanyPension {
   contribution_plan_steps: ContributionStep[]
 }
 
-/** 
- * Union type representing all possible pension types.
- * Used when handling pensions generically, with type field
- * determining the specific pension interface to use.
- */
+/** Union type of all possible pension types */
 export type Pension = ETFPension | InsurancePension | CompanyPension

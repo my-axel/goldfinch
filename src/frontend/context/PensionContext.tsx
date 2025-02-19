@@ -9,6 +9,7 @@ import {
   type CompanyPension,
   PensionType
 } from '@/frontend/types/pension'
+import { type ETF } from '@/frontend/types/etf'
 import { toast } from 'sonner'
 
 export interface PensionContribution {
@@ -61,17 +62,41 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         get<CompanyPension[]>(`/pension/company${memberId ? `?member_id=${memberId}` : ''}`)
       ])
 
+      // Fetch ETF details for ETF pensions
+      const etfPensionsWithDetails = await Promise.all(
+        etfResponse.map(async (p) => {
+          try {
+            const etfDetails = await get<ETF>(`/etf/${p.etf_id}`)
+            return {
+              ...p,
+              type: PensionType.ETF_PLAN as const,
+              etf: etfDetails,
+              contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
+                ...step,
+                start_date: new Date(step.start_date),
+                end_date: step.end_date ? new Date(step.end_date) : undefined
+              })) || []
+            }
+          } catch (err) {
+            console.error(`Failed to fetch ETF details for pension ${p.id}:`, err)
+            return {
+              ...p,
+              type: PensionType.ETF_PLAN as const,
+              contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
+                ...step,
+                start_date: new Date(step.start_date),
+                end_date: step.end_date ? new Date(step.end_date) : undefined
+              })) || []
+            }
+          }
+        })
+      )
+
       const allPensions = [
-        ...etfResponse.map(p => ({
-          ...p,
-          contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
-            ...step,
-            start_date: new Date(step.start_date),
-            end_date: step.end_date ? new Date(step.end_date) : undefined
-          })) || []
-        })),
+        ...etfPensionsWithDetails,
         ...insuranceResponse.map(p => ({
           ...p,
+          type: PensionType.INSURANCE as const,
           start_date: new Date(p.start_date),
           contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
             ...step,
@@ -81,6 +106,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         })),
         ...companyResponse.map(p => ({
           ...p,
+          type: PensionType.COMPANY as const,
           start_date: new Date(p.start_date),
           contribution_plan_steps: p.contribution_plan_steps?.map(step => ({
             ...step,
@@ -215,6 +241,10 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         member_id: memberId,
         notes: pension.notes,
         etf_id: pension.etf_id,
+        is_existing_investment: pension.is_existing_investment,
+        existing_units: pension.existing_units,
+        reference_date: pension.reference_date?.toISOString().split('T')[0],
+        realize_historical_contributions: pension.realize_historical_contributions,
         contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
           amount: Number(step.amount),
           frequency: step.frequency,
@@ -292,12 +322,43 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   }, [post, fetchPensions])
 
   const deletePension = useCallback(async (id: number) => {
-    await del(`/pension/${id}`)
-    fetchPensions()
-    if (selectedPension?.id === id) {
-      setSelectedPension(null)
+    try {
+      // First, find the pension type from our local state
+      const pension = pensions.find(p => p.id === id)
+      if (!pension) {
+        throw new Error('Pension not found')
+      }
+
+      // Store the type before deletion
+      const pensionType = pension.type as PensionType
+
+      // Then use the appropriate endpoint based on pension type
+      switch (pensionType) {
+        case PensionType.ETF_PLAN:
+          await del(`/pension/etf/${id}`)
+          break
+        case PensionType.INSURANCE:
+          await del(`/pension/insurance/${id}`)
+          break
+        case PensionType.COMPANY:
+          await del(`/pension/company/${id}`)
+          break
+        default:
+          throw new Error('Unknown pension type')
+      }
+
+      // Update local state after successful deletion
+      setPensions(prevPensions => prevPensions.filter(p => p.id !== id))
+      if (selectedPension?.id === id) {
+        setSelectedPension(null)
+      }
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to delete pension'
+      })
+      throw err
     }
-  }, [del, fetchPensions, selectedPension])
+  }, [del, setPensions, selectedPension, pensions])
 
   const addOneTimeInvestment = useCallback(async (
     pensionId: number,

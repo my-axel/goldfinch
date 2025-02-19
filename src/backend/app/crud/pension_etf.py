@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 
 class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
     def create(
-        self, db: Session, *, obj_in: PensionETFCreate, member_id: int
+        self, db: Session, *, obj_in: PensionETFCreate
     ) -> PensionETF:
         # Create the pension
-        obj_in_data = obj_in.dict(exclude={"contribution_plan_steps"})
-        db_obj = PensionETF(**obj_in_data, member_id=member_id)
+        obj_in_data = obj_in.dict(exclude={"contribution_plan_steps", "realize_historical_contributions"})
+        db_obj = PensionETF(**obj_in_data)
         db.add(db_obj)
         db.flush()  # Get the ID without committing
 
