@@ -172,12 +172,17 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
 
         today = date.today()
         realized_dates = set(ch.date for ch in pension.contribution_history)
+        logger.info(f"Starting historical contribution realization for pension {pension_id}")
+        logger.info(f"Found {len(realized_dates)} existing contributions")
 
         try:
             # Process contribution plan steps
             for step in pension.contribution_plan_steps:
+                logger.info(f"Processing step: amount={step.amount}, frequency={step.frequency}, start={step.start_date}, end={step.end_date or 'ongoing'}")
+                
                 # Skip future contributions
                 if step.start_date > today:
+                    logger.info(f"Skipping future step starting at {step.start_date}")
                     continue
 
                 # Calculate contribution dates
@@ -186,12 +191,16 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                     end_date=min(step.end_date or today, today),
                     frequency=step.frequency
                 )
+                logger.info(f"Calculated {len(dates)} contribution dates for step")
 
                 # Create contribution history for each date
                 for contribution_date in dates:
                     # Skip if already realized
                     if contribution_date in realized_dates:
+                        logger.info(f"Skipping already realized contribution for {contribution_date}")
                         continue
+
+                    logger.info(f"Processing contribution for {contribution_date}")
 
                     # Get ETF price for the date or next available
                     price = etf_crud.get_price_for_date(
@@ -221,6 +230,7 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
 
                     # Calculate units based on contribution amount and price
                     units = Decimal(str(step.amount)) / Decimal(str(price.price))
+                    logger.info(f"Calculated {units} units at price {price.price}")
                     
                     # Create contribution history entry
                     history = PensionETFContributionHistory(
@@ -228,7 +238,7 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                         date=contribution_date,
                         amount=step.amount,
                         is_manual=False,
-                        notes=f"Using ETF price from {price.date}" if price.date != contribution_date else None
+                        note=f"Using ETF price from {price.date}" if price.date != contribution_date else None
                     )
                     db.add(history)
                     db.flush()  # Get the history ID
@@ -247,8 +257,10 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                     # Update pension totals
                     pension.total_units += units
                     pension.current_value = pension.total_units * price.price
+                    logger.info(f"Updated pension totals: units={pension.total_units}, value={pension.current_value}")
 
             db.commit()
+            logger.info("Successfully realized all historical contributions")
         except Exception as e:
             db.rollback()
             logger.error(f"Error realizing historical contributions: {str(e)}")
@@ -268,24 +280,27 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
         while current_date <= end_date:
             dates.append(current_date)
             
-            if frequency == "monthly":
+            if frequency == "MONTHLY":
                 if current_date.month == 12:
                     current_date = date(current_date.year + 1, 1, current_date.day)
                 else:
                     current_date = date(current_date.year, current_date.month + 1, current_date.day)
-            elif frequency == "quarterly":
+            elif frequency == "QUARTERLY":
                 if current_date.month >= 10:
                     current_date = date(current_date.year + 1, (current_date.month + 3) % 12 or 12, current_date.day)
                 else:
                     current_date = date(current_date.year, current_date.month + 3, current_date.day)
-            elif frequency == "semi_annually":
+            elif frequency == "SEMI_ANNUALLY":
                 if current_date.month > 6:
                     current_date = date(current_date.year + 1, (current_date.month + 6) % 12 or 12, current_date.day)
                 else:
                     current_date = date(current_date.year, current_date.month + 6, current_date.day)
-            elif frequency == "annually":
+            elif frequency == "ANNUALLY":
                 current_date = date(current_date.year + 1, current_date.month, current_date.day)
-            elif frequency == "one_time":
+            elif frequency == "ONE_TIME":
+                break
+            else:
+                logger.warning(f"Unknown frequency: {frequency}")
                 break
 
         return dates

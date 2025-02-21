@@ -13,6 +13,9 @@ from fastapi import HTTPException
 from app.services.yfinance import get_etf_data
 from app.db.session import SessionLocal
 import yfinance as yf
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
     def _log_exchange_rate_error(
@@ -296,15 +299,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
     def _find_price_gaps(
         self, db: Session, etf_id: str, min_gap_days: int = 5
     ) -> List[tuple[date, date]]:
-        """
-        Find gaps in the ETF price history.
-        Returns a list of (start_date, end_date) tuples representing gaps.
-        
-        Args:
-            db: Database session
-            etf_id: ETF ID to check
-            min_gap_days: Minimum number of days to consider as a gap
-        """
+        """Find gaps in the ETF price history."""
         prices = (
             db.query(ETFPrice)
             .filter(ETFPrice.etf_id == etf_id)
@@ -321,7 +316,6 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         for price in prices[1:]:
             date_diff = (price.date - prev_date).days
             if date_diff > min_gap_days:
-                # Found a gap
                 gap_start = prev_date + timedelta(days=1)
                 gap_end = price.date - timedelta(days=1)
                 gaps.append((gap_start, gap_end))
@@ -329,102 +323,38 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             
         return gaps
 
-    def _fetch_missing_prices(
-        self, db: Session, etf: ETF, force_full_history: bool = False
-    ) -> None:
-        """
-        Fetch missing historical prices for an ETF.
-        
-        Args:
-            db: Database session
-            etf: ETF to fetch prices for
-            force_full_history: If True, fetches the full history from YFinance
-                              If False, only fills gaps in existing data
-        """
-        if force_full_history:
-            # Fetch full history from YFinance
-            price_data = get_etf_data(etf.id)
-            if not price_data or not price_data.get("historical_prices"):
-                return
-                
-            for price in price_data["historical_prices"]:
-                price_in = ETFPriceCreate(
-                    etf_id=etf.id,
-                    date=price["date"],
-                    price=Decimal(str(price["price"])),
-                    volume=price.get("volume"),
-                    high=price.get("high"),
-                    low=price.get("low"),
-                    open=price.get("open"),
-                    dividends=price.get("dividends"),
-                    stock_splits=price.get("stock_splits"),
-                    capital_gains=price.get("capital_gains")
-                )
-                # add_price handles checking for existing prices
-                self.add_price(db, etf_id=etf.id, obj_in=price_in)
-        else:
-            # Find and fill gaps
-            gaps = self._find_price_gaps(db, etf.id)
-            
-            for gap_start, gap_end in gaps:
-                # Fetch prices for each gap
-                price_data = get_etf_data(
-                    etf.id,
-                    start_date=gap_start,
-                    end_date=gap_end
-                )
-                
-                if price_data and price_data.get("historical_prices"):
-                    for price in price_data["historical_prices"]:
-                        price_in = ETFPriceCreate(
-                            etf_id=etf.id,
-                            date=price["date"],
-                            price=Decimal(str(price["price"])),
-                            volume=price.get("volume"),
-                            high=price.get("high"),
-                            low=price.get("low"),
-                            open=price.get("open"),
-                            dividends=price.get("dividends"),
-                            stock_splits=price.get("stock_splits"),
-                            capital_gains=price.get("capital_gains")
-                        )
-                        self.add_price(db, etf_id=etf.id, obj_in=price_in)
-
     def get(self, db: Session, id: Any) -> Optional[ETF]:
-        """Get an ETF by ID and fill any gaps in its price history."""
-        etf = super().get(db, id)
-        if etf:
-            self._fetch_missing_prices(db, etf)
-        return etf
+        """Get an ETF by ID."""
+        return super().get(db, id)
 
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100, filters: Dict = None
     ) -> List[ETF]:
-        """Get multiple ETFs and fill any gaps in their price histories."""
-        etfs = super().get_multi(db, skip=skip, limit=limit, filters=filters)
-        for etf in etfs:
-            self._fetch_missing_prices(db, etf)
-        return etfs
+        """Get multiple ETFs."""
+        return super().get_multi(db, skip=skip, limit=limit, filters=filters)
 
     def refresh_full_history(
         self, db: Session, etf_id: str
     ) -> None:
-        """
-        Force refresh the complete price history for an ETF.
-        This will fetch all historical data from YFinance.
-        """
-        etf = self.get(db, etf_id)
-        if etf:
-            self._fetch_missing_prices(db, etf, force_full_history=True)
+        """Queue a full refresh of ETF price history."""
+        # Import here to avoid circular dependency
+        from app.tasks.etf import refresh_etf_prices
+        refresh_etf_prices.delay(etf_id)
+
+    def update_latest_prices(self, db: Session, etf_id: str) -> None:
+        """Queue an update of latest prices for an ETF."""
+        # Import here to avoid circular dependency
+        from app.tasks.etf import update_etf_latest_prices
+        update_etf_latest_prices.delay(etf_id)
 
     def get_or_create(self, db: Session, *, id: str) -> ETF:
         """Get an ETF by ID, or create it with minimal data if it doesn't exist."""
-        etf = self.get(db, id)
+        etf = super().get(db, id)
         if not etf:
             # Try to get basic info from YFinance without historical data
             try:
                 ticker = yf.Ticker(id)
-                info = ticker.fast_info  # This is much faster than full info
+                info = ticker.fast_info
                 
                 # Create ETF with minimal data
                 etf = self.create(db, obj_in=ETFCreate(
@@ -435,7 +365,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                     is_active=True
                 ))
             except Exception as e:
-                print(f"Error getting YFinance data: {e}")
+                logger.error(f"Error getting YFinance data: {e}")
                 # If YFinance fails, create with minimal data
                 etf = self.create(db, obj_in=ETFCreate(
                     id=id,
@@ -444,29 +374,15 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                     currency='EUR',
                     is_active=True
                 ))
+            
+            # Import here to avoid circular dependency
+            from app.tasks.etf import fetch_etf_data
+            # Queue full data fetch for new ETF
+            fetch_etf_data.delay(id)
+        else:
+            # For existing ETFs, just update latest prices
+            self.update_latest_prices(db, id)
         
         return etf
-
-    def update_etf_data(self, db: Session, *, etf: ETF) -> None:
-        """
-        Update ETF data asynchronously.
-        This includes fetching full YFinance info and historical prices.
-        Should be called from a background task.
-        """
-        try:
-            etf_data = get_etf_data(etf.id)
-            if etf_data:
-                # Update ETF info
-                update_data = {
-                    "name": etf_data.get("longName", etf_data.get("shortName", etf.name)),
-                    "currency": etf_data.get("currency", etf.currency),
-                }
-                self.update(db, db_obj=etf, obj_in=ETFUpdate(**update_data))
-                
-                # Fetch full price history
-                self._fetch_missing_prices(db, etf, force_full_history=True)
-        except Exception as e:
-            print(f"Error updating ETF data: {e}")
-            # Don't raise the exception - this is running in background
 
 etf_crud = CRUDETF(ETF) 

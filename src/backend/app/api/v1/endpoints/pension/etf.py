@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import List
 from app.api.v1 import deps
@@ -9,7 +9,9 @@ from app.schemas.task import TaskStatusResponse
 from app.tasks.etf_pension import process_new_etf_pension
 from app.models.task import TaskStatus
 from app.models.pension_etf import PensionETF
-from sqlalchemy import text
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Make the router more explicit
 router = APIRouter(
@@ -27,32 +29,36 @@ router = APIRouter(
         422: {"description": "Validation error"}
     }
 )
-async def create_etf_pension(
+def create_etf_pension(
     *,
     db: Session = Depends(deps.get_db),
     pension_in: schemas.pension_etf.PensionETFCreate,
-    background_tasks: BackgroundTasks
 ) -> schemas.pension_etf.PensionETFResponse:
     """Create a new ETF pension."""
+    logger.info(f"Creating ETF pension with realize_historical_contributions={pension_in.realize_historical_contributions}")
+    
     # Get or create the ETF with minimal data
     etf = etf_crud.get_or_create(db=db, id=pension_in.etf_id)
     
     # Create the pension
     pension = pension_etf.create(db=db, obj_in=pension_in)
+    logger.info(f"Created pension with ID {pension.id}")
     
     # Create initial task status
+    task_metadata = {"realize_historical_contributions": pension_in.realize_historical_contributions}
     task = TaskStatus(
         task_type="etf_pension_processing",
         status="pending",
         resource_id=pension.id,
-        task_metadata={"realize_historical_contributions": pension_in.realize_historical_contributions}
+        task_metadata=task_metadata
     )
     db.add(task)
     db.commit()
+    logger.info(f"Created task with metadata: {task_metadata}")
     
-    # Add background tasks
-    background_tasks.add_task(etf_crud.update_etf_data, db=db, etf=etf)  # Update ETF data
-    background_tasks.add_task(process_new_etf_pension, pension.id)  # Process pension contributions
+    # Queue the Celery task
+    process_new_etf_pension.delay(pension.id)
+    logger.info("Queued background task")
     
     return pension
 

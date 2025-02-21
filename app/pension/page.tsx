@@ -1,12 +1,10 @@
 "use client"
 
 import { PensionList } from "@/frontend/components/pension/PensionList"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useEffect, useCallback, useRef } from "react"
 import { usePension } from "@/frontend/context/PensionContext"
-import { useETF } from "@/frontend/context/ETFContext"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { toast } from "sonner"
-import { PensionTypeSelectionModal } from "@/frontend/components/pension/PensionTypeSelectionModal"
 
 /**
  * Main pension management page component. Displays a list of all pension plans
@@ -26,22 +24,18 @@ export default function PensionPage() {
     fetchPensions,
     deletePension,
   } = usePension()
-  const { fetchETFs } = useETF()
   const { members, fetchMembers } = useHousehold()
   const initialized = useRef(false)
-
-  const [typeSelectionOpen, setTypeSelectionOpen] = useState(false)
 
   useEffect(() => {
     if (!initialized.current) {
       Promise.all([
         fetchPensions(),
-        fetchETFs(),
         fetchMembers()
       ])
       initialized.current = true
     }
-  }, [fetchPensions, fetchETFs, fetchMembers])
+  }, [fetchPensions, fetchMembers])
 
   // Error handling
   useEffect(() => {
@@ -82,11 +76,6 @@ export default function PensionPage() {
           onDelete={handleDelete}
         />
       )}
-
-      <PensionTypeSelectionModal
-        open={typeSelectionOpen}
-        onOpenChange={setTypeSelectionOpen}
-      />
     </div>
   )
 }

@@ -73,10 +73,6 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
           )}
         </dd>
       </div>
-      <div>
-        <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
-      </div>
       {currentStep && (
         <div>
           <dt className="text-muted-foreground">Current Contribution</dt>
@@ -85,6 +81,14 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
           </dd>
         </div>
       )}
+        <div>
+          <dt className="text-muted-foreground">Total Units</dt>
+          <dd>{Number(pension.total_units || 0).toFixed(3)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Current Value</dt>
+          <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
+        </div>
       <div className="flex justify-end">
         <Button
           variant="outline"
@@ -128,6 +132,10 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
         <dt className="text-muted-foreground">Expected Return</dt>
         <dd>{(pension.expected_return * 100).toFixed(2)}%</dd>
       </div>
+      <div>
+        <dt className="text-muted-foreground">Current Value</dt>
+        <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
+      </div>
     </>
   )
 }
@@ -156,6 +164,10 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
           } €</dd>
         </div>
       )}
+        <div>
+          <dt className="text-muted-foreground">Current Value</dt>
+          <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
+        </div>
     </>
   )
 }
@@ -237,10 +249,6 @@ function PensionCard({
       </CardHeader>
       <CardContent>
         <dl className="space-y-2 text-sm">
-          <div>
-            <dt className="text-muted-foreground">Current Value</dt>
-            <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
-          </div>
           {renderContent()}
         </dl>
       </CardContent>

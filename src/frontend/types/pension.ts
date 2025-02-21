@@ -78,6 +78,7 @@ export interface ETFPension {
   name: string
   member_id: number           // Links to household member
   current_value: number       // Current total value of the pension
+  total_units: number        // Total units in the pension
   notes?: string
   etf_id: string
   etf?: ETF

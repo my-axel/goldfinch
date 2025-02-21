@@ -2,6 +2,16 @@
     "version": "0.2.0",
     "compounds": [
         {
+            "name": "Full Stack Dev",
+            "configurations": ["Frontend Dev", "Backend", "Celery Worker"],
+            "stopAll": true
+        },
+        {
+            "name": "Full Stack Prod",
+            "configurations": ["Frontend Prod", "Backend", "Celery Worker"],
+            "stopAll": true
+        },
+        {
             "name": "Frontend Dev + Backend",
             "configurations": ["Frontend Dev", "Backend"],
             "stopAll": true
@@ -13,6 +23,7 @@
         }
     ],
     "configurations": [
+        
         {
             "name": "Backend",
             "type": "debugpy",
@@ -31,7 +42,45 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
-                "PYDEVD_DISABLE_FILE_VALIDATION": "1"  // Added to suppress warning
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
+            }
+        },
+        {
+            "name": "Celery Worker",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "celery",
+            "args": [
+                "-A",
+                "app.tasks",
+                "worker",
+                "--loglevel=info",
+                "--pool=solo"
+            ],
+            "cwd": "${workspaceFolder}/src/backend",
+            "python": "${workspaceFolder}/src/backend/venv/bin/python",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
+            }
+        },
+        {
+            "name": "Celery Flower",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "celery",
+            "args": [
+                "-A",
+                "app.tasks",
+                "flower"
+            ],
+            "cwd": "${workspaceFolder}/src/backend",
+            "python": "${workspaceFolder}/src/backend/venv/bin/python",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
         {
@@ -43,7 +92,7 @@
             "runtimeArgs": ["run", "dev"],
             "env": {
                 "NODE_ENV": "development"
-            },
+            }
         },
         {
             "name": "Frontend Prod",
@@ -55,7 +104,7 @@
             "runtimeArgs": ["run", "start"],
             "env": {
                 "NODE_ENV": "production"
-            },
+            }
         }
     ]
 } 

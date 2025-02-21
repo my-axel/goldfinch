@@ -16,7 +16,7 @@ import yfinance as yf
 router = APIRouter()
 
 @router.get("/search", status_code=200)
-async def search_yfinance(
+def search_yfinance(
     query: str = Query(..., min_length=2, description="ETF symbol to search for")
 ):
     """Search ETFs using yfinance API"""
