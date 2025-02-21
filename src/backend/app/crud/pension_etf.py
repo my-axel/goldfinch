@@ -172,17 +172,17 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
 
         today = date.today()
         realized_dates = set(ch.date for ch in pension.contribution_history)
-        logger.info(f"Starting historical contribution realization for pension {pension_id}")
-        logger.info(f"Found {len(realized_dates)} existing contributions")
+        logger.info(f"Realizing historical contributions for pension {pension_id}")
 
         try:
+            # Reset totals before processing
+            pension.total_units = Decimal('0')
+            pension.current_value = Decimal('0')
+
             # Process contribution plan steps
             for step in pension.contribution_plan_steps:
-                logger.info(f"Processing step: amount={step.amount}, frequency={step.frequency}, start={step.start_date}, end={step.end_date or 'ongoing'}")
-                
                 # Skip future contributions
                 if step.start_date > today:
-                    logger.info(f"Skipping future step starting at {step.start_date}")
                     continue
 
                 # Calculate contribution dates
@@ -191,16 +191,12 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                     end_date=min(step.end_date or today, today),
                     frequency=step.frequency
                 )
-                logger.info(f"Calculated {len(dates)} contribution dates for step")
 
                 # Create contribution history for each date
                 for contribution_date in dates:
                     # Skip if already realized
                     if contribution_date in realized_dates:
-                        logger.info(f"Skipping already realized contribution for {contribution_date}")
                         continue
-
-                    logger.info(f"Processing contribution for {contribution_date}")
 
                     # Get ETF price for the date or next available
                     price = etf_crud.get_price_for_date(
@@ -218,19 +214,11 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                         )
                         
                         if not price:
-                            logger.warning(
-                                f"No price found for ETF {pension.etf_id} on or after {contribution_date}. "
-                                "Skipping contribution realization."
-                            )
+                            logger.warning(f"No price found for ETF {pension.etf_id} on or after {contribution_date}")
                             continue
-                        else:
-                            logger.info(
-                                f"Using next available price from {price.date} for contribution on {contribution_date}"
-                            )
 
                     # Calculate units based on contribution amount and price
                     units = Decimal(str(step.amount)) / Decimal(str(price.price))
-                    logger.info(f"Calculated {units} units at price {price.price}")
                     
                     # Create contribution history entry
                     history = PensionETFContributionHistory(
@@ -254,16 +242,22 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                     )
                     db.add(allocation)
 
-                    # Update pension totals
+                    # Update pension total units
                     pension.total_units += units
-                    pension.current_value = pension.total_units * price.price
-                    logger.info(f"Updated pension totals: units={pension.total_units}, value={pension.current_value}")
+
+            # After all contributions are processed, get the latest price to calculate current value
+            latest_price = etf_crud.get_latest_price(db=db, etf_id=pension.etf_id)
+            if latest_price:
+                pension.current_value = pension.total_units * latest_price.price
+                logger.info(f"Completed with {pension.total_units:.4f} units, current value {pension.current_value:.2f} EUR")
+            else:
+                logger.warning(f"No latest price found for ETF {pension.etf_id}, cannot calculate current value")
 
             db.commit()
-            logger.info("Successfully realized all historical contributions")
+
         except Exception as e:
             db.rollback()
-            logger.error(f"Error realizing historical contributions: {str(e)}")
+            logger.error(f"Failed to realize historical contributions: {str(e)}")
             raise
 
     def _calculate_contribution_dates(

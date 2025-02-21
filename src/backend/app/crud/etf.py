@@ -76,47 +76,57 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             return price, False
             
         # Handle GBp (British pence) special case
+        original_currency = currency
         if currency == "GBp":
             # Convert pence to pounds first (divide by 100)
             price = price / Decimal('100')
             # Use GBP for the exchange rate lookup
             currency = "GBP"
+            logger.info(f"Converting {original_currency} price {price * Decimal('100')} to GBP: {price}")
             
         try:
             rate = ExchangeRateService.get_closest_rate(db, currency, price_date)
             if not rate:
                 # Log the missing rate for later resolution
+                error_msg = f"No exchange rate found within +/- 1 day when converting price from {original_currency} ({price} {currency}) to EUR"
+                logger.error(error_msg)
                 self._log_exchange_rate_error(
                     db, 
-                    currency, 
+                    original_currency,  # Log the original currency for clarity
                     price_date,
-                    f"No exchange rate found within +/- 1 day when converting ETF price from {currency}"
+                    error_msg
                 )
                 # Use 1:1 as last resort fallback rate
                 return price, True
                 
             # If we're using a rate from a different date, log it but don't mark as fallback
             if rate.date != price_date:
+                log_msg = f"Using exchange rate from {rate.date} ({rate.rate} EUR/{currency}) for {original_currency} price {price}"
+                logger.info(log_msg)
                 self._log_exchange_rate_error(
                     db,
-                    currency,
+                    original_currency,  # Log the original currency for clarity
                     price_date,
-                    f"Using exchange rate from {rate.date} for {currency}"
+                    log_msg
                 )
                 
             # Rate is stored as XXX/EUR (how many EUR you get for 1 XXX)
             # To convert XXX to EUR, we multiply by the rate
             # Example: 100 USD with rate 0.954381 (1 USD = 0.954381 EUR)
             # 100 USD * 0.954381 = 95.4381 EUR
-            return price * rate.rate, False
+            converted_price = price * rate.rate
+            logger.info(f"Converted {price} {currency} to {converted_price} EUR using rate {rate.rate}")
+            return converted_price, False
             
         except Exception as e:
             # Log any errors but continue with fallback rate
+            error_msg = f"Error getting exchange rate for {original_currency} ({price} {currency}): {str(e)}"
+            logger.error(error_msg)
             self._log_exchange_rate_error(
                 db, 
-                currency, 
+                original_currency,  # Log the original currency for clarity
                 price_date,
-                f"Error getting exchange rate: {str(e)}"
+                error_msg
             )
             return price, True
 
