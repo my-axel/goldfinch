@@ -1,0 +1,26 @@
+2025-02-22 15:35:47,243 - app.services.exchange_rate - ERROR - Failed to get update statistics: 'Session' object has no attribute 'func'
+2025-02-22 15:35:47,243 - app.services.exchange_rate - ERROR - Failed to get update statistics: 'Session' object has no attribute 'func'
+2025-02-22 15:45:01,687 - app.services.exchange_rate - ERROR - Failed to get update statistics: 'Session' object has no attribute 'func'
+2025-02-22 15:45:01,687 - app.services.exchange_rate - ERROR - Failed to get update statistics: 'Session' object has no attribute 'func'
+2025-02-22 15:45:50,349 - app.services.exchange_rate - ERROR - Failed to get update statistics: 'Session' object has no attribute 'func'
+2025-02-22 15:45:50,349 - app.services.exchange_rate - ERROR - Failed to get update statistics: 'Session' object has no attribute 'func'
+2025-02-22 15:57:26,656 - app.services.exchange_rate - INFO - Starting daily exchange rate update
+2025-02-22 15:57:26,656 - app.services.exchange_rate - INFO - Starting daily exchange rate update
+2025-02-22 15:57:26,684 - app.services.exchange_rate - INFO - Processing chunk from 2025-02-22 to 2025-02-22
+2025-02-22 15:57:26,684 - app.services.exchange_rate - INFO - Processing chunk from 2025-02-22 to 2025-02-22
+2025-02-22 15:57:28,170 - app.services.exchange_rate - ERROR - Failed to fetch rates for USD: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 15:57:28,170 - app.services.exchange_rate - ERROR - Failed to fetch rates for USD: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 15:57:28,172 - app.services.exchange_rate - ERROR - Failed to process chunk: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 15:57:28,172 - app.services.exchange_rate - ERROR - Failed to process chunk: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 15:57:28,195 - app.services.exchange_rate - INFO - Completed daily exchange rate update
+2025-02-22 15:57:28,195 - app.services.exchange_rate - INFO - Completed daily exchange rate update
+2025-02-22 16:02:57,770 - app.services.exchange_rate - INFO - Starting daily exchange rate update
+2025-02-22 16:02:57,770 - app.services.exchange_rate - INFO - Starting daily exchange rate update
+2025-02-22 16:02:57,792 - app.services.exchange_rate - INFO - Processing chunk from 2025-02-22 to 2025-02-22
+2025-02-22 16:02:57,792 - app.services.exchange_rate - INFO - Processing chunk from 2025-02-22 to 2025-02-22
+2025-02-22 16:02:58,161 - app.services.exchange_rate - ERROR - Failed to fetch rates for USD: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 16:02:58,161 - app.services.exchange_rate - ERROR - Failed to fetch rates for USD: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 16:02:58,163 - app.services.exchange_rate - ERROR - Failed to process chunk: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 16:02:58,163 - app.services.exchange_rate - ERROR - Failed to process chunk: 503: Error fetching rates for USD: 503: Invalid JSON response for USD
+2025-02-22 16:02:58,189 - app.services.exchange_rate - INFO - Completed daily exchange rate update
+2025-02-22 16:02:58,189 - app.services.exchange_rate - INFO - Completed daily exchange rate update

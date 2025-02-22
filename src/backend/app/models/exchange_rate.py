@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Date, Integer, Numeric, UniqueConstraint, Boolean, DateTime
+from sqlalchemy import Column, String, Date, Integer, Numeric, UniqueConstraint, Boolean, DateTime, ARRAY, Index
 from app.db.base_class import Base
 from datetime import datetime
 
@@ -38,4 +38,29 @@ class ExchangeRateError(Base):
     __table_args__ = (
         # Ensure we don't log duplicate errors for the same currency pair and date
         UniqueConstraint('source_currency', 'target_currency', 'date', name='uix_exchange_rate_error'),
+    )
+
+class ExchangeRateUpdate(Base):
+    """
+    Tracks exchange rate update operations.
+    Used to monitor both scheduled and manual updates, track their progress,
+    and maintain a history of update operations.
+    """
+    __tablename__ = "exchange_rate_updates"
+
+    id = Column(Integer, primary_key=True)
+    update_type = Column(String, nullable=False)  # 'historical', 'daily', 'manual_historical', 'manual_latest'
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    status = Column(String, nullable=False)  # 'pending', 'processing', 'completed', 'failed'
+    currencies = Column(ARRAY(String), nullable=False)  # Array of currency codes
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    error = Column(String, nullable=True)
+    missing_dates = Column(ARRAY(Date), nullable=True)  # Array of dates where update failed
+    retry_count = Column(Integer, nullable=False, default=0)
+    
+    __table_args__ = (
+        # Index for cleanup queries
+        Index('ix_exchange_rate_updates_status_completed', status, completed_at),
     ) 

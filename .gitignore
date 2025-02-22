@@ -54,3 +54,4 @@ next-env.d.ts
 venv/
 __pycache__/
 .pytest_cache/
+exchange_rates_backup_20250222.sql

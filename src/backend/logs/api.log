@@ -1,0 +1,102 @@
+2025-02-22 15:35:47,244 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: 'Session' object has no attribute 'func'
+2025-02-22 15:35:47,244 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: 'Session' object has no attribute 'func'
+2025-02-22 15:45:01,688 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: 'Session' object has no attribute 'func'
+2025-02-22 15:45:01,688 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: 'Session' object has no attribute 'func'
+2025-02-22 15:45:50,350 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: 'Session' object has no attribute 'func'
+2025-02-22 15:45:50,350 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: 'Session' object has no attribute 'func'
+2025-02-22 15:54:12,803 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+2025-02-22 15:54:12,803 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+2025-02-22 15:56:59,597 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+2025-02-22 15:56:59,597 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+2025-02-22 15:59:54,354 - app.api.v1.endpoints.exchange_rates - INFO - Starting to fetch exchange rate update status
+2025-02-22 15:59:54,354 - app.api.v1.endpoints.exchange_rates - INFO - Starting to fetch exchange rate update status
+2025-02-22 15:59:54,355 - app.api.v1.endpoints.exchange_rates - INFO - Fetching recent updates
+2025-02-22 15:59:54,355 - app.api.v1.endpoints.exchange_rates - INFO - Fetching recent updates
+2025-02-22 15:59:54,356 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+Traceback (most recent call last):
+  File "/opt/goldfinch/src/backend/app/api/v1/endpoints/exchange_rates.py", line 58, in get_update_status
+    db.query(ExchangeRateUpdate)
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2955, in query
+    return self._query_cls(entities, self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 275, in __init__
+    self._set_entities(entities)
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 287, in _set_entities
+    self._raw_columns = [
+                        ^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 288, in <listcomp>
+    coercions.expect(
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 395, in expect
+    resolved = impl._literal_coercion(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 634, in _literal_coercion
+    self._raise_for_expected(element, argname)
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 1132, in _raise_for_expected
+    return super()._raise_for_expected(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 695, in _raise_for_expected
+    super()._raise_for_expected(
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 518, in _raise_for_expected
+    raise exc.ArgumentError(msg, code=code) from err
+sqlalchemy.exc.ArgumentError: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+2025-02-22 15:59:54,356 - app.api.v1.endpoints.exchange_rates - ERROR - Failed to get update status: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+Traceback (most recent call last):
+  File "/opt/goldfinch/src/backend/app/api/v1/endpoints/exchange_rates.py", line 58, in get_update_status
+    db.query(ExchangeRateUpdate)
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2955, in query
+    return self._query_cls(entities, self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 275, in __init__
+    self._set_entities(entities)
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 287, in _set_entities
+    self._raw_columns = [
+                        ^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 288, in <listcomp>
+    coercions.expect(
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 395, in expect
+    resolved = impl._literal_coercion(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 634, in _literal_coercion
+    self._raise_for_expected(element, argname)
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 1132, in _raise_for_expected
+    return super()._raise_for_expected(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 695, in _raise_for_expected
+    super()._raise_for_expected(
+  File "/opt/goldfinch/src/backend/venv/lib/python3.11/site-packages/sqlalchemy/sql/coercions.py", line 518, in _raise_for_expected
+    raise exc.ArgumentError(msg, code=code) from err
+sqlalchemy.exc.ArgumentError: Column expression, FROM clause, or other columns clause element expected, got <class 'app.schemas.exchange_rate.ExchangeRateUpdate'>.
+2025-02-22 16:01:23,653 - app.api.v1.endpoints.exchange_rates - INFO - Starting to fetch exchange rate update status
+2025-02-22 16:01:23,653 - app.api.v1.endpoints.exchange_rates - INFO - Starting to fetch exchange rate update status
+2025-02-22 16:01:23,654 - app.api.v1.endpoints.exchange_rates - INFO - Fetching recent updates
+2025-02-22 16:01:23,654 - app.api.v1.endpoints.exchange_rates - INFO - Fetching recent updates
+2025-02-22 16:01:23,938 - app.api.v1.endpoints.exchange_rates - INFO - Found 2 recent updates
+2025-02-22 16:01:23,938 - app.api.v1.endpoints.exchange_rates - INFO - Found 2 recent updates
+2025-02-22 16:01:23,939 - app.api.v1.endpoints.exchange_rates - INFO - Fetching exchange rate statistics
+2025-02-22 16:01:23,939 - app.api.v1.endpoints.exchange_rates - INFO - Fetching exchange rate statistics
+2025-02-22 16:01:23,979 - app.api.v1.endpoints.exchange_rates - INFO - Successfully retrieved statistics
+2025-02-22 16:01:23,979 - app.api.v1.endpoints.exchange_rates - INFO - Successfully retrieved statistics
+2025-02-22 16:01:23,980 - app.api.v1.endpoints.exchange_rates - INFO - Successfully prepared status response
+2025-02-22 16:01:23,980 - app.api.v1.endpoints.exchange_rates - INFO - Successfully prepared status response
+2025-02-22 16:06:09,034 - app.api.v1.endpoints.exchange_rates - INFO - No rates for today (2025-02-22), using latest available date: 2025-02-21
+2025-02-22 16:06:09,034 - app.api.v1.endpoints.exchange_rates - INFO - No rates for today (2025-02-22), using latest available date: 2025-02-21
+2025-02-22 16:06:37,744 - app.api.v1.endpoints.exchange_rates - INFO - No rates for today (2025-02-22), using latest available date: 2025-02-21
+2025-02-22 16:06:37,744 - app.api.v1.endpoints.exchange_rates - INFO - No rates for today (2025-02-22), using latest available date: 2025-02-21
+2025-02-22 16:08:26,512 - app.api.v1.endpoints.exchange_rates - INFO - Starting to fetch exchange rate update status
+2025-02-22 16:08:26,512 - app.api.v1.endpoints.exchange_rates - INFO - Starting to fetch exchange rate update status
+2025-02-22 16:08:26,513 - app.api.v1.endpoints.exchange_rates - INFO - Fetching recent updates
+2025-02-22 16:08:26,513 - app.api.v1.endpoints.exchange_rates - INFO - Fetching recent updates
+2025-02-22 16:08:26,525 - app.api.v1.endpoints.exchange_rates - INFO - Found 1 recent updates
+2025-02-22 16:08:26,525 - app.api.v1.endpoints.exchange_rates - INFO - Found 1 recent updates
+2025-02-22 16:08:26,530 - app.api.v1.endpoints.exchange_rates - INFO - Fetching exchange rate statistics
+2025-02-22 16:08:26,530 - app.api.v1.endpoints.exchange_rates - INFO - Fetching exchange rate statistics
+2025-02-22 16:08:26,571 - app.api.v1.endpoints.exchange_rates - INFO - Successfully retrieved statistics
+2025-02-22 16:08:26,571 - app.api.v1.endpoints.exchange_rates - INFO - Successfully retrieved statistics
+2025-02-22 16:08:26,571 - app.api.v1.endpoints.exchange_rates - INFO - Successfully prepared status response
+2025-02-22 16:08:26,571 - app.api.v1.endpoints.exchange_rates - INFO - Successfully prepared status response
+2025-02-22 16:18:32,310 - app.api.v1.endpoints.exchange_rates - INFO - No rates for 2024-02-18, using latest available date: 2009-02-05
+2025-02-22 16:18:32,310 - app.api.v1.endpoints.exchange_rates - INFO - No rates for 2024-02-18, using latest available date: 2009-02-05
+2025-02-22 16:18:46,533 - app.api.v1.endpoints.exchange_rates - INFO - No rates for 2024-02-16, using latest available date: 2009-05-08
+2025-02-22 16:18:46,533 - app.api.v1.endpoints.exchange_rates - INFO - No rates for 2024-02-16, using latest available date: 2009-05-08
+2025-02-22 16:20:19,523 - app.api.v1.endpoints.exchange_rates - INFO - No rates for 2024-02-18, using latest available date: 2010-08-17
+2025-02-22 16:20:19,523 - app.api.v1.endpoints.exchange_rates - INFO - No rates for 2024-02-18, using latest available date: 2010-08-17

@@ -1,10 +1,11 @@
 from celery import Celery
+from celery.schedules import crontab
 
 celery_app = Celery(
     "worker",
     broker="amqp://guest:guest@localhost:5672//",
     backend="rpc://",
-    include=["app.tasks"]
+    include=["app.tasks"]  # Using __init__.py to handle task registration
 )
 
 # Optional configurations
@@ -16,3 +17,16 @@ celery_app.conf.update(
     timezone='UTC',
     enable_utc=True,
 )
+
+# Schedule tasks
+celery_app.conf.beat_schedule = {
+    'update-daily-rates': {
+        'task': 'app.tasks.exchange_rates.update_exchange_rates',
+        'schedule': crontab(hour=16, minute=30),  # 16:30 UTC (after ECB update)
+        'args': ('daily',)
+    },
+    'cleanup-old-updates': {
+        'task': 'app.tasks.exchange_rates.cleanup_old_updates',
+        'schedule': crontab(hour=0, minute=0),  # Daily at midnight UTC
+    }
+}
