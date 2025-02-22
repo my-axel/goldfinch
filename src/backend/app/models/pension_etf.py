@@ -13,7 +13,7 @@ class PensionETF(Base):
     notes = Column(String, nullable=True)
     
     # ETF specific
-    etf_id = Column(String, ForeignKey("etfs.id", ondelete="RESTRICT"), nullable=False, index=True)
+    etf_id = Column(String, ForeignKey("etfs.id", ondelete="CASCADE"), nullable=False, index=True)
     total_units = Column(Numeric(20, 6), nullable=False, default=0)
     
     # Investment initialization
@@ -51,7 +51,6 @@ class PensionETFContributionPlan(Base):
 
     # Relationships
     pension = relationship("PensionETF", back_populates="contribution_plan")
-    allocations = relationship("PensionETFAllocationPlan", back_populates="contribution", cascade="all, delete-orphan")
 
 class PensionETFContributionHistory(Base):
     __tablename__ = "pension_etf_contribution_history"
@@ -64,33 +63,4 @@ class PensionETFContributionHistory(Base):
     note = Column(String, nullable=True)
 
     # Relationships
-    pension = relationship("PensionETF", back_populates="contribution_history")
-    allocations = relationship("PensionETFAllocationHistory", back_populates="contribution", cascade="all, delete-orphan")
-
-class PensionETFAllocationPlan(Base):
-    __tablename__ = "pension_etf_allocation_plan"
-
-    id = Column(Integer, primary_key=True, index=True)
-    pension_etf_contribution_plan_id = Column(Integer, ForeignKey("pension_etf_contribution_plan.id", ondelete="CASCADE"), nullable=False)
-    etf_id = Column(String, ForeignKey("etfs.id"), nullable=False)
-    amount = Column(Numeric(20, 2), nullable=False)
-    percentage = Column(Numeric(5, 2), nullable=False)
-
-    # Relationships
-    contribution = relationship("PensionETFContributionPlan", back_populates="allocations")
-    etf = relationship("ETF", back_populates="allocation_plans")
-
-class PensionETFAllocationHistory(Base):
-    __tablename__ = "pension_etf_allocation_history"
-
-    id = Column(Integer, primary_key=True, index=True)
-    pension_etf_contribution_history_id = Column(Integer, ForeignKey("pension_etf_contribution_history.id", ondelete="CASCADE"), nullable=False)
-    etf_id = Column(String, ForeignKey("etfs.id"), nullable=False)
-    amount = Column(Numeric(20, 2), nullable=False)
-    units = Column(Numeric(20, 6), nullable=False)
-    price_per_unit = Column(Numeric(20, 6), nullable=False)
-    percentage = Column(Numeric(5, 2), nullable=False)
-
-    # Relationships
-    contribution = relationship("PensionETFContributionHistory", back_populates="allocations")
-    etf = relationship("ETF", back_populates="allocation_history") 
+    pension = relationship("PensionETF", back_populates="contribution_history") 

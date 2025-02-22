@@ -1,7 +1,7 @@
 from typing import List, Optional, Any, Dict
 from datetime import date, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, desc, asc
 from fastapi.encoders import jsonable_encoder
 from app.crud.base import CRUDBase
 from app.models.etf import ETF, ETFPrice
@@ -17,6 +17,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Constants
+EARLIEST_DATA_DATE = date(1999, 1, 1)  # Euro introduction date, earliest possible date for exchange rates
+
 class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
     def _log_exchange_rate_error(
         self, db: Session, currency: str, date_needed: date, context: str
@@ -25,41 +28,44 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         If an error for this currency/date already exists, update its context.
         This is a best-effort operation - if it fails, we just log to console and continue."""
         try:
-            # Create a new session for error logging to avoid affecting the main transaction
-            error_db = SessionLocal()
-            try:
-                # Check if an error already exists
-                existing_error = error_db.query(ExchangeRateError).filter(
-                    ExchangeRateError.source_currency == currency,
-                    ExchangeRateError.target_currency == 'EUR',
-                    ExchangeRateError.date == date_needed
-                ).first()
-
-                if existing_error:
-                    # Update existing error with new context if different
-                    if existing_error.context != context:
-                        existing_error.context = f"{existing_error.context}\n{context}"
-                        error_db.add(existing_error)
-                else:
-                    # Create new error log
-                    error_log = ExchangeRateError(
-                        source_currency=currency,
-                        target_currency='EUR',
-                        date=date_needed,
-                        context=context
-                    )
-                    error_db.add(error_log)
-
-                error_db.commit()
-            except Exception as e:
-                # If we fail to log the error, just print it and continue
-                print(f"Failed to log exchange rate error: {str(e)}")
-                error_db.rollback()
-            finally:
-                error_db.close()
+            error = db.query(ExchangeRateError).filter(
+                ExchangeRateError.source_currency == currency,
+                ExchangeRateError.target_currency == "EUR",
+                ExchangeRateError.date == date_needed,
+                ExchangeRateError.resolved == False  # noqa: E712
+            ).first()
+            
+            if error:
+                # Update existing error with additional context
+                error.context = f"{error.context}\n{context}"
+            else:
+                # Create new error
+                error = ExchangeRateError(
+                    source_currency=currency,
+                    target_currency="EUR",
+                    date=date_needed,
+                    context=context
+                )
+                db.add(error)
+            
+            db.commit()
         except Exception as e:
-            # Catch any other errors that might occur
-            print(f"Error in exchange rate error logging: {str(e)}")
+            logger.error(f"Failed to log exchange rate error: {str(e)}")
+
+    def _convert_field_to_eur(
+        self, db: Session, value: float, currency: str, price_date: date
+    ) -> Decimal:
+        """Convert a field value from given currency to EUR."""
+        if not value:
+            return Decimal('0')
+        
+        if currency == "EUR":
+            return Decimal(str(value))
+            
+        converted, is_fallback = self._convert_to_eur(
+            db, Decimal(str(value)), currency, price_date
+        )
+        return converted
 
     def _convert_to_eur(
         self, db: Session, price: Decimal, currency: str, price_date: date
@@ -67,22 +73,35 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         """Convert a price from given currency to EUR using stored exchange rates.
         Special handling for GBp (British pence) to convert to GBP first.
         
-        Returns:
-            tuple: (converted_price, used_fallback)
-            - converted_price: The price in EUR
-            - used_fallback: True if a fallback rate was used due to missing exchange rate
+        Returns a tuple of (converted_price, is_fallback) where is_fallback indicates
+        whether a fallback rate was used due to missing exchange rate data.
         """
+        if not price:
+            return Decimal('0'), False
+            
         if currency == "EUR":
             return price, False
             
-        # Handle GBp (British pence) special case
         original_currency = currency
+        
+        # Don't try to convert prices before exchange rates are available
+        if price_date < EARLIEST_DATA_DATE:
+            error_msg = f"Cannot convert price from {original_currency} to EUR for date {price_date} - before Euro introduction"
+            logger.error(error_msg)
+            self._log_exchange_rate_error(
+                db,
+                original_currency,
+                price_date,
+                error_msg
+            )
+            return price, True
+
+        # Handle GBp (British pence) special case
         if currency == "GBp":
             # Convert pence to pounds first (divide by 100)
             price = price / Decimal('100')
             # Use GBP for the exchange rate lookup
             currency = "GBP"
-            logger.info(f"Converting {original_currency} price {price * Decimal('100')} to GBP: {price}")
             
         try:
             rate = ExchangeRateService.get_closest_rate(db, currency, price_date)
@@ -101,8 +120,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                 
             # If we're using a rate from a different date, log it but don't mark as fallback
             if rate.date != price_date:
-                log_msg = f"Using exchange rate from {rate.date} ({rate.rate} EUR/{currency}) for {original_currency} price {price}"
-                logger.info(log_msg)
+                log_msg = f"Using exchange rate from {rate.date} for {original_currency} price on {price_date}"
                 self._log_exchange_rate_error(
                     db,
                     original_currency,  # Log the original currency for clarity
@@ -111,38 +129,19 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                 )
                 
             # Rate is stored as XXX/EUR (how many EUR you get for 1 XXX)
-            # To convert XXX to EUR, we multiply by the rate
-            # Example: 100 USD with rate 0.954381 (1 USD = 0.954381 EUR)
-            # 100 USD * 0.954381 = 95.4381 EUR
             converted_price = price * rate.rate
-            logger.info(f"Converted {price} {currency} to {converted_price} EUR using rate {rate.rate}")
             return converted_price, False
             
         except Exception as e:
-            # Log any errors but continue with fallback rate
-            error_msg = f"Error getting exchange rate for {original_currency} ({price} {currency}): {str(e)}"
+            error_msg = f"Error converting {price} {original_currency} to EUR: {str(e)}"
             logger.error(error_msg)
             self._log_exchange_rate_error(
-                db, 
-                original_currency,  # Log the original currency for clarity
+                db,
+                original_currency,
                 price_date,
                 error_msg
             )
             return price, True
-
-    def _convert_field_to_eur(
-        self, db: Session, value: Optional[float], currency: str, date: date
-    ) -> Optional[Decimal]:
-        """Helper method to convert a field value to EUR if it exists."""
-        if value is not None:
-            converted_value, _ = self._convert_to_eur(
-                db,
-                Decimal(str(value)),
-                currency,
-                date
-            )
-            return converted_value
-        return None
 
     def add_price(
         self, db: Session, *, etf_id: str, obj_in: ETFPriceCreate
@@ -280,7 +279,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         return (
             db.query(ETFPrice)
             .filter(ETFPrice.etf_id == etf_id)
-            .order_by(ETFPrice.date.desc())
+            .order_by(desc(ETFPrice.date))
             .first()
         )
 
@@ -302,7 +301,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             db.query(ETFPrice)
             .filter(ETFPrice.etf_id == etf_id)
             .filter(ETFPrice.date > after_date)
-            .order_by(ETFPrice.date.asc())  # Get the earliest date after after_date
+            .order_by(asc(ETFPrice.date))  # Get the earliest date after after_date
             .first()
         )
 
@@ -394,5 +393,13 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
             self.update_latest_prices(db, id)
         
         return etf
+
+    def get_prices_between_dates(self, db: Session, etf_id: str, start_date: date, end_date: date) -> List[ETFPrice]:
+        """Get all ETF prices between two dates, inclusive"""
+        return db.query(ETFPrice).filter(
+            ETFPrice.etf_id == etf_id,
+            ETFPrice.date >= start_date,
+            ETFPrice.date <= end_date
+        ).order_by(asc(ETFPrice.date)).all()
 
 etf_crud = CRUDETF(ETF) 

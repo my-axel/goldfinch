@@ -28,8 +28,11 @@ import {
                 <Image 
                     src="/goldfinch_logo.jpg" 
                     alt="Goldfinch Logo" 
-                    width={72} 
+                    className="logo"
+                    width={72}
                     height={72}
+                    style={{ width: 72, height: 72 }}
+                    unoptimized
                 />
                 <h2 className="group-data-[collapsible=icon]:hidden text-2xl font-bold">Goldfinch</h2>
             </div>

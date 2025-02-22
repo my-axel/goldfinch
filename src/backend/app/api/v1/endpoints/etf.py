@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 from datetime import date
 from app.api.v1 import deps
@@ -10,12 +11,20 @@ from app.schemas.etf import (
     ETFPriceCreate,
     ETFPriceResponse,
 )
+from app.schemas.etf_update import ETFUpdateResponse, ETFUpdateCreate
 from app.crud.etf import etf_crud
+from app.crud.etf_update import etf_update
+from app.tasks.etf import update_etf_latest_prices, refresh_etf_prices, fetch_etf_data
+from app.models.etf import ETFError, ETFPrice, ETFUpdate as ETFUpdateModel
 import yfinance as yf
+from app.services.etf_service import ETFServiceError, ETFNotFoundError
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.get("/search", status_code=200)
+@router.get("/search", status_code=status.HTTP_200_OK, response_model=List[dict])
 def search_yfinance(
     query: str = Query(..., min_length=2, description="ETF symbol to search for")
 ):
@@ -36,7 +45,7 @@ def search_yfinance(
             }]
         return []
     except Exception as e:
-        print(f"Error searching for ETF {query}: {str(e)}")
+        logger.error(f"Error searching for ETF {query}: {str(e)}")
         # Try alternative method if first one fails
         try:
             tickers = yf.download(query, period='1d')
@@ -48,14 +57,14 @@ def search_yfinance(
                     'currency': 'Unknown'  # We can't get currency from download
                 }]
         except Exception as e2:
-            print(f"Second attempt failed: {str(e2)}")
+            logger.error(f"Second attempt failed: {str(e2)}")
         return []
 
-@router.get("", response_model=List[ETFResponse])
+@router.get("", response_model=List[ETFResponse], status_code=status.HTTP_200_OK)
 def get_etfs(
     db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, gt=0, le=1000),
     query: Optional[str] = None,
     is_active: Optional[bool] = None,
     provider: Optional[str] = None
@@ -63,17 +72,24 @@ def get_etfs(
     """
     Retrieve ETFs with optional filtering and search.
     """
-    if query:
-        return etf_crud.search(db, query=query)
-        
-    filters = {}
-    if is_active is not None:
-        filters["is_active"] = is_active
-    if provider:
-        filters["provider"] = provider
-    return etf_crud.get_multi(db, skip=skip, limit=limit, filters=filters)
+    try:
+        if query:
+            return etf_crud.search(db, query=query)
+            
+        filters = {}
+        if is_active is not None:
+            filters["is_active"] = is_active
+        if provider:
+            filters["provider"] = provider
+        return etf_crud.get_multi(db, skip=skip, limit=limit, filters=filters)
+    except Exception as e:
+        logger.error(f"Error retrieving ETFs: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving ETFs"
+        )
 
-@router.get("/{etf_id}", response_model=ETFResponse)
+@router.get("/{etf_id}", response_model=ETFResponse, status_code=status.HTTP_200_OK)
 def get_etf(
     etf_id: str,
     db: Session = Depends(deps.get_db)
@@ -81,12 +97,24 @@ def get_etf(
     """
     Get a specific ETF by ID (ISIN).
     """
-    etf = etf_crud.get(db, id=etf_id)
-    if not etf:
-        raise HTTPException(status_code=404, detail="ETF not found")
-    return etf
+    try:
+        etf = etf_crud.get(db, id=etf_id)
+        if not etf:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ETF not found"
+            )
+        return etf
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving ETF {etf_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving ETF"
+        )
 
-@router.post("", response_model=ETFResponse)
+@router.post("", response_model=ETFResponse, status_code=status.HTTP_201_CREATED)
 def create_etf(
     etf_in: ETFCreate,
     db: Session = Depends(deps.get_db)
@@ -94,13 +122,22 @@ def create_etf(
     """
     Create a new ETF.
     """
-    existing_etf = etf_crud.get(db, id=etf_in.id)
-    if existing_etf:
+    try:
+        existing_etf = etf_crud.get(db, id=etf_in.id)
+        if existing_etf:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"ETF with ID {etf_in.id} already exists"
+            )
+        return etf_crud.create(db, obj_in=etf_in)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating ETF: {str(e)}")
         raise HTTPException(
-            status_code=400,
-            detail=f"ETF with ISIN {etf_in.id} already exists"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating ETF"
         )
-    return etf_crud.create(db, obj_in=etf_in)
 
 @router.put("/{etf_id}", response_model=ETFResponse)
 def update_etf(
@@ -111,10 +148,22 @@ def update_etf(
     """
     Update an ETF.
     """
-    etf = etf_crud.get(db, id=etf_id)
-    if not etf:
-        raise HTTPException(status_code=404, detail="ETF not found")
-    return etf_crud.update(db, db_obj=etf, obj_in=etf_in)
+    try:
+        etf = etf_crud.get(db, id=etf_id)
+        if not etf:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ETF not found"
+            )
+        return etf_crud.update(db, db_obj=etf, obj_in=etf_in)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating ETF {etf_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating ETF"
+        )
 
 @router.delete("/{etf_id}")
 def delete_etf(
@@ -166,4 +215,169 @@ def get_etf_prices(
         end_date=end_date,
         skip=skip,
         limit=limit
-    ) 
+    )
+
+@router.post("/{etf_id}/update", response_model=dict, status_code=status.HTTP_202_ACCEPTED)
+def trigger_etf_update(
+    etf_id: str,
+    update_type: str = Query(
+        ...,
+        description="Type of update: 'full', 'prices_only', 'prices_refresh'",
+        pattern="^(full|prices_only|prices_refresh)$"
+    ),
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Trigger an ETF data update.
+    - full: Complete refresh of ETF data and prices
+    - prices_only: Update only missing recent prices
+    - prices_refresh: Refresh all historical prices
+    """
+    try:
+        etf = etf_crud.get(db, id=etf_id)
+        if not etf:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ETF not found"
+            )
+            
+        # Create update record
+        update_record = etf_update.create_with_status(
+            db,
+            obj_in=ETFUpdateCreate(
+                etf_id=etf_id,
+                update_type=update_type,
+                start_date=date.today(),
+                end_date=date.today()
+            ),
+            status="pending"
+        )
+            
+        if update_type == "full":
+            task = fetch_etf_data.delay(etf_id)
+        elif update_type == "prices_only":
+            task = update_etf_latest_prices.delay(etf_id)
+        elif update_type == "prices_refresh":
+            task = refresh_etf_prices.delay(etf_id)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid update type"
+            )
+            
+        return {
+            "message": f"ETF update ({update_type}) scheduled",
+            "task_id": task.id,
+            "update_id": update_record.id,
+            "status": "pending"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error triggering ETF update: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error triggering ETF update"
+        )
+
+@router.get("/{etf_id}/status", response_model=List[ETFUpdateResponse], status_code=status.HTTP_200_OK)
+def get_etf_status(
+    etf_id: str,
+    limit: int = Query(10, gt=0, le=100),
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Get status of recent ETF updates.
+    Returns:
+    - Recent update operations
+    - Update status
+    - Missing dates
+    - Error information
+    """
+    try:
+        # First check if ETF exists
+        etf = etf_crud.get(db, id=etf_id)
+        if not etf:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ETF not found"
+            )
+            
+        # Get recent updates for this ETF
+        try:
+            recent_updates = (
+                db.query(ETFUpdateModel)
+                .filter(ETFUpdateModel.etf_id == etf_id)
+                .order_by(ETFUpdateModel.created_at.desc())
+                .limit(limit)
+                .all()
+            )
+            return recent_updates
+        except SQLAlchemyError as e:
+            logger.error(f"Database error when retrieving ETF status: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error when retrieving ETF status"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error retrieving ETF status: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected error retrieving ETF status"
+        )
+
+@router.get("/{etf_id}/metrics", status_code=status.HTTP_200_OK)
+def get_etf_metrics(
+    etf_id: str,
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Get ETF metrics including:
+    - Price update frequency
+    - Data completeness
+    - Error rates
+    - Performance metrics
+    """
+    try:
+        etf = etf_crud.get(db, id=etf_id)
+        if not etf:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="ETF not found"
+            )
+            
+        # Get latest update status
+        latest_update = etf_update.get_latest_by_etf(db, etf_id=etf_id)
+        
+        # Get error statistics
+        error_count = db.query(ETFError).filter(
+            ETFError.etf_id == etf_id,
+            ETFError.resolved == False  # noqa: E712
+        ).count()
+        
+        # Get price statistics
+        price_count = db.query(ETFPrice).filter(ETFPrice.etf_id == etf_id).count()
+        
+        return {
+            "update_status": latest_update.status if latest_update else "unknown",
+            "last_update": etf.last_update,
+            "price_count": price_count,
+            "unresolved_errors": error_count,
+            "performance_metrics": {
+                "ytd_return": etf.ytd_return,
+                "one_year_return": etf.one_year_return,
+                "volatility_30d": etf.volatility_30d,
+                "sharpe_ratio": etf.sharpe_ratio
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving ETF metrics: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving ETF metrics"
+        ) 

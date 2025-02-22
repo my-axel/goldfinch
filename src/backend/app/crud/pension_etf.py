@@ -5,9 +5,7 @@ from app.models.pension_etf import (
     PensionETF,
     PensionETFContributionPlanStep,
     PensionETFContributionPlan,
-    PensionETFContributionHistory,
-    PensionETFAllocationPlan,
-    PensionETFAllocationHistory
+    PensionETFContributionHistory
 )
 from app.schemas.pension_etf import (
     PensionETFCreate,
@@ -26,23 +24,66 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
     def create(
         self, db: Session, *, obj_in: PensionETFCreate
     ) -> PensionETF:
-        # Create the pension
-        obj_in_data = obj_in.dict(exclude={"contribution_plan_steps", "realize_historical_contributions"})
-        db_obj = PensionETF(**obj_in_data)
-        db.add(db_obj)
-        db.flush()  # Get the ID without committing
+        try:
+            # Start by creating the pension object
+            obj_in_data = obj_in.dict(exclude={"contribution_plan_steps", "realize_historical_contributions"})
+            db_obj = PensionETF(**obj_in_data)
+            
+            # Handle existing investment initialization
+            if db_obj.existing_units and db_obj.reference_date:
+                # Set initial total units
+                db_obj.total_units = Decimal(str(db_obj.existing_units))
+                
+                # Get ETF price at reference date
+                price = etf_crud.get_price_for_date(db=db, etf_id=db_obj.etf_id, date=db_obj.reference_date)
+                if not price:
+                    # Try to get next available price
+                    price = etf_crud.get_next_available_price(db=db, etf_id=db_obj.etf_id, after_date=db_obj.reference_date)
+                
+                if price:
+                    # Calculate initial current value
+                    db_obj.current_value = db_obj.total_units * price.price
+                else:
+                    # Use latest price as fallback
+                    latest_price = etf_crud.get_latest_price(db=db, etf_id=db_obj.etf_id)
+                    if not latest_price:
+                        logger.error(f"No price data available for ETF {db_obj.etf_id}")
+                        raise ValueError(f"No price data available for ETF {db_obj.etf_id}")
+                    db_obj.current_value = db_obj.total_units * latest_price.price
+                    price = latest_price
 
-        # Create contribution plan steps
-        for step in obj_in.contribution_plan_steps:
-            db_step = PensionETFContributionPlanStep(
-                **step.dict(),
-                pension_etf_id=db_obj.id
-            )
-            db.add(db_step)
+            # Add and flush the pension object to get its ID
+            db.add(db_obj)
+            db.flush()
 
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+            # Now that we have the pension ID, create the contribution history for existing investment
+            if db_obj.existing_units and db_obj.reference_date and price:
+                contribution = PensionETFContributionHistory(
+                    pension_etf_id=db_obj.id,  # Now we have the ID
+                    date=db_obj.reference_date,
+                    amount=db_obj.current_value,
+                    is_manual=True,
+                    note=f"Initial investment (price from {price.date})"
+                )
+                db.add(contribution)
+
+            # Create contribution plan steps
+            for step in obj_in.contribution_plan_steps:
+                db_step = PensionETFContributionPlanStep(
+                    **step.dict(),
+                    pension_etf_id=db_obj.id
+                )
+                db.add(db_step)
+
+            # Commit all changes
+            db.commit()
+            db.refresh(db_obj)
+            return db_obj
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to create ETF pension: {str(e)}")
+            raise
 
     def update(
         self,
@@ -81,28 +122,11 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
         obj_in: ContributionPlanCreate
     ) -> PensionETFContributionPlan:
         # Create the contribution plan
-        obj_in_data = obj_in.dict(exclude={"allocations"})
         db_obj = PensionETFContributionPlan(
-            **obj_in_data,
+            **obj_in.dict(),
             pension_etf_id=pension_id
         )
         db.add(db_obj)
-        db.flush()  # Get the ID without committing
-
-        # Create allocations
-        total_percentage = 0
-        for allocation in obj_in.allocations:
-            total_percentage += allocation.percentage
-            db_allocation = PensionETFAllocationPlan(
-                **allocation.dict(),
-                pension_etf_contribution_plan_id=db_obj.id
-            )
-            db.add(db_allocation)
-
-        if total_percentage != 100:
-            db.rollback()
-            raise ValueError("Total allocation percentage must be 100%")
-
         db.commit()
         db.refresh(db_obj)
         return db_obj
@@ -114,40 +138,29 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
         pension_id: int,
         obj_in: ContributionHistoryCreate
     ) -> PensionETFContributionHistory:
+        # Get the pension and its ETF
+        pension = db.query(PensionETF).get(pension_id)
+        if not pension:
+            raise ValueError("Pension not found")
+
+        # Get the latest ETF price
+        latest_price = etf_crud.get_latest_price(db=db, etf_id=pension.etf_id)
+        if not latest_price:
+            raise ValueError(f"No price found for ETF {pension.etf_id}")
+
+        # Calculate units bought
+        units = obj_in.amount / latest_price.price
+
         # Create the contribution history
-        obj_in_data = obj_in.dict(exclude={"allocations"})
         db_obj = PensionETFContributionHistory(
-            **obj_in_data,
+            **obj_in.dict(),
             pension_etf_id=pension_id
         )
         db.add(db_obj)
-        db.flush()  # Get the ID without committing
-
-        # Create allocations
-        total_percentage = 0
-        total_amount = 0
-        for allocation in obj_in.allocations:
-            total_percentage += allocation.percentage
-            total_amount += allocation.amount
-            db_allocation = PensionETFAllocationHistory(
-                **allocation.dict(),
-                pension_etf_contribution_history_id=db_obj.id
-            )
-            db.add(db_allocation)
-
-        if total_percentage != 100:
-            db.rollback()
-            raise ValueError("Total allocation percentage must be 100%")
-
-        if total_amount != obj_in.amount:
-            db.rollback()
-            raise ValueError("Total allocation amount must match contribution amount")
 
         # Update pension total units and current value
-        pension = db.query(PensionETF).get(pension_id)
-        for allocation in obj_in.allocations:
-            pension.total_units += allocation.units
-            pension.current_value += allocation.amount
+        pension.total_units += units
+        pension.current_value = pension.total_units * latest_price.price
 
         db.commit()
         db.refresh(db_obj)
@@ -229,18 +242,6 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                         note=f"Using ETF price from {price.date}" if price.date != contribution_date else None
                     )
                     db.add(history)
-                    db.flush()  # Get the history ID
-
-                    # Create allocation history entry
-                    allocation = PensionETFAllocationHistory(
-                        pension_etf_contribution_history_id=history.id,
-                        etf_id=pension.etf_id,
-                        amount=step.amount,
-                        units=units,
-                        price_per_unit=price.price,
-                        percentage=Decimal('100.0')  # Single ETF gets 100%
-                    )
-                    db.add(allocation)
 
                     # Update pension total units
                     pension.total_units += units

@@ -140,6 +140,31 @@ def create_etf_contribution_history(
         db=db, pension_id=pension_id, obj_in=contribution_in
     )
 
+@router.post("/{pension_id}/one-time-investment", response_model=schemas.pension_etf.ContributionHistoryResponse)
+def create_one_time_investment(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    investment_in: schemas.pension.OneTimeInvestmentCreate,
+) -> schemas.pension_etf.ContributionHistoryResponse:
+    """Record a one-time investment for ETF pension."""
+    # First check if the pension exists
+    pension = pension_etf.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="ETF Pension not found")
+    
+    # Create a contribution history entry for the one-time investment
+    contribution_data = schemas.pension_etf.ContributionHistoryCreate(
+        amount=investment_in.amount,
+        date=investment_in.investment_date,
+        note=investment_in.note,
+        is_manual=True
+    )
+    
+    return pension_etf.create_contribution_history(
+        db=db, pension_id=pension_id, obj_in=contribution_data
+    )
+
 @router.get("", response_model=List[schemas.pension_etf.PensionETFResponse])
 def list_etf_pensions(
     db: Session = Depends(deps.get_db),

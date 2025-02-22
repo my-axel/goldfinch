@@ -81,15 +81,16 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
           </dd>
         </div>
       )}
-        <div>
-          <dt className="text-muted-foreground">Total Units</dt>
-          <dd>{Number(pension.total_units || 0).toFixed(3)}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Current Value</dt>
-          <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
-        </div>
-      <div className="flex justify-end">
+      <div>
+        <dt className="text-muted-foreground">Total Units</dt>
+        <dd>{Number(pension.total_units || 0).toFixed(3)}</dd>
+      </div>
+      <div>
+        <dt className="text-muted-foreground">Current Value</dt>
+        <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
+      </div>
+
+      <div className="flex justify-end mt-4">
         <Button
           variant="outline"
           size="sm"
@@ -222,7 +223,7 @@ function PensionCard({
   }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center space-x-2">
           {renderIcon()}
@@ -261,7 +262,7 @@ function PensionCard({
  */
 function AddPensionCard({ onClick }: { onClick: () => void }) {
   return (
-    <Card className="flex flex-col items-center justify-center min-h-[140px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+    <Card className="flex flex-col items-center justify-center h-full w-full border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
       <CardContent className="flex flex-col items-center justify-center py-6 w-full">
         <PlusCircle className="h-6 w-6 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">Add New Pension Plan</p>
@@ -290,7 +291,7 @@ function MemberPensionGroup({
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">{formatMemberName(member)}</h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 min-[800px]:grid-cols-2 min-[1200px]:grid-cols-3 auto-rows-fr">
         {memberPensions.map((pension) => (
           <PensionCard
             key={pension.id}

@@ -27,7 +27,6 @@ interface PensionContextType {
   error: string | null
   pensions: Pension[]
   selectedPension: Pension | null
-  contributions: PensionContribution[]
   fetchPensions: (memberId?: number) => Promise<void>
   fetchPension: (id: number) => Promise<void>
   createEtfPension: (pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
@@ -37,7 +36,6 @@ interface PensionContextType {
   updateInsurancePension: (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>
   updateCompanyPension: (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<void>
   deletePension: (id: number) => Promise<void>
-  fetchContributions: (pensionId: number) => Promise<void>
   addOneTimeInvestment: (pensionId: number, data: { 
     amount: number, 
     investment_date: string, 
@@ -52,7 +50,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   const { isLoading, error, get, post, del, put } = useApi()
   const [pensions, setPensions] = useState<Pension[]>([])
   const [selectedPension, setSelectedPension] = useState<Pension | null>(null)
-  const [contributions, setContributions] = useState<PensionContribution[]>([])
 
   const fetchPensions = useCallback(async (memberId?: number) => {
     try {
@@ -165,38 +162,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [get, pensions])
 
-  const fetchContributions = useCallback(async (pensionId: number) => {
-    try {
-      // First, find the pension type from our local state
-      const pension = pensions.find(p => p.id === pensionId)
-      if (!pension) {
-        throw new Error('Pension not found')
-      }
-
-      // Then fetch from the appropriate endpoint
-      let response: PensionContribution[]
-      switch (pension.type) {
-        case PensionType.ETF_PLAN:
-          response = await get<PensionContribution[]>(`/pension/etf/${pensionId}/contributions`)
-          break
-        case PensionType.INSURANCE:
-          response = await get<PensionContribution[]>(`/pension/insurance/${pensionId}/contributions`)
-          break
-        case PensionType.COMPANY:
-          response = await get<PensionContribution[]>(`/pension/company/${pensionId}/contributions`)
-          break
-        default:
-          throw new Error('Unknown pension type')
-      }
-      setContributions(response)
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to fetch contributions'
-      })
-      throw err
-    }
-  }, [get, pensions])
-
   const realizeHistoricalContributions = useCallback(async (pensionId: number) => {
     try {
       // First, find the pension type from our local state
@@ -221,7 +186,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       }
 
       await fetchPension(pensionId)
-      await fetchContributions(pensionId)
       toast.success('Success', {
         description: 'Historical contributions have been realized'
       })
@@ -231,7 +195,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       })
       throw err
     }
-  }, [post, fetchPension, fetchContributions, pensions])
+  }, [post, fetchPension, pensions])
 
   const createEtfPension = useCallback(async (pension: Omit<ETFPension, 'id' | 'current_value'>): Promise<void> => {
     try {
@@ -365,20 +329,30 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     data: { amount: number, investment_date: string, note?: string }
   ) => {
     try {
-      await post(`/pension/${pensionId}/one-time-investment`, {
+      // First, find the pension type from our local state
+      const pension = pensions.find(p => p.id === pensionId)
+      if (!pension) {
+        throw new Error('Pension not found')
+      }
+
+      // One-time investments are only supported for ETF pensions
+      if (pension.type !== PensionType.ETF_PLAN) {
+        throw new Error('One-time investments are only supported for ETF pensions')
+      }
+
+      await post(`/pension/etf/${pensionId}/one-time-investment`, {
         amount: data.amount,
         investment_date: data.investment_date,
         note: data.note || undefined
       })
       await fetchPension(pensionId)
-      await fetchContributions(pensionId)
     } catch (err) {
       toast.error('Error', {
         description: 'Failed to add one-time investment'
       })
       throw err
     }
-  }, [post, fetchPension, fetchContributions])
+  }, [post, fetchPension, pensions])
 
   const updateEtfPension = useCallback(async (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>) => {
     try {
@@ -458,14 +432,12 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       error,
       pensions,
       selectedPension,
-      contributions,
       fetchPensions,
       fetchPension,
       createEtfPension,
       createInsurancePension,
       createCompanyPension,
       deletePension,
-      fetchContributions,
       addOneTimeInvestment,
       updateEtfPension,
       updateInsurancePension,

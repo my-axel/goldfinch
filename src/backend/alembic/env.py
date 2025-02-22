@@ -8,16 +8,14 @@ from app.core.config import settings
 
 # Import all models here
 from app.db.base_class import Base
-from app.models.etf import ETF, ETFPrice
+from app.models.etf import ETF, ETFPrice, ETFUpdate, ETFError
 from app.models.household import HouseholdMember
 from app.models.task import TaskStatus
 from app.models.pension_etf import (
     PensionETF,
     PensionETFContributionPlanStep,
     PensionETFContributionPlan,
-    PensionETFContributionHistory,
-    PensionETFAllocationPlan,
-    PensionETFAllocationHistory
+    PensionETFContributionHistory
 )
 from app.models.pension_insurance import (
     PensionInsurance,

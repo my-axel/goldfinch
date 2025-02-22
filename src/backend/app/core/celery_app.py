@@ -5,7 +5,8 @@ celery_app = Celery(
     "worker",
     broker="amqp://guest:guest@localhost:5672//",
     backend="rpc://",
-    include=["app.tasks"]  # Using __init__.py to handle task registration
+    include=["app.tasks"],  # Using __init__.py to handle task registration
+    broker_connection_retry_on_startup=True
 )
 
 # Optional configurations
@@ -28,5 +29,9 @@ celery_app.conf.beat_schedule = {
     'cleanup-old-updates': {
         'task': 'app.tasks.exchange_rates.cleanup_old_updates',
         'schedule': crontab(hour=0, minute=0),  # Daily at midnight UTC
+    },
+    'cleanup-old-etf-updates': {
+        'task': 'app.tasks.etf.cleanup_old_updates',
+        'schedule': crontab(hour=1, minute=0),  # Daily at 1 AM UTC
     }
 }

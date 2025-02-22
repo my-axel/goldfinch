@@ -3,6 +3,15 @@ import { ThemeProvider } from "@/src/frontend/components/layout/theme-provider";
 import { SidebarProvider } from "@/src/frontend/components/ui/sidebar"
 import { AppSidebar } from "@/frontend/components/layout/AppSidebar";
 import { AppProviders } from '@/frontend/providers/AppProviders'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Goldfinch',
+  description: 'Your personal pension portfolio manager',
+  icons: {
+    icon: '/goldfinch_logo.jpg',
+  },
+}
 
 export default function RootLayout({
   children,

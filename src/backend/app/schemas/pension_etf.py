@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from app.schemas.etf_update import ETFUpdateResponse, ETFErrorResponse
 
 class ETFResponse(BaseModel):
     id: str
@@ -21,6 +22,8 @@ class ETFResponse(BaseModel):
     one_year_return: Optional[Decimal] = None
     volatility_30d: Optional[Decimal] = None
     sharpe_ratio: Optional[Decimal] = None
+    updates: Optional[List[ETFUpdateResponse]] = None
+    errors: Optional[List[ETFErrorResponse]] = None
 
     class Config:
         from_attributes = True
@@ -41,50 +44,17 @@ class ContributionPlanStepResponse(ContributionPlanStepBase):
     class Config:
         from_attributes = True
 
-class AllocationPlanBase(BaseModel):
-    etf_id: str
-    amount: Decimal = Field(ge=0)
-    percentage: Decimal = Field(ge=0, le=100)
-
-class AllocationPlanCreate(AllocationPlanBase):
-    pass
-
-class AllocationPlanResponse(AllocationPlanBase):
-    id: int
-    pension_etf_contribution_plan_id: int
-
-    class Config:
-        from_attributes = True
-
 class ContributionPlanBase(BaseModel):
     date: date
     amount: Decimal = Field(ge=0)
     note: Optional[str] = None
 
 class ContributionPlanCreate(ContributionPlanBase):
-    allocations: List[AllocationPlanCreate]
+    pass
 
 class ContributionPlanResponse(ContributionPlanBase):
     id: int
     pension_etf_id: int
-    allocations: List[AllocationPlanResponse]
-
-    class Config:
-        from_attributes = True
-
-class AllocationHistoryBase(BaseModel):
-    etf_id: str
-    amount: Decimal = Field(ge=0)
-    units: Decimal = Field(ge=0)
-    price_per_unit: Decimal = Field(ge=0)
-    percentage: Decimal = Field(ge=0, le=100)
-
-class AllocationHistoryCreate(AllocationHistoryBase):
-    pass
-
-class AllocationHistoryResponse(AllocationHistoryBase):
-    id: int
-    pension_etf_contribution_history_id: int
 
     class Config:
         from_attributes = True
@@ -96,12 +66,11 @@ class ContributionHistoryBase(BaseModel):
     note: Optional[str] = None
 
 class ContributionHistoryCreate(ContributionHistoryBase):
-    allocations: List[AllocationHistoryCreate]
+    pass
 
 class ContributionHistoryResponse(ContributionHistoryBase):
     id: int
     pension_etf_id: int
-    allocations: List[AllocationHistoryResponse]
 
     class Config:
         from_attributes = True

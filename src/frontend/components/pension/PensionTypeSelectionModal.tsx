@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/frontend/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/frontend/components/ui/dialog"
 import { PensionType } from "@/frontend/types/pension"
 import { useRouter } from "next/navigation"
 import { RadioGroup, RadioGroupItem } from "@/frontend/components/ui/radio-group"
@@ -47,6 +47,9 @@ export function PensionTypeSelectionModal({ open, onOpenChange, memberId }: Pens
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>Choose Pension Type</DialogTitle>
+          <DialogDescription>
+            Choose the type of pension you want to create.
+          </DialogDescription>
         </DialogHeader>
         <RadioGroup
           onValueChange={(value) => handleTypeSelect(value as PensionType)}
