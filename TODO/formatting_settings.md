@@ -38,7 +38,7 @@
 ## Frontend Tasks
 
 ### Core Formatting Module
-- [ ] Create `lib/transforms.ts` utility file
+- [x] Create `lib/transforms.ts` utility file
   * Implement SafeNumber interface
   * Implement SafeDate interface
   * Add number formatting functions
@@ -49,7 +49,7 @@
   * Add TypeScript type definitions
 
 ### API Integration
-- [ ] Create enhanced API client in `lib/api-client.ts`
+- [x] Create enhanced API client in `lib/api-client.ts`
   * Implement request interceptor for data transformation
   * Add number field detection
   * Add date field detection
@@ -57,7 +57,7 @@
   * Add TypeScript types for all API responses
 
 ### Settings Context
-- [ ] Update `context/SettingsContext.tsx`
+- [x] Update `context/SettingsContext.tsx`
   * Add new settings fields
   * Add loading state
   * Add error state
@@ -66,7 +66,7 @@
   * Add persistence to localStorage as fallback
 
 ### Settings Page
-- [ ] Update `app/settings/page.tsx`
+- [x] Update `app/settings/page.tsx`
   * Add language selection
   * Add number format selection
   * Add currency selection
@@ -77,36 +77,36 @@
   * Ensure responsive design
 
 ### Component Updates
-- [ ] Update `PensionList.tsx`
+- [x] Update `PensionList.tsx`
   * Replace hardcoded number formatting
   * Replace hardcoded date formatting
   * Add proper error handling
   * Update TypeScript types
 
-- [ ] Update `OneTimeInvestmentModal.tsx`
+- [x] Update `OneTimeInvestmentModal.tsx`
   * Update number input handling
   * Update date input handling
   * Add input validation
   * Add error messages
   * Update TypeScript types
 
-- [ ] Update all other components using numbers or dates
-  * Identify all components using number/date formatting
-  * Replace hardcoded formatting
-  * Add proper error handling
-  * Update TypeScript types
+- [x] Update all other components using numbers or dates
+  * [x] Update `EditInsurancePensionForm.tsx`
+  * [x] Update `AddETFPensionForm.tsx`
+  * [x] Update `EditETFPensionForm.tsx`
+  * [x] Update `EditCompanyPensionForm.tsx`
 
 ## Documentation
 
 ### Backend Documentation
-- [ ] Update API documentation
+- [x] Update API documentation
   * Document new endpoints
   * Add request/response examples
   * Document error cases
   * Update OpenAPI schema
 
 ### Frontend Documentation
-- [ ] Create formatting utility documentation
+- [x] Create formatting utility documentation
   * Document all available functions
   * Add usage examples
   * Document error handling
@@ -115,7 +115,7 @@
 ## Deployment
 
 ### Migration Plan
-- [ ] Create deployment checklist
+- [x] Create deployment checklist
   * Database migration steps
   * Default settings creation
   * Rollback procedure

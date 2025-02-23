@@ -11,6 +11,8 @@ import { Input } from "@/frontend/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover"
 import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/components/ui/command"
 import { useState } from "react"
+import { useSettings } from "@/frontend/context/SettingsContext"
+import { parseNumber, getDecimalSeparator, /*getCurrencySymbol*/ } from "@/frontend/lib/transforms"
 
 interface EditInsurancePensionFormProps {
   form: UseFormReturn<InsurancePensionFormData>
@@ -25,7 +27,13 @@ export function EditInsurancePensionForm({ form }: EditInsurancePensionFormProps
     control: form.control,
     name: "contribution_plan_steps"
   })
+  const { settings } = useSettings()
   const [open, setOpen] = useState<number | null>(null)
+  const [interestInput, setInterestInput] = useState("")
+  const [expectedReturnInput, setExpectedReturnInput] = useState("")
+  const [contributionInputs, setContributionInputs] = useState<string[]>([])
+  const decimalSeparator = getDecimalSeparator(settings.number_locale)
+  //const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
 
   const handleAddContribution = () => {
     let startDate = new Date()
@@ -65,6 +73,16 @@ export function EditInsurancePensionForm({ form }: EditInsurancePensionFormProps
     endDate.setFullYear(endDate.getFullYear() + years)
     form.setValue(`contribution_plan_steps.${index}.end_date`, endDate)
     setOpen(null)
+  }
+
+  // Validate if the input is a valid number format
+  const isValidNumberFormat = (value: string): boolean => {
+    // Allow empty input
+    if (!value) return true
+    
+    // Allow only digits, one decimal separator, and one minus sign at the start
+    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
+    return regex.test(value)
   }
 
   return (
@@ -144,11 +162,35 @@ export function EditInsurancePensionForm({ form }: EditInsurancePensionFormProps
                 <FormLabel>Guaranteed Interest Rate (%)</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    step="0.01"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) / 100 : 0)}
-                    value={field.value * 100}
+                    type="text"
+                    inputMode="decimal"
+                    value={interestInput}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                      // Only update if the new value is a valid number format
+                      if (isValidNumberFormat(newValue)) {
+                        setInterestInput(newValue)
+                        // Parse and update form value if we have a complete number
+                        const parsedValue = parseNumber(newValue, settings.number_locale)
+                        if (parsedValue >= 0) {
+                          field.onChange(parsedValue / 100) // Convert to decimal
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      const value = parseNumber(interestInput, settings.number_locale)
+                      if (value >= 0) {
+                        // Format the display value on blur if it's valid
+                        setInterestInput(value.toString().replace('.', decimalSeparator))
+                        field.onChange(value / 100) // Convert to decimal
+                      } else {
+                        // Clear the input if the value is invalid
+                        setInterestInput("")
+                        field.onChange(0)
+                      }
+                      field.onBlur()
+                    }}
+                    placeholder={`0${decimalSeparator}00`}
                   />
                 </FormControl>
                 <FormMessage />
@@ -164,11 +206,31 @@ export function EditInsurancePensionForm({ form }: EditInsurancePensionFormProps
                 <FormLabel>Expected Return Rate (%)</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    step="0.01"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) / 100 : 0)}
-                    value={field.value * 100}
+                    type="text"
+                    inputMode="decimal"
+                    value={expectedReturnInput}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                      if (isValidNumberFormat(newValue)) {
+                        setExpectedReturnInput(newValue)
+                        const parsedValue = parseNumber(newValue, settings.number_locale)
+                        if (parsedValue >= 0) {
+                          field.onChange(parsedValue / 100) // Convert to decimal
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      const value = parseNumber(expectedReturnInput, settings.number_locale)
+                      if (value >= 0) {
+                        setExpectedReturnInput(value.toString().replace('.', decimalSeparator))
+                        field.onChange(value / 100) // Convert to decimal
+                      } else {
+                        setExpectedReturnInput("")
+                        field.onChange(0)
+                      }
+                      field.onBlur()
+                    }}
+                    placeholder={`0${decimalSeparator}00`}
                   />
                 </FormControl>
                 <FormMessage />
@@ -206,14 +268,40 @@ export function EditInsurancePensionForm({ form }: EditInsurancePensionFormProps
                       <FormControl>
                         <div className="relative">
                           <Input 
-                            type="number" 
-                            step="0.01"
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
-                            placeholder="0.00"
+                            type="text"
+                            inputMode="decimal"
+                            value={contributionInputs[index] || ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value
+                              if (isValidNumberFormat(newValue)) {
+                                const newInputs = [...contributionInputs]
+                                newInputs[index] = newValue
+                                setContributionInputs(newInputs)
+                                const parsedValue = parseNumber(newValue, settings.number_locale)
+                                if (parsedValue >= 0) {
+                                  field.onChange(parsedValue)
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              const value = parseNumber(contributionInputs[index] || "", settings.number_locale)
+                              if (value >= 0) {
+                                const newInputs = [...contributionInputs]
+                                newInputs[index] = value.toString().replace('.', decimalSeparator)
+                                setContributionInputs(newInputs)
+                                field.onChange(value)
+                              } else {
+                                const newInputs = [...contributionInputs]
+                                newInputs[index] = ""
+                                setContributionInputs(newInputs)
+                                field.onChange(0)
+                              }
+                              field.onBlur()
+                            }}
+                            placeholder={`0${decimalSeparator}00`}
                             className="pl-7"
                           />
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">€</span>
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{settings.currency}</span>
                         </div>
                       </FormControl>
                       <FormMessage />

@@ -12,6 +12,8 @@ import { Input } from "@/frontend/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover"
 import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/components/ui/command"
 import { useState } from "react"
+import { useSettings } from "@/frontend/context/SettingsContext"
+import { parseNumber, getDecimalSeparator, getCurrencySymbol } from "@/frontend/lib/transforms"
 
 interface EditETFPensionFormProps {
   form: UseFormReturn<ETFPensionFormData>
@@ -26,7 +28,11 @@ export function EditETFPensionForm({ form }: EditETFPensionFormProps) {
     control: form.control,
     name: "contribution_plan_steps"
   })
+  const { settings } = useSettings()
   const [open, setOpen] = useState<number | null>(null)
+  const [contributionInputs, setContributionInputs] = useState<string[]>([])
+  const decimalSeparator = getDecimalSeparator(settings.number_locale)
+  const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
 
   const handleAddContribution = () => {
     let startDate = new Date()
@@ -66,6 +72,16 @@ export function EditETFPensionForm({ form }: EditETFPensionFormProps) {
     endDate.setFullYear(endDate.getFullYear() + years)
     form.setValue(`contribution_plan_steps.${index}.end_date`, endDate)
     setOpen(null)
+  }
+
+  // Validate if the input is a valid number format
+  const isValidNumberFormat = (value: string): boolean => {
+    // Allow empty input
+    if (!value) return true
+    
+    // Allow only digits, one decimal separator, and one minus sign at the start
+    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
+    return regex.test(value)
   }
 
   return (
@@ -135,14 +151,40 @@ export function EditETFPensionForm({ form }: EditETFPensionFormProps) {
                       <FormControl>
                         <div className="relative">
                           <Input 
-                            type="number" 
-                            step="0.01"
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
-                            placeholder="0.00"
+                            type="text"
+                            inputMode="decimal"
+                            value={contributionInputs[index] || ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value
+                              if (isValidNumberFormat(newValue)) {
+                                const newInputs = [...contributionInputs]
+                                newInputs[index] = newValue
+                                setContributionInputs(newInputs)
+                                const parsedValue = parseNumber(newValue, settings.number_locale)
+                                if (parsedValue >= 0) {
+                                  field.onChange(parsedValue)
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              const value = parseNumber(contributionInputs[index] || "", settings.number_locale)
+                              if (value >= 0) {
+                                const newInputs = [...contributionInputs]
+                                newInputs[index] = value.toString().replace('.', decimalSeparator)
+                                setContributionInputs(newInputs)
+                                field.onChange(value)
+                              } else {
+                                const newInputs = [...contributionInputs]
+                                newInputs[index] = ""
+                                setContributionInputs(newInputs)
+                                field.onChange(0)
+                              }
+                              field.onBlur()
+                            }}
+                            placeholder={`0${decimalSeparator}00`}
                             className="pl-7"
                           />
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">€</span>
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{currencySymbol}</span>
                         </div>
                       </FormControl>
                       <FormMessage />

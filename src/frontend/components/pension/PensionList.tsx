@@ -22,6 +22,8 @@ import { ContributionFrequency } from '@/frontend/types/pension'
 import { OneTimeInvestmentModal } from "./OneTimeInvestmentModal"
 import { PensionTypeSelectionModal } from "./PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
+import { useSettings } from "@/frontend/context/SettingsContext"
+import { formatNumber, formatCurrency, formatPercent } from "@/frontend/lib/transforms"
 
 /**
  * Props for the PensionList component
@@ -61,6 +63,7 @@ function formatFrequency(frequency: ContributionFrequency): string {
 function ETFPensionContent({ pension }: { pension: ETFPension }) {
   const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
   const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
+  const { settings } = useSettings()
 
   return (
     <>
@@ -77,17 +80,26 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
         <div>
           <dt className="text-muted-foreground">Current Contribution</dt>
           <dd>
-            {currentStep.amount.toLocaleString('de-DE')} € {formatFrequency(currentStep.frequency)}
+            {formatCurrency(currentStep.amount, {
+              locale: settings.number_locale,
+              currency: settings.currency
+            }).formatted} {formatFrequency(currentStep.frequency)}
           </dd>
         </div>
       )}
       <div>
         <dt className="text-muted-foreground">Total Units</dt>
-        <dd>{Number(pension.total_units || 0).toFixed(3)}</dd>
+        <dd>{formatNumber(Number(pension.total_units || 0), {
+          locale: settings.number_locale,
+          decimals: 3
+        }).formatted}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
+        <dd>{formatCurrency(pension.current_value, {
+          locale: settings.number_locale,
+          currency: settings.currency
+        }).formatted}</dd>
       </div>
 
       <div className="flex justify-end mt-4">
@@ -112,9 +124,10 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
 
 /**
  * Displays insurance pension specific information
- * TODO: Add expected value calculation
  */
 function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
+  const { settings } = useSettings()
+
   return (
     <>
       <div>
@@ -127,15 +140,24 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
       </div>
       <div>
         <dt className="text-muted-foreground">Guaranteed Interest</dt>
-        <dd>{(pension.guaranteed_interest * 100).toFixed(2)}%</dd>
+        <dd>{formatPercent(pension.guaranteed_interest, {
+          locale: settings.number_locale,
+          decimals: 2
+        }).formatted}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Expected Return</dt>
-        <dd>{(pension.expected_return * 100).toFixed(2)}%</dd>
+        <dd>{formatPercent(pension.expected_return, {
+          locale: settings.number_locale,
+          decimals: 2
+        }).formatted}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
+        <dd>{formatCurrency(pension.current_value, {
+          locale: settings.number_locale,
+          currency: settings.currency
+        }).formatted}</dd>
       </div>
     </>
   )
@@ -143,10 +165,10 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
 
 /**
  * Displays company pension specific information
- * TODO: Add vesting period progress
- * TODO: Add employer contribution calculation
  */
 function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
+  const { settings } = useSettings()
+
   return (
     <>
       <div>
@@ -155,20 +177,30 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       </div>
       <div>
         <dt className="text-muted-foreground">Vesting Period</dt>
-        <dd>{pension.vesting_period} years</dd>
+        <dd>{formatNumber(pension.vesting_period, {
+          locale: settings.number_locale,
+          decimals: 0
+        }).formatted} years</dd>
       </div>
       {pension.matching_percentage && (
         <div>
           <dt className="text-muted-foreground">Employer Match</dt>
-          <dd>{pension.matching_percentage}% up to {
-            pension.max_employer_contribution?.toLocaleString('de-DE')
-          } €</dd>
+          <dd>{formatPercent(pension.matching_percentage / 100, {
+            locale: settings.number_locale,
+            decimals: 0
+          }).formatted} up to {formatCurrency(pension.max_employer_contribution || 0, {
+            locale: settings.number_locale,
+            currency: settings.currency
+          }).formatted}</dd>
         </div>
       )}
-        <div>
-          <dt className="text-muted-foreground">Current Value</dt>
-          <dd>{pension.current_value.toLocaleString('de-DE')} €</dd>
-        </div>
+      <div>
+        <dt className="text-muted-foreground">Current Value</dt>
+        <dd>{formatCurrency(pension.current_value, {
+          locale: settings.number_locale,
+          currency: settings.currency
+        }).formatted}</dd>
+      </div>
     </>
   )
 }
@@ -272,6 +304,24 @@ function AddPensionCard({ onClick }: { onClick: () => void }) {
 }
 
 /**
+ * Sorts pensions by type and name
+ */
+function sortPensions(a: Pension, b: Pension): number {
+  // First sort by type
+  const typeOrder = {
+    [PensionType.ETF_PLAN]: 1,
+    [PensionType.COMPANY]: 2,
+    [PensionType.INSURANCE]: 3
+  }
+  
+  const typeComparison = typeOrder[a.type] - typeOrder[b.type]
+  if (typeComparison !== 0) return typeComparison
+
+  // Then sort by name
+  return a.name.localeCompare(b.name)
+}
+
+/**
  * Displays a list of pension plans grouped by household member
  */
 function MemberPensionGroup({
@@ -286,7 +336,9 @@ function MemberPensionGroup({
   onDelete: (id: number) => void
 }) {
   const [typeSelectionOpen, setTypeSelectionOpen] = useState(false)
-  const memberPensions = pensions.filter(p => p.member_id === member.id)
+  const memberPensions = pensions
+    .filter(p => p.member_id === member.id)
+    .sort(sortPensions)
 
   return (
     <div>

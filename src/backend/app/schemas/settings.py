@@ -14,12 +14,12 @@ class SettingsBase(BaseModel):
         pattern="^[a-z]{2}-[A-Z]{2}$"  # Format: xx-XX
     )
     number_locale: str = Field(
-        default="en-US",
+        default="de-DE",
         description="The locale used for number and date formatting",
         pattern="^[a-z]{2}-[A-Z]{2}$"  # Format: xx-XX
     )
     currency: str = Field(
-        default="USD",
+        default="EUR",
         description="The default currency for monetary values",
         min_length=3,
         max_length=3
