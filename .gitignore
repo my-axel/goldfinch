@@ -55,3 +55,28 @@ venv/
 __pycache__/
 .pytest_cache/
 exchange_rates_backup_20250222.sql
+
+# Python build artifacts
+*.egg-info/
+*.egg
+
+# Logs
+/src/backend/logs/
+*.log
+
+# Database backups
+*.sql
+*.dump
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# TypeScript
+*.tsbuildinfo
