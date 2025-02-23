@@ -9,6 +9,7 @@ import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
+import { getPensionListRoute } from "@/frontend/lib/routes"
 
 export default function NewCompanyPensionPage() {
   const router = useRouter()
@@ -45,14 +46,13 @@ export default function NewCompanyPensionPage() {
         employer: data.employer,
         start_date: data.start_date,
         vesting_period: data.vesting_period,
-        initial_capital: data.initial_capital,
         matching_percentage: data.matching_percentage,
         max_employer_contribution: data.max_employer_contribution,
         contribution_plan_steps: data.contribution_plan_steps
       })
 
       toast.success("Success", { description: "Company pension created successfully" })
-      router.push("/pension")
+      router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
       console.error('Failed to create pension:', error)

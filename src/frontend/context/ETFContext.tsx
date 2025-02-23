@@ -3,7 +3,14 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { ETF, ETFUpdateStatus, ETFMetrics } from '@/frontend/types/etf'
 import { useApi } from '@/frontend/hooks/useApi'
-import { toast } from 'sonner'
+import { 
+  getETFApiRoute, 
+  getETFByIdRoute, 
+  getETFSearchRoute, 
+  getETFUpdateRoute, 
+  getETFStatusRoute, 
+  getETFMetricsRoute 
+} from '@/frontend/lib/routes/api/etf'
 
 interface ETFContextType {
   etfs: ETF[]
@@ -14,9 +21,9 @@ interface ETFContextType {
   addETF: (etf: Omit<ETF, 'id'>) => Promise<ETF>
   updateETF: (id: string, etf: Partial<ETF>) => Promise<ETF>
   deleteETF: (id: string) => Promise<void>
-  triggerUpdate: (id: string, type: 'full' | 'prices_only' | 'prices_refresh') => Promise<void>
-  getUpdateStatus: (id: string) => Promise<ETFUpdateStatus[]>
-  getMetrics: (id: string) => Promise<ETFMetrics>
+  updateETFData: (id: string, type: string) => Promise<void>
+  getETFStatus: (id: string) => Promise<ETFUpdateStatus[]>
+  getETFMetrics: (id: string) => Promise<ETFMetrics>
 }
 
 const ETFContext = createContext<ETFContextType | undefined>(undefined)
@@ -26,113 +33,47 @@ export function ETFProvider({ children }: { children: React.ReactNode }) {
   const { isLoading, error, apiCall } = useApi()
 
   const fetchETFs = useCallback(async () => {
-    try {
-      const data = await apiCall<ETF[]>('/api/v1/etf')
-      setETFs(data)
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to fetch ETFs'
-      })
-      throw err
-    }
+    const data = await apiCall<ETF[]>(getETFApiRoute())
+    setETFs(data)
   }, [apiCall])
 
   const searchETFs = useCallback(async (query: string) => {
-    try {
-      const data = await apiCall<ETF[]>(`/api/v1/etf?query=${encodeURIComponent(query)}`)
-      setETFs(data)
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to search ETFs'
-      })
-      throw err
-    }
+    const data = await apiCall<ETF[]>(getETFSearchRoute(query))
+    setETFs(data)
   }, [apiCall])
 
   const addETF = useCallback(async (etf: Omit<ETF, 'id'>) => {
-    try {
-      const newETF = await apiCall<ETF>('/api/v1/etf', 'POST', etf)
-      setETFs(prev => [...prev, newETF])
-      toast.success('Success', {
-        description: 'ETF added successfully'
-      })
-      return newETF
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to add ETF'
-      })
-      throw err
-    }
+    const newETF = await apiCall<ETF>(getETFApiRoute(), 'POST', etf)
+    setETFs(prev => [...prev, newETF])
+    return newETF
   }, [apiCall])
 
   const updateETF = useCallback(async (id: string, etf: Partial<ETF>) => {
-    try {
-      const updatedETF = await apiCall<ETF>(`/api/v1/etf/${id}`, 'PUT', etf)
-      setETFs(prev => prev.map(e => e.id === id ? updatedETF : e))
-      toast.success('Success', {
-        description: 'ETF updated successfully'
-      })
-      return updatedETF
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to update ETF'
-      })
-      throw err
-    }
+    const updatedETF = await apiCall<ETF>(getETFByIdRoute(id), 'PUT', etf)
+    setETFs(prev => prev.map(e => e.id === id ? updatedETF : e))
+    return updatedETF
   }, [apiCall])
 
   const deleteETF = useCallback(async (id: string) => {
+    await apiCall(getETFByIdRoute(id), 'DELETE')
+    setETFs(prev => prev.filter(e => e.id !== id))
+  }, [apiCall])
+
+  const updateETFData = useCallback(async (id: string, type: string) => {
     try {
-      await apiCall(`/api/v1/etf/${id}`, 'DELETE')
-      setETFs(prev => prev.filter(e => e.id !== id))
-      toast.success('Success', {
-        description: 'ETF deleted successfully'
-      })
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to delete ETF'
-      })
-      throw err
+      await apiCall(getETFUpdateRoute(id, type), 'POST')
+    } catch (error) {
+      console.error('Failed to update ETF data:', error)
+      throw error
     }
   }, [apiCall])
 
-  const triggerUpdate = useCallback(async (
-    id: string,
-    type: 'full' | 'prices_only' | 'prices_refresh'
-  ) => {
-    try {
-      await apiCall(`/api/v1/etf/${id}/update?update_type=${type}`, 'POST')
-      toast.success('Success', {
-        description: 'ETF update triggered successfully'
-      })
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to trigger ETF update'
-      })
-      throw err
-    }
+  const getETFStatus = useCallback(async (id: string) => {
+    return await apiCall<ETFUpdateStatus[]>(getETFStatusRoute(id), 'GET')
   }, [apiCall])
 
-  const getUpdateStatus = useCallback(async (id: string) => {
-    try {
-      return await apiCall<ETFUpdateStatus[]>(`/api/v1/etf/${id}/status`, 'GET')
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to get ETF update status'
-      })
-      throw err
-    }
-  }, [apiCall])
-
-  const getMetrics = useCallback(async (id: string) => {
-    try {
-      return await apiCall<ETFMetrics>(`/api/v1/etf/${id}/metrics`, 'GET')
-    } catch (err) {
-      toast.error('Error', {
-        description: 'Failed to get ETF metrics'
-      })
-      throw err
-    }
+  const getETFMetrics = useCallback(async (id: string) => {
+    return await apiCall<ETFMetrics>(getETFMetricsRoute(id), 'GET')
   }, [apiCall])
 
   return (
@@ -141,14 +82,14 @@ export function ETFProvider({ children }: { children: React.ReactNode }) {
         etfs, 
         isLoading, 
         error, 
-        fetchETFs,
-        searchETFs,
+        fetchETFs, 
+        searchETFs, 
         addETF, 
         updateETF, 
         deleteETF,
-        triggerUpdate,
-        getUpdateStatus,
-        getMetrics
+        updateETFData,
+        getETFStatus,
+        getETFMetrics
       }}
     >
       {children}

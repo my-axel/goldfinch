@@ -10,6 +10,7 @@ import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
 import { useEffect } from "react"
+import { getPensionListRoute } from "@/frontend/lib/routes"
 
 interface EditETFPensionPageProps {
   params: {
@@ -84,7 +85,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
       })
 
       toast.success("Success", { description: "ETF pension updated successfully" })
-      router.push("/pension")
+      router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
       console.error('Failed to update pension:', error)

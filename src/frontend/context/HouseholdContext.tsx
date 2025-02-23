@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback } from 'react'
 import { HouseholdMember } from '@/frontend/types/household'
 import { useApi } from '@/frontend/hooks/useApi'
 import { calculateMemberFields } from '@/frontend/types/household-helpers'
+import { getHouseholdApiRoute, getHouseholdMemberApiRoute } from '@/frontend/lib/routes/api/household'
 
 interface HouseholdContextType {
   members: HouseholdMember[]
@@ -23,24 +24,24 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
   const { isLoading, error, apiCall } = useApi()
 
   const fetchMembers = useCallback(async () => {
-    const data = await apiCall<HouseholdMember[]>('/household')
+    const data = await apiCall<HouseholdMember[]>(getHouseholdApiRoute())
     setMembers(data)
   }, [apiCall])
 
   const addMember = useCallback(async (member: Omit<HouseholdMember, 'id'>) => {
-    const newMember = await apiCall<HouseholdMember>('/household', 'POST', member)
+    const newMember = await apiCall<HouseholdMember>(getHouseholdApiRoute(), 'POST', member)
     setMembers(prev => [...prev, newMember])
     return newMember
   }, [apiCall])
 
   const updateMember = useCallback(async (id: number, member: Partial<HouseholdMember>) => {
-    const updatedMember = await apiCall<HouseholdMember>(`/household/${id}`, 'PUT', member)
+    const updatedMember = await apiCall<HouseholdMember>(getHouseholdMemberApiRoute(id), 'PUT', member)
     setMembers(prev => prev.map(m => m.id === id ? updatedMember : m))
     return updatedMember
   }, [apiCall])
 
   const deleteMember = useCallback(async (id: number) => {
-    await apiCall(`/household/${id}`, 'DELETE')
+    await apiCall(getHouseholdMemberApiRoute(id), 'DELETE')
     setMembers(prev => prev.filter(m => m.id !== id))
   }, [apiCall])
 

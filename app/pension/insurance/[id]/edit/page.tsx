@@ -10,6 +10,7 @@ import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
 import { useEffect } from "react"
+import { getPensionListRoute } from "@/frontend/lib/routes"
 
 interface EditInsurancePensionPageProps {
   params: {
@@ -77,14 +78,13 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
         provider: data.provider,
         contract_number: data.contract_number,
         start_date: data.start_date,
-        initial_capital: data.initial_capital,
         guaranteed_interest: data.guaranteed_interest,
         expected_return: data.expected_return,
         contribution_plan_steps: data.contribution_plan_steps
       })
 
       toast.success("Success", { description: "Insurance pension updated successfully" })
-      router.push("/pension")
+      router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
       console.error('Failed to update pension:', error)

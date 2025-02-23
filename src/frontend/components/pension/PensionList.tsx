@@ -24,6 +24,7 @@ import { PensionTypeSelectionModal } from "./PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatNumber, formatCurrency, formatPercent } from "@/frontend/lib/transforms"
+import { getPensionEditRoute } from "@/frontend/lib/routes"
 
 /**
  * Props for the PensionList component
@@ -371,8 +372,7 @@ export function PensionList({ pensions, members = [], onDelete }: PensionListPro
   const [pensionToDelete, setPensionToDelete] = useState<number | null>(null)
 
   const handleEdit = (pension: Pension) => {
-    const route = `/pension/${pension.type.toLowerCase()}/${pension.id}/edit`
-    router.push(route)
+    router.push(getPensionEditRoute(pension.type, pension.id))
   }
 
   if (!members || members.length === 0) {

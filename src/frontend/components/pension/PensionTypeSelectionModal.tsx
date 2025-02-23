@@ -8,6 +8,7 @@ import { Label } from "@/frontend/components/ui/label"
 import { Button } from "@/frontend/components/ui/button"
 import { useState } from "react"
 import { LineChart, Shield, Building2 } from "lucide-react"
+import { getNewPensionRoute } from "@/frontend/lib/routes"
 
 interface PensionTypeSelectionModalProps {
   open: boolean
@@ -27,19 +28,7 @@ export function PensionTypeSelectionModal({ open, onOpenChange, memberId }: Pens
     if (!selectedType) return
 
     onOpenChange(false) // Close the modal
-    
-    // Navigate to the appropriate form page
-    switch (selectedType) {
-      case PensionType.ETF_PLAN:
-        router.push(`/pension/etf/new?member_id=${memberId}`)
-        break
-      case PensionType.INSURANCE:
-        router.push(`/pension/insurance/new?member_id=${memberId}`)
-        break
-      case PensionType.COMPANY:
-        router.push(`/pension/company/new?member_id=${memberId}`)
-        break
-    }
+    router.push(getNewPensionRoute(selectedType, memberId))
   }
 
   return (

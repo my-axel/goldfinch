@@ -9,6 +9,7 @@ import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
+import { getPensionListRoute } from "@/frontend/lib/routes"
 
 export default function NewInsurancePensionPage() {
   const router = useRouter()
@@ -52,7 +53,7 @@ export default function NewInsurancePensionPage() {
       })
 
       toast.success("Success", { description: "Insurance pension created successfully" })
-      router.push("/pension")
+      router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
       console.error('Failed to create pension:', error)

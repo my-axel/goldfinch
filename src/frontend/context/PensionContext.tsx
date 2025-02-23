@@ -11,6 +11,13 @@ import {
 } from '@/frontend/types/pension'
 import { type ETF } from '@/frontend/types/etf'
 import { toast } from 'sonner'
+import { 
+  getPensionApiRoute, 
+  getPensionApiRouteWithId,
+  getPensionRealizeHistoricalRoute,
+  getPensionOneTimeInvestmentRoute,
+} from '@/frontend/lib/routes/api/pension'
+import { getETFByIdRoute } from '@/frontend/lib/routes/api/etf'
 
 export interface PensionContribution {
   id: number
@@ -54,16 +61,16 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   const fetchPensions = useCallback(async (memberId?: number) => {
     try {
       const [etfResponse, insuranceResponse, companyResponse] = await Promise.all([
-        get<ETFPension[]>(`/pension/etf${memberId ? `?member_id=${memberId}` : ''}`),
-        get<InsurancePension[]>(`/pension/insurance${memberId ? `?member_id=${memberId}` : ''}`),
-        get<CompanyPension[]>(`/pension/company${memberId ? `?member_id=${memberId}` : ''}`)
+        get<ETFPension[]>(`${getPensionApiRoute(PensionType.ETF_PLAN)}${memberId ? `?member_id=${memberId}` : ''}`),
+        get<InsurancePension[]>(`${getPensionApiRoute(PensionType.INSURANCE)}${memberId ? `?member_id=${memberId}` : ''}`),
+        get<CompanyPension[]>(`${getPensionApiRoute(PensionType.COMPANY)}${memberId ? `?member_id=${memberId}` : ''}`)
       ])
 
       // Fetch ETF details for ETF pensions
       const etfPensionsWithDetails = await Promise.all(
         etfResponse.map(async (p) => {
           try {
-            const etfDetails = await get<ETF>(`/etf/${p.etf_id}`)
+            const etfDetails = await get<ETF>(getETFByIdRoute(p.etf_id))
             return {
               ...p,
               type: PensionType.ETF_PLAN as const,
@@ -132,15 +139,17 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
 
       // Then fetch from the appropriate endpoint
       let response: Pension
+      const apiRoute = getPensionApiRouteWithId(pension.type, id)
+      
       switch (pension.type) {
         case PensionType.ETF_PLAN:
-          response = await get<ETFPension>(`/pension/etf/${id}`)
+          response = await get<ETFPension>(apiRoute)
           break
         case PensionType.INSURANCE:
-          response = await get<InsurancePension>(`/pension/insurance/${id}`)
+          response = await get<InsurancePension>(apiRoute)
           break
         case PensionType.COMPANY:
-          response = await get<CompanyPension>(`/pension/company/${id}`)
+          response = await get<CompanyPension>(apiRoute)
           break
         default:
           throw new Error('Unknown pension type')
@@ -171,21 +180,9 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Then use the appropriate endpoint
-      switch (pension.type) {
-        case PensionType.ETF_PLAN:
-          await post(`/pension/etf/${pensionId}/realize-historical`, {})
-          break
-        case PensionType.INSURANCE:
-          await post(`/pension/insurance/${pensionId}/realize-historical`, {})
-          break
-        case PensionType.COMPANY:
-          await post(`/pension/company/${pensionId}/realize-historical`, {})
-          break
-        default:
-          throw new Error('Unknown pension type')
-      }
-
+      await post(getPensionRealizeHistoricalRoute(pension.type, pensionId), {})
       await fetchPension(pensionId)
+      
       toast.success('Success', {
         description: 'Historical contributions have been realized'
       })
@@ -217,7 +214,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         }))
       }
       
-      await post<ETFPension>('/pension/etf', pensionData)
+      await post<ETFPension>(getPensionApiRoute(PensionType.ETF_PLAN), pensionData)
       await fetchPensions()
     } catch (err) {
       toast.error('Error', {
@@ -246,7 +243,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         }))
       }
       
-      await post<InsurancePension>('/pension/insurance', pensionData)
+      await post<InsurancePension>(getPensionApiRoute(PensionType.INSURANCE), pensionData)
       await fetchPensions()
     } catch (err) {
       toast.error('Error', {
@@ -275,7 +272,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         }))
       }
       
-      await post<CompanyPension>('/pension/company', pensionData)
+      await post<CompanyPension>(getPensionApiRoute(PensionType.COMPANY), pensionData)
       await fetchPensions()
     } catch (err) {
       toast.error('Error', {
@@ -299,13 +296,13 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       // Then use the appropriate endpoint based on pension type
       switch (pensionType) {
         case PensionType.ETF_PLAN:
-          await del(`/pension/etf/${id}`)
+          await del(`${getPensionApiRoute(pensionType)}/${id}`)
           break
         case PensionType.INSURANCE:
-          await del(`/pension/insurance/${id}`)
+          await del(`${getPensionApiRoute(pensionType)}/${id}`)
           break
         case PensionType.COMPANY:
-          await del(`/pension/company/${id}`)
+          await del(`${getPensionApiRoute(pensionType)}/${id}`)
           break
         default:
           throw new Error('Unknown pension type')
@@ -340,7 +337,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         throw new Error('One-time investments are only supported for ETF pensions')
       }
 
-      await post(`/pension/etf/${pensionId}/one-time-investment`, {
+      await post(getPensionOneTimeInvestmentRoute(pension.type, pensionId), {
         amount: data.amount,
         investment_date: data.investment_date,
         note: data.note || undefined
@@ -356,7 +353,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
 
   const updateEtfPension = useCallback(async (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>) => {
     try {
-      await put<Pension>(`/pension/etf/${id}`, {
+      await put<Pension>(getPensionApiRouteWithId(PensionType.ETF_PLAN, id), {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
@@ -381,7 +378,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
 
   const updateInsurancePension = useCallback(async (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>) => {
     try {
-      await put<Pension>(`/pension/insurance/${id}`, {
+      await put<Pension>(getPensionApiRouteWithId(PensionType.INSURANCE, id), {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: pension.start_date.toISOString().split('T')[0],
@@ -404,7 +401,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
 
   const updateCompanyPension = useCallback(async (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => {
     try {
-      await put<Pension>(`/pension/company/${id}`, {
+      await put<Pension>(getPensionApiRouteWithId(PensionType.COMPANY, id), {
         ...pension,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         start_date: pension.start_date.toISOString().split('T')[0],

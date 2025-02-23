@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { parseNumber, parseDate } from './transforms';
+import { getSettingsApiRoute } from './routes/api/settings';
 
 // Types for settings API
 export interface Settings {
@@ -35,8 +36,8 @@ class ApiClient {
   private api: AxiosInstance;
   private locale: string = 'en-US';
 
-  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || '') {
-    this.api = axios.create({ baseURL });
+  constructor() {
+    this.api = axios.create();
 
     // Add request interceptor for data transformation
     this.api.interceptors.request.use(
@@ -63,7 +64,7 @@ class ApiClient {
     return Object.entries(data).reduce((acc, [key, value]) => {
       if (typeof value === 'string') {
         if (isDateField(key)) {
-          acc[key] = parseDate(value, this.locale);
+          acc[key] = parseDate(value);
         } else if (isNumberField(key)) {
           acc[key] = parseNumber(value, this.locale);
         } else {
@@ -79,7 +80,7 @@ class ApiClient {
   // Settings API methods
   async getSettings(): Promise<Settings> {
     try {
-      const response = await this.api.get<Settings>('/v1/settings');
+      const response = await this.api.get<Settings>(getSettingsApiRoute());
       return response.data;
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -89,7 +90,7 @@ class ApiClient {
 
   async updateSettings(settings: SettingsUpdate): Promise<Settings> {
     try {
-      const response = await this.api.put<Settings>('/v1/settings', settings);
+      const response = await this.api.put<Settings>(getSettingsApiRoute(), settings);
       return response.data;
     } catch (error) {
       console.error('Error updating settings:', error);

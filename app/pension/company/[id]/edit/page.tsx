@@ -10,6 +10,7 @@ import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
 import { useEffect } from "react"
+import { getPensionListRoute } from "@/frontend/lib/routes"
 
 interface EditCompanyPensionPageProps {
   params: {
@@ -79,12 +80,11 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
         vesting_period: data.vesting_period,
         matching_percentage: data.matching_percentage,
         max_employer_contribution: data.max_employer_contribution,
-        initial_capital: data.initial_capital,
         contribution_plan_steps: data.contribution_plan_steps
       })
 
       toast.success("Success", { description: "Company pension updated successfully" })
-      router.push("/pension")
+      router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
       console.error('Failed to update pension:', error)
