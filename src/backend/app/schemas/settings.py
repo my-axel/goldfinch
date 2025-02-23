@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 # List of supported locales and currencies
@@ -25,14 +25,16 @@ class SettingsBase(BaseModel):
         max_length=3
     )
 
-    @Field.validator("ui_locale", "number_locale")
-    def validate_locale(cls, v):
+    @field_validator("ui_locale", "number_locale")
+    @classmethod
+    def validate_locale(cls, v: str) -> str:
         if v not in SUPPORTED_LOCALES:
             raise ValueError(f"Locale {v} not supported. Must be one of: {', '.join(SUPPORTED_LOCALES)}")
         return v
 
-    @Field.validator("currency")
-    def validate_currency(cls, v):
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v: str) -> str:
         if v not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Currency {v} not supported. Must be one of: {', '.join(SUPPORTED_CURRENCIES)}")
         return v
@@ -60,14 +62,16 @@ class SettingsUpdate(BaseModel):
         max_length=3
     )
 
-    @Field.validator("ui_locale", "number_locale")
-    def validate_locale(cls, v):
+    @field_validator("ui_locale", "number_locale")
+    @classmethod
+    def validate_locale(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and v not in SUPPORTED_LOCALES:
             raise ValueError(f"Locale {v} not supported. Must be one of: {', '.join(SUPPORTED_LOCALES)}")
         return v
 
-    @Field.validator("currency")
-    def validate_currency(cls, v):
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and v not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Currency {v} not supported. Must be one of: {', '.join(SUPPORTED_CURRENCIES)}")
         return v

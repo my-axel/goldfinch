@@ -194,3 +194,13 @@ WHERE etfs.is_active = true]
 2025-02-23 11:29:25,110 - app.core.startup - INFO - Latest exchange rate is from 2025-02-20. Weekend - no update needed
 2025-02-23 11:29:25,176 - app.core.startup - INFO - Latest price for ETF WLDL.L is from 2025-02-21. Weekend - no update needed
 2025-02-23 11:29:25,203 - app.main - INFO - Startup tasks completed
+2025-02-23 11:31:49,019 - app.main - INFO - Running application startup tasks...
+2025-02-23 11:31:49,041 - app.core.startup - INFO - Running startup checks for missing updates...
+2025-02-23 11:31:49,385 - app.core.startup - INFO - Latest exchange rate is from 2025-02-20. Weekend - no update needed
+2025-02-23 11:31:49,430 - app.core.startup - INFO - Latest price for ETF WLDL.L is from 2025-02-21. Weekend - no update needed
+2025-02-23 11:31:49,452 - app.main - INFO - Startup tasks completed
+2025-02-23 11:31:59,863 - app.main - INFO - Running application startup tasks...
+2025-02-23 11:31:59,884 - app.core.startup - INFO - Running startup checks for missing updates...
+2025-02-23 11:32:00,323 - app.core.startup - INFO - Latest exchange rate is from 2025-02-20. Weekend - no update needed
+2025-02-23 11:32:00,375 - app.core.startup - INFO - Latest price for ETF WLDL.L is from 2025-02-21. Weekend - no update needed
+2025-02-23 11:32:00,395 - app.main - INFO - Startup tasks completed
