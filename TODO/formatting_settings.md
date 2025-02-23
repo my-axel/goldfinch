@@ -3,33 +3,33 @@
 ## Backend Tasks
 
 ### Database and Models
-- [ ] Create new settings model in `app/models/settings.py`
+- [x] Create new settings model in `app/models/settings.py`
   * Add `ui_locale` field (string, default "en-US")
   * Add `number_locale` field (string, default "en-US")
   * Add `currency` field (string, default "USD")
   * Add timestamps (created_at, updated_at)
   * Add appropriate SQLAlchemy relationships
 
-- [ ] Create Alembic migration for settings table
+- [x] Create Alembic migration for settings table
   * Generate migration file
   * Add upgrade and downgrade functions
   * Test migration in both directions
   * Add default settings row for existing users
 
 ### API and Schemas
-- [ ] Create settings Pydantic schemas in `app/schemas/settings.py`
+- [x] Create settings Pydantic schemas in `app/schemas/settings.py`
   * Base schema with all fields
   * Create schema for new settings
   * Response schema including timestamps
   * Add validation for supported locales and currencies
 
-- [ ] Create settings CRUD operations in `app/crud/settings.py`
+- [x] Create settings CRUD operations in `app/crud/settings.py`
   * Add get_settings function
   * Add update_settings function
   * Add create_default_settings function
   * Add proper error handling
 
-- [ ] Create settings API endpoints in `app/api/settings.py`
+- [x] Create settings API endpoints in `app/api/settings.py`
   * GET endpoint to retrieve current settings
   * PUT endpoint to update settings
   * Add proper error responses

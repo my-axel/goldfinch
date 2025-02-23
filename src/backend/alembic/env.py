@@ -29,6 +29,7 @@ from app.models.pension_company import (
     PensionCompanyContributionPlan,
     PensionCompanyContributionHistory
 )
+from app.models.settings import Settings
 from app.models.exchange_rate import ExchangeRate
 from app.models.update_tracking import DailyUpdateTracking
 
