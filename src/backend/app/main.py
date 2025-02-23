@@ -5,6 +5,7 @@ import logging
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.core.startup import check_and_trigger_updates
 
 # Initialize logging
 setup_logging()
@@ -28,6 +29,15 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+@app.on_event("startup")
+async def startup_event():
+    """Run startup tasks when the application starts."""
+    logger.info("Running application startup tasks...")
+    # Run startup checks in the background to avoid delaying app startup
+    from fastapi.concurrency import run_in_threadpool
+    await run_in_threadpool(check_and_trigger_updates)
+    logger.info("Startup tasks completed")
 
 @app.get("/health")
 async def health_check():

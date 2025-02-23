@@ -30,6 +30,7 @@ from app.models.pension_company import (
     PensionCompanyContributionHistory
 )
 from app.models.exchange_rate import ExchangeRate
+from app.models.update_tracking import DailyUpdateTracking
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

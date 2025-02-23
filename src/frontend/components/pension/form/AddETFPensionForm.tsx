@@ -205,7 +205,8 @@ export function AddETFPensionForm({ form, isEditing = false }: ETFPensionFormPro
                             type="number" 
                             step="0.000001"
                             {...field}
-                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
                             placeholder="0.000000"
                           />
                         </FormControl>
