@@ -1,9 +1,0 @@
-README.md
-setup.py
-app/__init__.py
-app/core/__init__.py
-app/core/config.py
-goldfinch.egg-info/PKG-INFO
-goldfinch.egg-info/SOURCES.txt
-goldfinch.egg-info/dependency_links.txt
-goldfinch.egg-info/top_level.txt
