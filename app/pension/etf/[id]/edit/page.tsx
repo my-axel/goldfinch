@@ -25,27 +25,107 @@ interface EditETFPensionPageProps {
   }>
 }
 
+// Form transformation utilities
+const transformPensionToFormData = (pension: ETFPension): ETFPensionFormData => ({
+  type: PensionType.ETF_PLAN,
+  name: pension.name,
+  member_id: pension.member_id.toString(),
+  notes: pension.notes,
+  etf_id: pension.etf_id,
+  is_existing_investment: pension.is_existing_investment,
+  existing_units: pension.existing_units || 0,
+  reference_date: pension.reference_date || new Date(),
+  realize_historical_contributions: pension.realize_historical_contributions || false,
+  initialization_method: pension.realize_historical_contributions ? "historical" : "none",
+  contribution_plan_steps: pension.contribution_plan_steps.map(step => ({
+    amount: step.amount,
+    frequency: step.frequency,
+    start_date: new Date(step.start_date),
+    end_date: step.end_date ? new Date(step.end_date) : undefined,
+    note: step.note
+  }))
+})
+
+const transformFormDataToPension = (data: ETFPensionFormData, currentPension: ETFPension): Omit<ETFPension, "id" | "current_value"> => ({
+  type: PensionType.ETF_PLAN,
+  name: data.name,
+  member_id: parseInt(data.member_id),
+  notes: data.notes,
+  etf_id: data.etf_id,
+  is_existing_investment: data.is_existing_investment,
+  existing_units: data.existing_units,
+  reference_date: data.reference_date,
+  contribution_plan_steps: data.contribution_plan_steps.map(step => ({
+    amount: step.amount,
+    frequency: step.frequency,
+    start_date: step.start_date,
+    end_date: step.end_date || undefined,
+    note: step.note || undefined
+  })),
+  realize_historical_contributions: data.initialization_method === "historical",
+  total_units: currentPension.total_units,
+  status: currentPension.status,
+  paused_at: currentPension.paused_at,
+  resume_at: currentPension.resume_at
+})
+
 export default function EditETFPensionPage({ params }: EditETFPensionPageProps) {
   const router = useRouter()
   const { 
     selectedPension: pension, 
     fetchPension, 
     updateEtfPension, 
-    isLoading,
     pensionStatistics,
     isLoadingStatistics,
     fetchPensionStatistics
   } = usePension()
   const { members, fetchMembers } = useHousehold()
-  const [hasFetched, setHasFetched] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
   const statistics = pensionStatistics[pensionId]
-  const isLoadingCurrentStatistics = isLoadingStatistics[pensionId]
 
   // Get the member's retirement date
   const member = pension ? members.find(m => m.id === pension.member_id) : null
   const retirementDate = member ? new Date(member.retirement_date_planned) : undefined
+
+  // Unified loading state
+  const loadingState = {
+    isPageLoading: isInitialLoading,
+    isStatisticsLoading: isLoadingStatistics[pensionId] || false,
+    isAnyLoading: isInitialLoading || isLoadingStatistics[pensionId] || false
+  }
+
+  // Unified error handler
+  const handleError = (error: unknown, action: string) => {
+    console.error(`Failed to ${action}:`, error)
+    toast.error("Error", { 
+      description: `Failed to ${action}. Please try again.`
+    })
+    setIsInitialLoading(false) // Ensure we exit loading state on error
+  }
+
+  // Combined data fetching effect
+  useEffect(() => {
+    if (!pensionId) return
+
+    const loadData = async () => {
+      try {
+        setIsInitialLoading(true)
+        await Promise.all([
+          fetchPension(pensionId),
+          fetchMembers(),
+          fetchPensionStatistics(pensionId)
+        ])
+      } catch (error) {
+        handleError(error, "load pension data")
+      } finally {
+        setIsInitialLoading(false)
+      }
+    }
+
+    loadData()
+  }, [pensionId]) // Only depend on pensionId to prevent unnecessary refetches
 
   const form = useForm<ETFPensionFormData>({
     defaultValues: {
@@ -63,50 +143,10 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     }
   })
 
-  // Fetch both pension and members data when component mounts
-  useEffect(() => {
-    if (!hasFetched) {
-      Promise.all([
-        fetchPension(pensionId),
-        fetchMembers()
-      ]).then(() => {
-        setHasFetched(true)
-      }).catch((error) => {
-        console.error('Failed to fetch initial data:', error)
-        toast.error("Error", { description: "Failed to load pension data" })
-      })
-    }
-  }, [fetchPension, fetchMembers, pensionId, hasFetched])
-
-  // Fetch statistics when pension is loaded
-  useEffect(() => {
-    if (pension && !statistics && !isLoadingStatistics) {
-      fetchPensionStatistics(pensionId)
-    }
-  }, [pension, statistics, isLoadingStatistics, fetchPensionStatistics, pensionId])
-
   // Update form when pension data changes
   useEffect(() => {
     if (pension && pension.type === PensionType.ETF_PLAN) {
-      form.reset({
-        type: PensionType.ETF_PLAN,
-        name: pension.name,
-        member_id: pension.member_id.toString(),
-        notes: pension.notes,
-        etf_id: pension.etf_id,
-        is_existing_investment: pension.is_existing_investment,
-        existing_units: pension.existing_units || 0,
-        reference_date: pension.reference_date || new Date(),
-        realize_historical_contributions: pension.realize_historical_contributions || false,
-        initialization_method: "none",
-        contribution_plan_steps: pension.contribution_plan_steps.map(step => ({
-          amount: step.amount,
-          frequency: step.frequency,
-          start_date: new Date(step.start_date),
-          end_date: step.end_date ? new Date(step.end_date) : undefined,
-          note: step.note
-        }))
-      })
+      form.reset(transformPensionToFormData(pension))
     }
   }, [pension, form])
 
@@ -123,40 +163,14 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
         return
       }
 
-      // Transform contribution steps to ensure all fields are properly included
-      const contribution_plan_steps = data.contribution_plan_steps.map(step => ({
-        amount: step.amount,
-        frequency: step.frequency,
-        start_date: step.start_date,
-        end_date: step.end_date || undefined,
-        note: step.note || undefined
-      }))
-
-      const payload = {
-        type: PensionType.ETF_PLAN as const,
-        name: data.name,
-        member_id: memberId,
-        notes: data.notes,
-        etf_id: data.etf_id,
-        is_existing_investment: data.is_existing_investment,
-        existing_units: data.existing_units,
-        reference_date: data.reference_date,
-        contribution_plan_steps,
-        realize_historical_contributions: data.initialization_method === "historical",
-        total_units: (pension as ETFPension).total_units,
-        status: pension.status,
-        paused_at: pension.paused_at,
-        resume_at: pension.resume_at
-      }
-
+      const payload = transformFormDataToPension(data, pension)
       await updateEtfPension(pensionId, payload)
 
       toast.success("Success", { description: "ETF pension updated successfully" })
       router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
-      console.error('Failed to update pension:', error)
-      // Error is handled by the context
+      handleError(error, "update pension")
     }
   }
 
@@ -182,7 +196,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
             <Button
               type="submit"
               form="etf-pension-form"
-              disabled={isLoading}
+              disabled={loadingState.isAnyLoading}
             >
               Save Changes
             </Button>
@@ -191,12 +205,10 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
 
         <Form {...form}>
           <form id="etf-pension-form" onSubmit={form.handleSubmit(handleSubmit)}>
-            {/* Main Content */}
             <div className="space-y-6">
-              {/* First Row: Basic Information and Statistics */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7">
-                  {isLoading ? (
+                  {loadingState.isPageLoading ? (
                     <Skeleton className="h-[200px] w-full" />
                   ) : (
                     <EditETFPensionBasicInformationForm form={form} />
@@ -207,10 +219,9 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 </div>
               </div>
 
-              {/* Second Row: Contribution Plan and Historical Contributions */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7">
-                  {isLoading ? (
+                  {loadingState.isPageLoading ? (
                     <Skeleton className="h-[400px] w-full" />
                   ) : (
                     <EditETFPensionContributionStepsForm form={form} />
@@ -219,10 +230,10 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 <div className="lg:col-span-5">
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle>Historical Contributions</CardTitle>
+                      <CardTitle>Historical and Planned Contributions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {isLoading ? (
+                      {loadingState.isStatisticsLoading ? (
                         <div className="space-y-4">
                           <Skeleton className="h-[200px] w-full" />
                         </div>
@@ -232,7 +243,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                             data={statistics?.contribution_history || []}
                             contributionPlan={form.watch('contribution_plan_steps')}
                             retirementDate={retirementDate}
-                            isLoading={isLoadingCurrentStatistics}
+                            isLoading={loadingState.isStatisticsLoading}
                             height={300}
                           />
                         </div>
@@ -242,7 +253,6 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 </div>
               </div>
 
-              {/* Third Row: Performance */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-12">
                   <Card>
@@ -250,16 +260,15 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                       <CardTitle>Performance</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {isLoading ? (
+                      {loadingState.isPageLoading ? (
                         <div className="space-y-4">
                           <Skeleton className="h-[200px] w-full" />
                         </div>
                       ) : (
                         <div className="space-y-4">
-
                           <ValueDevelopmentChart
                             data={statistics?.value_history || []}
-                            isLoading={isLoadingCurrentStatistics}
+                            isLoading={loadingState.isStatisticsLoading}
                             height={300}
                           />
                           <PerformanceMetricsChart
@@ -267,7 +276,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                             currentValue={statistics?.current_value || 0}
                             totalReturn={statistics?.total_return || 0}
                             annualReturn={statistics?.annual_return}
-                            isLoading={isLoadingCurrentStatistics}
+                            isLoading={loadingState.isStatisticsLoading}
                             height={300}
                           />
                         </div>

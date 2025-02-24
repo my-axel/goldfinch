@@ -229,7 +229,7 @@ export function ContributionHistoryChart({
       >
         <LineChart
           data={chartData}
-          margin={{ top: 10, right: 10, left: 50, bottom: 20 }}
+          margin={{ top: 10, right: 10, left: 15, bottom: 10 }}
         >
           <CartesianGrid {...chartTheme.grid} />
           <XAxis
