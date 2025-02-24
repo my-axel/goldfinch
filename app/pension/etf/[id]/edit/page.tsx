@@ -12,11 +12,11 @@ import { PensionType, type ETFPension } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { toast } from "sonner"
+import { use } from "react"
 import { useEffect, useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
-import { use } from "react"
 import { ContributionHistoryChart, ValueDevelopmentChart, PerformanceMetricsChart } from "@/frontend/components/charts"
 
 interface EditETFPensionPageProps {

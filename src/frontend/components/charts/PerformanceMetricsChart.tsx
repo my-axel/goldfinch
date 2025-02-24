@@ -8,6 +8,9 @@ import { ChartWrapper } from "./ChartWrapper"
 import { ChartTooltip } from "./ChartTooltip"
 import { chartColors, chartTheme } from "./chart-theme"
 
+/**
+ * Represents a data point in the performance metrics chart
+ */
 interface ChartDataItem {
   name: string
   value: number
@@ -16,16 +19,49 @@ interface ChartDataItem {
   isPercentage?: boolean
 }
 
+/**
+ * Props for the PerformanceMetricsChart component
+ */
 interface PerformanceMetricsChartProps {
+  /** Total amount invested in the pension */
   totalInvestedAmount: number
+  /** Current value of the pension */
   currentValue: number
+  /** Total return (profit/loss) */
   totalReturn: number
+  /** Annual return rate (as percentage) */
   annualReturn?: number
+  /** Loading state of the chart */
   isLoading?: boolean
+  /** Height of the chart in pixels */
   height?: number
+  /** Additional CSS classes */
   className?: string
 }
 
+/**
+ * A chart component that visualizes key performance metrics of a pension plan.
+ * Displays total invested amount, current value, total return, and annual return rate
+ * in a bar chart format with proper currency and percentage formatting.
+ * 
+ * Features:
+ * - Displays key performance metrics in a bar chart
+ * - Color-coded returns (green for positive, red for negative)
+ * - Interactive tooltips with formatted values
+ * - Support for both currency and percentage values
+ * - Proper error handling and loading states
+ * 
+ * @example
+ * ```tsx
+ * <PerformanceMetricsChart
+ *   totalInvestedAmount={10000}
+ *   currentValue={12000}
+ *   totalReturn={2000}
+ *   annualReturn={8.5}
+ *   height={300}
+ * />
+ * ```
+ */
 export function PerformanceMetricsChart({
   totalInvestedAmount,
   currentValue,
@@ -37,7 +73,7 @@ export function PerformanceMetricsChart({
 }: PerformanceMetricsChartProps) {
   const { settings } = useSettings()
 
-  const chartData = useMemo(() => {
+  const chartData = useMemo<ChartDataItem[]>(() => {
     const data: ChartDataItem[] = [
       {
         name: "Total Invested",
@@ -70,7 +106,7 @@ export function PerformanceMetricsChart({
     return data
   }, [totalInvestedAmount, currentValue, totalReturn, annualReturn])
 
-  const formatYAxis = (value: number) => {
+  const formatYAxis = (value: number): string => {
     return formatCurrency(value, {
       locale: settings.number_locale,
       currency: settings.currency,
@@ -78,7 +114,7 @@ export function PerformanceMetricsChart({
     }).formatted
   }
 
-  const formatValue = (value: number, isPercentage?: boolean) => {
+  const formatValue = (value: number, isPercentage?: boolean): string => {
     if (isPercentage) {
       return formatPercent(value / 100, {
         locale: settings.number_locale,

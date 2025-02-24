@@ -2,7 +2,7 @@ import { ContributionHistoryResponse } from './pension'
 
 export interface ValueHistoryPoint {
   date: string
-  value: string
+  value: number
 }
 
 export interface PensionStatistics {
@@ -18,4 +18,4 @@ export interface PensionStatusUpdate {
   status: 'ACTIVE' | 'PAUSED'
   paused_at?: string
   resume_at?: string
-} 
+}

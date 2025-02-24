@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
-import { ValueHistoryPoint } from "@/frontend/types/pension-statistics"
+import type { ValueHistoryPoint } from "@/frontend/types/pension-statistics"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency } from "@/frontend/lib/transforms"
 import { ChartWrapper } from "./ChartWrapper"
@@ -16,6 +16,11 @@ interface ValueDevelopmentChartProps {
   className?: string
 }
 
+/**
+ * A chart component that displays the development of a pension's value over time.
+ * Shows the progression of the pension's value with interactive tooltips and proper
+ * currency formatting based on user settings.
+ */
 export function ValueDevelopmentChart({
   data,
   isLoading = false,
@@ -30,12 +35,12 @@ export function ValueDevelopmentChart({
         month: "short",
         year: "numeric"
       }),
-      value: parseFloat(point.value),
+      value: point.value,
       rawDate: point.date // Keep raw date for sorting
     })).sort((a, b) => new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime())
   }, [data, settings.number_locale])
 
-  const formatYAxis = (value: number) => {
+  const formatYAxis = (value: number): string => {
     return formatCurrency(value, {
       locale: settings.number_locale,
       currency: settings.currency,
