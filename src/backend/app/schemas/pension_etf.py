@@ -46,21 +46,6 @@ class ContributionPlanStepResponse(ContributionPlanStepBase):
     class Config:
         from_attributes = True
 
-class ContributionPlanBase(BaseModel):
-    date: date
-    amount: Decimal = Field(ge=0)
-    note: Optional[str] = None
-
-class ContributionPlanCreate(ContributionPlanBase):
-    pass
-
-class ContributionPlanResponse(ContributionPlanBase):
-    id: int
-    pension_etf_id: int
-
-    class Config:
-        from_attributes = True
-
 class ContributionHistoryBase(BaseModel):
     date: date
     amount: Decimal = Field(ge=0)
@@ -98,7 +83,6 @@ class PensionETFResponse(PensionETFBase):
     total_units: Decimal
     etf: Optional[ETFResponse] = None
     contribution_plan_steps: List[ContributionPlanStepResponse]
-    contribution_plan: List[ContributionPlanResponse]
     contribution_history: List[ContributionHistoryResponse]
 
     class Config:

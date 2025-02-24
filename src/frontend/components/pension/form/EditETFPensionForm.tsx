@@ -3,7 +3,7 @@
 import { UseFormReturn } from "react-hook-form"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { EditETFPensionBasicInformationForm } from "./EditETFPensionBasicInformationForm"
-import { EditETFPensionContributionPlanForm } from "./EditETFPensionContributionPlanForm"
+import { EditETFPensionContributionStepsForm } from "./EditETFPensionContributionStepsForm"
 
 interface EditETFPensionFormProps {
   form: UseFormReturn<ETFPensionFormData>
@@ -17,7 +17,7 @@ export function EditETFPensionForm({ form }: EditETFPensionFormProps) {
   return (
     <div className="space-y-6">
       <EditETFPensionBasicInformationForm form={form} />
-      <EditETFPensionContributionPlanForm form={form} />
+      <EditETFPensionContributionStepsForm form={form} />
     </div>
   )
 } 

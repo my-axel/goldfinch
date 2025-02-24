@@ -22,7 +22,6 @@ class PensionCompany(Base):
     # Relationships
     member = relationship("HouseholdMember", back_populates="company_pensions")
     contribution_plan_steps = relationship("PensionCompanyContributionPlanStep", back_populates="pension", cascade="all, delete-orphan")
-    contribution_plan = relationship("PensionCompanyContributionPlan", back_populates="pension", cascade="all, delete-orphan")
     contribution_history = relationship("PensionCompanyContributionHistory", back_populates="pension", cascade="all, delete-orphan")
 
 class PensionCompanyContributionPlanStep(Base):
@@ -38,19 +37,6 @@ class PensionCompanyContributionPlanStep(Base):
 
     # Relationships
     pension = relationship("PensionCompany", back_populates="contribution_plan_steps")
-
-class PensionCompanyContributionPlan(Base):
-    __tablename__ = "pension_company_contribution_plan"
-
-    id = Column(Integer, primary_key=True, index=True)
-    pension_company_id = Column(Integer, ForeignKey("pension_company.id", ondelete="CASCADE"), nullable=False)
-    date = Column(Date, nullable=False)
-    employee_amount = Column(Numeric(20, 2), nullable=False)
-    employer_amount = Column(Numeric(20, 2), nullable=False)
-    note = Column(String, nullable=True)
-
-    # Relationships
-    pension = relationship("PensionCompany", back_populates="contribution_plan")
 
 class PensionCompanyContributionHistory(Base):
     __tablename__ = "pension_company_contribution_history"

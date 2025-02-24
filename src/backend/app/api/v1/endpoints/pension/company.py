@@ -1,28 +1,35 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-from app.api.v1 import deps
-from app.crud.pension_company import pension_company
 from app import schemas
+from app.api.v1 import deps
+from app.crud import pension_company
 
-router = APIRouter(tags=["company-pensions"])
+router = APIRouter()
 
-@router.post("/", response_model=schemas.pension_company.PensionCompanyResponse)
+@router.post(
+    "",
+    response_model=schemas.pension_company.PensionCompanyResponse,
+    status_code=201,
+    responses={
+        201: {"description": "Company pension created successfully"},
+        422: {"description": "Validation error"}
+    }
+)
 def create_company_pension(
     *,
     db: Session = Depends(deps.get_db),
     pension_in: schemas.pension_company.PensionCompanyCreate,
-    member_id: int
 ) -> schemas.pension_company.PensionCompanyResponse:
     """Create a new company pension."""
-    return pension_company.create(db=db, obj_in=pension_in, member_id=member_id)
+    return pension_company.create(db=db, obj_in=pension_in)
 
 @router.get("/{pension_id}", response_model=schemas.pension_company.PensionCompanyResponse)
 def get_company_pension(
     pension_id: int,
     db: Session = Depends(deps.get_db),
 ) -> schemas.pension_company.PensionCompanyResponse:
-    """Get company pension by ID."""
+    """Get a company pension by ID."""
     pension = pension_company.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Company Pension not found")
@@ -35,7 +42,7 @@ def update_company_pension(
     pension_id: int,
     pension_in: schemas.pension_company.PensionCompanyUpdate,
 ) -> schemas.pension_company.PensionCompanyResponse:
-    """Update company pension."""
+    """Update a company pension."""
     pension = pension_company.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Company Pension not found")
@@ -46,24 +53,12 @@ def delete_company_pension(
     pension_id: int,
     db: Session = Depends(deps.get_db),
 ) -> dict:
-    """Delete company pension."""
+    """Delete a company pension."""
     pension = pension_company.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Company Pension not found")
     pension_company.remove(db=db, id=pension_id)
     return {"ok": True}
-
-@router.post("/{pension_id}/contribution-plan", response_model=schemas.pension_company.ContributionPlanResponse)
-def create_company_contribution_plan(
-    *,
-    db: Session = Depends(deps.get_db),
-    pension_id: int,
-    contribution_in: schemas.pension_company.ContributionPlanCreate,
-) -> schemas.pension_company.ContributionPlanResponse:
-    """Create a contribution plan for company pension."""
-    return pension_company.create_contribution_plan(
-        db=db, pension_id=pension_id, obj_in=contribution_in
-    )
 
 @router.post("/{pension_id}/contribution-history", response_model=schemas.pension_company.ContributionHistoryResponse)
 def create_company_contribution_history(

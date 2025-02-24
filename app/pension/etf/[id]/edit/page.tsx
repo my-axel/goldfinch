@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import { EditETFPensionBasicInformationForm } from "@/frontend/components/pension/form/EditETFPensionBasicInformationForm"
-import { EditETFPensionContributionPlanForm } from "@/frontend/components/pension/form/EditETFPensionContributionPlanForm"
+import { EditETFPensionContributionStepsForm } from "@/frontend/components/pension/form/EditETFPensionContributionStepsForm"
 import { ETFPensionStats } from "@/frontend/components/pension/ETFPensionStats"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
@@ -182,7 +182,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                   {isLoading ? (
                     <Skeleton className="h-[400px] w-full" />
                   ) : (
-                    <EditETFPensionContributionPlanForm form={form} />
+                    <EditETFPensionContributionStepsForm form={form} />
                   )}
                 </div>
                 <div className="lg:col-span-5">

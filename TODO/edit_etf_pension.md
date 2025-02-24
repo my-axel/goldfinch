@@ -67,7 +67,7 @@
   * Add proper validation
 
 ### Contribution Management Section
-- [ ] Enhance contribution plan management
+- [x] Enhance contribution plan management
   * Keep existing contribution step functionality
   * Add one-time investment button
   * Integrate existing OneTimeInvestmentModal

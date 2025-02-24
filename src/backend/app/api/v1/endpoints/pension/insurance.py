@@ -1,28 +1,35 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-from app.api.v1 import deps
-from app.crud.pension_insurance import pension_insurance
 from app import schemas
+from app.api.v1 import deps
+from app.crud import pension_insurance
 
-router = APIRouter(tags=["insurance-pensions"])
+router = APIRouter()
 
-@router.post("/", response_model=schemas.pension_insurance.PensionInsuranceResponse)
+@router.post(
+    "",
+    response_model=schemas.pension_insurance.PensionInsuranceResponse,
+    status_code=201,
+    responses={
+        201: {"description": "Insurance pension created successfully"},
+        422: {"description": "Validation error"}
+    }
+)
 def create_insurance_pension(
     *,
     db: Session = Depends(deps.get_db),
     pension_in: schemas.pension_insurance.PensionInsuranceCreate,
-    member_id: int
 ) -> schemas.pension_insurance.PensionInsuranceResponse:
     """Create a new insurance pension."""
-    return pension_insurance.create(db=db, obj_in=pension_in, member_id=member_id)
+    return pension_insurance.create(db=db, obj_in=pension_in)
 
 @router.get("/{pension_id}", response_model=schemas.pension_insurance.PensionInsuranceResponse)
 def get_insurance_pension(
     pension_id: int,
     db: Session = Depends(deps.get_db),
 ) -> schemas.pension_insurance.PensionInsuranceResponse:
-    """Get insurance pension by ID."""
+    """Get an insurance pension by ID."""
     pension = pension_insurance.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Insurance Pension not found")
@@ -35,7 +42,7 @@ def update_insurance_pension(
     pension_id: int,
     pension_in: schemas.pension_insurance.PensionInsuranceUpdate,
 ) -> schemas.pension_insurance.PensionInsuranceResponse:
-    """Update insurance pension."""
+    """Update an insurance pension."""
     pension = pension_insurance.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Insurance Pension not found")
@@ -46,24 +53,12 @@ def delete_insurance_pension(
     pension_id: int,
     db: Session = Depends(deps.get_db),
 ) -> dict:
-    """Delete insurance pension."""
+    """Delete an insurance pension."""
     pension = pension_insurance.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Insurance Pension not found")
     pension_insurance.remove(db=db, id=pension_id)
     return {"ok": True}
-
-@router.post("/{pension_id}/contribution-plan", response_model=schemas.pension_insurance.ContributionPlanResponse)
-def create_insurance_contribution_plan(
-    *,
-    db: Session = Depends(deps.get_db),
-    pension_id: int,
-    contribution_in: schemas.pension_insurance.ContributionPlanCreate,
-) -> schemas.pension_insurance.ContributionPlanResponse:
-    """Create a contribution plan for insurance pension."""
-    return pension_insurance.create_contribution_plan(
-        db=db, pension_id=pension_id, obj_in=contribution_in
-    )
 
 @router.post("/{pension_id}/contribution-history", response_model=schemas.pension_insurance.ContributionHistoryResponse)
 def create_insurance_contribution_history(

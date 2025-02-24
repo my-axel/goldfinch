@@ -116,18 +116,6 @@ def delete_etf_pension(
     
     return {"ok": True}
 
-@router.post("/{pension_id}/contribution-plan", response_model=schemas.pension_etf.ContributionPlanResponse)
-def create_etf_contribution_plan(
-    *,
-    db: Session = Depends(deps.get_db),
-    pension_id: int,
-    contribution_in: schemas.pension_etf.ContributionPlanCreate,
-) -> schemas.pension_etf.ContributionPlanResponse:
-    """Create a contribution plan for ETF pension."""
-    return pension_etf.create_contribution_plan(
-        db=db, pension_id=pension_id, obj_in=contribution_in
-    )
-
 @router.post("/{pension_id}/contribution-history", response_model=schemas.pension_etf.ContributionHistoryResponse)
 def create_etf_contribution_history(
     *,

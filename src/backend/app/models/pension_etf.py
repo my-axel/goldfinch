@@ -29,7 +29,6 @@ class PensionETF(Base):
     member = relationship("HouseholdMember", back_populates="etf_pensions")
     etf = relationship("ETF", back_populates="pensions")
     contribution_plan_steps = relationship("PensionETFContributionPlanStep", back_populates="pension", cascade="all, delete-orphan")
-    contribution_plan = relationship("PensionETFContributionPlan", back_populates="pension", cascade="all, delete-orphan")
     contribution_history = relationship("PensionETFContributionHistory", back_populates="pension", cascade="all, delete-orphan")
 
 class PensionETFContributionPlanStep(Base):
@@ -45,18 +44,6 @@ class PensionETFContributionPlanStep(Base):
 
     # Relationships
     pension = relationship("PensionETF", back_populates="contribution_plan_steps")
-
-class PensionETFContributionPlan(Base):
-    __tablename__ = "pension_etf_contribution_plan"
-
-    id = Column(Integer, primary_key=True, index=True)
-    pension_etf_id = Column(Integer, ForeignKey("pension_etf.id", ondelete="CASCADE"), nullable=False)
-    date = Column(Date, nullable=False)
-    amount = Column(Numeric(20, 2), nullable=False)
-    note = Column(String, nullable=True)
-
-    # Relationships
-    pension = relationship("PensionETF", back_populates="contribution_plan")
 
 class PensionETFContributionHistory(Base):
     __tablename__ = "pension_etf_contribution_history"

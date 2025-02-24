@@ -4,13 +4,11 @@ from app.crud.base import CRUDBase
 from app.models.pension_etf import (
     PensionETF,
     PensionETFContributionPlanStep,
-    PensionETFContributionPlan,
     PensionETFContributionHistory
 )
 from app.schemas.pension_etf import (
     PensionETFCreate,
     PensionETFUpdate,
-    ContributionPlanCreate,
     ContributionHistoryCreate,
     PensionStatusUpdate,
     PensionStatistics
@@ -119,23 +117,6 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
 
         # Update other fields
         return super().update(db=db, db_obj=db_obj, obj_in=update_data)
-
-    def create_contribution_plan(
-        self,
-        db: Session,
-        *,
-        pension_id: int,
-        obj_in: ContributionPlanCreate
-    ) -> PensionETFContributionPlan:
-        # Create the contribution plan
-        db_obj = PensionETFContributionPlan(
-            **obj_in.dict(),
-            pension_etf_id=pension_id
-        )
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
 
     def create_contribution_history(
         self,

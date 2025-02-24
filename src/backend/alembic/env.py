@@ -4,34 +4,32 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from app.core.config import settings
 
-# Import all models here
-from app.db.base_class import Base
-from app.models.etf import ETF, ETFPrice, ETFUpdate, ETFError
-from app.models.household import HouseholdMember
-from app.models.task import TaskStatus
+from app.db.base import Base
 from app.models.pension_etf import (
     PensionETF,
     PensionETFContributionPlanStep,
-    PensionETFContributionPlan,
     PensionETFContributionHistory
 )
 from app.models.pension_insurance import (
     PensionInsurance,
     PensionInsuranceContributionPlanStep,
-    PensionInsuranceContributionPlan,
     PensionInsuranceContributionHistory
 )
 from app.models.pension_company import (
     PensionCompany,
     PensionCompanyContributionPlanStep,
-    PensionCompanyContributionPlan,
     PensionCompanyContributionHistory
 )
+from app.models.household import HouseholdMember
+from app.models.etf import ETF
+from app.models.etf import ETFUpdate
+from app.models.etf import ETFError
+from app.models.task import TaskStatus
 from app.models.settings import Settings
 from app.models.exchange_rate import ExchangeRate
 from app.models.update_tracking import DailyUpdateTracking
+from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -53,8 +51,10 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+
 def get_url():
-    return settings.DATABASE_URL
+    return settings.SQLALCHEMY_DATABASE_URI
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

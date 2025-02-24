@@ -19,11 +19,11 @@ import { usePension } from "@/frontend/context/PensionContext"
 import { Textarea } from "@/frontend/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
-interface EditETFPensionContributionPlanFormProps {
+interface EditETFPensionContributionStepsFormProps {
   form: UseFormReturn<ETFPensionFormData>
 }
 
-export function EditETFPensionContributionPlanForm({ form }: EditETFPensionContributionPlanFormProps) {
+export function EditETFPensionContributionStepsForm({ form }: EditETFPensionContributionStepsFormProps) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "contribution_plan_steps"
