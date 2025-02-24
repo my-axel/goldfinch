@@ -4,12 +4,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/frontend/components/ui/button"
 import { Input } from "@/frontend/components/ui/input"
 import { Label } from "@/frontend/components/ui/label"
-import { HouseholdMember } from "@/frontend/types/household"
+import { HouseholdMember, HouseholdMemberFormData } from "@/frontend/types/household"
 import { format, isValid } from "date-fns"
 
 interface MemberFormProps {
   member?: HouseholdMember
-  onSubmit: (data: Omit<HouseholdMember, "id">) => void
+  onSubmit: (data: HouseholdMemberFormData) => void
   onCancel: () => void
 }
 
@@ -82,7 +82,7 @@ export function MemberForm({ member, onSubmit, onCancel }: MemberFormProps) {
     // Validate and parse retirement ages
     const retirement_age_planned = parseInt(formData.retirement_age_planned)
     const retirement_age_possible = parseInt(formData.retirement_age_possible)
-    
+
     if (isNaN(retirement_age_planned) || isNaN(retirement_age_possible)) {
       console.error("Invalid retirement ages")
       return
@@ -100,7 +100,7 @@ export function MemberForm({ member, onSubmit, onCancel }: MemberFormProps) {
       last_name: formData.last_name.trim(),
       birthday,
       retirement_age_planned,
-      retirement_age_possible,
+      retirement_age_possible
     })
   }
 

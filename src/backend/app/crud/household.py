@@ -6,7 +6,15 @@ from app.schemas.household import HouseholdMemberCreate, HouseholdMemberUpdate
 
 class CRUDHouseholdMember(CRUDBase[HouseholdMember, HouseholdMemberCreate, HouseholdMemberUpdate]):
     def create(self, db: Session, *, obj_in: HouseholdMemberCreate) -> HouseholdMember:
-        db_obj = HouseholdMember(**obj_in.model_dump())
+        db_obj = HouseholdMember(
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
+            birthday=obj_in.birthday,
+            retirement_age_planned=obj_in.retirement_age_planned,
+            retirement_age_possible=obj_in.retirement_age_possible
+        )
+        # Calculate retirement dates before saving
+        db_obj.calculate_retirement_dates()
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -23,7 +31,21 @@ class CRUDHouseholdMember(CRUDBase[HouseholdMember, HouseholdMemberCreate, House
             update_data = obj_in
         else:
             update_data = obj_in.model_dump(exclude_unset=True)
-        return super().update(db=db, db_obj=db_obj, obj_in=update_data)
+        needs_recalculation = any(
+            field in update_data 
+            for field in ['birthday', 'retirement_age_planned', 'retirement_age_possible']
+        )
+        
+        for field in update_data:
+            setattr(db_obj, field, update_data[field])
+            
+        if needs_recalculation:
+            db_obj.calculate_retirement_dates()
+            
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100, filters: Dict = None

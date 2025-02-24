@@ -6,11 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/frontend/components/ui/dialog"
-import { HouseholdMember } from "@/frontend/types/household"
+import { HouseholdMemberFormData } from "@/frontend/types/household"
 import { MemberForm } from "./MemberForm"
 
 interface AddMemberDialogProps {
-  onAdd: (member: Omit<HouseholdMember, "id">) => void
+  onAdd: (member: HouseholdMemberFormData) => void
   open: boolean
   onOpenChange: (open: boolean) => void
 }

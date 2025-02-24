@@ -36,7 +36,7 @@ export function EditMemberDialog({ member, open, onOpenChange, onEdit }: EditMem
         <MemberForm
           member={member}
           onSubmit={(data) => {
-            onEdit(member.id, data)
+            onEdit(member.id, data as Omit<HouseholdMember, "id">)
             onOpenChange(false)
           }}
           onCancel={() => onOpenChange(false)}

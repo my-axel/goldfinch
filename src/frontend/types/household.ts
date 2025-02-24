@@ -28,6 +28,8 @@ export interface HouseholdMember {
   birthday: Date
   retirement_age_planned: number    // Age at which member plans to retire
   retirement_age_possible: number    // Earliest possible retirement age
+  retirement_date_planned: Date     // Computed date of planned retirement
+  retirement_date_possible: Date    // Computed date of earliest possible retirement
 }
 
 // TODO: Add API response types
@@ -51,6 +53,18 @@ export interface HouseholdMemberWithComputedFields extends HouseholdMember {
   years_to_retirement_possible: number   // Years until earliest possible retirement
   retirement_year_planned: number        // Calendar year of planned retirement
   retirement_year_possible: number       // Calendar year of earliest possible retirement
+}
+
+/**
+ * Helper type for creating new household members. Omits system-generated
+ * fields like 'id' and backend-calculated fields.
+ */
+export type HouseholdMemberFormData = {
+  first_name: string
+  last_name: string
+  birthday: Date
+  retirement_age_planned: number
+  retirement_age_possible: number
 }
 
 /**

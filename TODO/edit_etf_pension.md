@@ -84,34 +84,34 @@
   * Add success/error notifications
 
 ### Charts Implementation
-- [ ] Set up recharts
+- [x] Set up recharts
   * Add recharts dependency
   * Create shared chart components (tooltip, legend)
   * Add responsive chart wrapper
   * Create chart theme matching current design
 
-- [ ] Implement ContributionHistoryChart
+- [x] Implement ContributionHistoryChart
   * Create bar chart showing all contributions
   * Add hover tooltips with exact values
   * Add proper date formatting
   * Add loading state
   * Style according to current design system
 
-- [ ] Implement ValueDevelopmentChart
+- [x] Implement ValueDevelopmentChart
   * Create line chart showing ETF value over time
   * Add hover tooltips with exact values
   * Add proper date and currency formatting
   * Add loading state
   * Style according to current design system
 
-- [ ] Implement ContributionPlanChart
+- [x] Implement ContributionPlanChart
   * Create combined bar/line chart for planned contributions
   * Add hover tooltips with exact values
   * Add proper date and currency formatting
   * Add loading state
   * Style according to current design system
 
-- [ ] Implement PerformanceMetricsChart
+- [x] Implement PerformanceMetricsChart
   * Create visualization for key metrics
   * Add hover tooltips with exact values
   * Add proper number formatting

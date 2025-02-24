@@ -10,12 +10,14 @@ import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, type ETFPension } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
+import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import { use } from "react"
+import { ContributionHistoryChart, ValueDevelopmentChart, PerformanceMetricsChart } from "@/frontend/components/charts"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -25,10 +27,25 @@ interface EditETFPensionPageProps {
 
 export default function EditETFPensionPage({ params }: EditETFPensionPageProps) {
   const router = useRouter()
-  const { selectedPension, fetchPension, updateEtfPension, isLoading } = usePension()
+  const { 
+    selectedPension: pension, 
+    fetchPension, 
+    updateEtfPension, 
+    isLoading,
+    pensionStatistics,
+    isLoadingStatistics,
+    fetchPensionStatistics
+  } = usePension()
+  const { members, fetchMembers } = useHousehold()
   const [hasFetched, setHasFetched] = useState(false)
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
+  const statistics = pensionStatistics[pensionId]
+  const isLoadingCurrentStatistics = isLoadingStatistics[pensionId]
+
+  // Get the member's retirement date
+  const member = pension ? members.find(m => m.id === pension.member_id) : null
+  const retirementDate = member ? new Date(member.retirement_date_planned) : undefined
 
   const form = useForm<ETFPensionFormData>({
     defaultValues: {
@@ -46,29 +63,43 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     }
   })
 
-  // Only fetch pension once when component mounts
+  // Fetch both pension and members data when component mounts
   useEffect(() => {
     if (!hasFetched) {
-      fetchPension(pensionId)
-      setHasFetched(true)
+      Promise.all([
+        fetchPension(pensionId),
+        fetchMembers()
+      ]).then(() => {
+        setHasFetched(true)
+      }).catch((error) => {
+        console.error('Failed to fetch initial data:', error)
+        toast.error("Error", { description: "Failed to load pension data" })
+      })
     }
-  }, [fetchPension, pensionId, hasFetched])
+  }, [fetchPension, fetchMembers, pensionId, hasFetched])
+
+  // Fetch statistics when pension is loaded
+  useEffect(() => {
+    if (pension && !statistics && !isLoadingStatistics) {
+      fetchPensionStatistics(pensionId)
+    }
+  }, [pension, statistics, isLoadingStatistics, fetchPensionStatistics, pensionId])
 
   // Update form when pension data changes
   useEffect(() => {
-    if (selectedPension && selectedPension.type === PensionType.ETF_PLAN) {
+    if (pension && pension.type === PensionType.ETF_PLAN) {
       form.reset({
         type: PensionType.ETF_PLAN,
-        name: selectedPension.name,
-        member_id: selectedPension.member_id.toString(),
-        notes: selectedPension.notes,
-        etf_id: selectedPension.etf_id,
-        is_existing_investment: selectedPension.is_existing_investment,
-        existing_units: selectedPension.existing_units || 0,
-        reference_date: selectedPension.reference_date || new Date(),
-        realize_historical_contributions: selectedPension.realize_historical_contributions || false,
+        name: pension.name,
+        member_id: pension.member_id.toString(),
+        notes: pension.notes,
+        etf_id: pension.etf_id,
+        is_existing_investment: pension.is_existing_investment,
+        existing_units: pension.existing_units || 0,
+        reference_date: pension.reference_date || new Date(),
+        realize_historical_contributions: pension.realize_historical_contributions || false,
         initialization_method: "none",
-        contribution_plan_steps: selectedPension.contribution_plan_steps.map(step => ({
+        contribution_plan_steps: pension.contribution_plan_steps.map(step => ({
           amount: step.amount,
           frequency: step.frequency,
           start_date: new Date(step.start_date),
@@ -77,7 +108,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
         }))
       })
     }
-  }, [selectedPension, form])
+  }, [pension, form])
 
   const handleSubmit = async (data: ETFPensionFormData) => {
     try {
@@ -87,7 +118,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
         return
       }
 
-      if (!selectedPension || selectedPension.type !== PensionType.ETF_PLAN) {
+      if (!pension || pension.type !== PensionType.ETF_PLAN) {
         toast.error("Error", { description: "ETF Pension not found" })
         return
       }
@@ -112,10 +143,10 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
         reference_date: data.reference_date,
         contribution_plan_steps,
         realize_historical_contributions: data.initialization_method === "historical",
-        total_units: (selectedPension as ETFPension).total_units,
-        status: selectedPension.status,
-        paused_at: selectedPension.paused_at,
-        resume_at: selectedPension.resume_at
+        total_units: (pension as ETFPension).total_units,
+        status: pension.status,
+        paused_at: pension.paused_at,
+        resume_at: pension.resume_at
       }
 
       await updateEtfPension(pensionId, payload)
@@ -197,7 +228,13 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {/* TODO: Add ContributionHistoryChart */}
+                          <ContributionHistoryChart
+                            data={statistics?.contribution_history || []}
+                            contributionPlan={form.watch('contribution_plan_steps')}
+                            retirementDate={retirementDate}
+                            isLoading={isLoadingCurrentStatistics}
+                            height={300}
+                          />
                         </div>
                       )}
                     </CardContent>
@@ -219,7 +256,20 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {/* TODO: Add performance charts */}
+
+                          <ValueDevelopmentChart
+                            data={statistics?.value_history || []}
+                            isLoading={isLoadingCurrentStatistics}
+                            height={300}
+                          />
+                          <PerformanceMetricsChart
+                            totalInvestedAmount={statistics?.total_invested_amount || 0}
+                            currentValue={statistics?.current_value || 0}
+                            totalReturn={statistics?.total_return || 0}
+                            annualReturn={statistics?.annual_return}
+                            isLoading={isLoadingCurrentStatistics}
+                            height={300}
+                          />
                         </div>
                       )}
                     </CardContent>

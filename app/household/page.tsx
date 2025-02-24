@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { MemberList } from "@/frontend/components/household/MemberList"
 import { AddMemberDialog } from "@/frontend/components/household/AddMemberDialog"
 import { EditMemberDialog } from "@/frontend/components/household/EditMemberDialog"
-import { HouseholdMember } from "@/frontend/types/household"
+import { HouseholdMember, HouseholdMemberFormData } from "@/frontend/types/household"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 
 /**
@@ -40,7 +40,7 @@ export default function HouseholdPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleAddMember = async (newMember: Omit<HouseholdMember, "id">) => {
+  const handleAddMember = async (newMember: HouseholdMemberFormData) => {
     try {
       await addMember(newMember)
       setIsAddDialogOpen(false)
@@ -59,7 +59,7 @@ export default function HouseholdPage() {
     }
   }
 
-  const handleUpdateMember = async (updatedMember: Omit<HouseholdMember, "id">) => {
+  const handleUpdateMember = async (updatedMember: HouseholdMemberFormData) => {
     if (!editingMember) return
     
     try {

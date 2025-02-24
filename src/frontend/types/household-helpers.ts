@@ -24,17 +24,20 @@ export function calculateMemberFields(
     (today.getMonth() === birthday.getMonth() && today.getDate() >= birthday.getDate())
   const currentAge = hasHadBirthdayThisYear ? age : age - 1
 
-  // Calculate retirement years
-  const years_to_retirement_planned = member.retirement_age_planned - currentAge
-  const years_to_retirement_possible = member.retirement_age_possible - currentAge
+  // Calculate years to retirement using retirement dates from backend
+  const retirement_planned = new Date(member.retirement_date_planned)
+  const retirement_possible = new Date(member.retirement_date_possible)
+  
+  const years_to_retirement_planned = Math.floor((retirement_planned.getTime() - today.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+  const years_to_retirement_possible = Math.floor((retirement_possible.getTime() - today.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
   
   return {
     ...member,
     age: currentAge,
     years_to_retirement_planned,
     years_to_retirement_possible,
-    retirement_year_planned: today.getFullYear() + years_to_retirement_planned,
-    retirement_year_possible: today.getFullYear() + years_to_retirement_possible
+    retirement_year_planned: retirement_planned.getFullYear(),
+    retirement_year_possible: retirement_possible.getFullYear()
   }
 }
 
@@ -73,16 +76,4 @@ export function validateRetirementAges(member: HouseholdMember): boolean {
  */
 export function formatMemberName(member: HouseholdMember): string {
   return `${member.first_name} ${member.last_name}`
-}
-
-/**
- * Calculates the planned retirement date based on birth date and retirement age
- * @param birthDate Date of birth
- * @param retirementAge Age at which the person plans to retire (default: 67)
- * @returns Date of planned retirement
- */
-export function calculatePlannedRetirementDate(birthday: Date, retirementAgePlanned: number = 67): Date {
-  const retirementDate = new Date(birthday)
-  retirementDate.setFullYear(birthday.getFullYear() + retirementAgePlanned)
-  return retirementDate
 } 

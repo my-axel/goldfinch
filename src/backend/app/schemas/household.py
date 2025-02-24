@@ -9,6 +9,8 @@ class HouseholdMemberBase(BaseModel):
     birthday: date
     retirement_age_planned: int = Field(default=67, ge=40, le=100)
     retirement_age_possible: int = Field(default=63, ge=40, le=100)
+    retirement_date_planned: date
+    retirement_date_possible: date
 
 class HouseholdMemberCreate(HouseholdMemberBase):
     pass
@@ -20,8 +22,11 @@ class HouseholdMemberUpdate(BaseModel):
     retirement_age_planned: Optional[int] = Field(default=None, ge=40, le=100)
     retirement_age_possible: Optional[int] = Field(default=None, ge=40, le=100)
 
-class HouseholdMember(HouseholdMemberBase):
+class HouseholdMemberInDB(HouseholdMemberBase):
     id: int
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
+class HouseholdMemberResponse(HouseholdMemberInDB):
+    pass 

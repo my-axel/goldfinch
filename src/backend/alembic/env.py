@@ -53,7 +53,7 @@ target_metadata = Base.metadata
 
 
 def get_url():
-    return settings.SQLALCHEMY_DATABASE_URI
+    return settings.DATABASE_URL
 
 
 def run_migrations_offline() -> None:
