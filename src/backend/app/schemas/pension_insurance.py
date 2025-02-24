@@ -8,6 +8,7 @@ class ContributionPlanStepBase(BaseModel):
     frequency: str  # Usually MONTHLY
     start_date: date
     end_date: Optional[date] = None
+    note: Optional[str] = None
 
 class ContributionPlanStepCreate(ContributionPlanStepBase):
     pass

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import axios from 'axios'
 
 interface ApiState {
@@ -12,31 +12,31 @@ export function useApi() {
     error: null
   })
 
-  const apiCall = async <T = unknown>(
+  const apiCall = useCallback(async <T = unknown>(
     endpoint: string, 
     method: string = 'GET', 
     data?: Record<string, unknown>
   ): Promise<T> => {
-    setState({ isLoading: true, error: null })
+    setState(prev => ({ ...prev, isLoading: true, error: null }))
     try {
       const response = await axios<T>({
         method,
         url: endpoint.startsWith('/api/v1') ? endpoint : `/api/v1${endpoint}`,
         data,
       })
-      setState({ isLoading: false, error: null })
+      setState(prev => ({ ...prev, isLoading: false, error: null }))
       return response.data
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      setState({ isLoading: false, error: errorMessage })
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }))
       throw error
     }
-  }
+  }, [])
 
-  const get = <T = unknown>(endpoint: string) => apiCall<T>(endpoint, 'GET')
-  const post = <T = unknown>(endpoint: string, data: Record<string, unknown>) => apiCall<T>(endpoint, 'POST', data)
-  const put = <T = unknown>(endpoint: string, data: Record<string, unknown>) => apiCall<T>(endpoint, 'PUT', data)
-  const del = <T = unknown>(endpoint: string) => apiCall<T>(endpoint, 'DELETE')
+  const get = useCallback(<T = unknown>(endpoint: string) => apiCall<T>(endpoint, 'GET'), [apiCall])
+  const post = useCallback(<T = unknown>(endpoint: string, data: Record<string, unknown>) => apiCall<T>(endpoint, 'POST', data), [apiCall])
+  const put = useCallback(<T = unknown>(endpoint: string, data: Record<string, unknown>) => apiCall<T>(endpoint, 'PUT', data), [apiCall])
+  const del = useCallback(<T = unknown>(endpoint: string) => apiCall<T>(endpoint, 'DELETE'), [apiCall])
 
   return { ...state, apiCall, get, post, put, del }
 } 

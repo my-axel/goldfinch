@@ -192,4 +192,26 @@ def get_pension_task_status(
     if not task:
         raise HTTPException(status_code=404, detail="Task status not found")
         
-    return task 
+    return task
+
+@router.put("/{pension_id}/status", response_model=schemas.pension_etf.PensionETFResponse)
+def update_etf_pension_status(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    status_in: schemas.pension_etf.PensionStatusUpdate,
+) -> schemas.pension_etf.PensionETFResponse:
+    """Update the status of an ETF pension."""
+    pension = pension_etf.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="ETF Pension not found")
+    
+    return pension_etf.update_status(db=db, db_obj=pension, obj_in=status_in)
+
+@router.get("/{pension_id}/statistics", response_model=schemas.pension_etf.PensionStatistics)
+def get_etf_pension_statistics(
+    pension_id: int,
+    db: Session = Depends(deps.get_db),
+) -> schemas.pension_etf.PensionStatistics:
+    """Get statistics for an ETF pension."""
+    return pension_etf.get_statistics(db=db, pension_id=pension_id) 

@@ -11,12 +11,17 @@ from app.schemas.pension_etf import (
     PensionETFCreate,
     PensionETFUpdate,
     ContributionPlanCreate,
-    ContributionHistoryCreate
+    ContributionHistoryCreate,
+    PensionStatusUpdate,
+    PensionStatistics
 )
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 import logging
 from app.crud.etf import etf_crud
+from app.models.enums import PensionStatus
+from fastapi import HTTPException
+from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
@@ -105,8 +110,9 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             
             # Add new steps
             for step in update_data.pop("contribution_plan_steps"):
+                step_data = step.dict() if hasattr(step, 'dict') else step
                 db_step = PensionETFContributionPlanStep(
-                    **step.dict(),
+                    **step_data,
                     pension_etf_id=db_obj.id
                 )
                 db.add(db_step)
@@ -166,6 +172,59 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
         db.refresh(db_obj)
         return db_obj
 
+    def update_status(
+        self,
+        db: Session,
+        *,
+        db_obj: PensionETF,
+        obj_in: PensionStatusUpdate
+    ) -> PensionETF:
+        """Update the status of a pension ETF."""
+        try:
+            # Validate status transition
+            if obj_in.status == PensionStatus.PAUSED:
+                if not obj_in.paused_at:
+                    obj_in.paused_at = date.today()
+                if db_obj.status == PensionStatus.PAUSED:
+                    raise HTTPException(status_code=400, detail="Pension is already paused")
+            elif obj_in.status == PensionStatus.ACTIVE:
+                if db_obj.status == PensionStatus.ACTIVE:
+                    raise HTTPException(status_code=400, detail="Pension is already active")
+                if not obj_in.resume_at and not db_obj.resume_at:
+                    obj_in.resume_at = date.today()
+
+            # Update status and related fields
+            for field, value in obj_in.dict(exclude_unset=True).items():
+                setattr(db_obj, field, value)
+
+            db.add(db_obj)
+            db.commit()
+            db.refresh(db_obj)
+            return db_obj
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to update pension status: {str(e)}")
+            raise
+
+    def _should_skip_contribution(
+        self,
+        db_obj: PensionETF,
+        contribution_date: date
+    ) -> bool:
+        """Check if a contribution should be skipped based on pension status."""
+        if db_obj.status == PensionStatus.ACTIVE:
+            return False
+        
+        if db_obj.status == PensionStatus.PAUSED:
+            # Skip if contribution date is after pause date
+            if db_obj.paused_at and contribution_date >= db_obj.paused_at:
+                # Unless there's a resume date and the contribution is after it
+                if db_obj.resume_at and contribution_date >= db_obj.resume_at:
+                    return False
+                return True
+        
+        return False
+
     def realize_historical_contributions(
         self,
         db: Session,
@@ -207,8 +266,8 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
 
                 # Create contribution history for each date
                 for contribution_date in dates:
-                    # Skip if already realized
-                    if contribution_date in realized_dates:
+                    # Skip if already realized or should be skipped due to status
+                    if contribution_date in realized_dates or self._should_skip_contribution(pension, contribution_date):
                         continue
 
                     # Get ETF price for the date or next available
@@ -250,11 +309,11 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             latest_price = etf_crud.get_latest_price(db=db, etf_id=pension.etf_id)
             if latest_price:
                 pension.current_value = pension.total_units * latest_price.price
-                logger.info(f"Completed with {pension.total_units:.4f} units, current value {pension.current_value:.2f} EUR")
             else:
-                logger.warning(f"No latest price found for ETF {pension.etf_id}, cannot calculate current value")
+                logger.warning(f"No latest price found for ETF {pension.etf_id}")
 
             db.commit()
+            logger.info(f"Successfully realized historical contributions for pension {pension_id}")
 
         except Exception as e:
             db.rollback()
@@ -299,5 +358,76 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                 break
 
         return dates
+
+    def get_statistics(
+        self,
+        db: Session,
+        *,
+        pension_id: int
+    ) -> PensionStatistics:
+        """Calculate statistics for an ETF pension."""
+        try:
+            # Get the pension with all its relationships
+            pension = db.query(PensionETF).get(pension_id)
+            if not pension:
+                raise HTTPException(status_code=404, detail="ETF Pension not found")
+
+            # Calculate total invested amount from contribution history
+            total_invested = db.query(func.sum(PensionETFContributionHistory.amount))\
+                .filter(PensionETFContributionHistory.pension_etf_id == pension_id)\
+                .scalar() or Decimal('0')
+
+            # Get current value
+            current_value = pension.current_value
+
+            # Calculate total return
+            total_return = current_value - total_invested
+
+            # Calculate annual return if we have enough history
+            annual_return = None
+            if pension.contribution_history:
+                first_contribution = min(ch.date for ch in pension.contribution_history)
+                days_invested = (date.today() - first_contribution).days
+                if days_invested > 0:
+                    # Use the time-weighted return formula
+                    days_ratio = Decimal(str(365)) / Decimal(str(days_invested))
+                    value_ratio = current_value / total_invested
+                    annual_return = (value_ratio ** days_ratio - Decimal('1')) * Decimal('100')
+                    annual_return = round(annual_return, 2)
+
+            # Get value history
+            # For now, we'll use contribution dates as value points
+            # In a real implementation, you might want to get actual ETF prices for each date
+            value_history = []
+            if pension.contribution_history:
+                running_units = Decimal('0')
+                for ch in sorted(pension.contribution_history, key=lambda x: x.date):
+                    # Get ETF price for this date
+                    price = etf_crud.get_price_for_date(db=db, etf_id=pension.etf_id, date=ch.date)
+                    if not price:
+                        price = etf_crud.get_next_available_price(db=db, etf_id=pension.etf_id, after_date=ch.date)
+                    
+                    if price:
+                        # Calculate units bought
+                        units = ch.amount / price.price
+                        running_units += units
+                        value = running_units * price.price
+                        value_history.append({
+                            "date": ch.date.isoformat(),
+                            "value": str(value)
+                        })
+
+            return PensionStatistics(
+                total_invested_amount=total_invested,
+                current_value=current_value,
+                total_return=total_return,
+                annual_return=annual_return,
+                contribution_history=pension.contribution_history,
+                value_history=value_history
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to calculate pension statistics: {str(e)}")
+            raise
 
 pension_etf = CRUDPensionETF(PensionETF) 

@@ -40,4 +40,12 @@ export function getPensionRealizeHistoricalRoute(type: PensionType, id: number):
  */
 export function getPensionOneTimeInvestmentRoute(type: PensionType, id: number): string {
   return `${getPensionApiRouteWithId(type, id)}/one-time-investment`
+}
+
+export const getPensionStatisticsRoute = (type: PensionType, id: number) => {
+  return `${getPensionApiRouteWithId(type, id)}/statistics`
+}
+
+export const getPensionStatusRoute = (type: PensionType, id: number) => {
+  return `${getPensionApiRouteWithId(type, id)}/status`
 } 

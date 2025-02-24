@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Numeric, Date, ForeignKey, Boolean, Enum as SQLEnum, Index
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
-from app.models.enums import ContributionFrequency
+from app.models.enums import ContributionFrequency, PensionStatus
 
 class PensionETF(Base):
     __tablename__ = "pension_etf"
@@ -20,6 +20,11 @@ class PensionETF(Base):
     existing_units = Column(Numeric(20, 6), nullable=True)
     reference_date = Column(Date, nullable=True)
 
+    # Status management
+    status = Column(SQLEnum(PensionStatus), nullable=False, default=PensionStatus.ACTIVE)
+    paused_at = Column(Date, nullable=True)
+    resume_at = Column(Date, nullable=True)
+
     # Relationships
     member = relationship("HouseholdMember", back_populates="etf_pensions")
     etf = relationship("ETF", back_populates="pensions")
@@ -36,6 +41,7 @@ class PensionETFContributionPlanStep(Base):
     frequency = Column(SQLEnum(ContributionFrequency), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)
+    note = Column(String, nullable=True)
 
     # Relationships
     pension = relationship("PensionETF", back_populates="contribution_plan_steps")

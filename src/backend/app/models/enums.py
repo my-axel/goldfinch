@@ -18,4 +18,8 @@ class PensionType(str, Enum):
     INSURANCE = "INSURANCE"
     COMPANY = "COMPANY"
     GOVERNMENT = "GOVERNMENT"
-    OTHER = "OTHER" 
+    OTHER = "OTHER"
+
+class PensionStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED" 

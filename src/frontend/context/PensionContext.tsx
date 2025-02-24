@@ -10,12 +10,15 @@ import {
   PensionType
 } from '@/frontend/types/pension'
 import { type ETF } from '@/frontend/types/etf'
+import { type PensionStatistics, type PensionStatusUpdate } from '@/frontend/types/pension-statistics'
 import { toast } from 'sonner'
 import { 
   getPensionApiRoute, 
   getPensionApiRouteWithId,
   getPensionRealizeHistoricalRoute,
   getPensionOneTimeInvestmentRoute,
+  getPensionStatisticsRoute,
+  getPensionStatusRoute,
 } from '@/frontend/lib/routes/api/pension'
 import { getETFByIdRoute } from '@/frontend/lib/routes/api/etf'
 
@@ -49,6 +52,11 @@ interface PensionContextType {
     note?: string 
   }) => Promise<void>
   realizeHistoricalContributions: (pensionId: number) => Promise<void>
+  getPensionStatistics: (pensionId: number) => Promise<PensionStatistics>
+  updatePensionStatus: (pensionId: number, status: PensionStatusUpdate) => Promise<void>
+  pensionStatistics: Record<number, PensionStatistics>
+  isLoadingStatistics: Record<number, boolean>
+  fetchPensionStatistics: (pensionId: number) => Promise<void>
 }
 
 const PensionContext = createContext<PensionContextType | undefined>(undefined)
@@ -57,6 +65,8 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   const { isLoading, error, get, post, del, put } = useApi()
   const [pensions, setPensions] = useState<Pension[]>([])
   const [selectedPension, setSelectedPension] = useState<Pension | null>(null)
+  const [pensionStatistics, setPensionStatistics] = useState<Record<number, PensionStatistics>>({})
+  const [isLoadingStatistics, setIsLoadingStatistics] = useState<Record<number, boolean>>({})
 
   const fetchPensions = useCallback(async (memberId?: number) => {
     try {
@@ -131,38 +141,131 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
 
   const fetchPension = useCallback(async (id: number) => {
     try {
-      // First, find the pension type from our local state
-      const pension = pensions.find(p => p.id === id)
-      if (!pension) {
-        throw new Error('Pension not found')
+      // Try to find the pension type from our local state first
+      const localPension = pensions.find(p => p.id === id)
+      
+      // If we don't have the pension in local state, try all pension types
+      if (!localPension) {
+        // Try ETF pension first as it's the most common
+        try {
+          console.info(`[PensionContext] Trying to fetch pension ${id} as ETF pension`)
+          const response = await get<ETFPension>(`${getPensionApiRoute(PensionType.ETF_PLAN)}/${id}`)
+          const pension = {
+            ...response,
+            type: PensionType.ETF_PLAN,
+            contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
+              ...step,
+              start_date: new Date(step.start_date),
+              end_date: step.end_date ? new Date(step.end_date) : undefined
+            })) || []
+          } as ETFPension
+          setSelectedPension(pension)
+          // Also update the pensions array
+          setPensions(prev => [...prev.filter(p => p.id !== id), pension])
+          return
+        } catch (err) {
+          console.info(`[PensionContext] Pension ${id} is not an ETF pension, trying insurance pension:`, err)
+          // If not ETF, try insurance
+          try {
+            const response = await get<InsurancePension>(`${getPensionApiRoute(PensionType.INSURANCE)}/${id}`)
+            const pension = {
+              ...response,
+              type: PensionType.INSURANCE,
+              start_date: new Date(response.start_date),
+              contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
+                ...step,
+                start_date: new Date(step.start_date),
+                end_date: step.end_date ? new Date(step.end_date) : undefined
+              })) || []
+            } as InsurancePension
+            setSelectedPension(pension)
+            // Also update the pensions array
+            setPensions(prev => [...prev.filter(p => p.id !== id), pension])
+            return
+          } catch (err) {
+            console.info(`[PensionContext] Pension ${id} is not an insurance pension, trying company pension:`, err)
+            // If not insurance, try company
+            try {
+              const response = await get<CompanyPension>(`${getPensionApiRoute(PensionType.COMPANY)}/${id}`)
+              const pension = {
+                ...response,
+                type: PensionType.COMPANY,
+                start_date: new Date(response.start_date),
+                contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
+                  ...step,
+                  start_date: new Date(step.start_date),
+                  end_date: step.end_date ? new Date(step.end_date) : undefined
+                })) || []
+              } as CompanyPension
+              setSelectedPension(pension)
+              // Also update the pensions array
+              setPensions(prev => [...prev.filter(p => p.id !== id), pension])
+              return
+            } catch (err) {
+              console.info(`[PensionContext] Pension ${id} not found in any pension type:`, err)
+              throw new Error('Pension not found')
+            }
+          }
+        }
       }
 
-      // Then fetch from the appropriate endpoint
-      let response: Pension
-      const apiRoute = getPensionApiRouteWithId(pension.type, id)
+      // If we have the pension type in local state, use it directly
+      const apiRoute = getPensionApiRouteWithId(localPension.type, id)
       
-      switch (pension.type) {
-        case PensionType.ETF_PLAN:
-          response = await get<ETFPension>(apiRoute)
+      switch (localPension.type) {
+        case PensionType.ETF_PLAN: {
+          const response = await get<ETFPension>(apiRoute)
+          const pension = {
+            ...response,
+            type: PensionType.ETF_PLAN,
+            contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
+              ...step,
+              start_date: new Date(step.start_date),
+              end_date: step.end_date ? new Date(step.end_date) : undefined
+            })) || []
+          } as ETFPension
+          setSelectedPension(pension)
+          // Also update the pensions array
+          setPensions(prev => [...prev.filter(p => p.id !== id), pension])
           break
-        case PensionType.INSURANCE:
-          response = await get<InsurancePension>(apiRoute)
+        }
+        case PensionType.INSURANCE: {
+          const response = await get<InsurancePension>(apiRoute)
+          const pension = {
+            ...response,
+            type: PensionType.INSURANCE,
+            start_date: new Date(response.start_date),
+            contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
+              ...step,
+              start_date: new Date(step.start_date),
+              end_date: step.end_date ? new Date(step.end_date) : undefined
+            })) || []
+          } as InsurancePension
+          setSelectedPension(pension)
+          // Also update the pensions array
+          setPensions(prev => [...prev.filter(p => p.id !== id), pension])
           break
-        case PensionType.COMPANY:
-          response = await get<CompanyPension>(apiRoute)
+        }
+        case PensionType.COMPANY: {
+          const response = await get<CompanyPension>(apiRoute)
+          const pension = {
+            ...response,
+            type: PensionType.COMPANY,
+            start_date: new Date(response.start_date),
+            contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
+              ...step,
+              start_date: new Date(step.start_date),
+              end_date: step.end_date ? new Date(step.end_date) : undefined
+            })) || []
+          } as CompanyPension
+          setSelectedPension(pension)
+          // Also update the pensions array
+          setPensions(prev => [...prev.filter(p => p.id !== id), pension])
           break
+        }
         default:
           throw new Error('Unknown pension type')
       }
-
-      setSelectedPension({
-        ...response,
-        contribution_plan_steps: response.contribution_plan_steps?.map(step => ({
-          ...step,
-          start_date: new Date(step.start_date),
-          end_date: step.end_date ? new Date(step.end_date) : undefined
-        })) || []
-      })
     } catch (err) {
       toast.error('Error', {
         description: 'Failed to fetch pension details'
@@ -360,7 +463,8 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
           amount: Number(step.amount),
           frequency: step.frequency,
           start_date: new Date(step.start_date).toISOString().split('T')[0],
-          end_date: step.end_date ? new Date(step.end_date).toISOString().split('T')[0] : null
+          end_date: step.end_date ? new Date(step.end_date).toISOString().split('T')[0] : null,
+          note: step.note || null
         }))
       })
       
@@ -423,24 +527,114 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [put, fetchPensions, fetchPension, selectedPension])
 
+  const getPensionStatistics = useCallback(async (pensionId: number): Promise<PensionStatistics> => {
+    try {
+      const pension = pensions.find(p => p.id === pensionId)
+      if (!pension) {
+        throw new Error('Pension not found')
+      }
+
+      const response = await get<PensionStatistics>(getPensionStatisticsRoute(pension.type, pensionId))
+      return response
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to fetch pension statistics'
+      })
+      throw err
+    }
+  }, [get, pensions])
+
+  const updatePensionStatus = useCallback(async (pensionId: number, status: PensionStatusUpdate): Promise<void> => {
+    try {
+      const pension = pensions.find(p => p.id === pensionId)
+      if (!pension) {
+        throw new Error('Pension not found')
+      }
+
+      await put(getPensionStatusRoute(pension.type, pensionId), status as unknown as Record<string, unknown>)
+      
+      // Create updated pension while preserving all existing data
+      const updatedPension = {
+        ...pension,
+        status: status.status,
+        paused_at: status.paused_at,
+        resume_at: status.resume_at,
+        // For ETF pensions, explicitly preserve ETF details
+        ...(pension.type === PensionType.ETF_PLAN && {
+          etf: (pension as ETFPension).etf,
+          total_units: (pension as ETFPension).total_units,
+          current_value: (pension as ETFPension).current_value,
+          contribution_plan_steps: (pension as ETFPension).contribution_plan_steps.map(step => ({
+            ...step,
+            start_date: new Date(step.start_date),
+            end_date: step.end_date ? new Date(step.end_date) : undefined
+          }))
+        })
+      }
+      
+      setSelectedPension(updatedPension)
+      setPensions(prev => prev.map(p => 
+        p.id === pensionId ? updatedPension : p
+      ))
+      
+      toast.success('Success', {
+        description: `Pension ${status.status === 'PAUSED' ? 'paused' : 'resumed'} successfully`
+      })
+    } catch (err) {
+      toast.error('Error', {
+        description: `Failed to ${status.status === 'PAUSED' ? 'pause' : 'resume'} pension`
+      })
+      throw err
+    }
+  }, [put, pensions])
+
+  const fetchPensionStatistics = useCallback(async (pensionId: number) => {
+    try {
+      // If already loading, don't fetch again
+      if (isLoadingStatistics[pensionId]) return
+
+      setIsLoadingStatistics(prev => ({ ...prev, [pensionId]: true }))
+      
+      const pension = pensions.find(p => p.id === pensionId)
+      if (!pension) throw new Error('Pension not found')
+
+      const response = await get<PensionStatistics>(getPensionStatisticsRoute(pension.type, pensionId))
+      setPensionStatistics(prev => ({ ...prev, [pensionId]: response }))
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to fetch pension statistics'
+      })
+      throw err
+    } finally {
+      setIsLoadingStatistics(prev => ({ ...prev, [pensionId]: false }))
+    }
+  }, [get, pensions])
+
   return (
-    <PensionContext.Provider value={{
-      isLoading,
-      error,
-      pensions,
-      selectedPension,
-      fetchPensions,
-      fetchPension,
-      createEtfPension,
-      createInsurancePension,
-      createCompanyPension,
-      deletePension,
-      addOneTimeInvestment,
-      updateEtfPension,
-      updateInsurancePension,
-      updateCompanyPension,
-      realizeHistoricalContributions
-    }}>
+    <PensionContext.Provider
+      value={{
+        isLoading,
+        error,
+        pensions,
+        selectedPension,
+        fetchPensions,
+        fetchPension,
+        createEtfPension,
+        createInsurancePension,
+        createCompanyPension,
+        updateEtfPension,
+        updateInsurancePension,
+        updateCompanyPension,
+        deletePension,
+        addOneTimeInvestment,
+        realizeHistoricalContributions,
+        getPensionStatistics,
+        updatePensionStatus,
+        pensionStatistics,
+        isLoadingStatistics,
+        fetchPensionStatistics,
+      }}
+    >
       {children}
     </PensionContext.Provider>
   )

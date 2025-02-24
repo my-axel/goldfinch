@@ -34,7 +34,8 @@ export interface ContributionStep {
   amount: number              // Amount per contribution
   frequency: ContributionFrequency
   start_date: Date
-  end_date?: Date | null      // If undefined, continues indefinitely
+  end_date?: Date | undefined      // If undefined, continues indefinitely
+  note?: string | undefined       // Optional note for this contribution step
 }
 
 /** 
@@ -87,6 +88,9 @@ export interface ETFPension {
   reference_date?: Date
   realize_historical_contributions?: boolean  // Whether to automatically realize past contributions
   contribution_plan_steps: ContributionStep[]
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
 }
 
 /** 
@@ -108,6 +112,9 @@ export interface InsurancePension {
   guaranteed_interest: number // Minimum guaranteed return
   expected_return: number    // Expected return including non-guaranteed portions
   contribution_plan_steps: ContributionStep[]
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
 }
 
 /** 
@@ -129,7 +136,19 @@ export interface CompanyPension {
   matching_percentage?: number             // Percentage of employee contribution matched
   max_employer_contribution?: number       // Maximum employer contribution
   contribution_plan_steps: ContributionStep[]
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
 }
 
 /** Union type of all possible pension types */
 export type Pension = ETFPension | InsurancePension | CompanyPension
+
+export interface ContributionHistoryResponse {
+  id: number
+  pension_etf_id: number
+  date: string
+  amount: number
+  is_manual: boolean
+  note?: string
+}

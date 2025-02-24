@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from app.schemas.etf_update import ETFUpdateResponse, ETFErrorResponse
+from app.models.enums import PensionStatus
 
 class ETFResponse(BaseModel):
     id: str
@@ -33,6 +34,7 @@ class ContributionPlanStepBase(BaseModel):
     frequency: str  # MONTHLY, QUARTERLY, etc.
     start_date: date
     end_date: Optional[date] = None
+    note: Optional[str] = None
 
 class ContributionPlanStepCreate(ContributionPlanStepBase):
     pass
@@ -82,6 +84,9 @@ class PensionETFBase(BaseModel):
     etf_id: str
     existing_units: Optional[float] = None
     reference_date: Optional[date] = None
+    status: PensionStatus = PensionStatus.ACTIVE
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
 
 class PensionETFCreate(PensionETFBase):
     contribution_plan_steps: List[ContributionPlanStepCreate]
@@ -102,4 +107,23 @@ class PensionETFResponse(PensionETFBase):
 class PensionETFUpdate(BaseModel):
     name: Optional[str] = None
     notes: Optional[str] = None
-    contribution_plan_steps: Optional[List[ContributionPlanStepCreate]] = None 
+    contribution_plan_steps: Optional[List[ContributionPlanStepCreate]] = None
+    status: Optional[PensionStatus] = None
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
+
+class PensionStatusUpdate(BaseModel):
+    status: PensionStatus
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
+
+class PensionStatistics(BaseModel):
+    total_invested_amount: Decimal = Field(ge=0)
+    current_value: Decimal = Field(ge=0)
+    total_return: Decimal
+    annual_return: Optional[Decimal] = None
+    contribution_history: List[ContributionHistoryResponse]
+    value_history: List[dict] = Field(
+        description="List of historical values with dates",
+        example=[{"date": "2024-01-01", "value": "1000.00"}]
+    ) 

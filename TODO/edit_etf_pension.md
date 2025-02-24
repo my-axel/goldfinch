@@ -3,7 +3,7 @@
 ## Backend Tasks
 
 ### Database Changes
-- [ ] Add status management to pension_etf table
+- [x] Add status management to pension_etf table
   * Create new enum PensionStatus in app/models/enums.py (ACTIVE, PAUSED)
   * Add status column to pension_etf table with default ACTIVE
   * Add paused_at and resume_at columns to pension_etf table (nullable)
@@ -11,19 +11,19 @@
   * Update pension_etf model
 
 ### Schema Updates
-- [ ] Update pension ETF schemas
+- [x] Update pension ETF schemas
   * Add status field to PensionETFBase
   * Add paused_at and resume_at to PensionETFResponse
   * Create new PensionStatusUpdate schema for status changes
   * Update PensionETFUpdate schema
 
 ### API Endpoints
-- [ ] Add pension status management endpoint
+- [x] Add pension status management endpoint
   * Implement PUT /api/v1/pension/etf/{id}/status endpoint
   * Add validation for resume_date when status changes to active
   * Update contribution calculation logic to respect paused periods
 
-- [ ] Add pension statistics endpoint
+- [x] Add pension statistics endpoint
   * Implement GET /api/v1/pension/etf/{id}/statistics endpoint
   * Calculate total invested amount
   * Calculate current value based on ETF price
@@ -33,7 +33,7 @@
   * Add proper error handling
 
 ### CRUD Updates
-- [ ] Update pension_etf CRUD operations
+- [x] Update pension_etf CRUD operations
   * Add status handling to create method
   * Add status handling to update method
   * Update contribution calculation to skip paused periods
@@ -42,7 +42,7 @@
 ## Frontend Tasks
 
 ### State Management
-- [ ] Extend PensionContext
+- [x] Extend PensionContext
   * Add pauseEtfPension function
   * Add resumeEtfPension function
   * Add getPensionStatistics function
@@ -50,14 +50,16 @@
   * Add error handling for new functions
 
 ### Layout Implementation
-- [ ] Create new layout structure
+- [x] Create new layout structure
   * Implement two-column grid layout
   * Add responsive design for mobile view
   * Style header section with title and description
   * Add loading states and skeletons
+  * Fix infinite update loop in useEffect
+  * Improve card alignment and grouping
 
 ### Basic Information Section
-- [ ] Update EditETFPensionForm component
+- [x] Update EditETFPensionForm component
   * Keep existing fields (name, ETF selection)
   * Add status indicator
   * Add pause/resume button
@@ -73,7 +75,7 @@
   * Style according to current design system
 
 ### Status Management
-- [ ] Implement pause/resume functionality
+- [x] Implement pause/resume functionality
   * Create PauseConfirmationModal component
   * Create ResumeDateModal component
   * Add status indicators
@@ -117,7 +119,7 @@
   * Style according to current design system
 
 ### Statistics Section
-- [ ] Create ETFPensionStats component
+- [x] Create ETFPensionStats component
   * Add next planned contribution display
   * Add total invested amount display
   * Add current value display

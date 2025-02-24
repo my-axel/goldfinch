@@ -7,7 +7,8 @@ export type ContributionPlanStep = {
   amount: number
   frequency: ContributionFrequency
   start_date: Date
-  end_date?: Date
+  end_date?: Date | undefined
+  note?: string | undefined
 }
 
 /**

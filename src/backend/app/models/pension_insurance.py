@@ -34,6 +34,7 @@ class PensionInsuranceContributionPlanStep(Base):
     frequency = Column(SQLEnum(ContributionFrequency), nullable=False)  # Changed from String to Enum
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)
+    note = Column(String, nullable=True)
 
     # Relationships
     pension = relationship("PensionInsurance", back_populates="contribution_plan_steps")
