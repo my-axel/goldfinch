@@ -1,10 +1,15 @@
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
+from decimal import Decimal
 
 # List of supported locales and currencies
 SUPPORTED_LOCALES = ["en-US", "en-GB", "de-DE"]
 SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP"]
+
+# Projection rate constraints
+MIN_PROJECTION_RATE = Decimal("0.0")
+MAX_PROJECTION_RATE = Decimal("15.0")
 
 class SettingsBase(BaseModel):
     """Base settings schema with validation."""
@@ -24,6 +29,24 @@ class SettingsBase(BaseModel):
         min_length=3,
         max_length=3
     )
+    projection_pessimistic_rate: Decimal = Field(
+        default=Decimal("4.0"),
+        description="Annual return rate for pessimistic projection scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    projection_realistic_rate: Decimal = Field(
+        default=Decimal("6.0"),
+        description="Annual return rate for realistic projection scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    projection_optimistic_rate: Decimal = Field(
+        default=Decimal("8.0"),
+        description="Annual return rate for optimistic projection scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
 
     @field_validator("ui_locale", "number_locale")
     @classmethod
@@ -37,6 +60,22 @@ class SettingsBase(BaseModel):
     def validate_currency(cls, v: str) -> str:
         if v not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Currency {v} not supported. Must be one of: {', '.join(SUPPORTED_CURRENCIES)}")
+        return v
+
+    @field_validator("projection_realistic_rate")
+    @classmethod
+    def validate_realistic_rate(cls, v: Decimal, values: dict) -> Decimal:
+        pessimistic = values.data.get("projection_pessimistic_rate")
+        if pessimistic is not None and v < pessimistic:
+            raise ValueError("Realistic rate must be greater than or equal to pessimistic rate")
+        return v
+
+    @field_validator("projection_optimistic_rate")
+    @classmethod
+    def validate_optimistic_rate(cls, v: Decimal, values: dict) -> Decimal:
+        realistic = values.data.get("projection_realistic_rate")
+        if realistic is not None and v < realistic:
+            raise ValueError("Optimistic rate must be greater than or equal to realistic rate")
         return v
 
 class SettingsCreate(SettingsBase):
@@ -61,6 +100,24 @@ class SettingsUpdate(BaseModel):
         min_length=3,
         max_length=3
     )
+    projection_pessimistic_rate: Optional[Decimal] = Field(
+        None,
+        description="Annual return rate for pessimistic projection scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    projection_realistic_rate: Optional[Decimal] = Field(
+        None,
+        description="Annual return rate for realistic projection scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    projection_optimistic_rate: Optional[Decimal] = Field(
+        None,
+        description="Annual return rate for optimistic projection scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
 
     @field_validator("ui_locale", "number_locale")
     @classmethod
@@ -74,6 +131,26 @@ class SettingsUpdate(BaseModel):
     def validate_currency(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and v not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Currency {v} not supported. Must be one of: {', '.join(SUPPORTED_CURRENCIES)}")
+        return v
+
+    @field_validator("projection_realistic_rate")
+    @classmethod
+    def validate_realistic_rate(cls, v: Optional[Decimal], values: dict) -> Optional[Decimal]:
+        if v is None:
+            return v
+        pessimistic = values.data.get("projection_pessimistic_rate")
+        if pessimistic is not None and v < pessimistic:
+            raise ValueError("Realistic rate must be greater than or equal to pessimistic rate")
+        return v
+
+    @field_validator("projection_optimistic_rate")
+    @classmethod
+    def validate_optimistic_rate(cls, v: Optional[Decimal], values: dict) -> Optional[Decimal]:
+        if v is None:
+            return v
+        realistic = values.data.get("projection_realistic_rate")
+        if realistic is not None and v < realistic:
+            raise ValueError("Optimistic rate must be greater than or equal to realistic rate")
         return v
 
 class Settings(SettingsBase):

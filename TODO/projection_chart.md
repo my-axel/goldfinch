@@ -3,7 +3,7 @@
 ## Backend Implementation
 
 ### Database and Schema Updates
-- [ ] Update settings model:
+- [x] Update settings model:
   ```python
   class Settings(Base):
       # ... existing fields ...
@@ -11,13 +11,13 @@
       projection_realistic_rate = Column(Numeric(10, 4), nullable=False, default=6.0)
       projection_optimistic_rate = Column(Numeric(10, 4), nullable=False, default=8.0)
   ```
-- [ ] Create database migration for new settings fields
-- [ ] Update settings Pydantic schemas
-- [ ] Add settings validation for rate ranges (0-15%)
+- [x] Create database migration for new settings fields
+- [x] Update settings Pydantic schemas
+- [x] Add settings validation for rate ranges (0-15%)
 
 ### API Endpoints
-- [ ] Add projection rates to settings GET/PUT endpoints
-- [ ] Add basic error handling for projection calculations
+- [x] Add projection rates to settings GET/PUT endpoints
+- [x] Add basic error handling for projection calculations
 
 ## Frontend Implementation
 
@@ -259,60 +259,60 @@ Goldfinch
 │       ├── app
 │       │   └── pension
 │       │       └── etf
-│       ├── components
-│       │   ├── charts
-│       │   │   ├── ChartErrorBoundary.tsx
-│       │   │   ├── ChartLegend.tsx
-│       │   │   ├── chart-theme.ts
-│       │   │   ├── ChartTooltip.tsx
-│       │   │   ├── ChartWrapper.tsx
-│       │   │   ├── ContributionHistoryChart.tsx
-│       │   │   ├── index.ts
-│       │   │   ├── PerformanceMetricsChart.tsx
-│       │   │   └── ValueDevelopmentChart.tsx
-│       │   ├── common
-│       │   ├── etf
-│       │   │   └── ETFSearchCombobox.tsx
-│       │   ├── household
-│       │   │   ├── AddMemberDialog.tsx
-│       │   │   ├── EditMemberDialog.tsx
-│       │   │   ├── MemberForm.tsx
-│       │   │   └── MemberList.tsx
-│       │   ├── layout
-│       │   │   ├── AppSidebar.tsx
-│       │   │   ├── mode-toggle.tsx
-│       │   │   └── theme-provider.tsx
-│       │   ├── pension
-│       │   │   ├── ETFPensionStats.tsx
-│       │   │   ├── form
-│       │   │   ├── OneTimeInvestmentModal.tsx
-│       │   │   ├── PauseConfirmationDialog.tsx
-│       │   │   ├── PensionList.tsx
-│       │   │   ├── PensionTypeSelectionModal.tsx
-│       │   │   └── ResumeDateDialog.tsx
-│       │   └── ui
-│       │       ├── alert-dialog.tsx
-│       │       ├── badge.tsx
-│       │       ├── button.tsx
-│       │       ├── card.tsx
-│       │       ├── checkbox.tsx
-│       │       ├── command.tsx
-│       │       ├── dialog.tsx
-│       │       ├── dropdown-menu.tsx
-│       │       ├── form.tsx
-│       │       ├── input.tsx
-│       │       ├── label.tsx
-│       │       ├── popover.tsx
-│       │       ├── radio-group.tsx
-│       │       ├── select.tsx
-│       │       ├── separator.tsx
-│       │       ├── sheet.tsx
-│       │       ├── sidebar.tsx
-│       │       ├── skeleton.tsx
-│       │       ├── sonner.tsx
-│       │       ├── switch.tsx
-│       │       ├── textarea.tsx
-│       │       └── tooltip.tsx
+│       │   └── components
+│       │       ├── charts
+│       │       │   ├── ChartErrorBoundary.tsx
+│       │       │   ├── ChartLegend.tsx
+│       │       │   ├── chart-theme.ts
+│       │       │   ├── ChartTooltip.tsx
+│       │       │   ├── ChartWrapper.tsx
+│       │       │   ├── ContributionHistoryChart.tsx
+│       │       │   ├── index.ts
+│       │       │   ├── PerformanceMetricsChart.tsx
+│       │       │   └── ValueDevelopmentChart.tsx
+│       │       ├── common
+│       │       ├── etf
+│       │       │   └── ETFSearchCombobox.tsx
+│       │       ├── household
+│       │       │   ├── AddMemberDialog.tsx
+│       │       │   ├── EditMemberDialog.tsx
+│       │       │   ├── MemberForm.tsx
+│       │       │   └── MemberList.tsx
+│       │       ├── layout
+│       │       │   ├── AppSidebar.tsx
+│       │       │   ├── mode-toggle.tsx
+│       │       │   └── theme-provider.tsx
+│       │       ├── pension
+│       │       │   ├── ETFPensionStats.tsx
+│       │       │   ├── form
+│       │       │   ├── OneTimeInvestmentModal.tsx
+│       │       │   ├── PauseConfirmationDialog.tsx
+│       │       │   ├── PensionList.tsx
+│       │       │   ├── PensionTypeSelectionModal.tsx
+│       │       │   └── ResumeDateDialog.tsx
+│       │       └── ui
+│       │           ├── alert-dialog.tsx
+│       │           ├── badge.tsx
+│       │           ├── button.tsx
+│       │           ├── card.tsx
+│       │           ├── checkbox.tsx
+│       │           ├── command.tsx
+│       │           ├── dialog.tsx
+│       │           ├── dropdown-menu.tsx
+│       │           ├── form.tsx
+│       │           ├── input.tsx
+│       │           ├── label.tsx
+│       │           ├── popover.tsx
+│       │           ├── radio-group.tsx
+│       │           ├── select.tsx
+│       │           ├── separator.tsx
+│       │           ├── sheet.tsx
+│       │           ├── sidebar.tsx
+│       │           ├── skeleton.tsx
+│       │           ├── sonner.tsx
+│       │           ├── switch.tsx
+│       │           ├── textarea.tsx
+│       │           └── tooltip.tsx
 │       ├── context
 │       │   ├── ETFContext.tsx
 │       │   ├── HouseholdContext.tsx
@@ -334,23 +334,23 @@ Goldfinch
 │       │   │   ├── index.ts
 │       │   │   ├── pages
 │       │   │   └── types.ts
-│       │   ├── routes.ts
-│       │   ├── transforms.ts
-│       │   ├── utils.ts
-│       │   └── validations
+│       │   │   ├── routes.ts
+│       │   │   ├── transforms.ts
+│       │   │   ├── utils.ts
+│       │   │   └── validations
+│       │   │       └── pension.ts
+│       │   ├── providers
+│       │   │   └── AppProviders.tsx
+│       │   └── types
+│       │       ├── etf.ts
+│       │       ├── household-helpers.ts
+│       │       ├── household.ts
+│       │       ├── pension-form.ts
+│       │       ├── pension-helpers.ts
+│       │       ├── pension-statistics.ts
 │       │       └── pension.ts
-│       ├── providers
-│       │   └── AppProviders.tsx
-│       └── types
-│           ├── etf.ts
-│           ├── household-helpers.ts
-│           ├── household.ts
-│           ├── pension-form.ts
-│           ├── pension-helpers.ts
-│           ├── pension-statistics.ts
-│           └── pension.ts
-├── tailwind.config.ts
-└── tsconfig.json
+│       ├── tailwind.config.ts
+│       └── tsconfig.json
 
 
 

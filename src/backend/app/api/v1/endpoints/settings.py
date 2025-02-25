@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from decimal import InvalidOperation
 
 from app.crud.settings import settings
 from app.schemas.settings import Settings, SettingsUpdate
@@ -33,14 +34,26 @@ def update_settings(
     """
     Update global settings.
     Creates default settings first if none exist.
+    
+    Validates:
+    - Locale and currency support
+    - Projection rate ranges (0-15%)
+    - Rate relationships (pessimistic ≤ realistic ≤ optimistic)
     """
     try:
+        # The Pydantic model will handle basic validation
         return settings.update_settings(db=db, obj_in=settings_update)
     except ValueError as e:
         # Handle validation errors from Pydantic
         raise HTTPException(
             status_code=422,
             detail=str(e)
+        )
+    except InvalidOperation as e:
+        # Handle decimal conversion errors
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid number format for projection rates: {str(e)}"
         )
     except Exception as e:
         raise HTTPException(
