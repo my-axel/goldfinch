@@ -1,22 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { parseNumber, parseDate } from './transforms';
-import { getSettingsApiRoute } from './routes/api/settings';
-
-// Types for settings API
-export interface Settings {
-  id: number;
-  ui_locale: string;
-  number_locale: string;
-  currency: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SettingsUpdate {
-  ui_locale?: string;
-  number_locale?: string;
-  currency?: string;
-}
 
 // Generic type for API data
 export type ApiData = Record<string, unknown>;
@@ -77,27 +60,6 @@ class ApiClient {
     }, {} as Record<string, unknown>);
   }
 
-  // Settings API methods
-  async getSettings(): Promise<Settings> {
-    try {
-      const response = await this.api.get<Settings>(getSettingsApiRoute());
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      throw error;
-    }
-  }
-
-  async updateSettings(settings: SettingsUpdate): Promise<Settings> {
-    try {
-      const response = await this.api.put<Settings>(getSettingsApiRoute(), settings);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating settings:', error);
-      throw error;
-    }
-  }
-
   // Generic request methods with proper typing
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
@@ -149,4 +111,4 @@ class ApiClient {
 }
 
 // Export singleton instance
-export const api = new ApiClient(); 
+export const api = new ApiClient();

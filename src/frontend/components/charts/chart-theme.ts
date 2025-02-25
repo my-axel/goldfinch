@@ -63,3 +63,13 @@ export const chartTheme = {
     fillOpacity: 0.1,
   },
 } 
+
+export const DEFAULT_PROJECTION_COLORS = {
+  historical: "hsl(var(--primary))",
+  contributions: "hsl(var(--muted))",
+  scenarios: {
+    pessimistic: "hsl(var(--destructive))",
+    realistic: "hsl(var(--warning))",
+    optimistic: "hsl(var(--success))"
+  }
+} as const

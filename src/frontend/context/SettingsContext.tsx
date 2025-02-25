@@ -1,31 +1,17 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { api, Settings as ApiSettings } from '@/frontend/lib/api-client'
+import { api } from '@/frontend/lib/api-client'
+import { settingsService } from '@/frontend/services/settings'
+import { FrontendSettings, SettingsState, SettingsContextType } from '@/frontend/types/settings'
 
-interface Settings extends Omit<ApiSettings, 'id' | 'created_at' | 'updated_at'> {
-  ui_locale: string;
-  number_locale: string;
-  currency: string;
-}
-
-interface SettingsState {
-  data: Settings;
-  isLoading: boolean;
-  error: string | null;
-}
-
-interface SettingsContextType {
-  settings: Settings;
-  isLoading: boolean;
-  error: string | null;
-  updateSettings: (settings: Partial<Settings>) => Promise<void>;
-}
-
-const defaultSettings: Settings = {
+const defaultSettings: FrontendSettings = {
   ui_locale: 'en-US',
   number_locale: 'en-US',
   currency: 'USD',
+  projection_pessimistic_rate: 4.0,
+  projection_realistic_rate: 6.0,
+  projection_optimistic_rate: 8.0,
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
@@ -40,12 +26,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   })
 
   // Load settings from localStorage
-  function loadSettingsFromStorage(): Settings | null {
+  function loadSettingsFromStorage(): FrontendSettings | null {
     if (typeof window === 'undefined') return null;
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return null;
     try {
-      return JSON.parse(stored) as Settings
+      return JSON.parse(stored) as FrontendSettings
     } catch (error) {
       console.error('Error parsing stored settings:', error)
       return null
@@ -53,7 +39,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Save settings to localStorage
-  function saveSettingsToStorage(settings: Settings) {
+  function saveSettingsToStorage(settings: FrontendSettings) {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   }
@@ -62,11 +48,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const fetchSettings = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }))
-      const response = await api.getSettings()
-      const settings: Settings = {
+      const response = await settingsService.getSettings()
+      const settings: FrontendSettings = {
         ui_locale: response.ui_locale,
         number_locale: response.number_locale,
         currency: response.currency,
+        projection_pessimistic_rate: response.projection_pessimistic_rate,
+        projection_realistic_rate: response.projection_realistic_rate,
+        projection_optimistic_rate: response.projection_optimistic_rate,
       }
       setState({ data: settings, isLoading: false, error: null })
       saveSettingsToStorage(settings)
@@ -88,15 +77,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [fetchSettings])
 
   // Update settings
-  const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
+  const updateSettings = useCallback(async (newSettings: Partial<FrontendSettings>) => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }))
       
-      const updatedSettings = await api.updateSettings(newSettings)
-      const settings: Settings = {
+      const updatedSettings = await settingsService.updateSettings(newSettings)
+      const settings: FrontendSettings = {
         ui_locale: updatedSettings.ui_locale,
         number_locale: updatedSettings.number_locale,
         currency: updatedSettings.currency,
+        projection_pessimistic_rate: updatedSettings.projection_pessimistic_rate,
+        projection_realistic_rate: updatedSettings.projection_realistic_rate,
+        projection_optimistic_rate: updatedSettings.projection_optimistic_rate,
       }
       
       setState({ data: settings, isLoading: false, error: null })

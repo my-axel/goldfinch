@@ -1,4 +1,5 @@
 import { ContributionHistoryResponse } from './pension'
+import { ProjectionScenario } from './projection'
 
 export interface ValueHistoryPoint {
   date: string
@@ -12,6 +13,12 @@ export interface PensionStatistics {
   annual_return?: number
   contribution_history: ContributionHistoryResponse[]
   value_history: ValueHistoryPoint[]
+  projections?: {
+    pessimistic: ProjectionScenario
+    realistic: ProjectionScenario
+    optimistic: ProjectionScenario
+  }
+  scenarios?: ProjectionScenario[]
 }
 
 export interface PensionStatusUpdate {

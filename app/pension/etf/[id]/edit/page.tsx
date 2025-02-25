@@ -17,7 +17,9 @@ import { useEffect, useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
-import { ContributionHistoryChart, ValueDevelopmentChart, PerformanceMetricsChart } from "@/frontend/components/charts"
+import { ContributionHistoryChart, CombinedProjectionChart } from "@/frontend/components/charts"
+import { ProjectionScenarioKPIs } from "@/frontend/components/pension/ProjectionScenarioKPIs"
+import { ProjectionExplanations } from "@/frontend/components/pension/ProjectionExplanations"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -206,6 +208,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
         <Form {...form}>
           <form id="etf-pension-form" onSubmit={form.handleSubmit(handleSubmit)}>
             <div className="space-y-6">
+              {/* Basic Information and Stats */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7">
                   {loadingState.isPageLoading ? (
@@ -219,6 +222,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 </div>
               </div>
 
+              {/* Contribution Plan and History */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7">
                   {loadingState.isPageLoading ? (
@@ -253,36 +257,49 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-12">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Performance</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {loadingState.isPageLoading ? (
-                        <div className="space-y-4">
-                          <Skeleton className="h-[200px] w-full" />
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <ValueDevelopmentChart
-                            data={statistics?.value_history || []}
-                            isLoading={loadingState.isStatisticsLoading}
-                            height={300}
+              {/* Value Development and Projections */}
+              <div>
+                <h2 className="text-2xl font-semibold mb-6">Value Development and Projections</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left column (8) - Chart */}
+                  <div className="lg:col-span-8">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Portfolio Value Projection</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {loadingState.isStatisticsLoading ? (
+                          <Skeleton className="h-[400px] w-full" />
+                        ) : statistics?.value_history ? (
+                          <CombinedProjectionChart
+                            data={statistics.value_history.map(point => ({
+                              date: new Date(point.date),
+                              value: parseFloat(point.value.toString()),
+                              isProjection: false
+                            }))}
+                            contributionData={statistics.contribution_history}
+                            scenarios={statistics.scenarios || []}
+                            timeRange={{
+                              start: new Date(statistics.value_history[0].date),
+                              end: retirementDate || new Date()
+                            }}
+                            height={400}
                           />
-                          <PerformanceMetricsChart
-                            totalInvestedAmount={statistics?.total_invested_amount || 0}
-                            currentValue={statistics?.current_value || 0}
-                            totalReturn={statistics?.total_return || 0}
-                            annualReturn={statistics?.annual_return}
-                            isLoading={loadingState.isStatisticsLoading}
-                            height={300}
-                          />
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        ) : null}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Right column (4) - KPIs and Explanations */}
+                  <div className="lg:col-span-4 space-y-6">
+                    {!loadingState.isStatisticsLoading && statistics?.scenarios && (
+                      <ProjectionScenarioKPIs
+                        scenarios={statistics.scenarios}
+                        totalContributions={statistics.total_invested_amount}
+                      />
+                    )}
+                    <ProjectionExplanations />
+                  </div>
                 </div>
               </div>
             </div>
