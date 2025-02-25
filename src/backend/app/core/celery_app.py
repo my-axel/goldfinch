@@ -1,5 +1,36 @@
 from celery import Celery
 from celery.schedules import crontab
+from celery.signals import after_setup_logger
+import logging
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from app.core.config import settings
+
+@after_setup_logger.connect
+def setup_celery_logging(logger, *args, **kwargs):
+    """Configure Celery logging to use our application's logging setup"""
+    # Remove default handlers
+    logger.handlers = []
+    
+    # Create formatter
+    formatter = logging.Formatter(settings.LOG_FORMAT)
+    
+    # Add handler for tasks.log
+    tasks_log = Path(settings.LOG_DIR) / "tasks.log"
+    handler = RotatingFileHandler(
+        tasks_log,
+        maxBytes=settings.LOG_FILE_MAX_BYTES,
+        backupCount=settings.LOG_FILE_BACKUP_COUNT
+    )
+    handler.setFormatter(formatter)
+    handler.setLevel(settings.LOG_LEVEL)
+    logger.addHandler(handler)
+    
+    # Also log to console in development
+    console = logging.StreamHandler()
+    console.setFormatter(formatter)
+    console.setLevel(settings.LOG_LEVEL)
+    logger.addHandler(console)
 
 celery_app = Celery(
     "worker",

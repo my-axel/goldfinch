@@ -36,52 +36,35 @@ def check_and_trigger_updates():
 def check_exchange_rates(db: Session):
     """
     Check for missing exchange rate updates and trigger catch-up tasks if needed.
-    Uses update tracking to avoid unnecessary updates on weekends/holidays.
+    Uses a streamlined approach to fetch only out-of-date currencies.
     """
-    today = date.today()
-    latest_rate = db.query(ExchangeRate).order_by(ExchangeRate.date.desc()).first()
+    logger.info("Checking exchange rates during startup...")
     
     # Always create a tracking record for today
+    today = date.today()
     tracking = update_tracking.get_or_create_tracking(db, today, "exchange_rates")
     
-    if not latest_rate:
-        logger.info("No exchange rates found. Triggering historical update...")
-        update_tracking.mark_update_attempted(db, tracking, notes="Initial historical update")
-        update_exchange_rates.delay('historical')
-        return
-    
-    days_missing = (today - latest_rate.date).days
-    
-    # Check weekend condition first
-    if today.weekday() >= 5:  # Weekend
-        if days_missing > 3:
-            notes = f"Weekend update triggered due to old data ({days_missing} days)"
-            logger.info(f"Latest exchange rate is from {latest_rate.date}. {notes}")
-            if update_tracking.should_attempt_update(db, "exchange_rates", latest_rate.date):
-                update_exchange_rates.delay(
-                    'manual_historical',
-                    start_date=(latest_rate.date + timedelta(days=1)).isoformat(),
-                    end_date=today.isoformat()
-                )
+    try:
+        # Get the latest exchange rate date
+        latest_rate = db.query(ExchangeRate).order_by(ExchangeRate.date.desc()).first()
+        latest_date = latest_rate.date if latest_rate else None
+        
+        # Use streamlined method to check and update exchange rates
+        if update_tracking.should_attempt_update(db, "exchange_rates", latest_date):
+            logger.info("Checking and fetching latest currency rates...")
+            
+            # Call the task to run the streamlined method with 'startup' update type
+            update_exchange_rates.delay('startup')  
+            
+            update_tracking.mark_update_attempted(db, tracking, notes="Startup currency check initiated")
         else:
-            notes = "Weekend - no update needed"
-            logger.info(f"Latest exchange rate is from {latest_rate.date}. {notes}")
-        update_tracking.mark_update_attempted(db, tracking, notes=notes)
-        return
-    
-    # Regular weekday check
-    if update_tracking.should_attempt_update(db, "exchange_rates", latest_rate.date):
-        logger.info(f"Latest exchange rate is from {latest_rate.date} ({days_missing} days old). Triggering catch-up update...")
-        update_exchange_rates.delay(
-            'manual_historical',
-            start_date=(latest_rate.date + timedelta(days=1)).isoformat(),
-            end_date=today.isoformat()
-        )
-        update_tracking.mark_update_attempted(db, tracking)
-    else:
-        notes = "Update not needed - already up to date or already attempted today"
-        logger.info(f"Exchange rates are up to date or update already attempted today (latest: {latest_rate.date})")
-        update_tracking.mark_update_attempted(db, tracking, notes=notes)
+            notes = "Update not needed - already attempted today"
+            logger.info(notes)
+            update_tracking.mark_update_attempted(db, tracking, notes=notes)
+    except Exception as e:
+        error_msg = f"Error checking exchange rates on startup: {str(e)}"
+        logger.error(error_msg)
+        update_tracking.mark_update_attempted(db, tracking, notes=error_msg)
 
 def check_etf_prices(db: Session):
     """

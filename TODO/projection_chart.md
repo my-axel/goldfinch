@@ -67,23 +67,40 @@
 - [ ] Create new CombinedProjectionChart component:
   - [ ] Historical value line
   - [ ] Three projection lines
+  - [ ] Contribution history visualization (area chart)
   - [ ] Clear visual distinction between historical and projected data
   - [ ] Interactive tooltips showing:
     - [ ] Date
     - [ ] Actual/Projected value
     - [ ] Contribution amount (if any)
     - [ ] Return rate (for projections)
+  - [ ] Highlight retirement date on the chart
+  - [ ] Option to toggle visibility of different scenarios
 - [ ] Add legend with:
   - [ ] Historical value
   - [ ] Planned contributions
   - [ ] Three projection scenarios with their respective return rates
 - [ ] Add error boundary for chart component
 
+### KPI and Context Components
+- [ ] Create ProjectionScenarioKPIs component:
+  - [ ] Display projected wealth at retirement for each scenario
+  - [ ] Show total contributions vs. projected returns
+  - [ ] Add visual indicators for each scenario (color-coded)
+- [ ] Create ProjectionContext component:
+  - [ ] Display current projection rate settings
+  - [ ] Add explanatory text about projection assumptions
+  - [ ] Include tips for interpreting the chart
+
 ### UI/UX Improvements
 - [ ] Update layout:
   - [ ] Remove Performance section
-  - [ ] Make chart section full width (12 columns)
+  - [ ] Adjust grid layout to 8:4 split (instead of 7:5) for better content hierarchy
+  - [ ] Add the projection chart section in the left column (8), and KPI and context information in the right column (4)
   - [ ] Update section title to "Value Development and Projections"
+  - [ ] Use right column consistently for KPIs and explanatory content
+  - [ ] Display projection KPIs (projected wealth for each scenario) in right column
+  - [ ] Show context information (percentages per scenario from settings) in right column
 - [ ] Add visual indicators:
   - [ ] Vertical line or marker for "today"
   - [ ] Different background colors/patterns for historical vs. projected areas

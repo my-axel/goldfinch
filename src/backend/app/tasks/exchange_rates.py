@@ -35,7 +35,7 @@ def update_exchange_rates(
     Handles both scheduled daily updates and manual updates.
     
     Args:
-        update_type: One of 'historical', 'daily', 'manual_historical', 'manual_latest'
+        update_type: One of 'startup', 'daily', 'historical', 'manual_historical', 'manual_latest'
         start_date: Optional start date in ISO format (YYYY-MM-DD)
         end_date: Optional end date in ISO format (YYYY-MM-DD)
         currencies: Optional list of currencies to update
@@ -49,14 +49,24 @@ def update_exchange_rates(
         
         @run_in_session
         def perform_update(db):
-            # Use sync version of service methods
-            return ExchangeRateService.manage_rate_update_sync(
-                db=db,
-                update_type=update_type,
-                start_date=start,
-                end_date=end,
-                currencies=currencies
-            )
+            # Handle different update types
+            if update_type in ['startup', 'daily']:
+                # Use the streamlined method for both startup and daily updates
+                logger.info(f"Using streamlined method to fetch latest currency rates for {update_type} update")
+                return ExchangeRateService.fetch_latest_currency_rates_sync(
+                    db=db,
+                    currencies=currencies,
+                    update_type=update_type
+                )
+            else:
+                # Use the traditional methods for other update types
+                return ExchangeRateService.manage_rate_update_sync(
+                    db=db,
+                    update_type=update_type,
+                    start_date=start,
+                    end_date=end,
+                    currencies=currencies
+                )
         
         perform_update()
         logger.info(f"Completed exchange rate update task: {update_type}")
