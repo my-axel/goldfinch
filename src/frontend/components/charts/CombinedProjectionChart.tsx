@@ -26,10 +26,12 @@ import {
 } from "@/frontend/types/projection"
 import { format } from "date-fns"
 import { calculateSingleScenarioProjection } from "@/frontend/lib/projection-utils"
+import { ContributionStep } from "@/frontend/types/pension"
 
 interface CombinedProjectionChartProps {
   data: ProjectionDataPoint[]
   contributionData: ContributionHistoryResponse[]
+  contributionSteps: ContributionStep[]
   timeRange: {
     start: Date
     end: Date
@@ -59,6 +61,7 @@ interface LegendItem {
 export function CombinedProjectionChart({
   data,
   contributionData,
+  contributionSteps,
   timeRange,
   height = 400,
   className
@@ -113,7 +116,7 @@ export function CombinedProjectionChart({
       // Calculate realistic scenario with proper contributions and retirement date
       const realisticScenario = calculateSingleScenarioProjection({
         initialValue: lastHistoricalValue,
-        monthlyContribution: 100, // Using fixed test value
+        contributionSteps,
         annualReturnRate: settings.projection_realistic_rate,
         startDate: new Date(),
         endDate: lastDayOfRetirementMonth, // Use last day of retirement month
@@ -124,12 +127,14 @@ export function CombinedProjectionChart({
         }))
       });
 
+      console.log('CombinedProjectionChart - realisticScenario:', realisticScenario);
+
       // TODO: We need to make sure, that all scenarios are calculated with the real contributions from the form!
 
       // Calculate realistic scenario with proper contributions and retirement date
       const pessimisticScenario = calculateSingleScenarioProjection({
         initialValue: lastHistoricalValue,
-        monthlyContribution: 100, // Using fixed test value
+        contributionSteps,
         annualReturnRate: settings.projection_pessimistic_rate,
         startDate: new Date(),
         endDate: lastDayOfRetirementMonth, // Use last day of retirement month
@@ -143,7 +148,7 @@ export function CombinedProjectionChart({
       // Calculate realistic scenario with proper contributions and retirement date
       const optimisticScenario = calculateSingleScenarioProjection({
         initialValue: lastHistoricalValue,
-        monthlyContribution: 100, // Using fixed test value
+        contributionSteps,
         annualReturnRate: settings.projection_optimistic_rate,
         startDate: new Date(),
         endDate: lastDayOfRetirementMonth, // Use last day of retirement month
@@ -190,7 +195,7 @@ export function CombinedProjectionChart({
       console.error('Error processing chart data:', error)
       throw new Error('Failed to process projection data')
     }
-  }, [data, contributionData, settings.number_locale, settings.projection_realistic_rate, settings.projection_pessimistic_rate, settings.projection_optimistic_rate, timeRange.end])
+  }, [data, contributionData, settings.number_locale, settings.projection_realistic_rate, settings.projection_pessimistic_rate, settings.projection_optimistic_rate, timeRange.end, contributionSteps])
 
   console.log('CombinedProjectionChart - chartData:', chartData);
 

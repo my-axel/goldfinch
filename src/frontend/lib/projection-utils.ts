@@ -4,7 +4,54 @@ import {
   ScenarioType,
   MONTHS_PER_YEAR
 } from '../types/projection'
+import { ContributionStep, ContributionFrequency } from '../types/pension'
+import { differenceInMonths } from 'date-fns'
 
+/**
+ * Helper function to determine if a contribution should be made on a specific date
+ * based on the contribution step's frequency and date range.
+ */
+function getContributionForDate(date: Date, steps: ContributionStep[]): number {
+  // Normalize the date to start of day for comparison
+  const normalizedDate = new Date(date.getFullYear(), date.getMonth(), 1);
+  
+  // Find the applicable step for this date
+  const applicableStep = steps.find(step => {
+    // Normalize dates for comparison
+    const stepStart = new Date(step.start_date.getFullYear(), step.start_date.getMonth(), 1);
+    const stepEnd = step.end_date ? new Date(step.end_date.getFullYear(), step.end_date.getMonth() + 1, 0) : undefined;
+    
+    const isAfterStart = normalizedDate >= stepStart;
+    const isBeforeEnd = !stepEnd || normalizedDate <= stepEnd;
+    return isAfterStart && isBeforeEnd;
+  });
+
+  if (!applicableStep) return 0;
+
+  // For ONE_TIME contributions, only contribute in the same month and year
+  if (applicableStep.frequency === ContributionFrequency.ONE_TIME) {
+    const isSameMonth = date.getMonth() === applicableStep.start_date.getMonth() &&
+                       date.getFullYear() === applicableStep.start_date.getFullYear();
+    return isSameMonth ? Number(applicableStep.amount) : 0;
+  }
+
+  // Calculate months between start_date and current date
+  const monthsSinceStart = differenceInMonths(normalizedDate, new Date(applicableStep.start_date.getFullYear(), applicableStep.start_date.getMonth(), 1));
+
+  // Check if this is a valid contribution month based on frequency
+  switch (applicableStep.frequency) {
+    case ContributionFrequency.MONTHLY:
+      return Number(applicableStep.amount);
+    case ContributionFrequency.QUARTERLY:
+      return monthsSinceStart % 3 === 0 ? Number(applicableStep.amount) : 0;
+    case ContributionFrequency.SEMI_ANNUALLY:
+      return monthsSinceStart % 6 === 0 ? Number(applicableStep.amount) : 0;
+    case ContributionFrequency.ANNUALLY:
+      return monthsSinceStart % 12 === 0 ? Number(applicableStep.amount) : 0;
+    default:
+      return 0;
+  }
+}
 
 /**
  * Calculates a single scenario projection with monthly compounding.
@@ -16,7 +63,7 @@ import {
  */
 export function calculateSingleScenarioProjection(params: {
   initialValue: number;
-  monthlyContribution: number;
+  contributionSteps: ContributionStep[];
   annualReturnRate: number;
   startDate: Date;
   endDate: Date;
@@ -25,7 +72,7 @@ export function calculateSingleScenarioProjection(params: {
 }): ProjectionScenario {
   const {
     initialValue,
-    monthlyContribution,
+    contributionSteps,
     annualReturnRate,
     startDate,
     endDate,
@@ -37,36 +84,30 @@ export function calculateSingleScenarioProjection(params: {
   const dataPoints: ProjectionDataPoint[] = [];
   let currentValue = initialValue;
   
-  // Calculate initial accumulated contributions from historical data, ensuring numeric addition
+  // Calculate initial accumulated contributions from historical data
   let accumulatedContributions = historicalContributions.reduce((sum, contribution) => 
     sum + Number(contribution.amount), 0);
     
   const currentDate = new Date(startDate);
 
-  // Create a map of historical contributions for quick lookup
-  const contributionMap = new Map(
-    historicalContributions.map(c => [c.date, c.amount])
-  );
-
   // Calculate monthly compounding until end date
   while (currentDate <= endDate) {
-    // Get contribution for this month (either from historical data or default monthly)
-    const dateKey = currentDate.toISOString().split('T')[0];
-    const monthContribution = Number(contributionMap.get(dateKey) ?? monthlyContribution);
+    // Get contribution for this date based on contribution steps
+    const contribution = getContributionForDate(currentDate, contributionSteps);
     
     // Apply monthly interest first
     currentValue = currentValue * (1 + monthlyRate);
     
     // Then add contribution
-    currentValue += monthContribution;
-    accumulatedContributions += monthContribution;
+    currentValue += contribution;
+    accumulatedContributions += contribution;
 
     // Record the data point
     dataPoints.push({
       date: new Date(currentDate),
       value: currentValue,
-      contributionAmount: monthContribution,
-      accumulatedContributions, // Add accumulated contributions to each point
+      contributionAmount: contribution,
+      accumulatedContributions,
       scenarioType,
       isProjection: true
     });
@@ -77,7 +118,7 @@ export function calculateSingleScenarioProjection(params: {
 
   // Calculate final metrics
   const finalValue = dataPoints[dataPoints.length - 1].value;
-  const totalReturns = finalValue - accumulatedContributions - initialValue; // Returns = Final - Contributions - Initial
+  const totalReturns = finalValue - accumulatedContributions - initialValue;
 
   return {
     type: scenarioType,

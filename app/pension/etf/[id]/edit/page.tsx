@@ -21,6 +21,7 @@ import { CombinedProjectionChart } from "@/frontend/components/charts"
 import { ProjectionScenarioKPIs } from "@/frontend/components/pension/ProjectionScenarioKPIs"
 import { ProjectionExplanations } from "@/frontend/components/pension/ProjectionExplanations"
 import { ContributionImpactAnalysis } from "@/frontend/components/pension/ContributionImpactAnalysis"
+
 interface EditETFPensionPageProps {
   params: Promise<{
     id: string
@@ -260,6 +261,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                               isProjection: false
                             }))}
                             contributionData={statistics.contribution_history}
+                            contributionSteps={form.watch("contribution_plan_steps")}
                             timeRange={{
                               start: new Date(statistics.value_history[0].date),
                               end: retirementDate || new Date()
