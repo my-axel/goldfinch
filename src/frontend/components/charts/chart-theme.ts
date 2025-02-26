@@ -4,6 +4,9 @@ export const chartColors = {
   tertiary: "var(--chart-3)",
   quaternary: "var(--chart-4)",
   quinary: "var(--chart-5)",
+  optimistic: "var(--chart-3)",
+  pessimistic: "var(--chart-4)",
+  realistic: "var(--chart-5)"
 }
 
 export const chartTheme = {
@@ -68,8 +71,8 @@ export const DEFAULT_PROJECTION_COLORS = {
   historical: "hsl(var(--primary))",
   contributions: "hsl(var(--muted))",
   scenarios: {
-    pessimistic: "hsl(var(--destructive))",
-    realistic: "hsl(var(--warning))",
-    optimistic: "hsl(var(--success))"
+    optimistic: "var(--chart-3)",
+    pessimistic: "var(--chart-3)",
+    realistic: "var(--chart-3)"
   }
 } as const

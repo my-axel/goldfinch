@@ -10,6 +10,7 @@ export interface ProjectionDataPoint {
   date: Date
   value: number
   contributionAmount?: number
+  accumulatedContributions?: number
   scenarioType?: ScenarioType
   isProjection?: boolean
 }
@@ -17,7 +18,6 @@ export interface ProjectionDataPoint {
 export interface ProjectionScenario {
   type: ScenarioType
   dataPoints: ProjectionDataPoint[]
-  rate: number
   returnRate?: number
   finalValue: number
   totalContributions: number

@@ -9,7 +9,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Area,
   ReferenceLine,
   ResponsiveContainer
 } from "recharts"
@@ -24,14 +23,13 @@ import { ChartErrorBoundary } from "./ChartErrorBoundary"
 import { ChartLegend } from "./ChartLegend"
 import {
   ProjectionDataPoint,
-  ProjectionScenario
 } from "@/frontend/types/projection"
 import { format } from "date-fns"
+import { calculateSingleScenarioProjection } from "@/frontend/lib/projection-utils"
 
 interface CombinedProjectionChartProps {
   data: ProjectionDataPoint[]
   contributionData: ContributionHistoryResponse[]
-  scenarios: ProjectionScenario[]
   timeRange: {
     start: Date
     end: Date
@@ -45,7 +43,10 @@ interface ChartDataPoint {
   value: number
   historical: number | null
   realistic: number | null
+  pessimistic: number | null
+  optimistic: number | null
   contributionAmount: number
+  accumulatedContribution: number
   isProjection: boolean
 }
 
@@ -58,38 +59,50 @@ interface LegendItem {
 export function CombinedProjectionChart({
   data,
   contributionData,
-  scenarios,
   timeRange,
   height = 400,
   className
 }: CombinedProjectionChartProps): ReactElement {
   const { settings } = useSettings()
 
-  console.log('Input data:', data)
-  console.log('Input scenarios:', scenarios)
+  const todayString = new Date().toLocaleDateString(settings.number_locale, { month: "short", year: "numeric" });
+  const retirementString = new Date(timeRange.end).toLocaleDateString(settings.number_locale, { month: "short", year: "numeric" });
 
   const chartData = useMemo<ChartDataPoint[]>(() => {
     try {
+
+      // Get the last day of the retirement month
+      const retirementDate = new Date(timeRange.end);
+      const lastDayOfRetirementMonth = new Date(retirementDate.getFullYear(), retirementDate.getMonth() + 1, 0);
+
       // Process historical data with accumulated values
-      let accumulatedAmount = 0
+      let accumulatedContribution = 0;
       const historicalData = data
         .filter(point => !point.isProjection)
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .map(point => {
-          accumulatedAmount = Number((accumulatedAmount + point.value).toFixed(2))
+          // Get the raw monthly contribution for this date
+          const monthlyContribution = Number(contributionData.find(
+            c => format(new Date(c.date), "yyyy-MM") === format(point.date, "yyyy-MM")
+          )?.amount || 0);
+
+          // Accumulate the contributions
+          accumulatedContribution += monthlyContribution;
+
           return {
             date: new Date(point.date).toLocaleDateString(
               settings.number_locale,
               { month: "short", year: "numeric" }
             ),
-            value: accumulatedAmount,
-            historical: accumulatedAmount,
+            value: Number(point.value.toFixed(2)),
+            historical: Number(point.value.toFixed(2)),
             realistic: null,
-            contributionAmount: Number(contributionData.find(
-              c => format(new Date(c.date), "yyyy-MM") === format(point.date, "yyyy-MM")
-            )?.amount || 0),
+            pessimistic: null,
+            optimistic: null,
+            contributionAmount: monthlyContribution,
+            accumulatedContribution: accumulatedContribution,
             isProjection: false
-          }
+          };
         })
 
       // Get the last historical value for projections
@@ -97,20 +110,61 @@ export function CombinedProjectionChart({
         ? historicalData[historicalData.length - 1].value 
         : 0
 
-      // Process projection data - focusing only on realistic scenario
-      const realisticScenario = scenarios.find(s => s.type === 'realistic')
-      console.log('Realistic Scenario:', realisticScenario)
-      
-      const projectionData = realisticScenario ? data
-        .filter(point => point.isProjection)
+      // Calculate realistic scenario with proper contributions and retirement date
+      const realisticScenario = calculateSingleScenarioProjection({
+        initialValue: lastHistoricalValue,
+        monthlyContribution: 100, // Using fixed test value
+        annualReturnRate: settings.projection_realistic_rate,
+        startDate: new Date(),
+        endDate: lastDayOfRetirementMonth, // Use last day of retirement month
+        scenarioType: 'realistic',
+        historicalContributions: contributionData.map(c => ({
+          date: c.date,
+          amount: c.amount
+        }))
+      });
+
+      // TODO: We need to make sure, that all scenarios are calculated with the real contributions from the form!
+
+      // Calculate realistic scenario with proper contributions and retirement date
+      const pessimisticScenario = calculateSingleScenarioProjection({
+        initialValue: lastHistoricalValue,
+        monthlyContribution: 100, // Using fixed test value
+        annualReturnRate: settings.projection_pessimistic_rate,
+        startDate: new Date(),
+        endDate: lastDayOfRetirementMonth, // Use last day of retirement month
+        scenarioType: 'pessimistic',
+        historicalContributions: contributionData.map(c => ({
+          date: c.date,
+          amount: c.amount
+        }))
+      });
+
+      // Calculate realistic scenario with proper contributions and retirement date
+      const optimisticScenario = calculateSingleScenarioProjection({
+        initialValue: lastHistoricalValue,
+        monthlyContribution: 100, // Using fixed test value
+        annualReturnRate: settings.projection_optimistic_rate,
+        startDate: new Date(),
+        endDate: lastDayOfRetirementMonth, // Use last day of retirement month
+        scenarioType: 'optimistic',
+        historicalContributions: contributionData.map(c => ({
+          date: c.date,
+          amount: c.amount
+        }))
+      });
+
+      const projectionData = realisticScenario.dataPoints
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .map(point => {
-          console.log('Processing projection point:', point)
-          const scenarioPoint = realisticScenario.dataPoints.find(
-            p => format(p.date, "yyyy-MM") === format(point.date, "yyyy-MM")
-          )
-          console.log('Found scenario point:', scenarioPoint)
-          
+          // Find matching points from other scenarios by date
+          const pessimisticPoint = pessimisticScenario.dataPoints.find(
+            p => format(new Date(p.date), "yyyy-MM") === format(point.date, "yyyy-MM")
+          );
+          const optimisticPoint = optimisticScenario.dataPoints.find(
+            p => format(new Date(p.date), "yyyy-MM") === format(point.date, "yyyy-MM")
+          );
+
           return {
             date: new Date(point.date).toLocaleDateString(
               settings.number_locale,
@@ -118,37 +172,25 @@ export function CombinedProjectionChart({
             ),
             value: point.value,
             historical: null,
-            realistic: scenarioPoint?.value ?? null,
-            contributionAmount: Number(contributionData.find(
-              c => format(new Date(c.date), "yyyy-MM") === format(point.date, "yyyy-MM")
-            )?.amount || 0),
+            realistic: point.value,
+            pessimistic: pessimisticPoint?.value || null,
+            optimistic: optimisticPoint?.value || null,
+            contributionAmount: point.contributionAmount || 0,
+            accumulatedContribution: point.accumulatedContributions || 0,
             isProjection: true
           }
-        }) : []
-
-      console.log('Projection Data:', projectionData)
+        });
 
       // Combine and sort all data
       const combinedData = [...historicalData, ...projectionData]
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      // If we have both historical and projection data, connect them
-      if (historicalData.length > 0 && projectionData.length > 0) {
-        const transitionPoint = combinedData.findIndex(point => point.isProjection)
-        if (transitionPoint !== -1) {
-          // Set historical value at transition point
-          combinedData[transitionPoint].historical = lastHistoricalValue
-          // Set initial projection value
-          combinedData[transitionPoint].realistic = lastHistoricalValue
-        }
-      }
-
-      return combinedData
+      return combinedData;
     } catch (error) {
       console.error('Error processing chart data:', error)
       throw new Error('Failed to process projection data')
     }
-  }, [data, contributionData, scenarios, settings.number_locale])
+  }, [data, contributionData, settings.number_locale, settings.projection_realistic_rate, settings.projection_pessimistic_rate, settings.projection_optimistic_rate, timeRange.end])
 
   console.log('CombinedProjectionChart - chartData:', chartData);
 
@@ -182,8 +224,16 @@ export function CombinedProjectionChart({
       color: chartColors.secondary
     },
     {
+      value: "Pessimistic Projection",
+      color: chartColors.pessimistic
+    },
+    {
       value: "Realistic Projection",
-      color: chartColors.tertiary
+      color: chartColors.realistic
+    },
+    {
+      value: "Optimistic Projection",
+      color: chartColors.optimistic
     }
   ]
 
@@ -207,12 +257,88 @@ export function CombinedProjectionChart({
               <CartesianGrid {...chartTheme.grid} />
               <XAxis
                 dataKey="date"
+                type="category"
                 {...chartTheme.xAxis}
                 angle={-45}
                 textAnchor="end"
                 height={60}
               />
               <YAxis {...chartTheme.yAxis} tickFormatter={formatYAxis} />
+
+              {/* Today marker */}
+              {chartData.findIndex(point => point.date === todayString) !== -1 && (
+                <ReferenceLine
+                  x={chartData.findIndex(point => point.date === todayString)}
+                  yAxisId={0}
+                  {...chartTheme.referenceLine}
+                  label={{
+                    value: "Today",
+                    position: "insideTopLeft",
+                    fill: "var(--muted-foreground)",
+                    fontSize: 10
+                  }}
+                />
+              )}
+
+              {/* Retirement date marker */}
+              {chartData.findIndex(point => point.date === retirementString) !== -1 && (
+                <ReferenceLine
+                  x={chartData.findIndex(point => point.date === retirementString)}
+                  yAxisId={0}
+                  {...chartTheme.referenceLine}
+                  label={{
+                    value: "Retirement",
+                    position: "insideTopRight",
+                    fill: "var(--muted-foreground)",
+                    fontSize: 10
+                  }}
+                />
+              )}
+
+              {/* Lines after reference lines */}
+              <Line
+                type="monotone"
+                dataKey="historical"
+                name="Historical Value"
+                stroke={chartColors.primary}
+                {...chartTheme.line}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="pessimistic"
+                name="Pessimistic Projection"
+                stroke={chartColors.pessimistic}
+                {...chartTheme.line}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="realistic"
+                name="Realistic Projection"
+                stroke={chartColors.realistic}
+                {...chartTheme.line}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="optimistic"
+                name="Optimistic Projection"
+                stroke={chartColors.optimistic}
+                {...chartTheme.line}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+
               <Tooltip
                 content={({ active, payload }) => (
                   <ChartTooltip
@@ -226,12 +352,10 @@ export function CombinedProjectionChart({
                         <div className="space-y-1">
                           {(payload[0].payload as ChartDataPoint).historical !== null && (
                             <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
+                              <div className="h-3 w-3 rounded-full" 
                                 style={{
                                   backgroundColor: chartColors.primary
-                                }}
-                              />
+                                }} />
                               <span className="text-sm text-muted-foreground">
                                 Historical Value:
                               </span>
@@ -249,18 +373,83 @@ export function CombinedProjectionChart({
                           )}
                           {(payload[0].payload as ChartDataPoint).realistic !== null && (
                             <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
+                              <div className="h-3 w-3 rounded-full"
                                 style={{
-                                  backgroundColor: chartColors.tertiary
-                                }}
-                              />
+                                  backgroundColor: chartColors.realistic
+                                }} />
                               <span className="text-sm text-muted-foreground">
                                 Realistic Projection:
                               </span>
                               <span className="text-sm font-medium">
                                 {formatCurrency(
                                   (payload[0].payload as ChartDataPoint).realistic as number,
+                                  {
+                                    locale: settings.number_locale,
+                                    currency: settings.currency,
+                                    decimals: 0
+                                  }
+                                ).formatted}
+                              </span>
+                            </div>
+                          )}
+                          {(payload[0].payload as ChartDataPoint).pessimistic !== null && (
+                            <div className="flex items-center gap-2">
+                              <div className="h-3 w-3 rounded-full"
+                                style={{
+                                  backgroundColor: chartColors.pessimistic
+                                }} />
+                              <span className="text-sm text-muted-foreground">
+                                Pessimistic Projection:
+                              </span>
+                              <span className="text-sm font-medium">
+                                {formatCurrency(
+                                  (payload[0].payload as ChartDataPoint).pessimistic as number,
+                                  {
+                                    locale: settings.number_locale,
+                                    currency: settings.currency,
+                                    decimals: 0
+                                  }
+                                ).formatted}
+                              </span>
+                            </div>
+                          )}
+                          {(payload[0].payload as ChartDataPoint).optimistic !== null && (
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-3 w-3 rounded-full"
+                                style={{
+                                  backgroundColor: chartColors.optimistic
+                                }}
+                              />
+                              <span className="text-sm text-muted-foreground">
+                                Optimistic Projection:
+                              </span>
+                              <span className="text-sm font-medium">
+                                {formatCurrency(
+                                  (payload[0].payload as ChartDataPoint).optimistic as number,
+                                  {
+                                    locale: settings.number_locale,
+                                    currency: settings.currency,
+                                    decimals: 0
+                                  }
+                                ).formatted}
+                              </span>
+                            </div>
+                          )}
+                          {(payload[0].payload as ChartDataPoint).accumulatedContribution > 0 && (
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-3 w-3 rounded-full"
+                                style={{
+                                  backgroundColor: chartColors.secondary
+                                }}
+                              />
+                              <span className="text-sm text-muted-foreground">
+                                Accumulated Contributions:
+                              </span>
+                              <span className="text-sm font-medium">
+                                {formatCurrency(
+                                  (payload[0].payload as ChartDataPoint).accumulatedContribution,
                                   {
                                     locale: settings.number_locale,
                                     currency: settings.currency,
@@ -279,7 +468,7 @@ export function CombinedProjectionChart({
                                 }}
                               />
                               <span className="text-sm text-muted-foreground">
-                                Contribution:
+                                Monthly Contribution:
                               </span>
                               <span className="text-sm font-medium">
                                 {formatCurrency(
@@ -297,64 +486,6 @@ export function CombinedProjectionChart({
                       )}
                   </ChartTooltip>
                 )}
-              />
-
-              {/* Contribution area */}
-              <Area
-                type="monotone"
-                dataKey="contributionAmount"
-                stroke={chartColors.secondary}
-                fill={chartColors.secondary}
-                fillOpacity={0.1}
-                strokeWidth={1}
-                dot={false}
-              />
-
-              {/* Historical value line */}
-              <Line
-                type="monotone"
-                dataKey="historical"
-                name="Historical Value"
-                stroke={chartColors.primary}
-                {...chartTheme.line}
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
-
-              {/* Realistic projection line */}
-              <Line
-                type="monotone"
-                dataKey="realistic"
-                name="Realistic Projection"
-                stroke={chartColors.tertiary}
-                {...chartTheme.line}
-                strokeDasharray="4 4"
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
-
-              {/* Today marker */}
-              <ReferenceLine
-                x={new Date(timeRange.start).toLocaleDateString(settings.number_locale, { month: "short", year: "numeric" })}
-                label={{
-                  value: "Today",
-                  position: "insideTopLeft",
-                  fill: chartTheme.yAxis.style.fill,
-                  fontSize: 12
-                }}
-                {...chartTheme.referenceLine}
-              />
-
-              {/* Retirement date marker */}
-              <ReferenceLine
-                x={new Date(timeRange.end).toLocaleDateString(settings.number_locale, { month: "short", year: "numeric" })}
-                label={{
-                  value: "Retirement",
-                  position: "insideTopRight",
-                  fill: chartTheme.yAxis.style.fill,
-                  fontSize: 12
-                }}
-                {...chartTheme.referenceLine}
               />
             </LineChart>
           </ResponsiveContainer>

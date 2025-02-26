@@ -82,7 +82,7 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-muted-foreground">Total Invested</p>
-                <p className="text-lg font-bold truncate">{formatValue(statistics.total_invested_amount)}</p>
+                <p className="text-lg text-foreground font-bold truncate opacity-80">{formatValue(statistics.total_invested_amount)}</p>
               </div>
             </div>
           </CardContent>
@@ -95,7 +95,7 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-muted-foreground">Current Value</p>
-                <p className="text-lg font-bold truncate">{formatValue(statistics.current_value)}</p>
+                <p className="text-lg text-foreground font-bold truncate opacity-80">{formatValue(statistics.current_value)}</p>
               </div>
             </div>
           </CardContent>
@@ -104,31 +104,28 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
       <div className="grid grid-cols-2 gap-3">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-primary/10 rounded-full">
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 bg-primary/10 rounded-full mt-0.5">
                 <CircleDot className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground">Contributions</p>
-                <div className="flex items-baseline gap-3 mt-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">Contributions</p>
+                <div className="space-y-0.5">
                   <div className="flex items-baseline gap-1.5">
-                    <p className="text-lg font-bold">{statistics.contribution_history.length}</p>
-                    <span className="text-xs text-muted-foreground">total</span>
+                    <p className="text-lg font-bold leading-none opacity-80">{statistics.contribution_history.length}</p>
+                    <span className="text-xs text-muted-foreground">total contributions</span>
                   </div>
                   {statistics.contribution_history.length > 0 && (
-                    <>
-                      <div className="text-muted-foreground/40">•</div>
-                      <div className="flex items-baseline gap-1.5">
-                        <p className="text-lg font-bold">
-                          {new Date(statistics.contribution_history[statistics.contribution_history.length - 1].date)
-                            .toLocaleDateString(settings.number_locale, { 
-                              month: 'short',
-                              year: 'numeric'
-                            })}
-                        </p>
-                        <span className="text-xs text-muted-foreground">last</span>
-                      </div>
-                    </>
+                    <div className="flex items-baseline gap-1.5">
+                      <p className="text-sm font-medium opacity-80">
+                        {new Date(statistics.contribution_history[statistics.contribution_history.length - 1].date)
+                          .toLocaleDateString(settings.number_locale, { 
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">last</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -137,16 +134,16 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-primary/10 rounded-full">
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 bg-primary/10 rounded-full mt-0.5">
                 <CalendarClock className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground">Return</p>
-                <div className="flex items-baseline gap-3 mt-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">Return</p>
+                <div className="space-y-0.5">
                   <div className="flex items-baseline gap-1.5">
                     <p className={cn(
-                      "text-lg font-bold",
+                      "text-lg font-bold leading-none opacity-80",
                       statistics.total_return >= 0 ? "text-green-600" : "text-red-600"
                     )}>
                       {formatValue(statistics.total_return)}
@@ -154,18 +151,15 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
                     <span className="text-xs text-muted-foreground">total</span>
                   </div>
                   {statistics.annual_return != null && (
-                    <>
-                      <div className="text-muted-foreground/40">•</div>
-                      <div className="flex items-baseline gap-1.5">
-                        <p className={cn(
-                          "text-lg font-bold",
-                          statistics.annual_return >= 0 ? "text-green-600" : "text-red-600"
-                        )}>
-                          {formatPercentValue(statistics.annual_return)}
-                        </p>
-                        <span className="text-xs text-muted-foreground">annual</span>
-                      </div>
-                    </>
+                    <div className="flex items-baseline gap-1.5">
+                      <p className={cn(
+                        "text-sm font-medium leading-none opacity-80",
+                        statistics.annual_return >= 0 ? "text-green-600" : "text-red-600"
+                      )}>
+                        {formatPercentValue(statistics.annual_return)}
+                      </p>
+                      <span className="text-xs text-muted-foreground">annual return</span>
+                    </div>
                   )}
                 </div>
               </div>

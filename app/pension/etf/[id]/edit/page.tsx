@@ -17,10 +17,10 @@ import { useEffect, useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
-import { ContributionHistoryChart, CombinedProjectionChart } from "@/frontend/components/charts"
+import { CombinedProjectionChart } from "@/frontend/components/charts"
 import { ProjectionScenarioKPIs } from "@/frontend/components/pension/ProjectionScenarioKPIs"
 import { ProjectionExplanations } from "@/frontend/components/pension/ProjectionExplanations"
-
+import { ContributionImpactAnalysis } from "@/frontend/components/pension/ContributionImpactAnalysis"
 interface EditETFPensionPageProps {
   params: Promise<{
     id: string
@@ -210,62 +210,44 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
             <div className="space-y-6">
               {/* Basic Information and Stats */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-7">
+                <div className="lg:col-span-8">
                   {loadingState.isPageLoading ? (
                     <Skeleton className="h-[200px] w-full" />
                   ) : (
                     <EditETFPensionBasicInformationForm form={form} />
                   )}
                 </div>
-                <div className="lg:col-span-5">
+                <div className="lg:col-span-4">
                   <ETFPensionStats pensionId={pensionId} />
                 </div>
               </div>
 
               {/* Contribution Plan and History */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-7">
+                <div className="lg:col-span-8">
                   {loadingState.isPageLoading ? (
                     <Skeleton className="h-[400px] w-full" />
                   ) : (
                     <EditETFPensionContributionStepsForm form={form} />
                   )}
                 </div>
-                <div className="lg:col-span-5">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle>Historical and Planned Contributions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {loadingState.isStatisticsLoading ? (
-                        <div className="space-y-4">
-                          <Skeleton className="h-[200px] w-full" />
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <ContributionHistoryChart
-                            data={statistics?.contribution_history || []}
-                            contributionPlan={form.watch('contribution_plan_steps')}
-                            retirementDate={retirementDate}
-                            isLoading={loadingState.isStatisticsLoading}
-                            height={300}
-                          />
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                {/* Right side with dynamic analysis */}
+                <div className="lg:col-span-4 space-y-6">
+                  <ContributionImpactAnalysis 
+                    form={form}
+                    retirementDate={retirementDate}
+                  />
                 </div>
               </div>
 
               {/* Value Development and Projections */}
               <div>
-                <h2 className="text-2xl font-semibold mb-6">Value Development and Projections</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   {/* Left column (8) - Chart */}
                   <div className="lg:col-span-8">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Portfolio Value Projection</CardTitle>
+                        <CardTitle>Value Projection</CardTitle>
                       </CardHeader>
                       <CardContent>
                         {loadingState.isStatisticsLoading ? (
@@ -278,12 +260,11 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                               isProjection: false
                             }))}
                             contributionData={statistics.contribution_history}
-                            scenarios={statistics.scenarios || []}
                             timeRange={{
                               start: new Date(statistics.value_history[0].date),
                               end: retirementDate || new Date()
                             }}
-                            height={400}
+                            height={600}
                           />
                         ) : null}
                       </CardContent>
