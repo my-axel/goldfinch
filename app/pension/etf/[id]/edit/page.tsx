@@ -17,7 +17,10 @@ import { useEffect, useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
-import { CombinedProjectionChart } from "@/frontend/components/charts"
+import {
+  CombinedProjectionChart,
+  HistoricalPerformanceChart
+} from "@/frontend/components/charts"
 import { ProjectionScenarioKPIs } from "@/frontend/components/pension/ProjectionScenarioKPIs"
 import { ProjectionExplanations } from "@/frontend/components/pension/ProjectionExplanations"
 import { ContributionImpactAnalysis } from "@/frontend/components/pension/ContributionImpactAnalysis"
@@ -244,8 +247,30 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
               {/* Value Development and Projections */}
               <div>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Left column (8) - Chart */}
-                  <div className="lg:col-span-8">
+                  {/* Left column (8) - Charts */}
+                  <div className="lg:col-span-8 space-y-6">
+                    {/* Historical Performance Chart */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Historical Performance</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {loadingState.isStatisticsLoading ? (
+                          <Skeleton className="h-[300px] w-full" />
+                        ) : statistics?.value_history ? (
+                          <HistoricalPerformanceChart
+                            contributionData={statistics.contribution_history}
+                            valueData={statistics.value_history.map(point => ({
+                              date: new Date(point.date),
+                              value: parseFloat(point.value.toString())
+                            }))}
+                            height={600}
+                          />
+                        ) : null}
+                      </CardContent>
+                    </Card>
+
+                    {/* Projection Chart */}
                     <Card>
                       <CardHeader>
                         <CardTitle>Value Projection</CardTitle>
