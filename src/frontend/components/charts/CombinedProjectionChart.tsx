@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import type { ReactElement } from 'react'
 import {
   LineChart,
@@ -16,7 +16,6 @@ import type { Payload } from "recharts/types/component/DefaultTooltipContent"
 import { ContributionHistoryResponse } from "@/frontend/types/pension"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency } from "@/frontend/lib/transforms"
-import { ChartWrapper } from "./ChartWrapper"
 import { ChartTooltip } from "./ChartTooltip"
 import { chartTheme, chartColors } from "./chart-theme"
 import { ChartErrorBoundary } from "./ChartErrorBoundary"
@@ -27,6 +26,9 @@ import {
 import { format } from "date-fns"
 import { calculateSingleScenarioProjection } from "@/frontend/lib/projection-utils"
 import { ContributionStep } from "@/frontend/types/pension"
+import { Card, CardHeader, CardTitle, CardContent } from "@/frontend/components/ui/card"
+import { Button } from "@/frontend/components/ui/button"
+import { Expand, Shrink } from "lucide-react"
 
 interface CombinedProjectionChartProps {
   data: ProjectionDataPoint[]
@@ -38,6 +40,10 @@ interface CombinedProjectionChartProps {
   }
   height?: number
   className?: string
+  /** Whether to render the chart as a card with header */
+  asCard?: boolean
+  /** Whether to show the expand button */
+  expandable?: boolean
 }
 
 interface ChartDataPoint {
@@ -64,9 +70,13 @@ export function CombinedProjectionChart({
   contributionSteps,
   timeRange,
   height = 400,
-  className
+  className,
+  asCard = true,
+  expandable = false
 }: CombinedProjectionChartProps): ReactElement {
   const { settings } = useSettings()
+  const [isExpanded, setIsExpanded] = useState(false)
+  const chartHeight = expandable && isExpanded ? 600 : height
 
   const todayString = new Date().toLocaleDateString(settings.number_locale, { month: "short", year: "numeric" });
   const retirementString = new Date(timeRange.end).toLocaleDateString(settings.number_locale, { month: "short", year: "numeric" });
@@ -203,9 +213,7 @@ export function CombinedProjectionChart({
   if (chartData.length === 0) {
     return (
       <ChartErrorBoundary title="Portfolio Value Projection" height={height}>
-        <ChartWrapper title="Portfolio Value Projection" height={height} className={className} withCard={false}>
-          <div className="p-4 text-center text-muted-foreground">No chart data available</div>
-        </ChartWrapper>
+        <div className="p-4 text-center text-muted-foreground">No chart data available</div>
       </ChartErrorBoundary>
     );
   }
@@ -242,260 +250,288 @@ export function CombinedProjectionChart({
     }
   ]
 
-  return (
-    <ChartErrorBoundary title="Portfolio Value Projection" height={height}>
-      <ChartWrapper
-        title="Portfolio Value Projection"
-        height={height}
-        className={className}
-        withCard={false}
-      >
-        <div className="w-full" style={{ minHeight: height }}>
-          <div className="mb-4">
-            <ChartLegend payload={legendPayload} />
-          </div>
-          <ResponsiveContainer width="100%" height={height}>
-            <LineChart
-              data={chartData}
-              margin={{ top: 10, right: 10, left: 15, bottom: 60 }}
-            >
-              <CartesianGrid {...chartTheme.grid} />
-              <XAxis
-                dataKey="date"
-                type="category"
-                {...chartTheme.xAxis}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis {...chartTheme.yAxis} tickFormatter={formatYAxis} />
+  const chartContent = (
+    <div className="w-full" style={{ minHeight: chartHeight }}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <LineChart
+          data={chartData}
+          margin={{ top: 10, right: 10, left: 15, bottom: 10 }}
+        >
+          <CartesianGrid {...chartTheme.grid} />
+          <XAxis
+            dataKey="date"
+            type="category"
+            {...chartTheme.xAxis}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+          />
+          <YAxis {...chartTheme.yAxis} tickFormatter={formatYAxis} />
 
-              {/* Today marker */}
-              {chartData.findIndex(point => point.date === todayString) !== -1 && (
-                <ReferenceLine
-                  x={chartData.findIndex(point => point.date === todayString)}
-                  yAxisId={0}
-                  {...chartTheme.referenceLine}
-                  label={{
-                    value: "Today",
-                    position: "insideTopLeft",
-                    fill: "var(--muted-foreground)",
-                    fontSize: 10
-                  }}
-                />
-              )}
+          {/* Today marker */}
+          {chartData.findIndex(point => point.date === todayString) !== -1 && (
+            <ReferenceLine
+              x={chartData.findIndex(point => point.date === todayString)}
+              yAxisId={0}
+              {...chartTheme.referenceLine}
+              label={{
+                value: "Today",
+                position: "insideTopLeft",
+                fill: "var(--muted-foreground)",
+                fontSize: 10
+              }}
+            />
+          )}
 
-              {/* Retirement date marker */}
-              {chartData.findIndex(point => point.date === retirementString) !== -1 && (
-                <ReferenceLine
-                  x={chartData.findIndex(point => point.date === retirementString)}
-                  yAxisId={0}
-                  {...chartTheme.referenceLine}
-                  label={{
-                    value: "Retirement",
-                    position: "insideTopRight",
-                    fill: "var(--muted-foreground)",
-                    fontSize: 10
-                  }}
-                />
-              )}
+          {/* Retirement date marker */}
+          {chartData.findIndex(point => point.date === retirementString) !== -1 && (
+            <ReferenceLine
+              x={chartData.findIndex(point => point.date === retirementString)}
+              yAxisId={0}
+              {...chartTheme.referenceLine}
+              label={{
+                value: "Retirement",
+                position: "insideTopRight",
+                fill: "var(--muted-foreground)",
+                fontSize: 10
+              }}
+            />
+          )}
 
-              {/* Lines after reference lines */}
-              <Line
-                type="monotone"
-                dataKey="historical"
-                name="Historical Value"
-                stroke={chartColors.primary}
-                {...chartTheme.line}
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
+          {/* Lines after reference lines */}
+          <Line
+            type="monotone"
+            dataKey="historical"
+            name="Historical Value"
+            stroke={chartColors.primary}
+            {...chartTheme.line}
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
 
-              <Line
-                type="monotone"
-                dataKey="pessimistic"
-                name="Pessimistic Projection"
-                stroke={chartColors.pessimistic}
-                {...chartTheme.line}
-                strokeDasharray="4 4"
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
+          <Line
+            type="monotone"
+            dataKey="pessimistic"
+            name="Pessimistic Projection"
+            stroke={chartColors.pessimistic}
+            {...chartTheme.line}
+            strokeDasharray="4 4"
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
 
-              <Line
-                type="monotone"
-                dataKey="realistic"
-                name="Realistic Projection"
-                stroke={chartColors.realistic}
-                {...chartTheme.line}
-                strokeDasharray="4 4"
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
+          <Line
+            type="monotone"
+            dataKey="realistic"
+            name="Realistic Projection"
+            stroke={chartColors.realistic}
+            {...chartTheme.line}
+            strokeDasharray="4 4"
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
 
-              <Line
-                type="monotone"
-                dataKey="optimistic"
-                name="Optimistic Projection"
-                stroke={chartColors.optimistic}
-                {...chartTheme.line}
-                strokeDasharray="4 4"
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
+          <Line
+            type="monotone"
+            dataKey="optimistic"
+            name="Optimistic Projection"
+            stroke={chartColors.optimistic}
+            {...chartTheme.line}
+            strokeDasharray="4 4"
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
 
-              <Tooltip
-                content={({ active, payload }) => (
-                  <ChartTooltip
-                    active={active}
-                    payload={payload as Payload<number, string>[]}
-                    title={payload?.[0]?.payload?.date}
-                  >
-                    {active &&
-                      payload &&
-                      payload.length > 0 && (
-                        <div className="space-y-1">
-                          {(payload[0].payload as ChartDataPoint).historical !== null && (
-                            <div className="flex items-center gap-2">
-                              <div className="h-3 w-3 rounded-full" 
-                                style={{
-                                  backgroundColor: chartColors.primary
-                                }} />
-                              <span className="text-sm text-muted-foreground">
-                                Historical Value:
-                              </span>
-                              <span className="text-sm font-medium">
-                                {formatCurrency(
-                                  (payload[0].payload as ChartDataPoint).historical as number,
-                                  {
-                                    locale: settings.number_locale,
-                                    currency: settings.currency,
-                                    decimals: 0
-                                  }
-                                ).formatted}
-                              </span>
-                            </div>
-                          )}
-                          {(payload[0].payload as ChartDataPoint).realistic !== null && (
-                            <div className="flex items-center gap-2">
-                              <div className="h-3 w-3 rounded-full"
-                                style={{
-                                  backgroundColor: chartColors.realistic
-                                }} />
-                              <span className="text-sm text-muted-foreground">
-                                Realistic Projection:
-                              </span>
-                              <span className="text-sm font-medium">
-                                {formatCurrency(
-                                  (payload[0].payload as ChartDataPoint).realistic as number,
-                                  {
-                                    locale: settings.number_locale,
-                                    currency: settings.currency,
-                                    decimals: 0
-                                  }
-                                ).formatted}
-                              </span>
-                            </div>
-                          )}
-                          {(payload[0].payload as ChartDataPoint).pessimistic !== null && (
-                            <div className="flex items-center gap-2">
-                              <div className="h-3 w-3 rounded-full"
-                                style={{
-                                  backgroundColor: chartColors.pessimistic
-                                }} />
-                              <span className="text-sm text-muted-foreground">
-                                Pessimistic Projection:
-                              </span>
-                              <span className="text-sm font-medium">
-                                {formatCurrency(
-                                  (payload[0].payload as ChartDataPoint).pessimistic as number,
-                                  {
-                                    locale: settings.number_locale,
-                                    currency: settings.currency,
-                                    decimals: 0
-                                  }
-                                ).formatted}
-                              </span>
-                            </div>
-                          )}
-                          {(payload[0].payload as ChartDataPoint).optimistic !== null && (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
-                                style={{
-                                  backgroundColor: chartColors.optimistic
-                                }}
-                              />
-                              <span className="text-sm text-muted-foreground">
-                                Optimistic Projection:
-                              </span>
-                              <span className="text-sm font-medium">
-                                {formatCurrency(
-                                  (payload[0].payload as ChartDataPoint).optimistic as number,
-                                  {
-                                    locale: settings.number_locale,
-                                    currency: settings.currency,
-                                    decimals: 0
-                                  }
-                                ).formatted}
-                              </span>
-                            </div>
-                          )}
-                          {(payload[0].payload as ChartDataPoint).accumulatedContribution > 0 && (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
-                                style={{
-                                  backgroundColor: chartColors.secondary
-                                }}
-                              />
-                              <span className="text-sm text-muted-foreground">
-                                Accumulated Contributions:
-                              </span>
-                              <span className="text-sm font-medium">
-                                {formatCurrency(
-                                  (payload[0].payload as ChartDataPoint).accumulatedContribution,
-                                  {
-                                    locale: settings.number_locale,
-                                    currency: settings.currency,
-                                    decimals: 0
-                                  }
-                                ).formatted}
-                              </span>
-                            </div>
-                          )}
-                          {(payload[0].payload as ChartDataPoint).contributionAmount > 0 && (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
-                                style={{
-                                  backgroundColor: chartColors.secondary
-                                }}
-                              />
-                              <span className="text-sm text-muted-foreground">
-                                Monthly Contribution:
-                              </span>
-                              <span className="text-sm font-medium">
-                                {formatCurrency(
-                                  (payload[0].payload as ChartDataPoint).contributionAmount,
-                                  {
-                                    locale: settings.number_locale,
-                                    currency: settings.currency,
-                                    decimals: 0
-                                  }
-                                ).formatted}
-                              </span>
-                            </div>
-                          )}
+          <Tooltip
+            content={({ active, payload }) => (
+              <ChartTooltip
+                active={active}
+                payload={payload as Payload<number, string>[]}
+                title={payload?.[0]?.payload?.date}
+              >
+                {active &&
+                  payload &&
+                  payload.length > 0 && (
+                    <div className="space-y-1">
+                      {(payload[0].payload as ChartDataPoint).historical !== null && (
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full" 
+                            style={{
+                              backgroundColor: chartColors.primary
+                            }} />
+                          <span className="text-sm text-muted-foreground">
+                            Historical Value:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {formatCurrency(
+                              (payload[0].payload as ChartDataPoint).historical as number,
+                              {
+                                locale: settings.number_locale,
+                                currency: settings.currency,
+                                decimals: 0
+                              }
+                            ).formatted}
+                          </span>
                         </div>
                       )}
-                  </ChartTooltip>
+                      {(payload[0].payload as ChartDataPoint).realistic !== null && (
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full"
+                            style={{
+                              backgroundColor: chartColors.realistic
+                            }} />
+                          <span className="text-sm text-muted-foreground">
+                            Realistic Projection:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {formatCurrency(
+                              (payload[0].payload as ChartDataPoint).realistic as number,
+                              {
+                                locale: settings.number_locale,
+                                currency: settings.currency,
+                                decimals: 0
+                              }
+                            ).formatted}
+                          </span>
+                        </div>
+                      )}
+                      {(payload[0].payload as ChartDataPoint).pessimistic !== null && (
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full"
+                            style={{
+                              backgroundColor: chartColors.pessimistic
+                            }} />
+                          <span className="text-sm text-muted-foreground">
+                            Pessimistic Projection:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {formatCurrency(
+                              (payload[0].payload as ChartDataPoint).pessimistic as number,
+                              {
+                                locale: settings.number_locale,
+                                currency: settings.currency,
+                                decimals: 0
+                              }
+                            ).formatted}
+                          </span>
+                        </div>
+                      )}
+                      {(payload[0].payload as ChartDataPoint).optimistic !== null && (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{
+                              backgroundColor: chartColors.optimistic
+                            }}
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            Optimistic Projection:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {formatCurrency(
+                              (payload[0].payload as ChartDataPoint).optimistic as number,
+                              {
+                                locale: settings.number_locale,
+                                currency: settings.currency,
+                                decimals: 0
+                              }
+                            ).formatted}
+                          </span>
+                        </div>
+                      )}
+                      {(payload[0].payload as ChartDataPoint).accumulatedContribution > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{
+                              backgroundColor: chartColors.secondary
+                            }}
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            Accumulated Contributions:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {formatCurrency(
+                              (payload[0].payload as ChartDataPoint).accumulatedContribution,
+                              {
+                                locale: settings.number_locale,
+                                currency: settings.currency,
+                                decimals: 0
+                              }
+                            ).formatted}
+                          </span>
+                        </div>
+                      )}
+                      {(payload[0].payload as ChartDataPoint).contributionAmount > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{
+                              backgroundColor: chartColors.secondary
+                            }}
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            Monthly Contribution:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {formatCurrency(
+                              (payload[0].payload as ChartDataPoint).contributionAmount,
+                              {
+                                locale: settings.number_locale,
+                                currency: settings.currency,
+                                decimals: 0
+                              }
+                            ).formatted}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+              </ChartTooltip>
+            )}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+
+  if (!asCard) {
+    return (
+      <ChartErrorBoundary title="Portfolio Value Projection" height={chartHeight}>
+        {chartContent}
+      </ChartErrorBoundary>
+    )
+  }
+
+  return (
+    <ChartErrorBoundary title="Portfolio Value Projection" height={chartHeight}>
+      <Card className={className}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle>Value Projection</CardTitle>
+          <div className="flex items-center gap-4">
+            <ChartLegend payload={legendPayload} />
+            {expandable && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsExpanded(!isExpanded)}
+                type="button"
+                className="h-8 w-8"
+                title={isExpanded ? "Collapse chart" : "Expand chart"}
+              >
+                {isExpanded ? (
+                  <Shrink className="h-4 w-4" />
+                ) : (
+                  <Expand className="h-4 w-4" />
                 )}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </ChartWrapper>
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {chartContent}
+        </CardContent>
+      </Card>
     </ChartErrorBoundary>
   )
 } 

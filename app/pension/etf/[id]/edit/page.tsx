@@ -16,7 +16,6 @@ import { use } from "react"
 import { useEffect, useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import {
   CombinedProjectionChart,
   HistoricalPerformanceChart
@@ -221,9 +220,6 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                     <EditETFPensionBasicInformationForm form={form} />
                   )}
                 </div>
-                <div className="lg:col-span-4">
-                  <ETFPensionStats pensionId={pensionId} />
-                </div>
               </div>
 
               {/* Contribution Plan and History */}
@@ -236,7 +232,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                   )}
                 </div>
                 {/* Right side with dynamic analysis */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-6 mt-6">
                   <ContributionImpactAnalysis 
                     form={form}
                     retirementDate={retirementDate}
@@ -244,70 +240,57 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 </div>
               </div>
 
-              {/* Value Development and Projections */}
-              <div>
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Left column (8) - Charts */}
-                  <div className="lg:col-span-8 space-y-6">
-                    {/* Historical Performance Chart */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Historical Performance</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {loadingState.isStatisticsLoading ? (
-                          <Skeleton className="h-[300px] w-full" />
-                        ) : statistics?.value_history ? (
-                          <HistoricalPerformanceChart
-                            contributionData={statistics.contribution_history}
-                            valueData={statistics.value_history.map(point => ({
-                              date: new Date(point.date),
-                              value: parseFloat(point.value.toString())
-                            }))}
-                            height={600}
-                          />
-                        ) : null}
-                      </CardContent>
-                    </Card>
+              {/* Historical Performance and Stats */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8">
+                  {loadingState.isStatisticsLoading ? (
+                    <Skeleton className="h-[400px] w-full" />
+                  ) : statistics?.value_history ? (
+                    <HistoricalPerformanceChart
+                      contributionData={statistics.contribution_history}
+                      valueData={statistics.value_history.map(point => ({
+                        date: new Date(point.date),
+                        value: parseFloat(point.value.toString())
+                      }))}
+                    />
+                  ) : null}
+                </div>
+                <div className="lg:col-span-4 mt-6">
+                  <ETFPensionStats pensionId={pensionId} />
+                </div>
+              </div>
 
-                    {/* Projection Chart */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Value Projection</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {loadingState.isStatisticsLoading ? (
-                          <Skeleton className="h-[400px] w-full" />
-                        ) : statistics?.value_history ? (
-                          <CombinedProjectionChart
-                            data={statistics.value_history.map(point => ({
-                              date: new Date(point.date),
-                              value: parseFloat(point.value.toString()),
-                              isProjection: false
-                            }))}
-                            contributionData={statistics.contribution_history}
-                            contributionSteps={form.watch("contribution_plan_steps")}
-                            timeRange={{
-                              start: new Date(statistics.value_history[0].date),
-                              end: retirementDate || new Date()
-                            }}
-                            height={600}
-                          />
-                        ) : null}
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Right column (4) - KPIs and Explanations */}
-                  <div className="lg:col-span-4 space-y-6">
-                    {!loadingState.isStatisticsLoading && statistics?.scenarios && (
-                      <ProjectionScenarioKPIs
-                        scenarios={statistics.scenarios}
-                        totalContributions={statistics.total_invested_amount}
-                      />
-                    )}
-                    <ProjectionExplanations />
-                  </div>
+              {/* Value Projection and Scenarios */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 ">
+                  {loadingState.isStatisticsLoading ? (
+                    <Skeleton className="h-[400px] w-full" />
+                  ) : statistics?.value_history ? (
+                    <CombinedProjectionChart
+                      data={statistics.value_history.map(point => ({
+                        date: new Date(point.date),
+                        value: parseFloat(point.value.toString()),
+                        isProjection: false
+                      }))}
+                      contributionData={statistics.contribution_history}
+                      contributionSteps={form.watch("contribution_plan_steps")}
+                      timeRange={{
+                        start: new Date(statistics.value_history[0].date),
+                        end: retirementDate || new Date()
+                      }}
+                      height={600}
+                      expandable={false}
+                    />
+                  ) : null}
+                </div>
+                <div className="lg:col-span-4 space-y-6 mt-6">
+                  {!loadingState.isStatisticsLoading && statistics?.scenarios && (
+                    <ProjectionScenarioKPIs
+                      scenarios={statistics.scenarios}
+                      totalContributions={statistics.total_invested_amount}
+                    />
+                  )}
+                  <ProjectionExplanations />
                 </div>
               </div>
             </div>

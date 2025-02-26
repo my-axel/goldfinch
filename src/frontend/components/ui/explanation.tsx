@@ -2,6 +2,7 @@ import * as React from "react"
 import { cn } from "@/frontend/lib/utils"
 import { Alert, AlertDescription } from "@/frontend/components/ui/alert"
 import { Info } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 interface ExplanationProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
@@ -25,6 +26,21 @@ interface ExplanationListProps extends React.HTMLAttributes<HTMLUListElement> {
 
 interface ExplanationListItemProps extends React.HTMLAttributes<HTMLLIElement> {
   children: React.ReactNode
+}
+
+interface ExplanationStatsProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode
+  columns?: 1 | 2
+}
+
+interface ExplanationStatProps extends React.HTMLAttributes<HTMLDivElement> {
+  icon?: LucideIcon
+  label: string
+  value: string | number
+  subValue?: string | number
+  subLabel?: string
+  valueClassName?: string
+  subValueClassName?: string
 }
 
 function Explanation({ className, ...props }: ExplanationProps) {
@@ -85,11 +101,76 @@ function ExplanationListItem({ className, ...props }: ExplanationListItemProps) 
   )
 }
 
+function ExplanationStats({ className, columns = 1, ...props }: ExplanationStatsProps) {
+  return (
+    <div
+      className={cn(
+        "grid gap-4",
+        columns === 2 ? "grid-cols-2" : "grid-cols-1",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function ExplanationStat({
+  icon: Icon,
+  label,
+  value,
+  subValue,
+  subLabel,
+  valueClassName,
+  subValueClassName,
+  className,
+  ...props
+}: ExplanationStatProps) {
+  return (
+    <div className={cn("flex items-start gap-3", className)} {...props}>
+      {Icon && (
+        <div className="p-1.5 bg-primary/10 rounded-full mt-0.5">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0 space-y-1">
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <div className="space-y-0.5">
+          <div className="flex items-baseline gap-1.5">
+            <p className={cn(
+              "text-lg font-bold leading-none opacity-80",
+              valueClassName
+            )}>
+              {value}
+            </p>
+          </div>
+          {(subValue || subLabel) && (
+            <div className="flex items-baseline gap-1.5">
+              {subValue && (
+                <p className={cn(
+                  "text-sm font-medium leading-none opacity-80",
+                  subValueClassName
+                )}>
+                  {subValue}
+                </p>
+              )}
+              {subLabel && (
+                <span className="text-xs text-muted-foreground">{subLabel}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export {
   Explanation,
   ExplanationHeader,
   ExplanationContent,
   ExplanationAlert,
   ExplanationList,
-  ExplanationListItem
+  ExplanationListItem,
+  ExplanationStats,
+  ExplanationStat
 } 

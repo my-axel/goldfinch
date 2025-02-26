@@ -1,12 +1,17 @@
 "use client"
 
 import { memo, useEffect } from "react"
-import { Card, CardContent } from "@/frontend/components/ui/card"
 import { usePension } from "@/frontend/context/PensionContext"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency, formatPercent } from "@/frontend/lib/transforms"
 import { CalendarClock, TrendingUp, Wallet, CircleDot } from "lucide-react"
 import { cn } from "@/frontend/lib/utils"
+import {
+  Explanation,
+  ExplanationHeader,
+  ExplanationStats,
+  ExplanationStat
+} from "@/frontend/components/ui/explanation"
 
 interface ETFPensionStatsProps {
   pensionId: number
@@ -34,19 +39,15 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
 
   if (!pension || isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="h-20 animate-pulse bg-muted" />
-          </Card>
-          <Card>
-            <CardContent className="h-20 animate-pulse bg-muted" />
-          </Card>
-        </div>
-        <Card>
-          <CardContent className="h-20 animate-pulse bg-muted" />
-        </Card>
-      </div>
+      <Explanation>
+        <ExplanationHeader>Portfolio Statistics</ExplanationHeader>
+        <ExplanationStats columns={2}>
+          <div className="h-20 animate-pulse bg-muted rounded-lg" />
+          <div className="h-20 animate-pulse bg-muted rounded-lg" />
+          <div className="h-20 animate-pulse bg-muted rounded-lg" />
+          <div className="h-20 animate-pulse bg-muted rounded-lg" />
+        </ExplanationStats>
+      </Explanation>
     )
   }
 
@@ -72,101 +73,45 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-primary/10 rounded-full">
-                <Wallet className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground">Total Invested</p>
-                <p className="text-lg text-foreground font-bold truncate opacity-80">{formatValue(statistics.total_invested_amount)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-primary/10 rounded-full">
-                <TrendingUp className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground">Current Value</p>
-                <p className="text-lg text-foreground font-bold truncate opacity-80">{formatValue(statistics.current_value)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="p-1.5 bg-primary/10 rounded-full mt-0.5">
-                <CircleDot className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Contributions</p>
-                <div className="space-y-0.5">
-                  <div className="flex items-baseline gap-1.5">
-                    <p className="text-lg font-bold leading-none opacity-80">{statistics.contribution_history.length}</p>
-                    <span className="text-xs text-muted-foreground">total contributions</span>
-                  </div>
-                  {statistics.contribution_history.length > 0 && (
-                    <div className="flex items-baseline gap-1.5">
-                      <p className="text-sm font-medium opacity-80">
-                        {new Date(statistics.contribution_history[statistics.contribution_history.length - 1].date)
-                          .toLocaleDateString(settings.number_locale, { 
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">last</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="p-1.5 bg-primary/10 rounded-full mt-0.5">
-                <CalendarClock className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Return</p>
-                <div className="space-y-0.5">
-                  <div className="flex items-baseline gap-1.5">
-                    <p className={cn(
-                      "text-lg font-bold leading-none opacity-80",
-                      statistics.total_return >= 0 ? "text-green-600" : "text-red-600"
-                    )}>
-                      {formatValue(statistics.total_return)}
-                    </p>
-                    <span className="text-xs text-muted-foreground">total</span>
-                  </div>
-                  {statistics.annual_return != null && (
-                    <div className="flex items-baseline gap-1.5">
-                      <p className={cn(
-                        "text-sm font-medium leading-none opacity-80",
-                        statistics.annual_return >= 0 ? "text-green-600" : "text-red-600"
-                      )}>
-                        {formatPercentValue(statistics.annual_return)}
-                      </p>
-                      <span className="text-xs text-muted-foreground">annual return</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <Explanation>
+      <ExplanationHeader>Historical Statistics</ExplanationHeader>
+      <ExplanationStats columns={2}>
+        <ExplanationStat
+          icon={Wallet}
+          label="Total Invested"
+          value={formatValue(statistics.total_invested_amount)}
+        />
+        <ExplanationStat
+          icon={TrendingUp}
+          label="Current Value"
+          value={formatValue(statistics.current_value)}
+        />
+        <ExplanationStat
+          icon={CircleDot}
+          label="Contributions"
+          value={statistics.contribution_history.length}
+          subValue={statistics.contribution_history.length > 0 ? new Date(
+            statistics.contribution_history[statistics.contribution_history.length - 1].date
+          ).toLocaleDateString(settings.number_locale, { 
+            month: 'short',
+            year: 'numeric'
+          }) : undefined}
+          subLabel={statistics.contribution_history.length > 0 ? "last contribution" : undefined}
+        />
+        <ExplanationStat
+          icon={CalendarClock}
+          label="Return"
+          value={formatValue(statistics.total_return)}
+          valueClassName={cn(
+            statistics.total_return >= 0 ? "text-green-600" : "text-red-600"
+          )}
+          subValue={statistics.annual_return != null ? formatPercentValue(statistics.annual_return) : undefined}
+          subLabel={statistics.annual_return != null ? "annual return" : undefined}
+          subValueClassName={cn(
+            statistics.annual_return != null && statistics.annual_return >= 0 ? "text-green-600" : "text-red-600"
+          )}
+        />
+      </ExplanationStats>
+    </Explanation>
   )
 }) 

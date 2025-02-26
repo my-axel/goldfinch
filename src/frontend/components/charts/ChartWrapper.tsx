@@ -1,55 +1,52 @@
 "use client"
 
-import { ReactElement } from "react"
+import { ReactElement, ReactNode } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
-import { ResponsiveContainer } from "recharts"
 
-interface ChartWrapperProps {
-  title?: string
+export interface ChartWrapperProps {
+  /** The title of the chart */
+  title: string
+  /** The content of the chart */
   children: ReactElement
-  height?: number
-  isLoading?: boolean
+  /** Whether the chart is loading */
+  isLoading: boolean
+  /** The height of the chart in pixels */
+  height: number
+  /** Additional CSS classes */
   className?: string
+  /** Whether to wrap the chart in a Card component */
   withCard?: boolean
+  /** Optional content to render on the right side of the header */
+  headerRight?: ReactNode
 }
 
 export function ChartWrapper({
   title,
   children,
-  height = 300,
-  isLoading = false,
+  isLoading,
+  height,
   className,
-  withCard = true
+  withCard = true,
+  headerRight
 }: ChartWrapperProps) {
-  const chartContent = (
-    <div className={withCard ? undefined : className}>
-      {title && withCard && (
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-      )}
-      {isLoading ? (
-        <Skeleton className="w-full" style={{ height }} />
-      ) : (
-        <div style={{ width: "100%", height }}>
-          <ResponsiveContainer width="100%" height="100%">
-            {children}
-          </ResponsiveContainer>
-        </div>
-      )}
-    </div>
-  )
+  const content = isLoading ? (
+    <Skeleton className="w-full" style={{ height }} />
+  ) : children
 
   if (!withCard) {
-    return chartContent
+    return content
   }
 
   return (
     <Card className={className}>
-      <CardContent>
-        {chartContent}
-      </CardContent>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-base font-medium">
+          {title}
+        </CardTitle>
+        {headerRight}
+      </CardHeader>
+      <CardContent>{content}</CardContent>
     </Card>
   )
 } 
