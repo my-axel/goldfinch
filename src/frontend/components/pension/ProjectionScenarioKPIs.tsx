@@ -50,7 +50,7 @@ export function ProjectionScenarioKPIs({
                 />
                 <h4 className="font-medium capitalize">{scenario.type} Scenario</h4>
                 <div className="text-sm text-muted-foreground ml-auto">
-                  {scenario.returnRate ? `${scenario.returnRate.toFixed(1)}% return` : 'No return rate'}
+                  {typeof scenario.returnRate === 'number' ? `${scenario.returnRate.toFixed(1)}% return` : 'No return rate'}
                 </div>
               </div>
               <div className="space-y-2">

@@ -166,7 +166,7 @@ export function HistoricalPerformanceChart({
                       <div className="h-3 w-3 rounded-full"
                         style={{ backgroundColor: chartColors.primary }} />
                       <span className="text-sm text-muted-foreground">
-                        Portfolio Value:
+                        Historical Value:
                       </span>
                       <span className="text-sm font-medium">
                         {formatCurrency(
