@@ -64,7 +64,12 @@ export default function PensionPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Pension Plans</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pension Plans</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your ETF, insurance, and company pension plans for each household member
+          </p>
+        </div>
       </div>
 
       {isLoading ? (

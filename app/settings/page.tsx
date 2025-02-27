@@ -8,6 +8,7 @@ import { formatNumber, formatCurrency, formatDate } from "@/frontend/lib/transfo
 import { Slider } from "@/frontend/components/ui/slider"
 import { Separator } from "@/frontend/components/ui/separator"
 import { useEffect, useState } from "react"
+import { Explanation, ExplanationHeader, ExplanationContent, ExplanationList, ExplanationListItem } from "@/frontend/components/ui/explanation"
 
 export default function SettingsPage() {
   const { settings, updateSettings, isLoading, error } = useSettings()
@@ -92,10 +93,30 @@ export default function SettingsPage() {
     if (!mounted) return null
 
     return (
-      <div className="space-y-4">
-        <div className="p-4 bg-muted rounded-lg">
-          <h4 className="font-medium mb-3">Example Portfolio</h4>
-          <div className="space-y-2 text-sm">
+      <>
+      <Explanation>
+        <ExplanationHeader>Understanding Projection Rates</ExplanationHeader>
+        <ExplanationContent>
+          <p>
+            These rates are used to calculate potential future values of your investments
+            across different market scenarios.
+          </p>
+          <ExplanationList>
+            <ExplanationListItem>
+              Pessimistic: Conservative estimate for challenging market conditions
+            </ExplanationListItem>
+            <ExplanationListItem>
+              Realistic: Moderate estimate based on historical averages
+            </ExplanationListItem>
+            <ExplanationListItem>
+              Optimistic: Higher estimate for favorable market conditions
+            </ExplanationListItem>
+          </ExplanationList>
+        </ExplanationContent>
+
+        <ExplanationHeader>Example Portfolio</ExplanationHeader>
+        <ExplanationContent>
+          <div className="space-y-2">
             <div>
               <span className="text-muted-foreground">Current Value:</span>
               <div className="font-medium">
@@ -119,38 +140,42 @@ export default function SettingsPage() {
               <div className="font-medium">{previewProjection.yearsToRetirement} years</div>
             </div>
           </div>
-        </div>
+        </ExplanationContent>
 
-        <div className="space-y-2">
-          <div>
-            <span className="text-muted-foreground">Pessimistic Scenario:</span>
-            <div className="font-medium">
-              {formatCurrency(calculateProjection(previewProjection, sliderValues.pessimistic), {
-                locale: settings.number_locale,
-                currency: settings.currency
-              }).formatted}
+        <ExplanationHeader>Projected Outcomes</ExplanationHeader>
+        <ExplanationContent>
+          <div className="space-y-2">
+            <div>
+              <span className="text-muted-foreground">Pessimistic Scenario:</span>
+              <div className="font-medium">
+                {formatCurrency(calculateProjection(previewProjection, sliderValues.pessimistic), {
+                  locale: settings.number_locale,
+                  currency: settings.currency
+                }).formatted}
+              </div>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Realistic Scenario:</span>
+              <div className="font-medium">
+                {formatCurrency(calculateProjection(previewProjection, sliderValues.realistic), {
+                  locale: settings.number_locale,
+                  currency: settings.currency
+                }).formatted}
+              </div>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Optimistic Scenario:</span>
+              <div className="font-medium">
+                {formatCurrency(calculateProjection(previewProjection, sliderValues.optimistic), {
+                  locale: settings.number_locale,
+                  currency: settings.currency
+                }).formatted}
+              </div>
             </div>
           </div>
-          <div>
-            <span className="text-muted-foreground">Realistic Scenario:</span>
-            <div className="font-medium">
-              {formatCurrency(calculateProjection(previewProjection, sliderValues.realistic), {
-                locale: settings.number_locale,
-                currency: settings.currency
-              }).formatted}
-            </div>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Optimistic Scenario:</span>
-            <div className="font-medium">
-              {formatCurrency(calculateProjection(previewProjection, sliderValues.optimistic), {
-                locale: settings.number_locale,
-                currency: settings.currency
-              }).formatted}
-            </div>
-          </div>
-        </div>
-      </div>
+        </ExplanationContent>
+        </Explanation>
+      </>
     )
   }
 
@@ -223,7 +248,14 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Settings</h1>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground mt-2">
+            Customize your experience with personalized preferences and calculation parameters
+          </p>
+        </div>
+      </div>
       
       {error && (
         <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-md">
@@ -313,15 +345,7 @@ export default function SettingsPage() {
 
         {/* Right column (4) - Preview and help */}
         <div className="col-span-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-              <CardDescription>Example projection based on current rates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderProjectionPreview()}
-            </CardContent>
-          </Card>
+          {renderProjectionPreview()}
         </div>
       </div>
     </div>

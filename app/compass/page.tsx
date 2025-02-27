@@ -2,14 +2,14 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 
-export default function PensionHealthPage() {
+export default function CompassPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Pension Health</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Compass</h1>
           <p className="text-muted-foreground mt-2">
-            Analyze your pension needs and track progress towards your retirement goals
+            Navigate your retirement journey with smart analysis and personalized guidance
           </p>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function PensionHealthPage() {
             <ul className="list-disc pl-4 space-y-2">
               <li>Adjust retirement age to see immediate impact</li>
               <li>Toggle between lifestyle scenarios</li>
-              <li>Explore "What if" scenarios</li>
+              <li>Explore &quot;What if&quot; scenarios</li>
               <li>View projected timeline visualization</li>
             </ul>
           </CardContent>

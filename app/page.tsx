@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 export default function DashboardPage() {
   return (
-    <div className="container mx-auto p-6 space-y-0">
+    <div className="space-y-6">
        <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

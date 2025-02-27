@@ -73,8 +73,13 @@ export default function HouseholdPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Household Members</h1>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Household</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your household members and their retirement planning preferences
+          </p>
+        </div>
         <AddMemberDialog 
           onAdd={handleAddMember}
           open={isAddDialogOpen}
