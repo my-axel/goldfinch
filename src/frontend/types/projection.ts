@@ -1,3 +1,5 @@
+import { ContributionStep, ContributionHistoryResponse } from './pension'
+
 /**
  * Types for projection data and calculations
  */
@@ -82,5 +84,54 @@ export const DEFAULT_PROJECTION_COLORS: ProjectionColors = {
     pessimistic: '#f97316', // orange-500
     realistic: '#22c55e', // green-500
     optimistic: '#3b82f6' // blue-500
+  }
+}
+
+export interface ScenarioDataPoint {
+  value: number
+  contribution: number
+  accumulatedContribution: number
+}
+
+export interface CombinedDataPoint {
+  date: Date
+  isHistorical: boolean
+  pessimistic: ScenarioDataPoint
+  realistic: ScenarioDataPoint
+  optimistic: ScenarioDataPoint
+}
+
+export interface PerformanceMetrics {
+  totalCalculationTime: number
+  dataPoints: number
+  averageTimePerPoint: number
+}
+
+export interface CombinedScenariosInput {
+  initialValue: number
+  contributionSteps: ContributionStep[]
+  rates: {
+    pessimistic: number
+    realistic: number
+    optimistic: number
+  }
+  startDate: Date
+  endDate: Date
+  historicalContributions: ContributionHistoryResponse[]
+}
+
+export interface CombinedScenariosOutput {
+  scenarios: {
+    pessimistic: ProjectionScenario
+    realistic: ProjectionScenario
+    optimistic: ProjectionScenario
+  }
+  metadata: {
+    totalCalculationTime: number
+    dataPoints: number
+    startDate: Date
+    endDate: Date
+    totalContributions: number
+    initialValue: number
   }
 } 

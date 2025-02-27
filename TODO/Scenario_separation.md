@@ -3,7 +3,7 @@
 ## 1. Scenario Calculation Separation
 
 ### Create Combined Scenario Calculator
-- [ ] Create new function `calculateCombinedScenarios` in `src/frontend/lib/projection-utils.ts`
+- [x] Create new function `calculateCombinedScenarios` in `src/frontend/lib/projection-utils.ts`
   ```typescript
   interface CombinedScenariosInput {
     initialValue: number
@@ -35,7 +35,7 @@
   }
   ```
   Implementation details:
-  - Single loop implementation for all scenarios
+  - [x] Single loop implementation for all scenarios
     ```typescript
     // Example loop structure
     while (currentDate <= endDate) {
@@ -57,12 +57,12 @@
       currentDate.setMonth(currentDate.getMonth() + 1)
     }
     ```
-  - Shared date calculations and transformations
-  - Optimized memory usage through single data structure
-  - Performance monitoring with detailed metrics
+  - [x] Shared date calculations and transformations
+  - [x] Optimized memory usage through single data structure
+  - [x] Performance monitoring with detailed metrics
 
 ### Create Shared Hook for Scenario Calculations
-- [ ] Create new hook `useProjectionScenarios` in `src/frontend/hooks/useProjectionScenarios.ts`
+- [x] Create new hook `useProjectionScenarios` in `src/frontend/hooks/useProjectionScenarios.ts`
   ```typescript
   function useProjectionScenarios({
     historicalData,
@@ -99,26 +99,13 @@
   ```
 
 ### Move and Update Calculation Logic
-- [ ] Extract calculation functions from `CombinedProjectionChart`
-  - Replace three separate `calculateSingleScenarioProjection` calls with single `calculateCombinedScenarios`
-  - Keep `calculateSingleScenarioProjection` for individual scenario calculations (e.g., for what-if analysis)
-  - Move data transformation logic to the calculator
-  - Keep only chart-specific transformations in the chart:
-    ```typescript
-    // Chart-specific transformations
-    const chartData = useMemo(() => {
-      if (!scenarios) return []
-      return scenarios.dataPoints.map(point => ({
-        date: formatDate(point.date),
-        historical: point.isHistorical ? point.value : null,
-        pessimistic: !point.isHistorical ? point.pessimistic.value : null,
-        realistic: !point.isHistorical ? point.realistic.value : null,
-        optimistic: !point.isHistorical ? point.optimistic.value : null,
-      }))
-    }, [scenarios])
-    ```
+- [x] Extract calculation functions from `CombinedProjectionChart`
+  - [x] Replace three separate `calculateSingleScenarioProjection` calls with single `calculateCombinedScenarios`
+  - [x] Keep `calculateSingleScenarioProjection` for individual scenario calculations (e.g., for what-if analysis)
+  - [x] Move data transformation logic to the calculator
+  - [x] Keep only chart-specific transformations in the chart
 
-- [ ] Update types in `src/frontend/types/projection.ts`
+- [x] Update types in `src/frontend/types/projection.ts`
   ```typescript
   // New types to add
   interface ScenarioDataPoint {
@@ -139,25 +126,16 @@
     totalCalculationTime: number
     dataPoints: number
     averageTimePerPoint: number
-    memoryUsage?: number
   }
   ```
 
 ### Update Components
-- [ ] Modify `CombinedProjectionChart`
-  - Remove individual calculation logic
-  - Use new hook for combined scenarios:
-    ```typescript
-    const { scenarios, isCalculating } = useProjectionScenarios({
-      historicalData,
-      contributionSteps,
-      retirementDate,
-      settings
-    })
-    ```
-  - Keep only visualization logic
-  - KEEP THE CHART VISUALIZATION AS IS - do not modify any Recharts configuration!
-  - Add loading state visualization during calculations
+- [x] Modify `CombinedProjectionChart`
+  - [x] Remove individual calculation logic
+  - [x] Use new hook for combined scenarios
+  - [x] Keep only visualization logic
+  - [x] KEEP THE CHART VISUALIZATION AS IS - do not modify any Recharts configuration!
+  - [x] Add loading state visualization during calculations
 
 - [ ] Update `ProjectionScenarioKPIs`
   - Use new hook for scenarios

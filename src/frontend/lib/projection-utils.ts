@@ -1,6 +1,8 @@
 import {
   ProjectionDataPoint,
   ProjectionScenario,
+  CombinedScenariosInput,
+  CombinedScenariosOutput,
   ScenarioType,
   MONTHS_PER_YEAR
 } from '../types/projection'
@@ -127,5 +129,178 @@ export function calculateSingleScenarioProjection(params: {
     finalValue,
     totalContributions: accumulatedContributions,
     totalReturns
+  };
+}
+
+/**
+ * Calculates all three scenarios (pessimistic, realistic, optimistic) in a single pass
+ * for better performance. This is the preferred method when calculating multiple scenarios.
+ * 
+ * @param params Configuration parameters for the combined scenario calculations
+ * @returns CombinedScenariosOutput containing all scenarios and metadata
+ */
+export function calculateCombinedScenarios(params: CombinedScenariosInput): CombinedScenariosOutput {
+  const {
+    initialValue,
+    contributionSteps,
+    rates,
+    startDate,
+    endDate,
+    historicalContributions = []
+  } = params;
+
+  const startTime = performance.now();
+
+  // Initialize scenario values
+  let pessimisticValue = initialValue;
+  let realisticValue = initialValue;
+  let optimisticValue = initialValue;
+
+  // Calculate monthly rates
+  const monthlyRates = {
+    pessimistic: rates.pessimistic / 100 / MONTHS_PER_YEAR,
+    realistic: rates.realistic / 100 / MONTHS_PER_YEAR,
+    optimistic: rates.optimistic / 100 / MONTHS_PER_YEAR
+  };
+
+  // Initialize data points arrays for each scenario
+  const pessimisticPoints: ProjectionDataPoint[] = [];
+  const realisticPoints: ProjectionDataPoint[] = [];
+  const optimisticPoints: ProjectionDataPoint[] = [];
+
+  // Calculate initial accumulated contributions from historical data
+  let accumulatedContributions = historicalContributions.reduce((sum, contribution) => 
+    sum + Number(contribution.amount), 0);
+
+  const currentDate = new Date(startDate);
+
+  // Calculate monthly compounding for all scenarios in a single loop
+  while (currentDate < endDate) {
+    // Get contribution for this date based on contribution steps
+    const contribution = getContributionForDate(currentDate, contributionSteps);
+    
+    // Apply monthly interest and contribution to all scenarios
+    pessimisticValue = pessimisticValue * (1 + monthlyRates.pessimistic) + contribution;
+    realisticValue = realisticValue * (1 + monthlyRates.realistic) + contribution;
+    optimisticValue = optimisticValue * (1 + monthlyRates.optimistic) + contribution;
+    
+    // Update accumulated contributions
+    accumulatedContributions += contribution;
+
+    // Create data points for all scenarios
+    const date = new Date(currentDate);
+    
+    pessimisticPoints.push({
+      date,
+      value: pessimisticValue,
+      contributionAmount: contribution,
+      accumulatedContributions,
+      scenarioType: 'pessimistic',
+      isProjection: true
+    });
+
+    realisticPoints.push({
+      date,
+      value: realisticValue,
+      contributionAmount: contribution,
+      accumulatedContributions,
+      scenarioType: 'realistic',
+      isProjection: true
+    });
+
+    optimisticPoints.push({
+      date,
+      value: optimisticValue,
+      contributionAmount: contribution,
+      accumulatedContributions,
+      scenarioType: 'optimistic',
+      isProjection: true
+    });
+
+    // Move to next month
+    currentDate.setMonth(currentDate.getMonth() + 1);
+  }
+
+  // Always add the final data point with the exact retirement date
+  const finalDate = new Date(endDate);
+  const finalContribution = getContributionForDate(finalDate, contributionSteps);
+  
+  // Apply final month's growth and contribution
+  pessimisticValue = pessimisticValue * (1 + monthlyRates.pessimistic) + finalContribution;
+  realisticValue = realisticValue * (1 + monthlyRates.realistic) + finalContribution;
+  optimisticValue = optimisticValue * (1 + monthlyRates.optimistic) + finalContribution;
+  
+  // Update final accumulated contributions
+  accumulatedContributions += finalContribution;
+
+  // Add final data points
+  pessimisticPoints.push({
+    date: finalDate,
+    value: pessimisticValue,
+    contributionAmount: finalContribution,
+    accumulatedContributions,
+    scenarioType: 'pessimistic',
+    isProjection: true
+  });
+
+  realisticPoints.push({
+    date: finalDate,
+    value: realisticValue,
+    contributionAmount: finalContribution,
+    accumulatedContributions,
+    scenarioType: 'realistic',
+    isProjection: true
+  });
+
+  optimisticPoints.push({
+    date: finalDate,
+    value: optimisticValue,
+    contributionAmount: finalContribution,
+    accumulatedContributions,
+    scenarioType: 'optimistic',
+    isProjection: true
+  });
+
+  // Calculate final metrics for each scenario
+  const scenarios = {
+    pessimistic: {
+      type: 'pessimistic' as const,
+      dataPoints: pessimisticPoints,
+      returnRate: rates.pessimistic,
+      finalValue: pessimisticValue,
+      totalContributions: accumulatedContributions,
+      totalReturns: pessimisticValue - accumulatedContributions - initialValue
+    },
+    realistic: {
+      type: 'realistic' as const,
+      dataPoints: realisticPoints,
+      returnRate: rates.realistic,
+      finalValue: realisticValue,
+      totalContributions: accumulatedContributions,
+      totalReturns: realisticValue - accumulatedContributions - initialValue
+    },
+    optimistic: {
+      type: 'optimistic' as const,
+      dataPoints: optimisticPoints,
+      returnRate: rates.optimistic,
+      finalValue: optimisticValue,
+      totalContributions: accumulatedContributions,
+      totalReturns: optimisticValue - accumulatedContributions - initialValue
+    }
+  };
+
+  const endTime = performance.now();
+  const totalCalculationTime = endTime - startTime;
+
+  return {
+    scenarios,
+    metadata: {
+      totalCalculationTime,
+      dataPoints: pessimisticPoints.length,
+      startDate,
+      endDate,
+      totalContributions: accumulatedContributions,
+      initialValue
+    }
   };
 } 
