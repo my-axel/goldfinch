@@ -47,6 +47,12 @@ class SettingsBase(BaseModel):
         ge=MIN_PROJECTION_RATE,
         le=MAX_PROJECTION_RATE
     )
+    inflation_rate: Decimal = Field(
+        default=Decimal("2.0"),
+        description="Annual inflation rate (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
 
     @field_validator("ui_locale", "number_locale")
     @classmethod
@@ -115,6 +121,12 @@ class SettingsUpdate(BaseModel):
     projection_optimistic_rate: Optional[Decimal] = Field(
         None,
         description="Annual return rate for optimistic projection scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    inflation_rate: Optional[Decimal] = Field(
+        None,
+        description="Annual inflation rate (in %)",
         ge=MIN_PROJECTION_RATE,
         le=MAX_PROJECTION_RATE
     )

@@ -4,31 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/fro
 import { Label } from "@/frontend/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select"
 import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatNumber, formatCurrency, formatDate } from "@/frontend/lib/transforms"
-import { Slider } from "@/frontend/components/ui/slider"
-import { Separator } from "@/frontend/components/ui/separator"
 import { useEffect, useState } from "react"
-import { Explanation, ExplanationHeader, ExplanationContent, ExplanationList, ExplanationListItem } from "@/frontend/components/ui/explanation"
+import { RateInput } from "@/frontend/components/ui/rate-input"
+import { useTheme } from "next-themes"
+import { Moon, Sun, Laptop } from "lucide-react"
+import { NumberFormatPreview } from "@/frontend/components/settings/number-format-preview"
+import { ProjectionPreview } from "@/frontend/components/settings/projection-preview"
 
 export default function SettingsPage() {
   const { settings, updateSettings, isLoading, error } = useSettings()
+  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const [sliderValues, setSliderValues] = useState({
-    pessimistic: 0,
-    realistic: 0,
-    optimistic: 0
-  })
+  const [rateErrors, setRateErrors] = useState<{[key: string]: string}>({})
 
   // Ensure client-side rendering for preview
   useEffect(() => {
     setMounted(true)
-    // Initialize slider values after mounting
-    setSliderValues({
-      pessimistic: getRate(settings.projection_pessimistic_rate),
-      realistic: getRate(settings.projection_realistic_rate),
-      optimistic: getRate(settings.projection_optimistic_rate)
-    })
-  }, [settings])
+  }, [])
 
   const handleCurrencyChange = (value: string) => {
     updateSettings({ currency: value })
@@ -42,204 +34,199 @@ export default function SettingsPage() {
     updateSettings({ number_locale: value })
   }
 
-  const handleProjectionRateChange = (type: 'pessimistic' | 'realistic' | 'optimistic', value: number[]) => {
-    const rateKey = `projection_${type}_rate` as const
-    setSliderValues(prev => ({ ...prev, [type]: value[0] }))
-    updateSettings({ [rateKey]: value[0] })
+  const validateRateRelationships = (
+    type: 'pessimistic' | 'realistic' | 'optimistic',
+    newValue: number
+  ): boolean => {
+    // Create a temporary object with the new value
+    const updatedValues = {
+      pessimistic: type === 'pessimistic' ? newValue : settings.projection_pessimistic_rate,
+      realistic: type === 'realistic' ? newValue : settings.projection_realistic_rate,
+      optimistic: type === 'optimistic' ? newValue : settings.projection_optimistic_rate
+    }
+
+    if (type === 'pessimistic' && updatedValues.pessimistic > updatedValues.realistic) {
+      setRateErrors({
+        ...rateErrors,
+        pessimistic: 'Pessimistic rate cannot be higher than realistic rate'
+      })
+      return false
+    }
+
+    if (type === 'realistic') {
+      if (updatedValues.realistic < updatedValues.pessimistic) {
+        setRateErrors({
+          ...rateErrors,
+          realistic: 'Realistic rate cannot be lower than pessimistic rate'
+        })
+        return false
+      }
+      if (updatedValues.realistic > updatedValues.optimistic) {
+        setRateErrors({
+          ...rateErrors,
+          realistic: 'Realistic rate cannot be higher than optimistic rate'
+        })
+        return false
+      }
+    }
+
+    if (type === 'optimistic' && updatedValues.optimistic < updatedValues.realistic) {
+      setRateErrors({
+        ...rateErrors,
+        optimistic: 'Optimistic rate cannot be lower than realistic rate'
+      })
+      return false
+    }
+
+    // Clear errors for the current type if validation passes
+    if (rateErrors[type]) {
+      setRateErrors({
+        ...rateErrors,
+        [type]: ''
+      })
+    }
+
+    return true
   }
 
-  // Ensure rates are numbers
-  const getRate = (rate: number | undefined) => Number(rate ?? 0)
+  const handleProjectionRateChange = (type: 'pessimistic' | 'realistic' | 'optimistic' | 'inflation', value: number) => {
+    if (type === 'inflation') {
+      updateSettings({ inflation_rate: value })
+      return
+    }
 
-  // Example values for preview
-  const previewNumber = 1234567.89
-  const previewDate = new Date("2024-02-23") // Use a fixed date to avoid hydration issues
-  const previewProjection = {
-    currentValue: 100000,
-    monthlyContribution: 1000,
-    yearsToRetirement: 30
+    // Validate rate relationships before updating
+    if (validateRateRelationships(type, value)) {
+      const rateKey = `projection_${type}_rate` as const
+      updateSettings({ [rateKey]: value })
+    }
   }
 
-  // Render preview content only after client-side hydration
+  // Replace renderPreview with NumberFormatPreview component
   const renderPreview = () => {
+    if (!mounted) return null
+    return (
+      <NumberFormatPreview
+        locale={settings.number_locale}
+        currency={settings.currency}
+      />
+    )
+  }
+
+  // Replace renderProjectionPreview with ProjectionPreview component
+  const renderProjectionPreview = () => {
+    if (!mounted) return null
+    return (
+      <ProjectionPreview
+        locale={settings.number_locale}
+        currency={settings.currency}
+        rates={settings}
+      />
+    )
+  }
+
+  // Only render rate inputs after client-side hydration
+  const renderRateInputs = () => {
     if (!mounted) return null
 
     return (
-      <div className="mt-6 p-4 bg-muted rounded-lg space-y-2">
-        <h4 className="font-medium mb-3">Preview</h4>
-        <div className="grid gap-2 text-sm">
+      <div>
+        <div>
+          <RateInput
+            label="Inflation Rate"
+            value={settings.inflation_rate}
+            onChange={(value) => handleProjectionRateChange('inflation', value)}
+            min={0}
+            max={10}
+            step={0.1}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           <div>
-            <span className="text-muted-foreground mr-2">Number:</span>
-            {formatNumber(previewNumber, { locale: settings.number_locale }).formatted}
+            <RateInput
+              label="Pessimistic Scenario Return Rate"
+              value={settings.projection_pessimistic_rate}
+              onChange={(value) => handleProjectionRateChange('pessimistic', value)}
+              min={0}
+              max={15}
+              step={0.1}
+              disabled={isLoading}
+              error={rateErrors.pessimistic}
+            />
           </div>
+
           <div>
-            <span className="text-muted-foreground mr-2">Currency:</span>
-            {formatCurrency(previewNumber, {
-              locale: settings.number_locale,
-              currency: settings.currency
-            }).formatted}
+            <RateInput
+              label="Realistic Scenario Return Rate"
+              value={settings.projection_realistic_rate}
+              onChange={(value) => handleProjectionRateChange('realistic', value)}
+              min={0}
+              max={15}
+              step={0.1}
+              disabled={isLoading}
+              error={rateErrors.realistic}
+            />
           </div>
+
           <div>
-            <span className="text-muted-foreground mr-2">Date:</span>
-            {formatDate(previewDate, { locale: settings.number_locale }).formatted}
+            <RateInput
+              label="Optimistic Scenario Return Rate"
+              value={settings.projection_optimistic_rate}
+              onChange={(value) => handleProjectionRateChange('optimistic', value)}
+              min={0}
+              max={15}
+              step={0.1}
+              disabled={isLoading}
+              error={rateErrors.optimistic}
+            />
           </div>
         </div>
       </div>
     )
   }
 
-  // Render projection preview content only after client-side hydration
-  const renderProjectionPreview = () => {
-    if (!mounted) return null
-
-    return (
-      <>
-      <Explanation>
-        <ExplanationHeader>Understanding Projection Rates</ExplanationHeader>
-        <ExplanationContent>
-          <p>
-            These rates are used to calculate potential future values of your investments
-            across different market scenarios.
-          </p>
-          <ExplanationList>
-            <ExplanationListItem>
-              Pessimistic: Conservative estimate for challenging market conditions
-            </ExplanationListItem>
-            <ExplanationListItem>
-              Realistic: Moderate estimate based on historical averages
-            </ExplanationListItem>
-            <ExplanationListItem>
-              Optimistic: Higher estimate for favorable market conditions
-            </ExplanationListItem>
-          </ExplanationList>
-        </ExplanationContent>
-
-        <ExplanationHeader>Example Portfolio</ExplanationHeader>
-        <ExplanationContent>
-          <div className="space-y-2">
-            <div>
-              <span className="text-muted-foreground">Current Value:</span>
-              <div className="font-medium">
-                {formatCurrency(previewProjection.currentValue, {
-                  locale: settings.number_locale,
-                  currency: settings.currency
-                }).formatted}
-              </div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Monthly Contribution:</span>
-              <div className="font-medium">
-                {formatCurrency(previewProjection.monthlyContribution, {
-                  locale: settings.number_locale,
-                  currency: settings.currency
-                }).formatted}
-              </div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Time Horizon:</span>
-              <div className="font-medium">{previewProjection.yearsToRetirement} years</div>
-            </div>
-          </div>
-        </ExplanationContent>
-
-        <ExplanationHeader>Projected Outcomes</ExplanationHeader>
-        <ExplanationContent>
-          <div className="space-y-2">
-            <div>
-              <span className="text-muted-foreground">Pessimistic Scenario:</span>
-              <div className="font-medium">
-                {formatCurrency(calculateProjection(previewProjection, sliderValues.pessimistic), {
-                  locale: settings.number_locale,
-                  currency: settings.currency
-                }).formatted}
-              </div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Realistic Scenario:</span>
-              <div className="font-medium">
-                {formatCurrency(calculateProjection(previewProjection, sliderValues.realistic), {
-                  locale: settings.number_locale,
-                  currency: settings.currency
-                }).formatted}
-              </div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Optimistic Scenario:</span>
-              <div className="font-medium">
-                {formatCurrency(calculateProjection(previewProjection, sliderValues.optimistic), {
-                  locale: settings.number_locale,
-                  currency: settings.currency
-                }).formatted}
-              </div>
-            </div>
-          </div>
-        </ExplanationContent>
-        </Explanation>
-      </>
-    )
-  }
-
-  // Only render sliders after client-side hydration
-  const renderSliders = () => {
+  // Render theme preview
+  const renderThemePreview = () => {
     if (!mounted) return null
 
     return (
       <div className="space-y-6">
-        <div className="space-y-4">
-          <Label>Pessimistic Scenario Return Rate</Label>
-          <div className="flex items-center space-x-4">
-            <Slider
-              value={[sliderValues.pessimistic]}
-              onValueChange={(value) => handleProjectionRateChange('pessimistic', value)}
-              min={0}
-              max={15}
-              step={0.1}
-              className="flex-1"
-              disabled={isLoading}
-            />
-            <span className="w-16 text-right">
-              {sliderValues.pessimistic.toFixed(1)}%
-            </span>
+        <div className="grid grid-cols-3 gap-4">
+          <div 
+            className={`p-2 rounded-lg border cursor-pointer transition-colors ${
+              theme === 'light' ? 'bg-primary/10 border-primary' : 'bg-card border-border hover:border-primary/50'
+            }`}
+            onClick={() => setTheme('light')}
+          >
+            <div className="flex items-center justify-center mb-2">
+              <Sun className="h-4 w-4" />
+            </div>
+            <p className="text-xs font-medium text-center">Light</p>
           </div>
-        </div>
 
-        <Separator />
-
-        <div className="space-y-4">
-          <Label>Realistic Scenario Return Rate</Label>
-          <div className="flex items-center space-x-4">
-            <Slider
-              value={[sliderValues.realistic]}
-              onValueChange={(value) => handleProjectionRateChange('realistic', value)}
-              min={0}
-              max={15}
-              step={0.1}
-              className="flex-1"
-              disabled={isLoading}
-            />
-            <span className="w-16 text-right">
-              {sliderValues.realistic.toFixed(1)}%
-            </span>
+          <div 
+            className={`p-2 rounded-lg border cursor-pointer transition-colors ${
+              theme === 'dark' ? 'bg-primary/10 border-primary' : 'bg-card border-border hover:border-primary/50'
+            }`}
+            onClick={() => setTheme('dark')}
+          >
+            <div className="flex items-center justify-center mb-2">
+              <Moon className="h-4 w-4" />
+            </div>
+            <p className="text-xs font-medium text-center">Dark</p>
           </div>
-        </div>
 
-        <Separator />
-
-        <div className="space-y-4">
-          <Label>Optimistic Scenario Return Rate</Label>
-          <div className="flex items-center space-x-4">
-            <Slider
-              value={[sliderValues.optimistic]}
-              onValueChange={(value) => handleProjectionRateChange('optimistic', value)}
-              min={0}
-              max={15}
-              step={0.1}
-              className="flex-1"
-              disabled={isLoading}
-            />
-            <span className="w-16 text-right">
-              {sliderValues.optimistic.toFixed(1)}%
-            </span>
+          <div 
+            className={`p-2 rounded-lg border cursor-pointer transition-colors ${
+              theme === 'system' ? 'bg-primary/10 border-primary' : 'bg-card border-border hover:border-primary/50'
+            }`}
+            onClick={() => setTheme('system')}
+          >
+            <div className="flex items-center justify-center mb-2">
+              <Laptop className="h-4 w-4" />
+            </div>
+            <p className="text-xs font-medium text-center">System</p>
           </div>
         </div>
       </div>
@@ -248,7 +235,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground mt-2">
@@ -263,115 +250,133 @@ export default function SettingsPage() {
         </div>
       )}
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Preferences</CardTitle>
-          <CardDescription>Manage your app preferences</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="ui-locale">Interface Language</Label>
-              <Select
-                value={settings.ui_locale}
-                onValueChange={handleUILocaleChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en-US">English (US)</SelectItem>
-                  <SelectItem value="en-GB">English (UK)</SelectItem>
-                  <SelectItem value="de-DE">Deutsch</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="number-locale">Number & Date Format</Label>
-              <Select
-                value={settings.number_locale}
-                onValueChange={handleNumberLocaleChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Format" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en-US">123,456.78 | 02/23/2024</SelectItem>
-                  <SelectItem value="en-GB">123,456.78 | 23/02/2024</SelectItem>
-                  <SelectItem value="de-DE">123.456,78 | 23.02.2024</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="currency">Default Currency</Label>
-              <Select
-                value={settings.currency}
-                onValueChange={handleCurrencyChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                  <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                  <SelectItem value="GBP">British Pound (GBP)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {renderPreview()}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-12 gap-6">
-        {/* Left column (8) - Form elements */}
-        <div className="col-span-8">
+      {/* Language Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+        <div className="lg:col-span-8">
           <Card>
             <CardHeader>
-              <CardTitle>Investment Projections</CardTitle>
-              <CardDescription>Configure return rate scenarios for investment projections</CardDescription>
+              <CardTitle>Language Settings</CardTitle>
+              <CardDescription>Choose your preferred language and formats</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {renderSliders()}
+              <div className="space-y-4">
+                <div>
+                <div className="mb-2">
+                  <Label htmlFor="ui-locale">Interface Language</Label>
+                  </div>
+                  <Select
+                    value={settings.ui_locale}
+                    onValueChange={handleUILocaleChange}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="w-[280px]">
+                      <SelectValue placeholder="Select Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en-US">English (US)</SelectItem>
+                      <SelectItem value="en-GB">English (UK)</SelectItem>
+                      <SelectItem value="de-DE">Deutsch</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        {/* Right column (4) - Preview and help */}
-        <div className="col-span-4">
+      {/* Number & Currency Format */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+        <div className="lg:col-span-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Number & Currency Format</CardTitle>
+              <CardDescription>Configure how numbers, dates, and currency values are displayed</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                <div className="mb-2">
+                  <Label htmlFor="number-locale">Number & Date Format</Label>
+                  </div>
+                  <Select
+                    value={settings.number_locale}
+                    onValueChange={handleNumberLocaleChange}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="w-[280px]">
+                      <SelectValue placeholder="Select Format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en-US">123,456.78 | 02/23/2024</SelectItem>
+                      <SelectItem value="en-GB">123,456.78 | 23/02/2024</SelectItem>
+                      <SelectItem value="de-DE">123.456,78 | 23.02.2024</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <div className="mb-2">
+                    <Label htmlFor="currency">Default Currency</Label>
+                  </div>
+                  <Select
+                    value={settings.currency}
+                    onValueChange={handleCurrencyChange}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="w-[280px]">
+                      <SelectValue placeholder="Select Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                      <SelectItem value="GBP">British Pound (GBP)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-4">
+              {renderPreview()}
+        </div>
+      </div>
+
+      {/* Investment Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+        <div className="lg:col-span-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Investment Projections</CardTitle>
+              <CardDescription>Configure return rate scenarios and inflation for investment projections</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {renderRateInputs()}
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-4">
           {renderProjectionPreview()}
+        </div>
+      </div>
+
+      {/* Theme Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+        <div className="lg:col-span-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme Settings</CardTitle>
+              <CardDescription>Choose your preferred color theme</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderThemePreview()}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   )
-}
-
-// Helper function to calculate projection (simplified for preview)
-interface ProjectionParams {
-  currentValue: number
-  monthlyContribution: number
-  yearsToRetirement: number
-}
-
-function calculateProjection(
-  { currentValue, monthlyContribution, yearsToRetirement }: ProjectionParams,
-  annualRate: number
-): number {
-  const monthlyRate = annualRate / 100 / 12
-  const months = yearsToRetirement * 12
-  
-  // Future value of current principal
-  const futureValue = currentValue * Math.pow(1 + monthlyRate, months)
-  
-  // Future value of monthly contributions
-  const contributionValue = monthlyContribution * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate)
-  
-  return futureValue + contributionValue
 }
 

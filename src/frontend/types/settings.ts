@@ -13,6 +13,7 @@ export interface Settings {
   projection_pessimistic_rate: number;
   projection_realistic_rate: number;
   projection_optimistic_rate: number;
+  inflation_rate: number;
   created_at: string;
   updated_at: string;
 }
@@ -27,6 +28,7 @@ export interface SettingsUpdate {
   projection_pessimistic_rate?: number;
   projection_realistic_rate?: number;
   projection_optimistic_rate?: number;
+  inflation_rate?: number;
 }
 
 /**
@@ -39,6 +41,7 @@ export interface FrontendSettings extends Omit<Settings, 'id' | 'created_at' | '
   projection_pessimistic_rate: number;
   projection_realistic_rate: number;
   projection_optimistic_rate: number;
+  inflation_rate: number;
 }
 
 /**

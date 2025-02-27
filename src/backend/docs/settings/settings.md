@@ -91,6 +91,10 @@ class Settings(Base):
     ui_locale: str  # Default: "en-US"
     number_locale: str  # Default: "en-US"
     currency: str  # Default: "USD"
+    inflation_rate: Decimal  # Default: 2.0
+    projection_pessimistic_rate: Decimal  # Default: 2.0
+    projection_realistic_rate: Decimal  # Default: 5.0
+    projection_optimistic_rate: Decimal  # Default: 8.0
     created_at: datetime
     updated_at: datetime
 ```
@@ -112,7 +116,66 @@ class SettingsBase(BaseModel):
         min_length=3,
         max_length=3
     )
+    inflation_rate: Decimal = Field(
+        default=Decimal("2.0"),
+        description="Annual inflation rate (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    projection_pessimistic_rate: Decimal = Field(
+        default=Decimal("2.0"),
+        description="Annual return rate for pessimistic scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    projection_realistic_rate: Decimal = Field(
+        default=Decimal("5.0"),
+        description="Annual return rate for realistic scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    projection_optimistic_rate: Decimal = Field(
+        default=Decimal("8.0"),
+        description="Annual return rate for optimistic scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
 ```
+
+### Response Example
+```json
+{
+    "id": 1,
+    "ui_locale": "en-US",
+    "number_locale": "de-DE",
+    "currency": "EUR",
+    "inflation_rate": 2.0,
+    "projection_pessimistic_rate": 2.0,
+    "projection_realistic_rate": 5.0,
+    "projection_optimistic_rate": 8.0,
+    "created_at": "2024-03-21T10:00:00Z",
+    "updated_at": "2024-03-21T10:00:00Z"
+}
+```
+
+### Validation Rules
+
+1. **Locale Format**
+   - Must match pattern: `xx-XX` (e.g., "en-US", "de-DE")
+   - Must be in supported locales list
+   - Examples: "en-US", "en-GB", "de-DE"
+
+2. **Currency Format**
+   - Must be exactly 3 characters
+   - Must be in supported currencies list
+   - Examples: "USD", "EUR", "GBP"
+
+3. **Rate Validation**
+   - All rates must be between MIN_PROJECTION_RATE and MAX_PROJECTION_RATE
+   - Pessimistic rate must be less than or equal to realistic rate
+   - Realistic rate must be less than or equal to optimistic rate
+   - Inflation rate must be non-negative
+   - All rates are stored with 4 decimal places precision
 
 ## Usage Examples
 
@@ -165,6 +228,13 @@ Common error codes:
    - Must be exactly 3 characters
    - Must be in supported currencies list
    - Examples: "USD", "EUR", "GBP"
+
+3. **Rate Validation**
+   - All rates must be between MIN_PROJECTION_RATE and MAX_PROJECTION_RATE
+   - Pessimistic rate must be less than or equal to realistic rate
+   - Realistic rate must be less than or equal to optimistic rate
+   - Inflation rate must be non-negative
+   - All rates are stored with 4 decimal places precision
 
 ## Best Practices
 

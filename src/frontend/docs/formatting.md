@@ -267,4 +267,124 @@ All formatting functions include comprehensive error handling:
 4. **Performance**
    - Cache separator values
    - Minimize state updates
-   - Use memoization where appropriate 
+   - Use memoization where appropriate
+
+## Components
+
+### RateInput
+```typescript
+interface RateInputProps {
+  label: string
+  value: number | string
+  onChange: (value: number) => void
+  min?: number
+  max?: number
+  step?: number
+  disabled?: boolean
+  error?: string
+}
+```
+
+A reusable input component for rate values with increment/decrement buttons.
+
+**Features**
+- Numeric input with percentage formatting
+- Increment/decrement buttons
+- Min/max value constraints
+- Step size customization
+- Error state handling
+- Disabled state support
+
+**Example**
+```typescript
+<RateInput
+  label="Inflation Rate"
+  value={2.5}
+  onChange={(value) => handleRateChange(value)}
+  min={0}
+  max={10}
+  step={0.1}
+/>
+```
+
+### ProjectionPreview
+```typescript
+interface ProjectionPreviewProps {
+  locale: string
+  currency: string
+  rates: {
+    inflation_rate: number | string
+    projection_pessimistic_rate: number | string
+    projection_realistic_rate: number | string
+    projection_optimistic_rate: number | string
+  }
+}
+```
+
+A component that displays investment projections based on different scenarios.
+
+**Features**
+- Displays nominal and inflation-adjusted values
+- Supports multiple projection scenarios
+- Locale-aware number formatting
+- Currency formatting
+- Real-time updates
+
+**Example**
+```typescript
+<ProjectionPreview
+  locale="de-DE"
+  currency="EUR"
+  rates={{
+    inflation_rate: 2.0,
+    projection_pessimistic_rate: 2.0,
+    projection_realistic_rate: 5.0,
+    projection_optimistic_rate: 8.0
+  }}
+/>
+```
+
+### Projection Calculations
+
+#### calculateProjection
+```typescript
+interface ProjectionParams {
+  currentValue: number
+  monthlyContribution: number
+  yearsToRetirement: number
+}
+
+function calculateProjection(
+  params: ProjectionParams,
+  annualRate: number,
+  inflationRate: number = 0
+): number
+```
+
+Calculates future investment value based on given parameters.
+
+**Features**
+- Compound interest calculation
+- Monthly contribution compounding
+- Inflation adjustment
+- Handles both nominal and real returns
+
+**Example**
+```typescript
+const projection = calculateProjection(
+  {
+    currentValue: 100000,
+    monthlyContribution: 1000,
+    yearsToRetirement: 30
+  },
+  5.0,  // 5% annual return
+  2.0   // 2% inflation
+);
+```
+
+**Formula**
+1. Monthly rate = Annual rate / 12 / 100
+2. Future value of current principal = Principal * (1 + monthly_rate)^months
+3. Future value of contributions = Monthly * ((1 + monthly_rate)^months - 1) / monthly_rate
+4. Total nominal value = Principal future value + Contributions future value
+5. Real value = Nominal value / (1 + monthly_inflation_rate)^months 

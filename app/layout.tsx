@@ -30,8 +30,8 @@ export default function RootLayout({
           >
             <SidebarProvider>
               <AppSidebar />
-              <main className="ml-[50px] min-h-screen px-8">     
-                <div className="mx-auto h-full w-full max-w-[1440px] py-8">
+              <main className="ml-[50px] min-h-screen">     
+                <div style={{ width: '1280px' }} className="px-8 py-8 bg-blue-500">
                   {children}
                 </div>
               </main>

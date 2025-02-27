@@ -43,7 +43,7 @@ interface ExplanationStatsProps extends React.HTMLAttributes<HTMLDivElement> {
 interface ExplanationStatProps extends React.HTMLAttributes<HTMLDivElement> {
   icon?: LucideIcon
   label: string
-  value: string | number
+  value?: string | number
   subValue?: string | number
   subLabel?: string
   valueClassName?: string
@@ -164,7 +164,7 @@ function ExplanationStat({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <p className={cn(
-                        "text-sm font-medium leading-none opacity-80 cursor-help",
+                        "text-sm font-medium leading-none opacity-80 cursor-default",
                         subValueClassName
                       )}>
                         {subValue}

@@ -12,6 +12,7 @@ const defaultSettings: FrontendSettings = {
   projection_pessimistic_rate: 4.0,
   projection_realistic_rate: 6.0,
   projection_optimistic_rate: 8.0,
+  inflation_rate: 2.0,
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
@@ -56,6 +57,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         projection_pessimistic_rate: response.projection_pessimistic_rate,
         projection_realistic_rate: response.projection_realistic_rate,
         projection_optimistic_rate: response.projection_optimistic_rate,
+        inflation_rate: response.inflation_rate,
       }
       setState({ data: settings, isLoading: false, error: null })
       saveSettingsToStorage(settings)
@@ -89,6 +91,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         projection_pessimistic_rate: updatedSettings.projection_pessimistic_rate,
         projection_realistic_rate: updatedSettings.projection_realistic_rate,
         projection_optimistic_rate: updatedSettings.projection_optimistic_rate,
+        inflation_rate: updatedSettings.inflation_rate,
       }
       
       setState({ data: settings, isLoading: false, error: null })
