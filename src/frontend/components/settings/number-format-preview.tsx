@@ -15,7 +15,7 @@ export function NumberFormatPreview({ locale, currency }: NumberFormatPreviewPro
   return (
     <Explanation>
         <ExplanationHeader>Format Preview</ExplanationHeader>
-      <div className="mt-4 space-y-0">
+      <div className="space-y-2">
         <ExplanationStats>
           <ExplanationStat
             label="Number"

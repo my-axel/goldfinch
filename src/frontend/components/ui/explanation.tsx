@@ -54,7 +54,7 @@ interface ExplanationStatProps extends React.HTMLAttributes<HTMLDivElement> {
 function Explanation({ className, ...props }: ExplanationProps) {
   return (
     <div
-      className={cn("space-y-4 pl-4", className)}
+      className={cn("space-y-2 pl-4", className)}
       {...props}
     />
   )
@@ -66,7 +66,7 @@ function ExplanationHeader({ className, ...props }: ExplanationHeaderProps) {
       className={cn("", className)}
       {...props}
     >
-      <h4 className="text-muted-foreground font-medium mb-2">{props.children}</h4>
+      <h4 className="text-muted-foreground font-medium">{props.children}</h4>
     </div>
   )
 }

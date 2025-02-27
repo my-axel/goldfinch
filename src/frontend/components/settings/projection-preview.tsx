@@ -75,33 +75,17 @@ export function ProjectionPreview({ locale, currency, rates }: ProjectionPreview
         </p>
       </ExplanationContent>
 
-      <ExplanationHeader>Example Portfolio</ExplanationHeader>
+      <ExplanationHeader>Example</ExplanationHeader>
       <ExplanationContent>
-        <ExplanationStats columns={2}>
-          <ExplanationStat
-            label="Current Value"
-            subValue={formatCurrency(previewProjection.currentValue, {
+        <p>A hypothetical portfolio of {formatCurrency(previewProjection.currentValue, {
               locale,
-              currency
-            }).formatted}
-          />
-          <ExplanationStat
-            label="Monthly Contribution"
-            subValue={formatCurrency(previewProjection.monthlyContribution, {
+              currency,
+              decimals: 0
+            }).formatted} with a monthly contribution of {formatCurrency(previewProjection.monthlyContribution, {
               locale,
-              currency
-            }).formatted}
-          />
-          <ExplanationStat
-            label="Time Horizon"
-            subValue={`${previewProjection.yearsToRetirement} years`}
-          />
-          <ExplanationStat
-            label="Inflation Rate"
-            subValue={`${inflationRate.toFixed(1)}%`}
-            tooltip="The rate at which prices increase over time, reducing the purchasing power of your money."
-          />
-        </ExplanationStats>
+              currency,
+              decimals: 0
+            }).formatted}, a time horizon of {`${previewProjection.yearsToRetirement} years`} years and an inflation rate of {`${inflationRate.toFixed(1)}%`}.</p>
       </ExplanationContent>
 
       <ExplanationHeader>Projected Outcomes</ExplanationHeader>
