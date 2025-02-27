@@ -10,6 +10,14 @@ import { ContributionStep, ContributionFrequency } from '../types/pension'
 import { differenceInMonths } from 'date-fns'
 
 /**
+ * Utility functions for calculating retirement projections with different scenarios.
+ * These functions handle the core calculation logic for pension projections,
+ * including monthly compounding, contribution management, and scenario calculations.
+ * 
+ * @module projection-utils
+ */
+
+/**
  * Helper function to determine if a contribution should be made on a specific date
  * based on the contribution step's frequency and date range.
  */
@@ -60,8 +68,22 @@ function getContributionForDate(date: Date, steps: ContributionStep[]): number {
  * This is an optimized version for calculating one scenario at a time,
  * useful when we need to calculate scenarios independently or in parallel.
  * 
+ * Features:
+ * - Monthly compounding of returns
+ * - Variable contribution steps
+ * - Historical contribution tracking
+ * - Accumulated contributions calculation
+ * 
  * @param params Configuration parameters for the projection calculation
- * @returns ProjectionScenario containing the calculated projection data
+ * @param {number} params.initialValue - Starting value for the projection
+ * @param {ContributionStep[]} params.contributionSteps - Array of planned contribution steps
+ * @param {number} params.annualReturnRate - Annual return rate as a percentage
+ * @param {Date} params.startDate - Start date for the projection
+ * @param {Date} params.endDate - End date for the projection
+ * @param {ScenarioType} params.scenarioType - Type of scenario (pessimistic/realistic/optimistic)
+ * @param {Array<{date: string, amount: number}>} [params.historicalContributions] - Optional historical contributions
+ * 
+ * @returns {ProjectionScenario} Calculated projection data including data points and metrics
  */
 export function calculateSingleScenarioProjection(params: {
   initialValue: number;
@@ -136,8 +158,49 @@ export function calculateSingleScenarioProjection(params: {
  * Calculates all three scenarios (pessimistic, realistic, optimistic) in a single pass
  * for better performance. This is the preferred method when calculating multiple scenarios.
  * 
- * @param params Configuration parameters for the combined scenario calculations
- * @returns CombinedScenariosOutput containing all scenarios and metadata
+ * Performance Optimizations:
+ * - Single loop for all scenarios
+ * - Shared date calculations
+ * - Optimized memory usage with single data structure
+ * - Performance monitoring with detailed metrics
+ * 
+ * Features:
+ * - Monthly compounding for all scenarios
+ * - Shared contribution calculations
+ * - Historical contribution tracking
+ * - Performance metrics collection
+ * 
+ * @param {CombinedScenariosInput} params - Configuration parameters for all scenarios
+ * @param {number} params.initialValue - Starting value for projections
+ * @param {ContributionStep[]} params.contributionSteps - Array of planned contribution steps
+ * @param {Object} params.rates - Return rates for each scenario
+ * @param {number} params.rates.pessimistic - Annual return rate for pessimistic scenario
+ * @param {number} params.rates.realistic - Annual return rate for realistic scenario
+ * @param {number} params.rates.optimistic - Annual return rate for optimistic scenario
+ * @param {Date} params.startDate - Start date for projections
+ * @param {Date} params.endDate - End date for projections
+ * @param {ContributionHistoryResponse[]} params.historicalContributions - Historical contributions
+ * 
+ * @returns {CombinedScenariosOutput} Object containing all scenarios and calculation metadata
+ * 
+ * @example
+ * ```typescript
+ * const result = calculateCombinedScenarios({
+ *   initialValue: 10000,
+ *   contributionSteps: [{ amount: 500, startDate: '2024-01' }],
+ *   rates: {
+ *     pessimistic: 2,
+ *     realistic: 5,
+ *     optimistic: 8
+ *   },
+ *   startDate: new Date(),
+ *   endDate: new Date('2050-01-01'),
+ *   historicalContributions: []
+ * });
+ * 
+ * console.log(result.scenarios.realistic.finalValue);
+ * console.log(result.metadata.totalCalculationTime);
+ * ```
  */
 export function calculateCombinedScenarios(params: CombinedScenariosInput): CombinedScenariosOutput {
   const {

@@ -15,6 +15,8 @@ export const BASE_ROUTES = {
     PENSION: '/pension',
     HOUSEHOLD: '/household',
     DASHBOARD: '/dashboard',
-    SETTINGS: '/settings'
+    SETTINGS: '/settings',
+    PENSION_HEALTH: '/pension-health',
+    PAYOUT_STRATEGY: '/payout-strategy'
   }
 } as const 

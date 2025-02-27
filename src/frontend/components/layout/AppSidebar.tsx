@@ -2,7 +2,7 @@
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/frontend/components/ui/tooltip"
 import Link from "next/link"
-import { Users, PiggyBank, Settings, LayoutDashboard } from "lucide-react"
+import { Users, PiggyBank, Settings, LayoutDashboard, Heart, Wallet } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -19,6 +19,8 @@ const navItems = [
   { name: "Dashboard", href: BASE_ROUTES.PAGES.HOME, icon: LayoutDashboard },
   { name: "Household", href: BASE_ROUTES.PAGES.HOUSEHOLD, icon: Users },
   { name: "Pension", href: BASE_ROUTES.PAGES.PENSION, icon: PiggyBank },
+  { name: "Pension Health", href: BASE_ROUTES.PAGES.PENSION_HEALTH, icon: Heart },
+  { name: "Payout Strategy", href: BASE_ROUTES.PAGES.PAYOUT_STRATEGY, icon: Wallet },
 ]
 
 export const AppSidebar = () => {  

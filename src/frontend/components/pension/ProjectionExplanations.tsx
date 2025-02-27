@@ -1,7 +1,7 @@
 "use client"
 
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatNumber } from "@/frontend/lib/transforms"
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 import {
   Explanation,
   ExplanationHeader,
@@ -10,65 +10,81 @@ import {
   ExplanationList,
   ExplanationListItem
 } from "@/frontend/components/ui/explanation"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from "@/frontend/components/ui/collapsible"
+import { Button } from "@/frontend/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export function ProjectionExplanations() {
-  const { settings } = useSettings()
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
     <Explanation>
-      <div>
-        <ExplanationHeader>Return Rate Scenarios</ExplanationHeader>
-        <ExplanationContent>
-          <p>
-            <span className="font-semibold">Pessimistic ({formatNumber(settings.projection_pessimistic_rate, { decimals: 2 }).formatted}%):</span>{" "}
-            Assumes lower market returns, representing conservative growth during challenging market conditions.
-          </p>
-          <p>
-            <span className="font-semibold">Realistic ({formatNumber(settings.projection_realistic_rate, { decimals: 2 }).formatted}%):</span>{" "}
-            Based on historical average market returns, representing a balanced growth scenario.
-          </p>
-          <p>
-            <span className="font-semibold">Optimistic ({formatNumber(settings.projection_optimistic_rate, { decimals: 2 }).formatted}%):</span>{" "}
-            Assumes higher market returns, representing strong growth during favorable market conditions.
-          </p>
-        </ExplanationContent>
-      </div>
+      <div className="space-y-4">
+        {/* Summary Section - Always Visible */}
+        <ExplanationAlert>
+          These projections are estimates based on consistent return rates. 
+          Actual returns will vary year to year.
+        </ExplanationAlert>
 
-      <div>
-        <ExplanationHeader>Calculation Method</ExplanationHeader>
-        <ExplanationContent>
-          <p>
-            Projections are calculated using compound interest with regular contributions. 
-            The model takes into account your current portfolio value, planned monthly 
-            contributions from the form data, and the selected return rates for each scenario.
-          </p>
-        </ExplanationContent>
-      </div>
+        {/* Expandable Detailed Section */}
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <div className={cn(
+            "rounded-lg transition-colors",
+            isOpen && "bg-muted"
+          )}>
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className={cn(
+                  "flex w-full justify-between p-4 font-normal hover:bg-transparent",
+                  isOpen && "border-b border-border"
+                )}
+              >
+                <span className="font-semibold opacity-80">
+                  {isOpen ? "Show Less Details" : "Show More Details"}
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </Button>
+            </CollapsibleTrigger>
 
-      <ExplanationAlert>
-        These projections are estimates based on consistent return rates. 
-        Actual returns will vary year to year and may be higher or lower 
-        than the projected values.
-      </ExplanationAlert>
+            <CollapsibleContent className="p-4 space-y-4">
+              <div>
+                <ExplanationHeader>Calculation Method</ExplanationHeader>
+                <ExplanationContent>
+                  <p>
+                    Projections are calculated using compound interest with regular contributions. 
+                    The model takes into account your current portfolio value, planned monthly 
+                    contributions from the form data, and the selected return rates for each scenario.
+                  </p>
+                </ExplanationContent>
+              </div>
 
-      <div>
-        <ExplanationHeader>How to Use This Information</ExplanationHeader>
-        <ExplanationList>
-          <ExplanationListItem>
-            Use the realistic scenario as your baseline for planning
-          </ExplanationListItem>
-          <ExplanationListItem>
-            Consider the pessimistic scenario for conservative planning
-          </ExplanationListItem>
-          <ExplanationListItem>
-            The optimistic scenario shows potential upside but shouldn&apos;t be 
-            relied upon for primary planning
-          </ExplanationListItem>
-          <ExplanationListItem>
-            Regularly review and adjust your contribution strategy based on 
-            actual performance
-          </ExplanationListItem>
-        </ExplanationList>
+              <div>
+                <ExplanationHeader>How to Use This Information</ExplanationHeader>
+                <ExplanationList>
+                  <ExplanationListItem>
+                    Use the realistic scenario as your baseline for planning
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    Consider the pessimistic scenario for conservative planning
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    The optimistic scenario shows potential upside but shouldn&apos;t be 
+                    relied upon for primary planning
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    Regularly review and adjust your contribution strategy based on 
+                    actual performance
+                  </ExplanationListItem>
+                </ExplanationList>
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
       </div>
     </Explanation>
   )

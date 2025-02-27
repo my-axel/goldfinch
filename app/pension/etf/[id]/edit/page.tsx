@@ -1,6 +1,6 @@
 "use client"
 
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import { EditETFPensionBasicInformationForm } from "@/frontend/components/pension/form/EditETFPensionBasicInformationForm"
 import { EditETFPensionContributionStepsForm } from "@/frontend/components/pension/form/EditETFPensionContributionStepsForm"
@@ -20,9 +20,10 @@ import {
   CombinedProjectionChart,
   HistoricalPerformanceChart
 } from "@/frontend/components/charts"
-import { ProjectionScenarioKPIs } from "@/frontend/components/pension/ProjectionScenarioKPIs"
 import { ProjectionExplanations } from "@/frontend/components/pension/ProjectionExplanations"
 import { ContributionImpactAnalysis } from "@/frontend/components/pension/ContributionImpactAnalysis"
+import { useProjectionScenarios } from "@/frontend/hooks/useProjectionScenarios"
+import { ProjectionRatesSummary } from "@/frontend/components/pension/ProjectionRatesSummary"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -94,6 +95,41 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
   const member = pension ? members.find(m => m.id === pension.member_id) : null
   const retirementDate = member ? new Date(member.retirement_date_planned) : undefined
 
+  const form = useForm<ETFPensionFormData>({
+    defaultValues: {
+      type: PensionType.ETF_PLAN,
+      name: "",
+      member_id: "",
+      notes: "",
+      etf_id: "",
+      is_existing_investment: false,
+      existing_units: 0,
+      reference_date: new Date(),
+      realize_historical_contributions: false,
+      initialization_method: "none",
+      contribution_plan_steps: []
+    }
+  })
+
+  // Use useWatch to get stable value for contribution_plan_steps
+  const contributionPlanSteps = useWatch({
+    control: form.control,
+    name: "contribution_plan_steps",
+    defaultValue: []
+  })
+
+  // Use the projection scenarios hook with stable contributionPlanSteps
+  const { scenarios } = useProjectionScenarios({
+    historicalData: statistics?.value_history?.map(point => ({
+      date: new Date(point.date),
+      value: parseFloat(point.value.toString()),
+      isProjection: false
+    })) || [],
+    contributionSteps: contributionPlanSteps,
+    retirementDate: retirementDate || new Date(),
+    historicalContributions: statistics?.contribution_history || []
+  })
+
   // Unified loading state
   const loadingState = {
     isPageLoading: isInitialLoading,
@@ -131,22 +167,6 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
 
     loadData()
   }, [pensionId]) // Only depend on pensionId to prevent unnecessary refetches
-
-  const form = useForm<ETFPensionFormData>({
-    defaultValues: {
-      type: PensionType.ETF_PLAN,
-      name: "",
-      member_id: "",
-      notes: "",
-      etf_id: "",
-      is_existing_investment: false,
-      existing_units: 0,
-      reference_date: new Date(),
-      realize_historical_contributions: false,
-      initialization_method: "none",
-      contribution_plan_steps: []
-    }
-  })
 
   // Update form when pension data changes
   useEffect(() => {
@@ -273,7 +293,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                         isProjection: false
                       }))}
                       contributionData={statistics.contribution_history}
-                      contributionSteps={form.watch("contribution_plan_steps")}
+                      contributionSteps={contributionPlanSteps}
                       timeRange={{
                         start: new Date(statistics.value_history[0].date),
                         end: retirementDate || new Date()
@@ -283,14 +303,19 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                     />
                   ) : null}
                 </div>
-                <div className="lg:col-span-4 space-y-6 mt-6">
-                  {!loadingState.isStatisticsLoading && statistics?.scenarios && (
-                    <ProjectionScenarioKPIs
-                      scenarios={statistics.scenarios}
-                      totalContributions={statistics.total_invested_amount}
-                    />
+                <div className="lg:col-span-4 space-y-6">
+                  {!loadingState.isStatisticsLoading && (
+                    <>
+                      <ProjectionRatesSummary
+                        scenarios={scenarios?.scenarios || {
+                          pessimistic: { type: 'pessimistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 2 },
+                          realistic: { type: 'realistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 5 },
+                          optimistic: { type: 'optimistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 8 }
+                        }}
+                      />
+                      <ProjectionExplanations />
+                    </>
                   )}
-                  <ProjectionExplanations />
                 </div>
               </div>
             </div>

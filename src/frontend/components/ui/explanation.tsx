@@ -3,6 +3,12 @@ import { cn } from "@/frontend/lib/utils"
 import { Alert, AlertDescription } from "@/frontend/components/ui/alert"
 import { Info } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/frontend/components/ui/tooltip"
 
 interface ExplanationProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
@@ -30,7 +36,8 @@ interface ExplanationListItemProps extends React.HTMLAttributes<HTMLLIElement> {
 
 interface ExplanationStatsProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
-  columns?: 1 | 2
+  columns?: 1 | 2 | 3
+  style?: React.CSSProperties
 }
 
 interface ExplanationStatProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -41,6 +48,7 @@ interface ExplanationStatProps extends React.HTMLAttributes<HTMLDivElement> {
   subLabel?: string
   valueClassName?: string
   subValueClassName?: string
+  tooltip?: string
 }
 
 function Explanation({ className, ...props }: ExplanationProps) {
@@ -101,14 +109,19 @@ function ExplanationListItem({ className, ...props }: ExplanationListItemProps) 
   )
 }
 
-function ExplanationStats({ className, columns = 1, ...props }: ExplanationStatsProps) {
+function ExplanationStats({ className, columns = 1, style, ...props }: ExplanationStatsProps & { style?: React.CSSProperties }) {
+  // The following comment is used by Tailwind to include these classes in the final CSS: 
+  // grid-cols-1 grid-cols-2 grid-cols-3
+  const colsClass = columns === 1 ? "grid-cols-1" : columns === 2 ? "grid-cols-2" : "grid-cols-3";
+  const gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
   return (
     <div
       className={cn(
-        "grid gap-4",
-        columns === 2 ? "grid-cols-2" : "grid-cols-1",
+        "w-full grid gap-4",
+        colsClass,
         className
       )}
+      style={{ gridTemplateColumns, ...style }}
       {...props}
     />
   )
@@ -122,6 +135,7 @@ function ExplanationStat({
   subLabel,
   valueClassName,
   subValueClassName,
+  tooltip,
   className,
   ...props
 }: ExplanationStatProps) {
@@ -146,12 +160,23 @@ function ExplanationStat({
           {(subValue || subLabel) && (
             <div className="flex items-baseline gap-1.5">
               {subValue && (
-                <p className={cn(
-                  "text-sm font-medium leading-none opacity-80",
-                  subValueClassName
-                )}>
-                  {subValue}
-                </p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className={cn(
+                        "text-sm font-medium leading-none opacity-80 cursor-help",
+                        subValueClassName
+                      )}>
+                        {subValue}
+                      </p>
+                    </TooltipTrigger>
+                    {tooltip && (
+                      <TooltipContent>
+                        <p className="text-sm">{tooltip}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               )}
               {subLabel && (
                 <span className="text-xs text-muted-foreground">{subLabel}</span>

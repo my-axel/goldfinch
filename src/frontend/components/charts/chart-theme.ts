@@ -72,7 +72,7 @@ export const DEFAULT_PROJECTION_COLORS = {
   contributions: "hsl(var(--muted))",
   scenarios: {
     optimistic: "var(--chart-3)",
-    pessimistic: "var(--chart-3)",
-    realistic: "var(--chart-3)"
+    pessimistic: "var(--chart-4)",
+    realistic: "var(--chart-5)"
   }
 } as const

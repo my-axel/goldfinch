@@ -29,7 +29,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/frontend/components/
 import { Button } from "@/frontend/components/ui/button"
 import { Expand, Shrink } from "lucide-react"
 import { useProjectionScenarios } from "@/frontend/hooks/useProjectionScenarios"
-import { Skeleton } from "@/frontend/components/ui/skeleton"
 
 interface CombinedProjectionChartProps {
   data: ProjectionDataPoint[]
@@ -83,11 +82,10 @@ export function CombinedProjectionChart({
   const retirementString = new Date(timeRange.end).toLocaleDateString(settings.number_locale, { month: "short", year: "numeric" });
 
   // Use the new hook for scenario calculations
-  const { scenarios, isCalculating, error } = useProjectionScenarios({
+  const { scenarios } = useProjectionScenarios({
     historicalData: data,
     contributionSteps,
     retirementDate: timeRange.end,
-    settings,
     historicalContributions: contributionData
   })
 
@@ -164,17 +162,6 @@ export function CombinedProjectionChart({
     }
   }, [data, contributionData, settings.number_locale, scenarios]);
 
-  // If there's an error, show it
-  if (error) {
-    return (
-      <ChartErrorBoundary title="Portfolio Value Projection" height={height}>
-        <div className="p-4 text-center text-destructive">
-          Failed to calculate projections: {error.message}
-        </div>
-      </ChartErrorBoundary>
-    );
-  }
-
   // If no data is available, render a fallback message
   if (chartData.length === 0) {
     return (
@@ -218,9 +205,6 @@ export function CombinedProjectionChart({
 
   const chartContent = (
     <div className="w-full" style={{ minHeight: chartHeight }}>
-      {isCalculating ? (
-        <Skeleton className="w-full h-full" />
-      ) : (
         <ResponsiveContainer width="100%" height={chartHeight}>
           <LineChart
             data={chartData}
@@ -461,7 +445,6 @@ export function CombinedProjectionChart({
             />
           </LineChart>
         </ResponsiveContainer>
-      )}
     </div>
   )
 

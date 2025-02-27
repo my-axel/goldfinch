@@ -1,95 +1,115 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useMemo } from 'react'
 import { ProjectionDataPoint } from '@/frontend/types/projection'
 import { ContributionStep, ContributionHistoryResponse } from '@/frontend/types/pension'
 import { calculateCombinedScenarios } from '@/frontend/lib/projection-utils'
+import { useSettings } from "@/frontend/context/SettingsContext"
 
+/**
+ * Input parameters for the useProjectionScenarios hook
+ * @interface ProjectionScenariosInput
+ * @property {ProjectionDataPoint[]} historicalData - Array of historical data points with dates and values
+ * @property {ContributionStep[]} contributionSteps - Array of planned contribution steps
+ * @property {Date} retirementDate - Target retirement date for projections
+ * @property {ContributionHistoryResponse[]} historicalContributions - Array of historical contributions
+ */
 interface ProjectionScenariosInput {
   historicalData: ProjectionDataPoint[]
   contributionSteps: ContributionStep[]
   retirementDate: Date
-  settings: {
-    projection_pessimistic_rate: number
-    projection_realistic_rate: number
-    projection_optimistic_rate: number
-  }
   historicalContributions: ContributionHistoryResponse[]
 }
 
 /**
- * Hook for managing projection scenario calculations with caching and loading states.
- * Uses a single calculation pass for all scenarios to optimize performance.
+ * A React hook that manages projection scenario calculations for retirement planning.
+ * 
+ * This hook provides a simplified interface for calculating and managing multiple projection scenarios
+ * (pessimistic, realistic, and optimistic) based on historical data and future contributions.
+ * It uses memoization to optimize performance and prevent unnecessary recalculations.
+ * 
+ * Key features:
+ * - Synchronous calculations using useMemo for better performance
+ * - Automatic rate management from global settings
+ * - Error handling with try-catch
+ * - Stable calculation inputs to prevent unnecessary recalculations
+ * 
+ * @example
+ * ```tsx
+ * const { scenarios } = useProjectionScenarios({
+ *   historicalData: [...],
+ *   contributionSteps: [...],
+ *   retirementDate: new Date('2050-01-01'),
+ *   historicalContributions: [...]
+ * });
+ * 
+ * // Access scenario data
+ * const finalValue = scenarios?.realistic.finalValue;
+ * const monthlyData = scenarios?.realistic.dataPoints;
+ * ```
+ * 
+ * @param {ProjectionScenariosInput} props - Input parameters for scenario calculations
+ * @returns {{ scenarios: CombinedScenariosOutput | null }} Object containing calculated scenarios or null if calculation fails
  */
 export function useProjectionScenarios({
   historicalData,
   contributionSteps,
   retirementDate,
-  settings,
   historicalContributions
 }: ProjectionScenariosInput) {
-  const [isCalculating, setIsCalculating] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+  const { settings: globalSettings } = useSettings()
 
-  // Get the last historical value for projections
+  /**
+   * Extracts the last historical value for use as the starting point in projections.
+   * Returns 0 if no historical data is available.
+   */
   const lastHistoricalValue = useMemo(() => {
     if (historicalData.length === 0) return 0
     return historicalData[historicalData.length - 1].value
   }, [historicalData])
 
-  // Memoize calculation inputs to prevent unnecessary recalculations
+  /**
+   * Creates a stable start date that won't change during component lifecycle.
+   * This prevents unnecessary recalculations due to date changes.
+   */
+  const startDate = useMemo(() => new Date(), [])
+
+  /**
+   * Memoizes calculation inputs to prevent unnecessary recalculations.
+   * Only updates when relevant inputs change.
+   */
   const calculationInputs = useMemo(() => ({
     initialValue: lastHistoricalValue,
     contributionSteps,
     rates: {
-      pessimistic: settings.projection_pessimistic_rate,
-      realistic: settings.projection_realistic_rate,
-      optimistic: settings.projection_optimistic_rate
+      pessimistic: globalSettings.projection_pessimistic_rate,
+      realistic: globalSettings.projection_realistic_rate,
+      optimistic: globalSettings.projection_optimistic_rate
     },
-    startDate: new Date(),
+    startDate,
     endDate: retirementDate,
     historicalContributions
   }), [
     lastHistoricalValue,
     contributionSteps,
-    settings.projection_pessimistic_rate,
-    settings.projection_realistic_rate,
-    settings.projection_optimistic_rate,
+    globalSettings.projection_pessimistic_rate,
+    globalSettings.projection_realistic_rate,
+    globalSettings.projection_optimistic_rate,
     retirementDate,
-    historicalContributions
+    historicalContributions,
+    startDate
   ])
 
-  // Calculate scenarios with memoization
+  /**
+   * Calculates all scenarios synchronously using memoization.
+   * Returns null if calculation fails.
+   */
   const scenarios = useMemo(() => {
     try {
-      setIsCalculating(true)
-      setError(null)
       return calculateCombinedScenarios(calculationInputs)
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to calculate scenarios'))
+      console.error('Scenario calculation error:', err);
       return null
-    } finally {
-      setIsCalculating(false)
     }
   }, [calculationInputs])
 
-  // Function to force recalculation if needed
-  const recalculate = useCallback(() => {
-    setIsCalculating(true)
-    try {
-      const result = calculateCombinedScenarios(calculationInputs)
-      setError(null)
-      return result
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to calculate scenarios'))
-      return null
-    } finally {
-      setIsCalculating(false)
-    }
-  }, [calculationInputs])
-
-  return {
-    scenarios,
-    isCalculating,
-    error,
-    recalculate
-  }
+  return { scenarios }
 } 
