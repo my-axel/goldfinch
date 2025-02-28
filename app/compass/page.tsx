@@ -24,10 +24,10 @@ export default function CompassPage() {
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-4 space-y-2">
-              <li>Enter your current wage for baseline calculations</li>
-              <li>View your pension gap with real-time updates</li>
-              <li>Automatic integration with household member data</li>
-              <li>Compare with your existing pension plans</li>
+              <li className="font-bold">Enter your current wage for baseline calculations</li>
+              <li className="font-bold">View your pension gap with real-time updates</li>
+              <li className="text-muted-foreground">Automatic integration with household member data</li>
+              <li className="font-bold">Compare with your existing pension plans</li>
             </ul>
           </CardContent>
         </Card>
@@ -41,10 +41,10 @@ export default function CompassPage() {
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-4 space-y-2">
-              <li>Actionable steps to close your pension gap</li>
-              <li>Risk level assessment</li>
-              <li>Savings adjustment recommendations</li>
-              <li>Investment strategy suggestions</li>
+              <li className="font-bold text-red-800/70">Actionable steps to close your pension gap</li>
+              <li className="font-bold">Risk level assessment</li>
+              <li className="font-bold text-red-800/70">Savings adjustment recommendations</li>
+              <li className="text-muted-foreground">Investment strategy suggestions</li>
             </ul>
           </CardContent>
         </Card>
@@ -58,10 +58,10 @@ export default function CompassPage() {
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-4 space-y-2">
-              <li>Adjust retirement age to see immediate impact</li>
-              <li>Toggle between lifestyle scenarios</li>
-              <li>Explore &quot;What if&quot; scenarios</li>
-              <li>View projected timeline visualization</li>
+              <li className="font-bold">Adjust retirement age to see immediate impact</li>
+              <li className="text-muted-foreground">Toggle between lifestyle scenarios</li>
+              <li className="text-muted-foreground">Explore &quot;What if&quot; scenarios</li>
+              <li className="font-bold">View projected timeline visualization</li>
             </ul>
           </CardContent>
         </Card>

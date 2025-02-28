@@ -285,4 +285,57 @@ supervisorctl start all
 3. No high-severity errors in logs
 4. Metrics being collected
 5. Alerts properly configured
-6. Backup systems operational 
+6. Backup systems operational
+
+## Future Considerations
+
+### Scalability
+- Prepare for horizontal scaling
+- Add sharding support
+- Implement read replicas
+- Add load balancing
+
+### Monitoring Setup
+```python
+# Future Prometheus configuration
+scrape_configs:
+  - job_name: 'etf_service'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: '/metrics'
+```
+
+### Application Metrics
+```python
+# Planned metrics implementation
+from prometheus_client import Counter, Histogram, Gauge
+
+# Define metrics
+ETF_UPDATES = Counter('etf_updates_total', 'Total number of ETF updates')
+UPDATE_DURATION = Histogram('etf_update_duration_seconds', 'Time spent updating ETF data')
+ACTIVE_UPDATES = Gauge('etf_active_updates', 'Number of ongoing ETF updates')
+```
+
+### Alerting Rules
+```yaml
+# Future alerting configuration
+groups:
+  - name: etf_service
+    rules:
+      - alert: HighErrorRate
+        expr: rate(etf_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High ETF update error rate
+
+      - alert: UpdateStuck
+        expr: etf_active_updates > 0 and time() - etf_last_update_timestamp > 3600
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: ETF update process stuck
+``` 
