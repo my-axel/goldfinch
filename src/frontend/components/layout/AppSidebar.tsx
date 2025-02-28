@@ -29,15 +29,13 @@ export const AppSidebar = () => {
       <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
               <Image 
-                  src="/goldfinch_logo.jpg" 
+                  src="/goldfinch-high-resolution-logo-only-transparent.svg" 
                   alt="Goldfinch Logo" 
                   className="logo"
-                  width={72}
-                  height={72}
-                  style={{ width: 72, height: 72 }}
-                  unoptimized
+                  width={50}
+                  height={50}
               />
-              <h2 className="group-data-[collapsible=icon]:hidden text-2xl font-bold">Goldfinch</h2>
+              <h2 className="text-3xl ml-1">Goldfinch</h2>
           </div>
       </SidebarHeader>
       <SidebarContent>

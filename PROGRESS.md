@@ -11,25 +11,27 @@
    - Blocking Dashboard implementation
    - Next: Implement contribution management
 
-2. 🔥 **Dashboard Core Features**
-   - Blocked by: Company & Insurance Pension completion
-   - Can start: Portfolio overview for ETF pensions
+2. 🔥 **Insurance Pension** (High Priority)
+   - Currently at 0% progress
+   - Also blocking Dashboard implementation
+   - Next: Implement basic CRUD
 
-3. 📝 **Currency System**
-   - Required for accurate calculations
-   - No blockers, can be started
+3. 🔥 **Dashboard Core Features**
+   - Blocked by: Company & Insurance Pension completion
+   - Can start: Portfolio overview for ETF pensions only
+   - Full implementation requires all pension types
 
 ### Blocked Items
 - Compass Module (Blocked by: Dashboard)
 - Payout Strategy (Blocked by: Dashboard)
-- Full Settings Implementation (Blocked by: Currency, i18n)
+- Full Settings Implementation (Blocked by: i18n)
 
 ### Implementation Order
 1. Complete Company Pension
-2. Start Dashboard with ETF support
-3. Begin Currency System
+2. Start Insurance Pension implementation
+3. Start Dashboard with ETF support (parallel track)
 4. Complete Insurance Pension
-5. Finish Dashboard
+5. Complete Dashboard with all pension types
 6. Proceed with Compass
 
 ### Module Dependencies
@@ -39,12 +41,12 @@ graph TD
     ETF[ETF Pension ✅<br/>Weight: 15%] --> D
     CP[Company Pension ⚠️<br/>Weight: 15%] --> D
     IP[Insurance Pension ⚠️<br/>Weight: 15%] --> D
-    D[Dashboard ⚠️<br/>Weight: 25%] --> C
+    D[Dashboard 📝<br/>Weight: 25%] --> C
     D --> PS
     
     %% Dependent Modules
-    C[Compass ⚠️<br/>Weight: 25%]
-    PS[Payout Strategy ⚠️<br/>Weight: 15%]
+    C[Compass 📝<br/>Weight: 25%]
+    PS[Payout Strategy 📝<br/>Weight: 15%]
     
     %% Cross-Cutting Features
     CS[Currency System 📝<br/>Weight: 15%] --> S
@@ -68,22 +70,47 @@ graph TD
     classDef partial fill:#FFE5B4,stroke:#000
     classDef notStarted fill:#FFB6C6,stroke:#000
     class ETF,H complete
-    class CP,IP,D,C,PS,S partial
-    class CS,I18n notStarted
-    
-    %% Legend
-    subgraph Legend
-        L1[Complete ✅] --> L2[Partial ⚠️]
-        L2 --> L3[Not Started 📝]
-        L4[Direct Dependency] --> L5[Indirect Dependency]
-        L4 --- L6[Dotted: Indirect<br/>Solid: Direct]
-    end
-
-    %% Notes
-    subgraph Notes
-        N1[Higher weights<br/>indicate more<br/>complexity]
-    end
+    class CP,IP,S partial
+    class CS,I18n,D,C,PS notStarted
 ```
+
+<details>
+<summary><strong>📊 Graph Legend</strong></summary>
+
+```mermaid
+graph LR
+    %% Status Legend
+    L1[Complete ✅] --> L2[Partial ⚠️]
+    L2 --> L3[Not Started 📝]
+    
+    %% Dependency Types
+    D1[Module A] --> D2[Module B]
+    D3[Module X] -.-> D4[Module Y]
+    
+    %% Styling
+    classDef complete fill:#90EE90,stroke:#000
+    classDef partial fill:#FFE5B4,stroke:#000
+    classDef notStarted fill:#FFB6C6,stroke:#000
+    class L1 complete
+    class L2 partial
+    class L3 notStarted
+    
+    %% Legend Labels
+    style D1 fill:#fff,stroke:#000
+    style D2 fill:#fff,stroke:#000
+    style D3 fill:#fff,stroke:#000
+    style D4 fill:#fff,stroke:#000
+    
+    %% Notes
+    N1[Higher weights<br/>indicate more<br/>complexity]
+    
+    %% Labels
+    Label1[Solid Arrow:<br/>Direct Dependency]
+    Label2[Dotted Arrow:<br/>Indirect Dependency]
+```
+
+</details>
+<br>
 
 > <details>
 > <summary><strong>🤖 AI Assistant Guide</strong></summary>
@@ -193,12 +220,12 @@ graph TD
 - [x] Form validation
 
 ##### Missing Features ⚠️
-###### Currency System
-- [ ] Exchange rate service integration
-- [ ] Real-time currency conversion
-- [ ] Historical exchange rates tracking
-- [ ] Currency conversion for all monetary values
-- [ ] Currency format handling across the app
+###### Currency System (Frontend)
+- [ ] Currency conversion UI components
+- [ ] Display converted values across all views
+- [ ] Format monetary values according to locale
+- [ ] Handle currency changes in forms
+- [ ] Real-time conversion updates
 
 ###### Internationalization System
 - [ ] Translation management system
@@ -207,6 +234,16 @@ graph TD
 - [ ] RTL support for applicable languages
 - [ ] Date/time localization
 - [ ] Number format localization
+
+##### Complete Features ✅
+###### Currency System (Backend)
+- [x] Exchange rate service integration (ECB)
+- [x] Real-time currency conversion API
+- [x] Historical exchange rates tracking
+- [x] Backend conversion utilities
+- [x] Automatic daily updates
+- [x] Fallback mechanisms
+- [x] Error handling and monitoring
 
 #### 4. 📈 Dashboard Module ⚠️
 
@@ -248,32 +285,26 @@ graph TD
 
 ### Cross-Cutting Features
 
-#### 1. 💱 Currency System Implementation `3-4 weeks`
+#### 1. 💱 Currency System Frontend Integration `1-2 weeks`
 > **Status**: 📝 Not Started
 
-##### Currency Service Setup (Week 1)
-- [ ] Set up exchange rate API integration
-- [ ] Implement rate caching system
-- [ ] Create rate update scheduler
-- [ ] Add fallback mechanisms
+##### Frontend Components (Week 1)
+- [ ] Create currency conversion hooks
+- [ ] Implement currency formatting utilities
+- [ ] Add currency selection persistence
+- [ ] Create reusable currency display components
 
-##### Core Conversion System (Week 1-2)
-- [ ] Create currency conversion service
-- [ ] Implement conversion helpers
-- [ ] Add historical rate tracking
-- [ ] Create conversion audit system
-
-##### Application Integration (Week 2-3)
+##### Application Integration (Week 1-2)
 - [ ] Update pension value displays
-- [ ] Modify contribution handling
-- [ ] Adapt projection calculations
+- [ ] Modify contribution forms
+- [ ] Adapt projection displays
 - [ ] Update dashboard calculations
 
-##### Testing & Optimization (Week 3-4)
-- [ ] Add conversion unit tests
+##### Testing & Validation (Week 2)
+- [ ] Add component unit tests
 - [ ] Implement integration tests
-- [ ] Optimize rate caching
-- [ ] Add performance monitoring
+- [ ] Test currency switching
+- [ ] Verify formatting across locales
 
 #### 2. 🌐 Internationalization Implementation `4-5 weeks`
 > **Status**: 📝 Not Started
@@ -312,17 +343,18 @@ graph TD
 | Company Pension | ⚠️ UI Only | 25% | None | Custom calculations |
 | Insurance Pension | ⚠️ UI Only | 0% | None | Premium logic |
 | Household | ✅ Complete | 100% | None | Basic CRUD |
-| Settings | ⚠️ Partial | 50% | Currency, i18n | Config + validation |
+| Settings | ⚠️ Partial | 50% | i18n | Config + validation |
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
 | Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms |
 | Payout Strategy | ⚠️ UI Only | 10% | Dashboard | Financial modeling |
-| Currency System | 📝 Not Started | 0% | None | Real-time rates |
+| Currency System (Backend) | ✅ Complete | 100% | None | Exchange rates + API |
+| Currency System (Frontend) | 📝 Not Started | 0% | None | UI integration |
 | Internationalization | 📝 Not Started | 0% | None | Full app coverage |
 
 > 🎯 **Overall Progress**: ~18%
 > 
 > **Module Completion**:
-> - 2 of 10 modules complete (ETF Pension, Household)
+> - 3 of 11 modules complete (ETF Pension, Household, Currency Backend)
 > - 6 modules partially implemented
 > - 2 modules not started
 > - Technical Debt: Minimal coverage
@@ -465,7 +497,82 @@ graph TD
 - [ ] Add comprehensive logging
 
 #### 3. 🧪 Testing Implementation
+
+##### Completed Tests ✅
+1. **Context Testing**
+   - [x] HouseholdContext test setup with Jest and React Testing Library
+   - [x] Provider integration tests
+   - [x] Hook usage tests
+   - [x] Error handling tests
+   - [x] State management tests
+   - [x] API integration mocking
+
+##### Priority Testing Areas
+
+###### Immediate Testing Needs
+1. **Complex Calculation Functions**
+   - [ ] `calculateMemberFields` (household-helpers.ts) - age and retirement calculations
+   - [ ] `generateFutureContributions` (contribution-plan.ts) - pension contribution projections
+   - [ ] `analyzeContributionStep` (ContributionImpactAnalysis.tsx) - growth opportunities
+   - [ ] `calculateProjection` (projection-preview.tsx) - financial projections with inflation
+
+2. **Business Logic Validators**
+   - [ ] `validateRetirementAges` (household-helpers.ts)
+   - [ ] Pension validation schemas (validations/pension.ts)
+
+3. **Data Transformation Functions**
+   - [ ] `getContributionForDate` (projection-utils.ts)
+   - [ ] `formatPensionSummary` (pension-helpers.ts)
+
+###### Future Feature Testing Requirements
+1. **Currency System Integration**
+   - [ ] Currency conversion utilities
+   - [ ] Currency formatting functions
+   - [ ] Exchange rate calculations
+   - [ ] Multi-currency portfolio aggregation
+
+2. **Enhanced Projection & Analysis**
+   - [ ] Multi-pension type projections
+   - [ ] Market condition scenarios
+   - [ ] Tax implication calculations
+   - [ ] Inflation scenario handling
+   - [ ] Gap analysis algorithms
+   - [ ] Risk assessment calculations
+
+3. **Advanced Contribution Management**
+   - [ ] Company matching rules
+   - [ ] Insurance premium patterns
+   - [ ] Variable contribution schedules
+   - [ ] Tax-limit validations
+   - [ ] Cross-pension contribution optimization
+
+4. **Payout Strategy Calculations**
+   - [ ] Withdrawal calculation algorithms
+   - [ ] Phase transition logic
+   - [ ] Market condition simulation
+   - [ ] Portfolio rebalancing functions
+   - [ ] Tax-efficient withdrawal strategies
+
+5. **Dashboard Data Aggregation**
+   - [ ] Cross-pension portfolio aggregation
+   - [ ] XIRR calculations
+   - [ ] Performance comparison algorithms
+   - [ ] Distribution analysis functions
+   - [ ] Real-time update calculations
+
+##### Test Infrastructure Setup ✅
+- [x] Jest configuration for React components
+- [x] React Testing Library setup
+- [x] API mocking utilities
+- [x] Test helper functions
+- [ ] Setup CI/CD test pipeline
+- [ ] Implement test coverage reporting
+- [ ] Create testing documentation
+- [ ] Setup automated test runs
+- [ ] Configure test environments
+
 ##### Frontend Testing
+- [x] Basic context testing patterns established
 - [ ] Unit tests for React components (Jest + React Testing Library)
   - [ ] Form validation logic
   - [ ] Component state management
@@ -473,6 +580,7 @@ graph TD
   - [ ] Currency formatting utilities
   - [ ] Date handling utilities
 - [ ] Integration tests
+  - [x] Context provider integration
   - [ ] User flows (form submissions, navigation)
   - [ ] API integration points
   - [ ] State management integration
@@ -503,27 +611,7 @@ graph TD
   - [ ] Authentication flows
   - [ ] API security headers
 
-##### Test Infrastructure
-- [ ] Setup CI/CD test pipeline
-- [ ] Implement test coverage reporting
-- [ ] Create testing documentation
-- [ ] Setup automated test runs
-- [ ] Configure test environments
-
-> **Target Coverage**: 
-> - Frontend: 80% for components, 90% for utilities
-> - Backend: 90% for models/services, 85% for API endpoints
-
 #### 4. 📚 Documentation
 - [ ] Complete API documentation
 - [ ] Add user guides
 - [ ] Create maintenance documentation
-
-graph TD
-    ETF[ETF Pension ✅] --> D[Dashboard ⚠️]
-    CP[Company Pension ⚠️] --> D
-    IP[Insurance Pension ⚠️] --> D
-    D --> C[Compass ⚠️]
-    D --> PS[Payout Strategy ⚠️]
-    CS[Currency System 📝] --> S[Settings ⚠️]
-    I18n[Internationalization 📝] --> S 
