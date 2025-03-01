@@ -112,16 +112,18 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
         }).formatted}</dd>
       </div>
 
-      <div className="flex justify-end mt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowOneTimeInvestment(true)}
-        >
-          <PlusCircle className="h-4 w-4 mr-2" />
-          One-Time Investment
-        </Button>
-      </div>
+      {pension.status !== 'PAUSED' && (
+        <div className="flex justify-end mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowOneTimeInvestment(true)}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            One-Time Investment
+          </Button>
+        </div>
+      )}
       <OneTimeInvestmentModal
         open={showOneTimeInvestment}
         onOpenChange={setShowOneTimeInvestment}
@@ -235,16 +237,18 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         </div>
       )}
 
-      <div className="flex justify-end mt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowYearlyInvestment(true)}
-        >
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Yearly Investment
-        </Button>
-      </div>
+      {pension.status !== 'PAUSED' && (
+        <div className="flex justify-end mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowYearlyInvestment(true)}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Yearly Investment
+          </Button>
+        </div>
+      )}
       <YearlyInvestmentModal
         open={showYearlyInvestment}
         onOpenChange={setShowYearlyInvestment}
@@ -267,6 +271,8 @@ function PensionCard({
   onEdit: (pension: Pension) => void
   onDelete: (id: number) => void
 }) {
+  const isInactive = pension.status === 'PAUSED';
+  
   const renderIcon = () => {
     switch (pension.type) {
       case PensionType.ETF_PLAN:
@@ -305,17 +311,15 @@ function PensionCard({
   }
 
   return (
-    <Card className="w-[270px]">
+    <Card className={`w-[270px] ${isInactive ? 'bg-muted/20' : ''}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center space-x-2">
           {renderIcon()}
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className={`flex items-center gap-2 ${isInactive ? 'text-muted-foreground' : ''}`}>
               {pension.name}
-              {pension.status && (
-                <Badge variant={pension.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                  {pension.status === 'ACTIVE' ? 'Active' : 'Paused'}
-                </Badge>
+              {isInactive && (
+                <Badge variant="secondary">Inactive</Badge>
               )}
             </CardTitle>
           </div>
@@ -337,7 +341,7 @@ function PensionCard({
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className={isInactive ? 'text-muted-foreground' : ''}>
         <dl className="space-y-2 text-sm">
           {renderContent()}
         </dl>
