@@ -203,6 +203,15 @@ graph LR
 - [ ] Value tracking
 - [ ] Integration with projections
 
+##### Cross-Pension Features 📝
+> Detailed implementation plan: [Contribution Management System](TODO/contribution_management.md)
+- [ ] Automated contribution management
+  - Daily contribution realization
+  - Special case handling (weekends, holidays)
+  - Monitoring and error recovery
+- [ ] Advanced value tracking
+- [ ] Unified projection system
+
 #### 2. 👨‍👩‍👧‍👦 Household Module ✅
 - [x] Member CRUD operations
 - [x] Birthday and retirement age tracking
@@ -496,7 +505,21 @@ graph LR
 - [ ] Improve error handling
 - [ ] Add comprehensive logging
 
-#### 3. 🧪 Testing Implementation
+#### 3. 🔄 Task System Cleanup & Migration
+> Detailed migration plan: [Task Monitoring Migration](TODO/task_monitoring_migration.md)
+
+##### Current State Analysis
+- [ ] Audit TaskStatus table usage
+- [ ] Document dependencies on TaskStatus
+- [ ] Map out migration path
+
+##### Migration Tasks
+- [ ] Create specialized tracking for ETF pension creation
+- [ ] Update ETF pension processing to use new tracking
+- [ ] Remove TaskStatus table
+- [ ] Update affected documentation
+
+#### 4. 🧪 Testing Implementation
 
 ##### Completed Tests ✅
 1. **Context Testing**
@@ -611,7 +634,7 @@ graph LR
   - [ ] Authentication flows
   - [ ] API security headers
 
-#### 4. 📚 Documentation
+#### 6. 📚 Documentation
 - [ ] Complete API documentation
 - [ ] Add user guides
 - [ ] Create maintenance documentation

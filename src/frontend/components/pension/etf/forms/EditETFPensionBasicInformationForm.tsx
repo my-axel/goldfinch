@@ -12,8 +12,8 @@ import { PauseCircle, PlayCircle } from "lucide-react"
 import { usePension } from "@/frontend/context/PensionContext"
 import { useState } from "react"
 import { PensionStatusUpdate } from "@/frontend/types/pension-statistics"
-import { PauseConfirmationDialog } from "@/frontend/components/pension/PauseConfirmationDialog"
-import { ResumeDateDialog } from "@/frontend/components/pension/ResumeDateDialog"
+import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/dialogs/PauseConfirmationDialog"
+import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
 import { ETFPension } from "@/frontend/types/pension"
 
 interface EditETFPensionBasicInformationFormProps {

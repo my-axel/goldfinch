@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AddCompanyPensionForm } from "@/frontend/components/pension/form/AddCompanyPensionForm"
+import { AddCompanyPensionForm } from "@/frontend/components/pension/company/forms/AddCompanyPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"

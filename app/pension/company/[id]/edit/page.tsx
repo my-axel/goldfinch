@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import { EditCompanyPensionForm } from "@/frontend/components/pension/form/EditCompanyPensionForm"
+import { EditCompanyPensionForm } from "@/frontend/components/pension/company/forms/EditCompanyPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
@@ -80,7 +80,9 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
         vesting_period: data.vesting_period,
         matching_percentage: data.matching_percentage,
         max_employer_contribution: data.max_employer_contribution,
-        contribution_plan_steps: data.contribution_plan_steps
+        contribution_plan_steps: data.contribution_plan_steps,
+        initial_capital: data.initial_capital || 0,
+        status: selectedPension?.status || "ACTIVE"
       })
 
       toast.success("Success", { description: "Company pension updated successfully" })

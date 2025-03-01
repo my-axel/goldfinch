@@ -19,8 +19,8 @@ import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
 import { ContributionFrequency } from '@/frontend/types/pension'
-import { OneTimeInvestmentModal } from "./OneTimeInvestmentModal"
-import { PensionTypeSelectionModal } from "./PensionTypeSelectionModal"
+import { OneTimeInvestmentModal } from "../etf/components/OneTimeInvestmentModal"
+import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatNumber, formatCurrency, formatPercent } from "@/frontend/lib/transforms"

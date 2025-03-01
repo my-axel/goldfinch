@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AddETFPensionForm } from "@/frontend/components/pension/form/AddETFPensionForm"
+import { AddETFPensionForm } from "@/frontend/components/pension/etf/forms/AddETFPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
@@ -43,7 +43,9 @@ export default function NewETFPensionPage() {
         existing_units: data.existing_units,
         reference_date: data.reference_date,
         contribution_plan_steps: data.contribution_plan_steps,
-        realize_historical_contributions: data.initialization_method === "historical"
+        realize_historical_contributions: data.initialization_method === "historical",
+        status: "ACTIVE",
+        total_units: data.is_existing_investment ? data.existing_units : 0
       })
 
       toast.success("Success", { description: "ETF pension created successfully" })

@@ -1,6 +1,6 @@
 "use client"
 
-import { PensionList } from "@/frontend/components/pension/PensionList"
+import { PensionList } from "@/frontend/components/pension/shared/PensionList"
 import { useEffect, useCallback, useRef } from "react"
 import { usePension } from "@/frontend/context/PensionContext"
 import { useHousehold } from "@/frontend/context/HouseholdContext"

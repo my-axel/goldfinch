@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import { EditInsurancePensionForm } from "@/frontend/components/pension/form/EditInsurancePensionForm"
+import { EditInsurancePensionForm } from "@/frontend/components/pension/insurance/forms/EditInsurancePensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
@@ -80,7 +80,9 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
         start_date: data.start_date,
         guaranteed_interest: data.guaranteed_interest,
         expected_return: data.expected_return,
-        contribution_plan_steps: data.contribution_plan_steps
+        contribution_plan_steps: data.contribution_plan_steps,
+        initial_capital: data.initial_capital || 0,
+        status: selectedPension?.status || "ACTIVE"
       })
 
       toast.success("Success", { description: "Insurance pension updated successfully" })

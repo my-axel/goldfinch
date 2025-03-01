@@ -2,9 +2,9 @@
 
 import { useForm, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import { EditETFPensionBasicInformationForm } from "@/frontend/components/pension/form/EditETFPensionBasicInformationForm"
-import { EditETFPensionContributionStepsForm } from "@/frontend/components/pension/form/EditETFPensionContributionStepsForm"
-import { ETFPensionStats } from "@/frontend/components/pension/ETFPensionStats"
+import { EditETFPensionBasicInformationForm } from "@/frontend/components/pension/etf/forms/EditETFPensionBasicInformationForm"
+import { EditETFPensionContributionStepsForm } from "@/frontend/components/pension/etf/forms/EditETFPensionContributionStepsForm"
+import { ETFPensionStats } from "@/frontend/components/pension/etf/components/ETFPensionStats"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
@@ -20,10 +20,10 @@ import {
   CombinedProjectionChart,
   HistoricalPerformanceChart
 } from "@/frontend/components/charts"
-import { ProjectionExplanations } from "@/frontend/components/pension/ProjectionExplanations"
-import { ContributionImpactAnalysis } from "@/frontend/components/pension/ContributionImpactAnalysis"
+import { ProjectionExplanations } from "@/frontend/components/pension/etf/components/ProjectionExplanations"
+import { ContributionImpactAnalysis } from "@/frontend/components/pension/etf/components/ContributionImpactAnalysis"
 import { useProjectionScenarios } from "@/frontend/hooks/useProjectionScenarios"
-import { ProjectionRatesSummary } from "@/frontend/components/pension/ProjectionRatesSummary"
+import { ProjectionRatesSummary } from "@/frontend/components/pension/etf/components/ProjectionRatesSummary"
 
 interface EditETFPensionPageProps {
   params: Promise<{
