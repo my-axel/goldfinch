@@ -1,5 +1,12 @@
 "use client"
 
+/**
+ * This component follows the formatting best practices documented in:
+ * src/frontend/docs/formatting-best-practices.md
+ * 
+ * It uses client-side only formatting with useState and useEffect to avoid hydration mismatches.
+ */
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import { Pension, PensionType, ETFPension, InsurancePension, CompanyPension } from "@/frontend/types/pension"
 import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle } from "lucide-react"
@@ -20,6 +27,8 @@ import { formatMemberName } from "@/frontend/types/household-helpers"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
 import { ContributionFrequency } from '@/frontend/types/pension'
 import { OneTimeInvestmentModal } from "../etf/components/OneTimeInvestmentModal"
+import { YearlyInvestmentModal } from "../company/components/YearlyInvestmentModal"
+import { Badge } from "@/frontend/components/ui/badge"
 import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
 import { useSettings } from "@/frontend/context/SettingsContext"
@@ -169,6 +178,8 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
  */
 function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
   const { settings } = useSettings()
+  const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
+  const [showYearlyInvestment, setShowYearlyInvestment] = useState(false)
 
   return (
     <>
@@ -176,25 +187,39 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         <dt className="text-muted-foreground">Employer</dt>
         <dd>{pension.employer}</dd>
       </div>
-      <div>
-        <dt className="text-muted-foreground">Vesting Period</dt>
-        <dd>{formatNumber(pension.vesting_period, {
-          locale: settings.number_locale,
-          decimals: 0
-        }).formatted} years</dd>
-      </div>
-      {pension.matching_percentage && (
+      
+      {pension.contribution_amount && pension.contribution_frequency && (
         <div>
-          <dt className="text-muted-foreground">Employer Match</dt>
-          <dd>{formatPercent(pension.matching_percentage / 100, {
-            locale: settings.number_locale,
-            decimals: 0
-          }).formatted} up to {formatCurrency(pension.max_employer_contribution || 0, {
+          <dt className="text-muted-foreground">Regular Contribution</dt>
+          <dd>{formatCurrency(pension.contribution_amount, {
             locale: settings.number_locale,
             currency: settings.currency
-          }).formatted}</dd>
+          }).formatted} {formatFrequency(pension.contribution_frequency)}</dd>
         </div>
       )}
+      
+      {currentStep && (
+        <div>
+          <dt className="text-muted-foreground">Current Contribution</dt>
+          <dd>
+            {formatCurrency(currentStep.amount, {
+              locale: settings.number_locale,
+              currency: settings.currency
+            }).formatted} {formatFrequency(currentStep.frequency)}
+          </dd>
+        </div>
+      )}
+      
+      {pension.projections && pension.projections.length > 0 && (
+        <div>
+          <dt className="text-muted-foreground">Projected Monthly Payout</dt>
+          <dd>{formatCurrency(pension.projections[0].monthly_payout, {
+            locale: settings.number_locale,
+            currency: settings.currency
+          }).formatted} at age {pension.projections[0].retirement_age}</dd>
+        </div>
+      )}
+      
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
         <dd>{formatCurrency(pension.current_value, {
@@ -202,6 +227,30 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
           currency: settings.currency
         }).formatted}</dd>
       </div>
+      
+      {pension.latest_statement_date && (
+        <div>
+          <dt className="text-muted-foreground">Latest Statement</dt>
+          <dd>{new Date(pension.latest_statement_date).toLocaleDateString(settings.ui_locale)}</dd>
+        </div>
+      )}
+
+      <div className="flex justify-end mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowYearlyInvestment(true)}
+        >
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Yearly Investment
+        </Button>
+      </div>
+      <YearlyInvestmentModal
+        open={showYearlyInvestment}
+        onOpenChange={setShowYearlyInvestment}
+        pensionId={pension.id}
+        pensionName={pension.name}
+      />
     </>
   )
 }
@@ -256,12 +305,19 @@ function PensionCard({
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-[270px]">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center space-x-2">
           {renderIcon()}
           <div>
-            <CardTitle>{pension.name}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              {pension.name}
+              {pension.status && (
+                <Badge variant={pension.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                  {pension.status === 'ACTIVE' ? 'Active' : 'Paused'}
+                </Badge>
+              )}
+            </CardTitle>
           </div>
         </div>
         <div className="flex space-x-1">
@@ -295,7 +351,7 @@ function PensionCard({
  */
 function AddPensionCard({ onClick }: { onClick: () => void }) {
   return (
-    <Card className="flex flex-col items-center justify-center h-full w-full border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+    <Card className="flex flex-col items-center justify-center h-full w-[270px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
       <CardContent className="flex flex-col items-center justify-center py-6 w-full">
         <PlusCircle className="h-6 w-6 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">Add New Pension Plan</p>
@@ -344,7 +400,7 @@ function MemberPensionGroup({
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">{formatMemberName(member)}</h2>
-      <div className="grid gap-4 grid-cols-1 min-[800px]:grid-cols-2 min-[1200px]:grid-cols-3 auto-rows-fr">
+      <div className="flex flex-wrap gap-4">
         {memberPensions.map((pension) => (
           <PensionCard
             key={pension.id}

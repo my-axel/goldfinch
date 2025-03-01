@@ -72,6 +72,18 @@ def create_company_contribution_history(
         db=db, pension_id=pension_id, obj_in=contribution_in
     )
 
+@router.post("/{pension_id}/projections", response_model=schemas.pension_company.ProjectionResponse)
+def create_company_projection(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    projection_in: schemas.pension_company.ProjectionCreate,
+) -> schemas.pension_company.ProjectionResponse:
+    """Create a projection for company pension."""
+    return pension_company.create_projection(
+        db=db, pension_id=pension_id, obj_in=projection_in
+    )
+
 @router.get("", response_model=List[schemas.pension_company.PensionCompanyResponse])
 def list_company_pensions(
     db: Session = Depends(deps.get_db),
@@ -83,4 +95,17 @@ def list_company_pensions(
     filters = {}
     if member_id is not None:
         filters["member_id"] = member_id
-    return pension_company.get_multi(db, skip=skip, limit=limit, filters=filters) 
+    return pension_company.get_multi(db, skip=skip, limit=limit, filters=filters)
+
+@router.put("/{pension_id}/status", response_model=schemas.pension_company.PensionCompanyResponse)
+def update_company_pension_status(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    status_in: schemas.pension_company.PensionStatusUpdate,
+) -> schemas.pension_company.PensionCompanyResponse:
+    """Update the status of a company pension."""
+    pension = pension_company.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Company Pension not found")
+    return pension_company.update_status(db=db, db_obj=pension, obj_in=status_in) 

@@ -12,6 +12,15 @@ export type ContributionPlanStep = {
 }
 
 /**
+ * Represents a retirement projection for a company pension
+ */
+export type RetirementProjection = {
+  retirement_age: number
+  monthly_payout: number
+  total_capital: number
+}
+
+/**
  * ETF Pension form data
  */
 export type ETFPensionFormData = {
@@ -55,9 +64,9 @@ export type CompanyPensionFormData = {
   notes?: string
   start_date: Date
   employer: string
-  initial_capital: number
-  vesting_period: number
-  matching_percentage: number
-  max_employer_contribution: number
+  contribution_amount?: number
+  contribution_frequency?: ContributionFrequency
+  latest_statement_date?: Date
   contribution_plan_steps: ContributionPlanStep[]
+  projections?: RetirementProjection[]
 }

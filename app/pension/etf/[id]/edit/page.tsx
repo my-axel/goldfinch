@@ -153,10 +153,10 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     const loadData = async () => {
       try {
         setIsInitialLoading(true)
+        // First fetch the pension and members
         await Promise.all([
-          fetchPension(pensionId),
-          fetchMembers(),
-          fetchPensionStatistics(pensionId)
+          fetchPension(pensionId, PensionType.ETF_PLAN),
+          fetchMembers()
         ])
       } catch (error) {
         handleError(error, "load pension data")
@@ -167,6 +167,22 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
 
     loadData()
   }, [pensionId]) // Only depend on pensionId to prevent unnecessary refetches
+
+  // Separate effect for fetching statistics after pension is loaded
+  useEffect(() => {
+    if (!pension || pension.type !== PensionType.ETF_PLAN) return;
+    
+    const loadStatistics = async () => {
+      try {
+        await fetchPensionStatistics(pensionId, PensionType.ETF_PLAN);
+      } catch (statsError) {
+        console.warn("Failed to fetch pension statistics:", statsError);
+        // Don't fail the entire page load if statistics can't be fetched
+      }
+    };
+    
+    loadStatistics();
+  }, [pension, pensionId, fetchPensionStatistics]);
 
   // Update form when pension data changes
   useEffect(() => {

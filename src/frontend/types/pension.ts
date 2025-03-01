@@ -58,6 +58,31 @@ export interface HistoricalContribution {
 }
 
 /**
+ * Represents an extra contribution made to a company pension plan.
+ * Used for tracking yearly or one-time additional investments.
+ */
+export interface ExtraContribution {
+  id: number
+  pension_id: number
+  amount: number
+  date: Date
+  note?: string
+}
+
+/**
+ * Represents a retirement projection for a company pension plan.
+ * Contains information about expected retirement benefits based on
+ * the latest company pension statement.
+ */
+export interface RetirementProjection {
+  id: number
+  pension_id: number
+  retirement_age: number
+  monthly_payout: number
+  total_capital: number
+}
+
+/**
  * TODO: Consider moving enums to shared backend/frontend constants
  * TODO: Add API response types for all interfaces
  * TODO: Add validation decorators for backend ORM
@@ -118,9 +143,8 @@ export interface InsurancePension {
 }
 
 /** 
- * Company pension plan that includes employer contributions and
- * vesting rules. May include matching contributions up to a
- * certain percentage or amount.
+ * Company pension plan that includes regular contributions and
+ * retirement projections based on company statements.
  */
 export interface CompanyPension {
   id: number
@@ -128,14 +152,19 @@ export interface CompanyPension {
   name: string
   member_id: number           // Links to household member
   start_date: Date
-  initial_capital: number     // Initial investment amount
   current_value: number       // Current total value of the pension
   notes?: string
   employer: string
-  vesting_period: number                   // Years until fully vested
-  matching_percentage?: number             // Percentage of employee contribution matched
-  max_employer_contribution?: number       // Maximum employer contribution
+  
+  // New fields replacing employer matching and vesting
+  contribution_amount?: number        // Regular contribution amount
+  contribution_frequency?: ContributionFrequency  // Frequency of regular contributions
+  latest_statement_date?: Date        // Date of the latest pension statement
+  
   contribution_plan_steps: ContributionStep[]
+  contribution_history?: ExtraContribution[]  // History of contributions
+  projections?: RetirementProjection[]       // Retirement projections
+  
   status: 'ACTIVE' | 'PAUSED'
   paused_at?: string
   resume_at?: string

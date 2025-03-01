@@ -38,7 +38,7 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
   })
 
   useEffect(() => {
-    fetchPension(pensionId)
+    fetchPension(pensionId, PensionType.INSURANCE)
   }, [fetchPension, pensionId])
 
   useEffect(() => {

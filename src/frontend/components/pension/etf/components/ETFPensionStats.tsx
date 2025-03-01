@@ -1,11 +1,12 @@
 "use client"
 
-import { memo, useEffect } from "react"
+import { memo, useEffect, useState } from "react"
 import { usePension } from "@/frontend/context/PensionContext"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency, formatPercent } from "@/frontend/lib/transforms"
 import { CalendarClock, TrendingUp, Wallet, CircleDot } from "lucide-react"
 import { cn } from "@/frontend/lib/utils"
+import { PensionType } from "@/frontend/types/pension"
 import {
   Explanation,
   ExplanationHeader,
@@ -23,19 +24,56 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
   const statistics = pensionStatistics[pensionId]
   const isLoading = isLoadingStatistics[pensionId]
   const pension = pensions.find(p => p.id === pensionId)
+  
+  // State for formatted values to avoid hydration mismatches
+  const [formattedStats, setFormattedStats] = useState({
+    totalInvested: "0",
+    currentValue: "0",
+    totalReturn: "0",
+    annualReturn: ""
+  })
 
   useEffect(() => {
     // First ensure we have the pension data
     if (!pension) {
-      fetchPension(pensionId)
+      fetchPension(pensionId, PensionType.ETF_PLAN)
       return
     }
 
     // Then fetch statistics if needed
     if (!statistics && !isLoading) {
-      fetchPensionStatistics(pensionId)
+      fetchPensionStatistics(pensionId, PensionType.ETF_PLAN)
     }
   }, [pensionId, statistics, isLoading, fetchPensionStatistics, pension, fetchPension])
+  
+  // Format values client-side only to avoid hydration mismatches
+  useEffect(() => {
+    if (statistics) {
+      setFormattedStats({
+        totalInvested: formatCurrency(statistics.total_invested_amount, { 
+          locale: settings.number_locale,
+          currency: settings.currency,
+          decimals: 0
+        }).formatted,
+        currentValue: formatCurrency(statistics.current_value, { 
+          locale: settings.number_locale,
+          currency: settings.currency,
+          decimals: 0
+        }).formatted,
+        totalReturn: formatCurrency(statistics.total_return, { 
+          locale: settings.number_locale,
+          currency: settings.currency,
+          decimals: 0
+        }).formatted,
+        annualReturn: statistics.annual_return != null 
+          ? formatPercent(statistics.annual_return / 100, { 
+              locale: settings.number_locale,
+              decimals: 0
+            }).formatted
+          : ""
+      })
+    }
+  }, [statistics, settings])
 
   if (!pension || isLoading) {
     return (
@@ -54,23 +92,12 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
   if (!statistics) {
     return null
   }
-
-  const formatValue = (value: number): string => {
-    const formatted = formatCurrency(value, { 
-      locale: settings.number_locale,
-      currency: settings.currency,
-      decimals: 0
-    })
-    return formatted.formatted
-  }
-
-  const formatPercentValue = (value: number): string => {
-    const formatted = formatPercent(value / 100, { 
-      locale: settings.number_locale,
-      decimals: 0
-    })
-    return formatted.formatted
-  }
+  
+  // Format the last contribution date
+  const lastContributionDate = statistics.contribution_history.length > 0 
+    ? new Date(statistics.contribution_history[statistics.contribution_history.length - 1].date)
+        .toLocaleDateString(settings.number_locale, { month: 'short', year: 'numeric' })
+    : undefined
 
   return (
     <Explanation>
@@ -79,33 +106,28 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
         <ExplanationStat
           icon={Wallet}
           label="Total Invested"
-          value={formatValue(statistics.total_invested_amount)}
+          value={formattedStats.totalInvested}
         />
         <ExplanationStat
           icon={TrendingUp}
           label="Current Value"
-          value={formatValue(statistics.current_value)}
+          value={formattedStats.currentValue}
         />
         <ExplanationStat
           icon={CircleDot}
           label="Contributions"
           value={statistics.contribution_history.length}
-          subValue={statistics.contribution_history.length > 0 ? new Date(
-            statistics.contribution_history[statistics.contribution_history.length - 1].date
-          ).toLocaleDateString(settings.number_locale, { 
-            month: 'short',
-            year: 'numeric'
-          }) : undefined}
+          subValue={lastContributionDate}
           subLabel={statistics.contribution_history.length > 0 ? "last contribution" : undefined}
         />
         <ExplanationStat
           icon={CalendarClock}
           label="Return"
-          value={formatValue(statistics.total_return)}
+          value={formattedStats.totalReturn}
           valueClassName={cn(
             statistics.total_return >= 0 ? "text-green-600" : "text-red-600"
           )}
-          subValue={statistics.annual_return != null ? formatPercentValue(statistics.annual_return) : undefined}
+          subValue={formattedStats.annualReturn || undefined}
           subLabel={statistics.annual_return != null ? "annual return" : undefined}
           subValueClassName={cn(
             statistics.annual_return != null && statistics.annual_return >= 0 ? "text-green-600" : "text-red-600"

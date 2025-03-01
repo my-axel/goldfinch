@@ -1,8 +1,16 @@
 "use client"
 
+/**
+ * This component follows the formatting best practices documented in:
+ * src/frontend/docs/formatting-best-practices.md
+ * 
+ * It uses client-side only formatting with useState and useEffect to avoid hydration mismatches.
+ */
+
 import { TrendingDown, TrendingUp, ArrowRight, Wallet, Calendar } from "lucide-react"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency, formatNumber } from "@/frontend/lib/transforms"
+import { useState, useEffect } from "react"
 import {
   Explanation,
   ExplanationHeader,
@@ -61,23 +69,62 @@ export function ProjectionRatesSummary({
   scenarios
 }: ProjectionRatesSummaryProps) {
   const { settings: globalSettings } = useSettings()
-
-  /**
-   * Formats a number value as currency according to user settings
-   * @param {number} value - The number to format
-   * @returns {string} Formatted currency string
-   */
-  const formatValue = (value: number) => {
-    return formatCurrency(value, {
-      locale: globalSettings.number_locale,
-      currency: globalSettings.currency,
-      decimals: 0
-    }).formatted
-  }
-
-  // Calculate total contributions from the realistic scenario
-  const totalContributions = scenarios.realistic.totalContributions || 0
+  const [formattedValues, setFormattedValues] = useState({
+    pessimistic: "0",
+    realistic: "0",
+    optimistic: "0",
+    contributions: "0"
+  })
   
+  // State for formatted return rates (to avoid hydration mismatches)
+  const [formattedRates, setFormattedRates] = useState({
+    pessimistic: "0% return",
+    realistic: "0% return",
+    optimistic: "0% return"
+  })
+
+  // Use useEffect to format values client-side only after hydration
+  useEffect(() => {
+    setFormattedValues({
+      pessimistic: formatCurrency(scenarios.pessimistic.finalValue, {
+        locale: globalSettings.number_locale,
+        currency: globalSettings.currency,
+        decimals: 0
+      }).formatted,
+      realistic: formatCurrency(scenarios.realistic.finalValue, {
+        locale: globalSettings.number_locale,
+        currency: globalSettings.currency,
+        decimals: 0
+      }).formatted,
+      optimistic: formatCurrency(scenarios.optimistic.finalValue, {
+        locale: globalSettings.number_locale,
+        currency: globalSettings.currency,
+        decimals: 0
+      }).formatted,
+      contributions: formatCurrency(scenarios.realistic.totalContributions || 0, {
+        locale: globalSettings.number_locale,
+        currency: globalSettings.currency,
+        decimals: 0
+      }).formatted
+    })
+    
+    // Format return rates client-side only to avoid hydration mismatches
+    setFormattedRates({
+      pessimistic: `${formatNumber(globalSettings.projection_pessimistic_rate, { 
+        locale: globalSettings.number_locale,
+        decimals: 1 
+      }).formatted}% return`,
+      realistic: `${formatNumber(globalSettings.projection_realistic_rate, { 
+        locale: globalSettings.number_locale,
+        decimals: 1 
+      }).formatted}% return`,
+      optimistic: `${formatNumber(globalSettings.projection_optimistic_rate, { 
+        locale: globalSettings.number_locale,
+        decimals: 1 
+      }).formatted}% return`
+    })
+  }, [scenarios, globalSettings])
+
   // Get retirement date from the last data point of the realistic scenario
   const retirementDate = scenarios.realistic.dataPoints[scenarios.realistic.dataPoints.length - 1]?.date
   const yearsUntilRetirement = retirementDate ? differenceInYears(new Date(retirementDate), new Date()) : 0
@@ -91,22 +138,22 @@ export function ProjectionRatesSummary({
           <ExplanationStat
             icon={TrendingDown}
             label="Pessimistic"
-            value={formatValue(scenarios.pessimistic.finalValue)}
-            subValue={`${formatNumber(globalSettings.projection_pessimistic_rate, { decimals: 1 }).formatted}% return`}
+            value={formattedValues.pessimistic}
+            subValue={formattedRates.pessimistic}
             tooltip="Assumes lower market returns during challenging conditions"
           />
           <ExplanationStat
             icon={ArrowRight}
             label="Realistic"
-            value={formatValue(scenarios.realistic.finalValue)}
-            subValue={`${formatNumber(globalSettings.projection_realistic_rate, { decimals: 1 }).formatted}% return`}
+            value={formattedValues.realistic}
+            subValue={formattedRates.realistic}
             tooltip="Based on historical average market returns"
           />
           <ExplanationStat
             icon={TrendingUp}
             label="Optimistic"
-            value={formatValue(scenarios.optimistic.finalValue)}
-            subValue={`${formatNumber(globalSettings.projection_optimistic_rate, { decimals: 1 }).formatted}% return`}
+            value={formattedValues.optimistic}
+            subValue={formattedRates.optimistic}
             tooltip="Assumes higher returns during favorable conditions"
           />
         </ExplanationStats>
@@ -115,7 +162,7 @@ export function ProjectionRatesSummary({
           <ExplanationStat
             icon={Wallet}
             label="Total Contributions"
-            value={formatValue(totalContributions)}
+            value={formattedValues.contributions}
             subValue="Until retirement"
           />
           <ExplanationStat
