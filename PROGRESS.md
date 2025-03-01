@@ -24,8 +24,14 @@
    - Also blocking Dashboard implementation
    - Next: Implement basic CRUD
 
-2. 🔥 **Dashboard Core Features**
-   - Blocked by: Insurance Pension completion
+2. 🔥 **State Pension** (High Priority)
+   - Currently at 0% progress
+   - Simpler than Insurance Pension
+   - Also blocking Dashboard implementation
+   - Next: Implement basic CRUD
+
+3. 🔥 **Dashboard Core Features**
+   - Blocked by: Insurance Pension and State Pension completion
    - Can start: Portfolio overview for ETF and Company pensions
    - Full implementation requires all pension types
 
@@ -36,11 +42,13 @@
 
 ### Implementation Order
 1. ✅ Complete Company Pension
-2. Start Insurance Pension implementation
-3. Start Dashboard with ETF and Company support (parallel track)
-4. Complete Insurance Pension
-5. Complete Dashboard with all pension types
-6. Proceed with Compass
+2. Start State Pension implementation (simpler model)
+3. Start Insurance Pension implementation
+4. Start Dashboard with ETF and Company support (parallel track)
+5. Complete State Pension
+6. Complete Insurance Pension
+7. Complete Dashboard with all pension types
+8. Proceed with Compass
 
 ### Module Dependencies
 ```mermaid
@@ -49,6 +57,7 @@ graph TD
     ETF[ETF Pension ✅<br/>Weight: 15%] --> D
     CP[Company Pension ✅<br/>Weight: 15%] --> D
     IP[Insurance Pension ⚠️<br/>Weight: 15%] --> D
+    SP[State Pension 📝<br/>Weight: 10%] --> D
     D[Dashboard 📝<br/>Weight: 25%] --> C
     D --> PS
     
@@ -64,6 +73,7 @@ graph TD
     S[Settings ⚠️<br/>Weight: 10%] -.-> ETF
     S -.-> CP
     S -.-> IP
+    S -.-> SP
     S -.-> D
     S -.-> C
     S -.-> PS
@@ -72,6 +82,7 @@ graph TD
     H[Household ✅<br/>Weight: 10%] -.-> ETF
     H -.-> CP
     H -.-> IP
+    H -.-> SP
     
     %% Styling
     classDef complete fill:#90EE90,stroke:#000
@@ -79,7 +90,7 @@ graph TD
     classDef notStarted fill:#FFB6C6,stroke:#000
     class ETF,H,CP complete
     class IP,S partial
-    class CS,I18n,D,C,PS notStarted
+    class SP,CS,I18n,D,C,PS notStarted
 ```
 
 <details>
@@ -175,10 +186,10 @@ graph LR
 > 3. Update documentation
 > </details>
 
-## 📊 Implementation Status `[Overall Progress: ~27%]`
+## 📊 Implementation Status `[Overall Progress: ~25%]`
 
 ### Core Modules
-[Module 1/6 Complete]
+[Module 1/8 Complete]
 
 > <details>
 > <summary><strong>⚖️ Module Weights</strong></summary>
@@ -210,6 +221,13 @@ graph LR
 - [ ] CRUD operations
 - [ ] Premium management
 - [ ] Value tracking
+- [ ] Integration with projections
+
+##### State Pension 📝
+- [ ] CRUD operations
+- [ ] Expected payout tracking
+- [ ] Retirement age eligibility
+- [ ] Early retirement options
 - [ ] Integration with projections
 
 ##### Cross-Pension Features 📝
@@ -360,6 +378,7 @@ graph LR
 | ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts |
 | Company Pension | ✅ Complete | 100% | None | Contribution tracking + projections |
 | Insurance Pension | ⚠️ UI Only | 0% | None | Premium logic |
+| State Pension | 📝 Not Started | 0% | None | Payout tracking |
 | Household | ✅ Complete | 100% | None | Basic CRUD |
 | Settings | ⚠️ Partial | 50% | i18n | Config + validation |
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
@@ -369,12 +388,12 @@ graph LR
 | Currency System (Frontend) | 📝 Not Started | 0% | None | UI integration |
 | Internationalization | 📝 Not Started | 0% | None | Full app coverage |
 
-> 🎯 **Overall Progress**: ~27%
+> 🎯 **Overall Progress**: ~25%
 > 
 > **Module Completion**:
-> - 4 of 11 modules complete (ETF Pension, Company Pension, Household, Currency Backend)
+> - 4 of 12 modules complete (ETF Pension, Company Pension, Household, Currency Backend)
 > - 5 modules partially implemented
-> - 2 modules not started
+> - 3 modules not started
 > - Technical Debt: Improved API optimization for pension fetching
 
 ## 🎯 Project Milestones
@@ -406,7 +425,7 @@ graph LR
 - [ ] Add basic health check functionality
 - [ ] Build notification system for updates
 
-### Milestone 2: Complete Pension Plans `3-4 weeks`
+### Milestone 2: Complete Pension Plans `4-5 weeks`
 > **Status**: 🟡 In Progress
 
 #### 1. Company Pension Implementation (Week 1-2)
@@ -415,13 +434,19 @@ graph LR
 - [x] Add value tracking system
 - [x] Integrate with projections
 
-#### 2. Insurance Pension Implementation (Week 2-3)
+#### 2. State Pension Implementation (Week 1-2)
+- [ ] Create CRUD operations
+- [ ] Implement expected payout tracking
+- [ ] Add retirement age eligibility options
+- [ ] Integrate with projections
+
+#### 3. Insurance Pension Implementation (Week 2-3)
 - [ ] Create CRUD operations
 - [ ] Implement premium management
 - [ ] Add value tracking system
 - [ ] Integrate with projections
 
-#### 3. ETF Pension Enhancements (Week 3-4)
+#### 4. ETF Pension Enhancements (Week 3-4)
 - [x] Improve error handling
 - [x] Add validation rules
 - [x] Enhance projection accuracy

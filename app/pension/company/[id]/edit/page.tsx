@@ -49,10 +49,9 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
       start_date: new Date(),
       contribution_amount: undefined,
       contribution_frequency: ContributionFrequency.MONTHLY,
-      latest_statement_date: undefined,
       notes: "",
       contribution_plan_steps: [],
-      projections: []
+      statements: []
     }
   })
 
@@ -71,12 +70,20 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
   // Only update the form when selectedPension changes
   useEffect(() => {
     if (selectedPension && selectedPension.type === PensionType.COMPANY) {
-      // Create a deep copy of projections to avoid reference issues
-      const projectionsCopy = selectedPension.projections ? 
-        selectedPension.projections.map(projection => ({
-          retirement_age: projection.retirement_age,
-          monthly_payout: projection.monthly_payout,
-          total_capital: projection.total_capital
+      // Create a deep copy of statements to avoid reference issues
+      const statementsCopy = selectedPension.statements ? 
+        selectedPension.statements.map(statement => ({
+          id: statement.id,
+          statement_date: new Date(statement.statement_date),
+          value: statement.value,
+          note: statement.note || "",
+          retirement_projections: statement.retirement_projections ? 
+            statement.retirement_projections.map(projection => ({
+              id: projection.id,
+              retirement_age: projection.retirement_age,
+              monthly_payout: projection.monthly_payout,
+              total_capital: projection.total_capital
+            })) : []
         })) : [];
 
       // Create a deep copy of contribution steps to avoid reference issues
@@ -96,10 +103,9 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
         start_date: new Date(selectedPension.start_date),
         contribution_amount: selectedPension.contribution_amount,
         contribution_frequency: selectedPension.contribution_frequency || ContributionFrequency.MONTHLY,
-        latest_statement_date: selectedPension.latest_statement_date ? new Date(selectedPension.latest_statement_date) : undefined,
         notes: selectedPension.notes || "",
         contribution_plan_steps: contributionStepsCopy,
-        projections: projectionsCopy
+        statements: statementsCopy
       });
     }
   }, [selectedPension, form]);
@@ -121,7 +127,6 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
         start_date: data.start_date.toISOString().split('T')[0],
         contribution_amount: data.contribution_amount !== undefined ? Number(data.contribution_amount) : null,
         contribution_frequency: data.contribution_frequency || null,
-        latest_statement_date: data.latest_statement_date ? data.latest_statement_date.toISOString().split('T')[0] : null,
         notes: data.notes || "",
         contribution_plan_steps: data.contribution_plan_steps.map(step => ({
           amount: typeof step.amount === 'string' ? parseFloat(step.amount) : step.amount,
@@ -131,15 +136,23 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
           note: step.note || null
         })),
         status: selectedPension?.status || "ACTIVE",
-        projections: data.projections && data.projections.length > 0 
-          ? data.projections.map(projection => ({
-              pension_id: pensionId,
-              retirement_age: typeof projection.retirement_age === 'string' ? 
-                parseInt(projection.retirement_age) : projection.retirement_age,
-              monthly_payout: typeof projection.monthly_payout === 'string' ? 
-                parseFloat(projection.monthly_payout) : projection.monthly_payout,
-              total_capital: typeof projection.total_capital === 'string' ? 
-                parseFloat(projection.total_capital) : projection.total_capital
+        statements: data.statements && data.statements.length > 0 
+          ? data.statements.map(statement => ({
+              id: statement.id,
+              statement_date: statement.statement_date.toISOString().split('T')[0],
+              value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
+              note: statement.note || "",
+              retirement_projections: statement.retirement_projections && statement.retirement_projections.length > 0
+                ? statement.retirement_projections.map(projection => ({
+                    id: projection.id,
+                    retirement_age: typeof projection.retirement_age === 'string' ? 
+                      parseInt(projection.retirement_age) : projection.retirement_age,
+                    monthly_payout: typeof projection.monthly_payout === 'string' ? 
+                      parseFloat(projection.monthly_payout) : projection.monthly_payout,
+                    total_capital: typeof projection.total_capital === 'string' ? 
+                      parseFloat(projection.total_capital) : projection.total_capital
+                  }))
+                : []
             }))
           : []
       }

@@ -35,10 +35,9 @@ export default function NewCompanyPensionPage() {
       start_date: new Date(),
       contribution_amount: undefined,
       contribution_frequency: ContributionFrequency.MONTHLY,
-      latest_statement_date: undefined,
       notes: "",
       contribution_plan_steps: [],
-      projections: []
+      statements: []
     }
   })
 
@@ -59,7 +58,6 @@ export default function NewCompanyPensionPage() {
         start_date: data.start_date.toISOString().split('T')[0],
         contribution_amount: data.contribution_amount !== undefined ? Number(data.contribution_amount) : null,
         contribution_frequency: data.contribution_frequency || null,
-        latest_statement_date: data.latest_statement_date ? data.latest_statement_date.toISOString().split('T')[0] : null,
         notes: data.notes || "",
         contribution_plan_steps: data.contribution_plan_steps.map(step => ({
           amount: typeof step.amount === 'string' ? parseFloat(step.amount) : step.amount,
@@ -69,15 +67,21 @@ export default function NewCompanyPensionPage() {
           note: step.note || null
         })),
         status: 'ACTIVE',
-        projections: data.projections && data.projections.length > 0 
-          ? data.projections.map(projection => ({
-              pension_id: -1, // Temporary ID, will be replaced by the backend
-              retirement_age: typeof projection.retirement_age === 'string' ? 
-                parseInt(projection.retirement_age) : projection.retirement_age,
-              monthly_payout: typeof projection.monthly_payout === 'string' ? 
-                parseFloat(projection.monthly_payout) : projection.monthly_payout,
-              total_capital: typeof projection.total_capital === 'string' ? 
-                parseFloat(projection.total_capital) : projection.total_capital
+        statements: data.statements && data.statements.length > 0 
+          ? data.statements.map(statement => ({
+              statement_date: statement.statement_date.toISOString().split('T')[0],
+              value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
+              note: statement.note || "",
+              retirement_projections: statement.retirement_projections && statement.retirement_projections.length > 0
+                ? statement.retirement_projections.map(projection => ({
+                    retirement_age: typeof projection.retirement_age === 'string' ? 
+                      parseInt(projection.retirement_age) : projection.retirement_age,
+                    monthly_payout: typeof projection.monthly_payout === 'string' ? 
+                      parseFloat(projection.monthly_payout) : projection.monthly_payout,
+                    total_capital: typeof projection.total_capital === 'string' ? 
+                      parseFloat(projection.total_capital) : projection.total_capital
+                  }))
+                : []
             }))
           : []
       }
@@ -172,10 +176,10 @@ export default function NewCompanyPensionPage() {
                   <strong>Contribution Frequency:</strong> How often you contribute
                 </ExplanationListItem>
                 <ExplanationListItem>
-                  <strong>Latest Statement Date:</strong> When you received your last statement
+                  <strong>Statements:</strong> Records of your pension value over time
                 </ExplanationListItem>
                 <ExplanationListItem>
-                  <strong>Projections:</strong> Expected retirement benefits based on your statement
+                  <strong>Projections:</strong> Expected retirement benefits based on your statements
                 </ExplanationListItem>
               </ExplanationList>
             </Explanation>

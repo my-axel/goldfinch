@@ -29,16 +29,18 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
     name: "contribution_plan_steps"
   })
   
-  const { fields: projectionFields, append: appendProjection, remove: removeProjection } = useFieldArray({
+  const { fields: statementFields, append: appendStatement, remove: removeStatement } = useFieldArray({
     control: form.control,
-    name: "projections"
+    name: "statements"
   })
   
+  // We can't use useFieldArray in a loop, so we'll manage projections manually
   const [open, setOpen] = useState<number | null>(null)
   const { members } = useHousehold()
   const { settings } = useSettings()
   const [contributionAmountInput, setContributionAmountInput] = useState("")
   const [contributionInputs, setContributionInputs] = useState<string[]>([])
+  const [statementValueInputs, setStatementValueInputs] = useState<string[]>([])
   const [projectionInputs, setProjectionInputs] = useState<{[key: string]: string}>({})
   const decimalSeparator = getDecimalSeparator(settings.number_locale)
   const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
@@ -46,7 +48,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
   // Initialize input states when form data changes
   useEffect(() => {
     const contributionSteps = form.getValues("contribution_plan_steps");
-    const projections = form.getValues("projections");
+    const statements = form.getValues("statements");
     
     // Initialize contribution inputs
     if (contributionSteps && contributionSteps.length > 0) {
@@ -56,16 +58,29 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
       setContributionInputs(newContributionInputs);
     }
     
-    // Initialize projection inputs
-    if (projections && projections.length > 0) {
+    // Initialize statement value inputs
+    if (statements && statements.length > 0) {
+      const newStatementValueInputs = statements.map(statement => 
+        statement.value ? statement.value.toString().replace('.', decimalSeparator) : ""
+      );
+      setStatementValueInputs(newStatementValueInputs);
+      
+      // Initialize projection inputs for each statement
       const newProjectionInputs: {[key: string]: string} = {};
-      projections.forEach((projection, index) => {
-        newProjectionInputs[`${index}.monthly_payout`] = projection.monthly_payout 
-          ? projection.monthly_payout.toString().replace('.', decimalSeparator) 
-          : "";
-        newProjectionInputs[`${index}.total_capital`] = projection.total_capital 
-          ? projection.total_capital.toString().replace('.', decimalSeparator) 
-          : "";
+      statements.forEach((statement, statementIndex) => {
+        // Ensure retirement_projections is initialized for each statement
+        if (!statement.retirement_projections) {
+          form.setValue(`statements.${statementIndex}.retirement_projections`, []);
+        } else {
+          statement.retirement_projections.forEach((projection, projectionIndex) => {
+            newProjectionInputs[`${statementIndex}.${projectionIndex}.monthly_payout`] = projection.monthly_payout 
+              ? projection.monthly_payout.toString().replace('.', decimalSeparator) 
+              : "";
+            newProjectionInputs[`${statementIndex}.${projectionIndex}.total_capital`] = projection.total_capital 
+              ? projection.total_capital.toString().replace('.', decimalSeparator) 
+              : "";
+          });
+        }
       });
       setProjectionInputs(newProjectionInputs);
     }
@@ -101,20 +116,93 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
     setContributionInputs([...contributionInputs, ""])
   }
   
-  const handleAddProjection = () => {
-    appendProjection({
+  const handleAddStatement = () => {
+    appendStatement({
+      statement_date: new Date(),
+      value: 0,
+      note: "",
+      retirement_projections: []
+    })
+    
+    // Add a new entry to the statementValueInputs array
+    setStatementValueInputs([...statementValueInputs, "0"])
+  }
+  
+  const handleAddProjectionToStatement = (statementIndex: number) => {
+    // Get the current statements
+    const statements = form.getValues("statements");
+    if (!statements || !statements[statementIndex]) return;
+    
+    // Create a deep copy of the current statement
+    const currentStatement = { ...statements[statementIndex] };
+    
+    // Ensure retirement_projections is initialized as an array
+    if (!currentStatement.retirement_projections) {
+      currentStatement.retirement_projections = [];
+    }
+    
+    // Add a new projection
+    const newProjection = {
       retirement_age: 67,
       monthly_payout: 0,
       total_capital: 0
-    })
+    };
+    
+    // Create a new array with the existing projections plus the new one
+    const updatedProjections = [...currentStatement.retirement_projections, newProjection];
+    
+    // Update the form with the new projections array
+    form.setValue(`statements.${statementIndex}.retirement_projections`, updatedProjections);
     
     // Add new entries to the projectionInputs object
-    const newIndex = projectionFields.length
+    const projectionIndex = currentStatement.retirement_projections.length;
     setProjectionInputs({
       ...projectionInputs,
-      [`${newIndex}.monthly_payout`]: "",
-      [`${newIndex}.total_capital`]: ""
-    })
+      [`${statementIndex}.${projectionIndex}.monthly_payout`]: "0",
+      [`${statementIndex}.${projectionIndex}.total_capital`]: "0"
+    });
+  }
+  
+  const handleRemoveProjection = (statementIndex: number, projectionIndex: number) => {
+    // Get the current statements
+    const statements = form.getValues("statements");
+    if (!statements || !statements[statementIndex]) return;
+    
+    // Create a deep copy of the current statement
+    const currentStatement = { ...statements[statementIndex] };
+    
+    // Ensure retirement_projections is initialized as an array
+    if (!currentStatement.retirement_projections) {
+      currentStatement.retirement_projections = [];
+      return; // Nothing to remove if the array is empty
+    }
+    
+    // Create a new array without the projection to remove
+    const updatedProjections = [...currentStatement.retirement_projections];
+    updatedProjections.splice(projectionIndex, 1);
+    
+    // Update the form with the new projections array
+    form.setValue(`statements.${statementIndex}.retirement_projections`, updatedProjections);
+    
+    // Remove entries from projectionInputs
+    const newProjectionInputs = { ...projectionInputs };
+    delete newProjectionInputs[`${statementIndex}.${projectionIndex}.monthly_payout`];
+    delete newProjectionInputs[`${statementIndex}.${projectionIndex}.total_capital`];
+    
+    // Update keys for projections that come after the removed one
+    for (let i = projectionIndex + 1; i < currentStatement.retirement_projections.length; i++) {
+      if (newProjectionInputs[`${statementIndex}.${i}.monthly_payout`]) {
+        newProjectionInputs[`${statementIndex}.${i-1}.monthly_payout`] = newProjectionInputs[`${statementIndex}.${i}.monthly_payout`];
+        delete newProjectionInputs[`${statementIndex}.${i}.monthly_payout`];
+      }
+      
+      if (newProjectionInputs[`${statementIndex}.${i}.total_capital`]) {
+        newProjectionInputs[`${statementIndex}.${i-1}.total_capital`] = newProjectionInputs[`${statementIndex}.${i}.total_capital`];
+        delete newProjectionInputs[`${statementIndex}.${i}.total_capital`];
+      }
+    }
+    
+    setProjectionInputs(newProjectionInputs);
   }
 
   const handleDurationSelect = (index: number, years?: number) => {
@@ -171,7 +259,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                 <FormControl>
                   <Input
                     type="date"
-                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                    value={typeof field.value === 'string' ? field.value : field.value?.toISOString().split('T')[0] || ''}
                     onChange={(e) => {
                       const date = new Date(e.target.value)
                       date.setUTCHours(0, 0, 0, 0)
@@ -263,32 +351,6 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                     <SelectItem value={ContributionFrequency.ONE_TIME}>One-Time</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="latest_statement_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Latest Statement Date</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        const date = new Date(e.target.value)
-                        date.setUTCHours(0, 0, 0, 0)
-                        field.onChange(date)
-                      } else {
-                        field.onChange(undefined)
-                      }
-                    }}
-                  />
-                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -413,7 +475,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                     <FormControl>
                       <Input
                         type="date"
-                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        value={typeof field.value === 'string' ? field.value : field.value?.toISOString().split('T')[0] || ''}
                         onChange={(e) => {
                           const date = new Date(e.target.value)
                           date.setUTCHours(0, 0, 0, 0)
@@ -494,161 +556,277 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
       
       <div className="space-y-6 p-6 rounded-lg border bg-card">
         <div className="flex justify-between items-center border-b pb-2">
-          <h3 className="text-lg font-medium">Retirement Projections</h3>
+          <h3 className="text-lg font-medium">Pension Statements</h3>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleAddProjection}
+            onClick={handleAddStatement}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Projection
+            Add Statement
           </Button>
         </div>
 
-        <div className="space-y-6">
-          {projectionFields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end">
-              <FormField
-                control={form.control}
-                name={`projections.${index}.retirement_age`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Retirement Age</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="50" 
-                        max="100" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 67)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <div className="space-y-8">
+          {statementFields.map((statementField, statementIndex) => {
+            return (
+              <div key={statementField.id} className="space-y-4 p-4 border rounded-md">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-medium">Statement {statementIndex + 1}</h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeStatement(statementIndex)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`statements.${statementIndex}.statement_date`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Statement Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            value={typeof field.value === 'string' ? field.value : field.value?.toISOString().split('T')[0] || ''}
+                            onChange={(e) => {
+                              const date = new Date(e.target.value)
+                              date.setUTCHours(0, 0, 0, 0)
+                              field.onChange(date)
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name={`projections.${index}.monthly_payout`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Monthly Payout ({currencySymbol})</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={projectionInputs[`${index}.monthly_payout`] || ""}
-                          onChange={(e) => {
-                            const newValue = e.target.value
-                            if (isValidNumberFormat(newValue)) {
-                              setProjectionInputs({
-                                ...projectionInputs,
-                                [`${index}.monthly_payout`]: newValue
-                              })
-                              
-                              const parsedValue = parseNumber(newValue, settings.number_locale)
-                              if (parsedValue >= 0) {
-                                field.onChange(parsedValue)
-                              }
-                            }
-                          }}
-                          onBlur={() => {
-                            const value = parseNumber(projectionInputs[`${index}.monthly_payout`] || "", settings.number_locale)
-                            if (value >= 0) {
-                              setProjectionInputs({
-                                ...projectionInputs,
-                                [`${index}.monthly_payout`]: value.toString().replace('.', decimalSeparator)
-                              })
-                              field.onChange(value)
-                            } else {
-                              setProjectionInputs({
-                                ...projectionInputs,
-                                [`${index}.monthly_payout`]: ""
-                              })
-                              field.onChange(0)
-                            }
-                            field.onBlur()
-                          }}
-                          placeholder={`0${decimalSeparator}00`}
+                  <FormField
+                    control={form.control}
+                    name={`statements.${statementIndex}.value`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Value ({currencySymbol})</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={statementValueInputs[statementIndex] || ""}
+                              onChange={(e) => {
+                                const newValue = e.target.value
+                                if (isValidNumberFormat(newValue)) {
+                                  const newInputs = [...statementValueInputs]
+                                  newInputs[statementIndex] = newValue
+                                  setStatementValueInputs(newInputs)
+                                  
+                                  const parsedValue = parseNumber(newValue, settings.number_locale)
+                                  if (parsedValue >= 0) {
+                                    field.onChange(parsedValue)
+                                  }
+                                }
+                              }}
+                              onBlur={() => {
+                                const value = parseNumber(statementValueInputs[statementIndex] || "", settings.number_locale)
+                                if (value >= 0) {
+                                  const newInputs = [...statementValueInputs]
+                                  newInputs[statementIndex] = value.toString().replace('.', decimalSeparator)
+                                  setStatementValueInputs(newInputs)
+                                  field.onChange(value)
+                                } else {
+                                  const newInputs = [...statementValueInputs]
+                                  newInputs[statementIndex] = ""
+                                  setStatementValueInputs(newInputs)
+                                  field.onChange(0)
+                                }
+                                field.onBlur()
+                              }}
+                              placeholder={`0${decimalSeparator}00`}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`statements.${statementIndex}.note`}
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Note</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Additional information about this statement" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="pt-4 border-t">
+                  <div className="flex justify-between items-center mb-4">
+                    <h5 className="font-medium text-sm">Retirement Projections</h5>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddProjectionToStatement(statementIndex)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Projection
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {(statementField.retirement_projections || []).map((projection, projectionIndex) => (
+                      <div key={projectionIndex} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end">
+                        <FormField
+                          control={form.control}
+                          name={`statements.${statementIndex}.retirement_projections.${projectionIndex}.retirement_age`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Retirement Age</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="50" 
+                                  max="100" 
+                                  {...field} 
+                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 67)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              <FormField
-                control={form.control}
-                name={`projections.${index}.total_capital`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Capital ({currencySymbol})</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={projectionInputs[`${index}.total_capital`] || ""}
-                          onChange={(e) => {
-                            const newValue = e.target.value
-                            if (isValidNumberFormat(newValue)) {
-                              setProjectionInputs({
-                                ...projectionInputs,
-                                [`${index}.total_capital`]: newValue
-                              })
-                              
-                              const parsedValue = parseNumber(newValue, settings.number_locale)
-                              if (parsedValue >= 0) {
-                                field.onChange(parsedValue)
-                              }
-                            }
-                          }}
-                          onBlur={() => {
-                            const value = parseNumber(projectionInputs[`${index}.total_capital`] || "", settings.number_locale)
-                            if (value >= 0) {
-                              setProjectionInputs({
-                                ...projectionInputs,
-                                [`${index}.total_capital`]: value.toString().replace('.', decimalSeparator)
-                              })
-                              field.onChange(value)
-                            } else {
-                              setProjectionInputs({
-                                ...projectionInputs,
-                                [`${index}.total_capital`]: ""
-                              })
-                              field.onChange(0)
-                            }
-                            field.onBlur()
-                          }}
-                          placeholder={`0${decimalSeparator}00`}
+                        <FormField
+                          control={form.control}
+                          name={`statements.${statementIndex}.retirement_projections.${projectionIndex}.monthly_payout`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Monthly Payout ({currencySymbol})</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={projectionInputs[`${statementIndex}.${projectionIndex}.monthly_payout`] || ""}
+                                    onChange={(e) => {
+                                      const newValue = e.target.value
+                                      if (isValidNumberFormat(newValue)) {
+                                        setProjectionInputs({
+                                          ...projectionInputs,
+                                          [`${statementIndex}.${projectionIndex}.monthly_payout`]: newValue
+                                        })
+                                        
+                                        const parsedValue = parseNumber(newValue, settings.number_locale)
+                                        if (parsedValue >= 0) {
+                                          field.onChange(parsedValue)
+                                        }
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      const value = parseNumber(projectionInputs[`${statementIndex}.${projectionIndex}.monthly_payout`] || "", settings.number_locale)
+                                      if (value >= 0) {
+                                        setProjectionInputs({
+                                          ...projectionInputs,
+                                          [`${statementIndex}.${projectionIndex}.monthly_payout`]: value.toString().replace('.', decimalSeparator)
+                                        })
+                                        field.onChange(value)
+                                      } else {
+                                        setProjectionInputs({
+                                          ...projectionInputs,
+                                          [`${statementIndex}.${projectionIndex}.monthly_payout`]: ""
+                                        })
+                                        field.onChange(0)
+                                      }
+                                      field.onBlur()
+                                    }}
+                                    placeholder={`0${decimalSeparator}00`}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  removeProjection(index)
-                  const newInputs = { ...projectionInputs }
-                  delete newInputs[`${index}.monthly_payout`]
-                  delete newInputs[`${index}.total_capital`]
-                  setProjectionInputs(newInputs)
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+                        <FormField
+                          control={form.control}
+                          name={`statements.${statementIndex}.retirement_projections.${projectionIndex}.total_capital`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Total Capital ({currencySymbol})</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={projectionInputs[`${statementIndex}.${projectionIndex}.total_capital`] || ""}
+                                    onChange={(e) => {
+                                      const newValue = e.target.value
+                                      if (isValidNumberFormat(newValue)) {
+                                        setProjectionInputs({
+                                          ...projectionInputs,
+                                          [`${statementIndex}.${projectionIndex}.total_capital`]: newValue
+                                        })
+                                        
+                                        const parsedValue = parseNumber(newValue, settings.number_locale)
+                                        if (parsedValue >= 0) {
+                                          field.onChange(parsedValue)
+                                        }
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      const value = parseNumber(projectionInputs[`${statementIndex}.${projectionIndex}.total_capital`] || "", settings.number_locale)
+                                      if (value >= 0) {
+                                        setProjectionInputs({
+                                          ...projectionInputs,
+                                          [`${statementIndex}.${projectionIndex}.total_capital`]: value.toString().replace('.', decimalSeparator)
+                                        })
+                                        field.onChange(value)
+                                      } else {
+                                        setProjectionInputs({
+                                          ...projectionInputs,
+                                          [`${statementIndex}.${projectionIndex}.total_capital`]: ""
+                                        })
+                                        field.onChange(0)
+                                      }
+                                      field.onBlur()
+                                    }}
+                                    placeholder={`0${decimalSeparator}00`}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveProjection(statementIndex, projectionIndex)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

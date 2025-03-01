@@ -1,18 +1,21 @@
-from typing import Dict, Any, Union, List
+from typing import Dict, Any, Union, List, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from app.crud.base import CRUDBase
 from app.models.pension_company import (
     PensionCompany,
     PensionCompanyContributionPlanStep,
     PensionCompanyContributionHistory,
-    PensionCompanyProjection
+    PensionCompanyStatement,
+    PensionCompanyRetirementProjection
 )
 from app.schemas.pension_company import (
     PensionCompanyCreate,
     PensionCompanyUpdate,
     ContributionHistoryCreate,
-    ProjectionCreate,
-    PensionStatusUpdate
+    PensionStatusUpdate,
+    PensionCompanyStatementCreate,
+    PensionCompanyStatementUpdate
 )
 from app.models.enums import PensionStatus
 from datetime import date
@@ -28,7 +31,7 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
     ) -> PensionCompany:
         try:
             # Start by creating the pension object
-            obj_in_data = obj_in.dict(exclude={"contribution_plan_steps", "projections"})
+            obj_in_data = obj_in.dict(exclude={"contribution_plan_steps"})
             db_obj = PensionCompany(**obj_in_data)
             
             # Add and flush the pension object to get its ID
@@ -42,15 +45,6 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
                     pension_company_id=db_obj.id
                 )
                 db.add(db_step)
-                
-            # Create projections if provided
-            if obj_in.projections:
-                for projection in obj_in.projections:
-                    db_projection = PensionCompanyProjection(
-                        **projection.dict(),
-                        pension_company_id=db_obj.id
-                    )
-                    db.add(db_projection)
 
             # Commit all changes
             db.commit()
@@ -88,23 +82,6 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
                     pension_company_id=db_obj.id
                 )
                 db.add(db_step)
-                
-        # Handle projections separately
-        if "projections" in update_data:
-            # Remove old projections
-            for projection in db_obj.projections:
-                db.delete(projection)
-            
-            # Add new projections
-            projections = update_data.pop("projections")
-            if projections:
-                for projection in projections:
-                    projection_data = projection.dict() if hasattr(projection, 'dict') else projection
-                    db_projection = PensionCompanyProjection(
-                        **projection_data,
-                        pension_company_id=db_obj.id
-                    )
-                    db.add(db_projection)
 
         # Update other fields
         return super().update(db=db, db_obj=db_obj, obj_in=update_data)
@@ -130,29 +107,6 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
 
         # Update pension current value
         pension.current_value += obj_in.amount
-
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
-        
-    def create_projection(
-        self,
-        db: Session,
-        *,
-        pension_id: int,
-        obj_in: ProjectionCreate
-    ) -> PensionCompanyProjection:
-        # Get the pension
-        pension = db.query(PensionCompany).get(pension_id)
-        if not pension:
-            raise ValueError("Pension not found")
-
-        # Create the projection
-        db_obj = PensionCompanyProjection(
-            **obj_in.dict(),
-            pension_company_id=pension_id
-        )
-        db.add(db_obj)
 
         db.commit()
         db.refresh(db_obj)
@@ -191,5 +145,115 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
             db.rollback()
             logger.error(f"Failed to update pension status: {str(e)}")
             raise
+
+    def create_statement(
+        self,
+        db: Session,
+        *,
+        pension_id: int,
+        obj_in: PensionCompanyStatementCreate
+    ) -> PensionCompanyStatement:
+        """Create a new statement for a company pension."""
+        try:
+            # Create the statement object
+            obj_in_data = obj_in.dict(exclude={"projections"})
+            db_obj = PensionCompanyStatement(**obj_in_data, pension_id=pension_id)
+            
+            # Add and flush the statement object to get its ID
+            db.add(db_obj)
+            db.flush()
+
+            # Create projections if provided
+            if obj_in.projections:
+                for projection in obj_in.projections:
+                    db_projection = PensionCompanyRetirementProjection(
+                        **projection.dict(),
+                        statement_id=db_obj.id
+                    )
+                    db.add(db_projection)
+
+            # Commit all changes
+            db.commit()
+            db.refresh(db_obj)
+            return db_obj
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to create company pension statement: {str(e)}")
+            raise
+
+    def update_statement(
+        self,
+        db: Session,
+        *,
+        db_obj: PensionCompanyStatement,
+        obj_in: Union[PensionCompanyStatementUpdate, Dict[str, Any]]
+    ) -> PensionCompanyStatement:
+        """Update an existing pension company statement."""
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.dict(exclude_unset=True)
+
+        # Handle projections separately
+        if "projections" in update_data:
+            # Remove old projections
+            for projection in db_obj.projections:
+                db.delete(projection)
+            
+            # Add new projections
+            projections = update_data.pop("projections")
+            if projections:
+                for projection in projections:
+                    projection_data = projection.dict() if hasattr(projection, 'dict') else projection
+                    db_projection = PensionCompanyRetirementProjection(
+                        **projection_data,
+                        statement_id=db_obj.id
+                    )
+                    db.add(db_projection)
+
+        # Update other fields
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+    def get_statement(
+        self,
+        db: Session,
+        *,
+        statement_id: int
+    ) -> Optional[PensionCompanyStatement]:
+        """Get a statement by ID."""
+        return db.query(PensionCompanyStatement).filter(
+            PensionCompanyStatement.id == statement_id
+        ).first()
+
+    def get_statements(
+        self,
+        db: Session,
+        *,
+        pension_id: int,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[PensionCompanyStatement]:
+        """Get all statements for a pension company with pagination."""
+        return db.query(PensionCompanyStatement).filter(
+            PensionCompanyStatement.pension_id == pension_id
+        ).order_by(desc(PensionCompanyStatement.statement_date)).offset(skip).limit(limit).all()
+
+    def get_latest_statement(
+        self,
+        db: Session,
+        *,
+        pension_id: int
+    ) -> Optional[PensionCompanyStatement]:
+        """Get the latest statement for a pension company."""
+        return db.query(PensionCompanyStatement).filter(
+            PensionCompanyStatement.pension_id == pension_id
+        ).order_by(desc(PensionCompanyStatement.statement_date)).first()
 
 pension_company = CRUDPensionCompany(PensionCompany) 

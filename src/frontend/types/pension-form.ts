@@ -15,9 +15,21 @@ export type ContributionPlanStep = {
  * Represents a retirement projection for a company pension
  */
 export type RetirementProjection = {
+  id?: number  // Optional ID for new projections
   retirement_age: number
   monthly_payout: number
   total_capital: number
+}
+
+/**
+ * Represents a pension company statement
+ */
+export type PensionCompanyStatementFormData = {
+  id?: number  // Optional ID for new statements
+  statement_date: Date
+  value: number
+  note?: string
+  retirement_projections?: RetirementProjection[]
 }
 
 /**
@@ -66,7 +78,6 @@ export type CompanyPensionFormData = {
   employer: string
   contribution_amount?: number
   contribution_frequency?: ContributionFrequency
-  latest_statement_date?: Date
   contribution_plan_steps: ContributionPlanStep[]
-  projections?: RetirementProjection[]
+  statements?: PensionCompanyStatementFormData[]
 }

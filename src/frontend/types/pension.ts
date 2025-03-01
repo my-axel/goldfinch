@@ -70,13 +70,26 @@ export interface ExtraContribution {
 }
 
 /**
+ * Represents a statement for a company pension plan.
+ * Contains information about the pension value at a specific date.
+ */
+export interface PensionCompanyStatement {
+  id: number
+  pension_id: number
+  statement_date: Date
+  value: number
+  note?: string
+  retirement_projections?: PensionCompanyRetirementProjection[]
+}
+
+/**
  * Represents a retirement projection for a company pension plan.
  * Contains information about expected retirement benefits based on
  * the latest company pension statement.
  */
-export interface RetirementProjection {
+export interface PensionCompanyRetirementProjection {
   id: number
-  pension_id: number
+  statement_id: number
   retirement_age: number
   monthly_payout: number
   total_capital: number
@@ -159,11 +172,10 @@ export interface CompanyPension {
   // New fields replacing employer matching and vesting
   contribution_amount?: number        // Regular contribution amount
   contribution_frequency?: ContributionFrequency  // Frequency of regular contributions
-  latest_statement_date?: Date        // Date of the latest pension statement
   
   contribution_plan_steps: ContributionStep[]
   contribution_history?: ExtraContribution[]  // History of contributions
-  projections?: RetirementProjection[]       // Retirement projections
+  statements?: PensionCompanyStatement[]      // Pension statements
   
   status: 'ACTIVE' | 'PAUSED'
   paused_at?: string

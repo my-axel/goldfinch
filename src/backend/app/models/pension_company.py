@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, ForeignKey, Boolean, Index, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Numeric, Date, ForeignKey, Boolean, Index, Enum as SQLEnum, Text, DateTime
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from app.models.enums import ContributionFrequency, PensionStatus
+from sqlalchemy.sql import func
 
 class PensionCompany(Base):
     __tablename__ = "pension_company"
@@ -19,7 +20,6 @@ class PensionCompany(Base):
     # New fields
     contribution_amount = Column(Numeric(20, 2), nullable=True)
     contribution_frequency = Column(SQLEnum(ContributionFrequency), nullable=True)
-    latest_statement_date = Column(Date, nullable=True)
 
     # Status management
     status = Column(SQLEnum(PensionStatus), nullable=False, default=PensionStatus.ACTIVE)
@@ -30,7 +30,7 @@ class PensionCompany(Base):
     member = relationship("HouseholdMember", back_populates="company_pensions")
     contribution_plan_steps = relationship("PensionCompanyContributionPlanStep", back_populates="pension", cascade="all, delete-orphan")
     contribution_history = relationship("PensionCompanyContributionHistory", back_populates="pension", cascade="all, delete-orphan")
-    projections = relationship("PensionCompanyProjection", back_populates="pension", cascade="all, delete-orphan")
+    statements = relationship("PensionCompanyStatement", back_populates="pension", cascade="all, delete-orphan")
 
 class PensionCompanyContributionPlanStep(Base):
     __tablename__ = "pension_company_contribution_plan_steps"
@@ -59,20 +59,40 @@ class PensionCompanyContributionHistory(Base):
     # Relationships
     pension = relationship("PensionCompany", back_populates="contribution_history")
 
-# New model for projections
-class PensionCompanyProjection(Base):
-    __tablename__ = "pension_company_projections"
+class PensionCompanyStatement(Base):
+    """
+    Represents a statement for a company pension plan.
+    Each statement contains projections for retirement benefits.
+    """
+    __tablename__ = "pension_company_statements"
 
     id = Column(Integer, primary_key=True, index=True)
-    pension_company_id = Column(Integer, ForeignKey("pension_company.id", ondelete="CASCADE"), nullable=False)
-    retirement_age = Column(Integer, nullable=False)
-    monthly_payout = Column(Numeric(20, 2), nullable=False)
-    total_capital = Column(Numeric(20, 2), nullable=False)
-    
+    pension_id = Column(Integer, ForeignKey("pension_company.id", ondelete="CASCADE"), nullable=False)
+    statement_date = Column(Date, nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
     # Relationships
-    pension = relationship("PensionCompany", back_populates="projections")
+    pension = relationship("PensionCompany", back_populates="statements")
+    projections = relationship("PensionCompanyRetirementProjection", back_populates="statement", cascade="all, delete-orphan")
+
+class PensionCompanyRetirementProjection(Base):
+    """
+    Represents a retirement projection associated with a pension company statement.
+    Contains information about projected retirement benefits.
+    """
+    __tablename__ = "pension_company_retirement_projections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    statement_id = Column(Integer, ForeignKey("pension_company_statements.id", ondelete="CASCADE"), nullable=False)
+    retirement_age = Column(Integer, nullable=False)
+    monthly_payout = Column(Numeric(precision=10, scale=2), nullable=False)
+    total_capital = Column(Numeric(precision=10, scale=2), nullable=False)
+
+    # Relationships
+    statement = relationship("PensionCompanyStatement", back_populates="projections")
     
     # Indexes
     __table_args__ = (
-        Index("ix_pension_company_projections_pension_id", "pension_company_id"),
+        Index("ix_pension_company_retirement_projections_statement_id", "statement_id"),
     ) 
