@@ -8,7 +8,6 @@ import {
   type InsurancePension,
   type CompanyPension,
   type PensionCompanyStatement,
-  type PensionCompanyRetirementProjection,
   PensionType
 } from '@/frontend/types/pension'
 import { type ETF } from '@/frontend/types/etf'
@@ -471,8 +470,8 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
           amount: Number(step.amount),
           frequency: step.frequency,
-          start_date: step.start_date.toISOString().split('T')[0],
-          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null
+          start_date: step.start_date instanceof Date ? step.start_date.toISOString().split('T')[0] : new Date(step.start_date).toISOString().split('T')[0],
+          end_date: step.end_date ? (step.end_date instanceof Date ? step.end_date.toISOString().split('T')[0] : new Date(step.end_date).toISOString().split('T')[0]) : null
         }))
       }
       

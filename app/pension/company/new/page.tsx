@@ -18,6 +18,8 @@ import {
   ExplanationList,
   ExplanationListItem
 } from "@/frontend/components/ui/explanation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { companyPensionSchema } from "@/frontend/lib/validations/pension"
 
 export default function NewCompanyPensionPage() {
   const router = useRouter()
@@ -27,6 +29,7 @@ export default function NewCompanyPensionPage() {
   const memberId = searchParams?.get('member_id') || ""
 
   const form = useForm<CompanyPensionFormData>({
+    resolver: zodResolver(companyPensionSchema),
     defaultValues: {
       type: PensionType.COMPANY,
       name: "",
@@ -55,21 +58,21 @@ export default function NewCompanyPensionPage() {
         name: data.name,
         member_id: memberId,
         employer: data.employer,
-        start_date: data.start_date.toISOString().split('T')[0],
+        start_date: data.start_date instanceof Date ? data.start_date.toISOString().split('T')[0] : new Date(data.start_date).toISOString().split('T')[0],
         contribution_amount: data.contribution_amount !== undefined ? Number(data.contribution_amount) : null,
         contribution_frequency: data.contribution_frequency || null,
         notes: data.notes || "",
         contribution_plan_steps: data.contribution_plan_steps.map(step => ({
           amount: typeof step.amount === 'string' ? parseFloat(step.amount) : step.amount,
           frequency: step.frequency,
-          start_date: step.start_date.toISOString().split('T')[0],
-          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null,
+          start_date: step.start_date instanceof Date ? step.start_date.toISOString().split('T')[0] : new Date(step.start_date).toISOString().split('T')[0],
+          end_date: step.end_date ? (step.end_date instanceof Date ? step.end_date.toISOString().split('T')[0] : new Date(step.end_date).toISOString().split('T')[0]) : null,
           note: step.note || null
         })),
         status: 'ACTIVE',
         statements: data.statements && data.statements.length > 0 
           ? data.statements.map(statement => ({
-              statement_date: statement.statement_date.toISOString().split('T')[0],
+              statement_date: statement.statement_date instanceof Date ? statement.statement_date.toISOString().split('T')[0] : new Date(statement.statement_date).toISOString().split('T')[0],
               value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
               note: statement.note || "",
               retirement_projections: statement.retirement_projections && statement.retirement_projections.length > 0
@@ -86,8 +89,6 @@ export default function NewCompanyPensionPage() {
           : []
       }
 
-      // The API expects dates as strings but the type definition uses Date objects
-      // Use a type assertion to bridge this gap
       await createCompanyPension(pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
 
       toast.success("Success", { description: "Company pension created successfully" })

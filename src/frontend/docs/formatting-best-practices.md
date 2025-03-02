@@ -9,6 +9,7 @@ This guide outlines best practices for formatting numbers, currencies, percentag
 3. Client-Side Only Formatting Pattern
 4. Examples
 5. Common Pitfalls
+6. Date Handling in Forms
 
 ## Understanding Hydration Mismatches
 
@@ -261,4 +262,90 @@ useEffect(() => {
 return <div>{formattedValue}</div>
 ```
 
-By following these best practices, we can ensure consistent formatting throughout the application while avoiding hydration mismatches. 
+By following these best practices, we can ensure consistent formatting throughout the application while avoiding hydration mismatches.
+
+## Date Handling in Forms
+
+### Understanding Date Type Inconsistencies
+
+When working with dates in forms, especially in a form submission flow that involves multiple steps (form → context → API), dates can arrive in different formats. This can lead to runtime errors when trying to call methods like `toISOString()`.
+
+Common scenarios where this occurs:
+- Form components handling dates as `Date` objects
+- Data transformation converting dates to strings
+- API responses returning date strings
+- Nested objects with multiple date fields
+
+### Best Practices for Form Date Handling
+
+#### 1. Form Component Level
+
+Always ensure dates are stored as Date objects in form state:
+
+```typescript
+// In form components
+onChange={(e) => {
+  const date = new Date(e.target.value)
+  date.setUTCHours(0, 0, 0, 0)  // Ensure UTC midnight
+  field.onChange(date)
+}}
+```
+
+#### 2. Context/Service Level
+
+Handle both possible types when processing dates:
+
+```typescript
+// Utility function for robust date handling
+const ensureDateString = (date: Date | string | undefined | null): string | null => {
+  if (!date) return null
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0]
+  }
+  return new Date(date).toISOString().split('T')[0]
+}
+
+// Usage in data transformation
+const processFormData = (formData: FormData) => {
+  return {
+    start_date: ensureDateString(formData.start_date),
+    steps: formData.steps.map(step => ({
+      ...step,
+      start_date: ensureDateString(step.start_date),
+      end_date: ensureDateString(step.end_date)
+    }))
+  }
+}
+```
+
+### Common Date Handling Patterns
+
+#### ❌ Avoid Direct Date Method Calls Without Type Checking
+
+```typescript
+// BAD - Assumes date is always a Date object
+const dateString = formData.start_date.toISOString()
+```
+
+#### ✅ Use Type Guards and Safe Date Processing
+
+```typescript
+// GOOD - Handles both Date objects and strings safely
+const processDate = (dateField: Date | string) => {
+  if (dateField instanceof Date) {
+    return dateField.toISOString().split('T')[0]
+  }
+  return new Date(dateField).toISOString().split('T')[0]
+}
+```
+
+### Key Guidelines for Date Handling
+
+1. Always validate date types before calling `toISOString()`
+2. Use type guards or instanceof checks for Date objects
+3. Implement utility functions for consistent date processing
+4. Set UTC midnight for all dates to avoid timezone issues
+5. Handle nullable date fields appropriately
+6. Consider implementing a centralized date processing utility
+
+By following these patterns, you can ensure robust date handling across your application, preventing type-related errors and providing consistent date formatting for API submissions. 

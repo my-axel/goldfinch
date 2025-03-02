@@ -10,6 +10,8 @@ import { PensionType } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
 import { getPensionListRoute } from "@/frontend/lib/routes"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { etfPensionSchema } from "@/frontend/lib/validations/pension"
 
 export default function NewETFPensionPage() {
   const router = useRouter()
@@ -17,6 +19,7 @@ export default function NewETFPensionPage() {
   const { createEtfPension } = usePension()
 
   const form = useForm<ETFPensionFormData>({
+    resolver: zodResolver(etfPensionSchema),
     defaultValues: {
       type: PensionType.ETF_PLAN,
       name: "",
