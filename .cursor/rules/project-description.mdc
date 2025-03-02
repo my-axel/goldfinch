@@ -1,0 +1,105 @@
+---
+description: If the context of the app is necessary to create something new or extend something. It contains mainly a description of the app and explains the functionality as well as the roadmap
+globs: 
+alwaysApply: false
+---
+# 🐦 Goldfinch
+
+Goldfinch is a sophisticated retirement planning platform that empowers individuals and families to take control of their financial future. Built with modern technology and designed for transparency, it provides comprehensive management of diverse pension types (ETF, Company, Insurance), real-time portfolio tracking, and intelligent retirement strategies. With features like multi-currency support, smart analytics, and personalized recommendations, Goldfinch transforms complex retirement planning into a structured, accessible journey for everyone.
+
+## 🚀 Main Features
+
+### Dashboard
+- **Portfolio Overview**: Complete view of your retirement journey
+  - Total portfolio value and growth rates
+  - Contribution tracking and investment returns
+  - Historical performance analysis
+  - Quick actions for common tasks
+
+### Household Management
+- **Family Planning**: Manage retirement planning for the whole family
+  - Add and manage household members
+  - Track individual and combined portfolios
+  - View household-level analytics
+  - Customize settings per member
+
+### Pension Plans
+- **ETF-Based Pensions**: Create and manage ETF investment portfolios
+  - Real-time ETF data integration
+  - Performance tracking and analytics
+  - Contribution planning and monitoring
+  - Multi-currency support with automatic exchange rates
+- **Company Pensions**: Track employer-provided retirement benefits
+  - Record and monitor company contributions
+  - Track vesting schedules
+  - Document benefit terms
+- **Insurance Pensions**: Manage insurance-based retirement products
+  - Track policy values and returns
+  - Monitor premium payments
+  - Document policy terms and conditions
+
+### Compass
+- **Retirement Navigation**: Smart analysis and guidance
+  - Gap analysis tools
+  - Personalized recommendations
+  - Interactive retirement planning
+  - Risk assessment and optimization
+
+### Payout Strategy
+- **Retirement Income Planning**: Plan your retirement withdrawals
+  - Timeline visualization
+  - Scenario planning
+  - Withdrawal strategy optimization
+  - Tax-efficient distribution planning
+
+## ⚙️ Core Features
+
+### Currency Management
+- **Multi-Currency Support**: Comprehensive handling of international currencies with EUR as base
+- **Real-Time Exchange Rates**: Daily updates from European Central Bank (ECB)
+- **Historical Rate Data**: Access to exchange rates dating back to 1999
+- **Automatic Conversion**: Seamless currency conversion for all financial calculations
+
+### Data Formatting
+- **Locale-Aware Formatting**: Intelligent number and date formatting based on user locale
+- **Currency Display**: Proper currency symbol placement and formatting
+- **Percentage Handling**: Standardized percentage formatting across the application
+- **Date Standardization**: Consistent date formatting with timezone support
+
+### Calculation Engine
+- **Projection System**: Sophisticated retirement projection calculations with multiple scenarios
+- **Monthly Compounding**: Accurate interest calculations with monthly compounding
+- **Contribution Tracking**: Detailed tracking of regular and one-time contributions
+- **Performance Analytics**: Comprehensive performance metrics and statistics
+
+### User Experience
+- **Responsive Design**: Fully responsive interface optimized for all device sizes
+- **Real-Time Updates**: Immediate reflection of changes in calculations and projections
+- **Data Validation**: Comprehensive input validation and error handling
+- **Accessibility**: WCAG-compliant interface with full keyboard navigation
+
+## 🗺️ Roadmap
+
+### In Progress
+- Dashboard implementation with:
+  - Portfolio overview and analytics
+  - Historical performance tracking
+  - Future projections and scenarios
+- Compass feature development:
+  - Gap analysis tools
+  - Smart recommendations engine
+  - Interactive retirement planning
+- Payout Strategy implementation:
+  - Timeline visualization
+  - Scenario planning tools
+  - Withdrawal strategy optimization
+
+### Future Plans
+- Insurance and company pension integration
+- State pension tracking and management
+- Advanced scenario analysis
+- Tax impact calculations
+- Real estate and other asset integration
+- Full localization support (German/English)
+- Enhanced contribution planning tools
+- Improved ETF data synchronization

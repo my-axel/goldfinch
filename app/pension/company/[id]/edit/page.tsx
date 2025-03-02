@@ -6,10 +6,10 @@ import { EditCompanyPensionForm } from "@/frontend/components/pension/company/fo
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
-import { PensionType, ContributionFrequency, CompanyPension } from "@/frontend/types/pension"
+import { PensionType, CompanyPension } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/PensionContext"
 import { toast } from "sonner"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { 
   Explanation, 
@@ -20,7 +20,11 @@ import {
   ExplanationListItem
 } from "@/frontend/components/ui/explanation"
 import { ContributionHistoryCard } from "@/frontend/components/pension/company/components/ContributionHistoryCard"
-import { ProjectionsCard } from "@/frontend/components/pension/company/components/ProjectionsCard"
+import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
+import { LoadingState } from "@/frontend/components/shared/LoadingState"
+import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
+import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
+import { ContributionFrequency } from "@/frontend/types/pension"
 
 interface EditCompanyPensionPageProps {
   params: {
@@ -29,16 +33,13 @@ interface EditCompanyPensionPageProps {
 }
 
 export default function EditCompanyPensionPage({ params: serverParams }: EditCompanyPensionPageProps) {
-  // Use the useParams hook to get the client-side params
   const clientParams = useParams<{ id: string }>()
-  
-  // Use the id from either client or server params
   const id = clientParams?.id || serverParams.id
   const pensionId = parseInt(id)
   
   const router = useRouter()
-  const { selectedPension, fetchPension, updateCompanyPension } = usePension()
-  const [hasFetched, setHasFetched] = useState(false)
+  const { updateCompanyPension } = usePension()
+  const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
 
   const form = useForm<CompanyPensionFormData>({
     defaultValues: {
@@ -55,60 +56,59 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
     }
   })
 
-  // Only fetch the pension once when the component mounts
+  // Reset form when pension data is available
   useEffect(() => {
-    if (!hasFetched && pensionId) {
-      fetchPension(pensionId, PensionType.COMPANY).then(() => {
-        setHasFetched(true)
-      }).catch(error => {
-        console.error("Failed to fetch pension:", error);
-        setHasFetched(true); // Mark as fetched even on error to prevent infinite retries
-      });
+    if (!pension || isLoading) {
+      return
     }
-  }, [fetchPension, pensionId, hasFetched]);
 
-  // Only update the form when selectedPension changes
-  useEffect(() => {
-    if (selectedPension && selectedPension.type === PensionType.COMPANY) {
-      // Create a deep copy of statements to avoid reference issues
-      const statementsCopy = selectedPension.statements ? 
-        selectedPension.statements.map(statement => ({
-          id: statement.id,
-          statement_date: new Date(statement.statement_date),
-          value: statement.value,
-          note: statement.note || "",
-          retirement_projections: statement.retirement_projections ? 
-            statement.retirement_projections.map(projection => ({
-              id: projection.id,
-              retirement_age: projection.retirement_age,
-              monthly_payout: projection.monthly_payout,
-              total_capital: projection.total_capital
-            })) : []
-        })) : [];
+    const statementsCopy = pension.statements ? 
+      pension.statements.map(statement => ({
+        id: statement.id,
+        statement_date: new Date(statement.statement_date),
+        value: statement.value,
+        note: statement.note || "",
+        retirement_projections: statement.retirement_projections ? 
+          statement.retirement_projections.map(projection => ({
+            id: projection.id,
+            retirement_age: projection.retirement_age,
+            monthly_payout: projection.monthly_payout,
+            total_capital: projection.total_capital
+          })) : []
+      })) : []
 
-      // Create a deep copy of contribution steps to avoid reference issues
-      const contributionStepsCopy = selectedPension.contribution_plan_steps.map(step => ({
-        amount: step.amount,
-        frequency: step.frequency,
-        start_date: new Date(step.start_date),
-        end_date: step.end_date ? new Date(step.end_date) : undefined,
-        note: step.note
-      }));
+    const contributionStepsCopy = pension.contribution_plan_steps.map(step => ({
+      amount: step.amount,
+      frequency: step.frequency,
+      start_date: new Date(step.start_date),
+      end_date: step.end_date ? new Date(step.end_date) : undefined,
+      note: step.note
+    }))
 
-      form.reset({
-        type: PensionType.COMPANY,
-        name: selectedPension.name,
-        member_id: selectedPension.member_id.toString(),
-        employer: selectedPension.employer,
-        start_date: new Date(selectedPension.start_date),
-        contribution_amount: selectedPension.contribution_amount,
-        contribution_frequency: selectedPension.contribution_frequency || ContributionFrequency.MONTHLY,
-        notes: selectedPension.notes || "",
-        contribution_plan_steps: contributionStepsCopy,
-        statements: statementsCopy
-      });
+    // Ensure contribution_frequency is a valid enum value or default to MONTHLY
+    let contributionFrequency = ContributionFrequency.MONTHLY;
+    
+    if (pension.contribution_frequency && 
+        Object.values(ContributionFrequency).includes(pension.contribution_frequency as ContributionFrequency)) {
+      contributionFrequency = pension.contribution_frequency as ContributionFrequency;
     }
-  }, [selectedPension, form]);
+    
+    // Reset the form with all fields including contribution_frequency
+    form.reset({
+      type: PensionType.COMPANY,
+      name: pension.name,
+      member_id: pension.member_id.toString(),
+      employer: pension.employer,
+      start_date: new Date(pension.start_date),
+      contribution_amount: pension.contribution_amount,
+      contribution_frequency: contributionFrequency,
+      notes: pension.notes || "",
+      contribution_plan_steps: contributionStepsCopy,
+      statements: statementsCopy
+    }, {
+      keepDefaultValues: false
+    });
+  }, [pension, isLoading, form])
 
   const handleSubmit = async (data: CompanyPensionFormData) => {
     try {
@@ -135,7 +135,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
           end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null,
           note: step.note || null
         })),
-        status: selectedPension?.status || "ACTIVE",
+        status: pension?.status || "ACTIVE",
         statements: data.statements && data.statements.length > 0 
           ? data.statements.map(statement => ({
               id: statement.id,
@@ -170,116 +170,117 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
     }
   }
 
-  if (!selectedPension) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading pension details...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (selectedPension.type !== PensionType.COMPANY) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Invalid pension type</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="container mx-auto py-10">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left column (8/12) - Form and Cards */}
-        <div className="md:col-span-8 space-y-6">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Edit Company Pension Plan</h1>
-              <p className="text-muted-foreground mt-2">
-                Update your company pension plan details and contribution schedule.
-              </p>
+    <ErrorBoundary>
+      <div className="container mx-auto py-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Left column (8/12) - Form and Cards */}
+          <div className="md:col-span-8 space-y-6">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Edit Company Pension Plan</h1>
+                <p className="text-muted-foreground mt-2">
+                  Update your company pension plan details and contribution schedule.
+                </p>
+              </div>
+              
+              <div className="flex space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  form="company-pension-form"
+                  disabled={isLoading}
+                >
+                  Save Changes
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                form="company-pension-form"
-              >
-                Save Changes
-              </Button>
-            </div>
+
+            {isLoading ? (
+              <LoadingState message="Loading pension details..." />
+            ) : error ? (
+              <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error.message}</AlertDescription>
+              </Alert>
+            ) : !pension ? (
+              <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>Pension not found</AlertDescription>
+              </Alert>
+            ) : pension.type !== PensionType.COMPANY ? (
+              <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>Invalid pension type</AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                {/* Form */}
+                <Form {...form}>
+                  <form 
+                    id="company-pension-form"
+                    onSubmit={form.handleSubmit(handleSubmit)} 
+                    className="space-y-8"
+                  >
+                    <EditCompanyPensionForm form={form} />
+                  </form>
+                </Form>
+
+                {/* Contribution History Card */}
+                <ContributionHistoryCard pension={pension} />
+              </>
+            )}
           </div>
 
-          {/* Form */}
-          <Form {...form}>
-            <form 
-              id="company-pension-form"
-              onSubmit={form.handleSubmit(handleSubmit)} 
-              className="space-y-8"
-            >
-              <EditCompanyPensionForm form={form} />
-            </form>
-          </Form>
-
-          {/* Contribution History Card */}
-          <ContributionHistoryCard pension={selectedPension} />
-          
-          {/* Projections Card */}
-          <ProjectionsCard pension={selectedPension} />
-        </div>
-
-        {/* Right column (4/12) - Explanation */}
-        <div className="md:col-span-4">
-          <div className="sticky top-6 space-y-6">
-            <Explanation>
-              <ExplanationHeader>Managing Your Company Pension</ExplanationHeader>
-              <ExplanationContent>
-                <p>
-                  Review and update your pension details based on the latest
-                  statement from your company. You can add yearly investments
-                  when you make additional contributions.
-                </p>
-                <p className="mt-2">
-                  The contribution history shows all your past investments by month.
-                  The projection values should reflect the latest estimates
-                  provided by your company&apos;s pension plan statement.
-                </p>
-              </ExplanationContent>
-              
-              <ExplanationAlert className="mt-4">
-                Regular updates to your pension information help you track your
-                retirement progress more accurately.
-              </ExplanationAlert>
-              
-              <ExplanationHeader className="mt-6">Key Management Tasks</ExplanationHeader>
-              <ExplanationList>
-                <ExplanationListItem>
-                  <strong>Update Contribution Amount:</strong> When your contribution changes
-                </ExplanationListItem>
-                <ExplanationListItem>
-                  <strong>Add Yearly Investments:</strong> Record additional contributions
-                </ExplanationListItem>
-                <ExplanationListItem>
-                  <strong>Update Projections:</strong> When you receive a new statement
-                </ExplanationListItem>
-                <ExplanationListItem>
-                  <strong>Track History:</strong> View your contribution history
-                </ExplanationListItem>
-              </ExplanationList>
-            </Explanation>
+          {/* Right column (4/12) - Explanation */}
+          <div className="md:col-span-4">
+            <div className="sticky top-6 space-y-6">
+              <Explanation>
+                <ExplanationHeader>Managing Your Company Pension</ExplanationHeader>
+                <ExplanationContent>
+                  <p>
+                    Review and update your pension details based on the latest
+                    statement from your company. You can add yearly investments
+                    when you make additional contributions.
+                  </p>
+                  <p className="mt-2">
+                    The contribution history shows all your past investments by month.
+                    The projection values should reflect the latest estimates
+                    provided by your company&apos;s pension plan statement.
+                  </p>
+                </ExplanationContent>
+                
+                <ExplanationAlert className="mt-4">
+                  Regular updates to your pension information help you track your
+                  retirement progress more accurately.
+                </ExplanationAlert>
+                
+                <ExplanationHeader className="mt-6">Key Management Tasks</ExplanationHeader>
+                <ExplanationList>
+                  <ExplanationListItem>
+                    <strong>Update Contribution Amount:</strong> When your contribution changes
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Add Yearly Investments:</strong> Record additional contributions
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Update Projections:</strong> When you receive a new statement
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Track History:</strong> View your contribution history
+                  </ExplanationListItem>
+                </ExplanationList>
+              </Explanation>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   )
 } 

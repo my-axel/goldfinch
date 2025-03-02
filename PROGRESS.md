@@ -3,6 +3,15 @@
 ## 📋 Current Status & Next Steps
 
 ### Active Development
+- 🔄 **Form Refactoring Planning**
+  - Created detailed TODO lists for form refactoring tasks
+  - Documented implementation order for refactoring tasks
+  - Prepared implementation guides for each refactoring type
+  - Next: Begin EnumSelect refactoring implementation
+
+<details>
+<summary><strong>✅ Recently Completed</strong></summary>
+
 - ✅ Pension Status Management System
   - Added status field to company pension model
   - Created API endpoint for updating company pension status
@@ -17,6 +26,12 @@
   - Documented patterns to avoid hydration mismatches
   - Added examples for client-side only formatting
   - Provided templates for consistent implementation
+- ✅ EnumSelect Component Implementation
+  - Created reusable EnumSelect component for handling enum-based select fields
+  - Fixed issues with form resets and default values
+  - Implemented in EditCompanyPensionForm for contribution_frequency
+  - Created refactoring plan for other enum-based selects in the codebase
+</details>
 
 ### Ready to Implement
 1. 🔥 **Insurance Pension** (High Priority)
@@ -34,6 +49,28 @@
    - Blocked by: Insurance Pension and State Pension completion
    - Can start: Portfolio overview for ETF and Company pensions
    - Full implementation requires all pension types
+
+4. 🔥 **EnumSelect Refactoring**
+   - Refactor all enum-based select fields to use the new EnumSelect component
+   - See [TODO/enum_selects.md](TODO/enum_selects.md) for the complete list
+   - Will improve form handling and prevent empty field issues
+   - *Recommended to implement first among refactoring tasks - isolated changes with immediate benefits*
+
+5. 🔥 **Form Reset Hook Implementation**
+   - Create a reusable hook to standardize form reset logic across all forms
+   - Centralize data transformation between API and form formats
+   - Handle complex nested data structures, dates, and enums consistently
+   - See [TODO/form_reset_hook.md](TODO/form_reset_hook.md) for implementation details
+   - Will reduce code duplication, improve type safety, and prevent reset-related bugs
+   - *Recommended to implement second among refactoring tasks - builds on EnumSelect and provides foundation for architecture refactoring*
+
+6. 🔥 **Forms Architecture Refactoring**
+   - Standardize all form pages to follow the new architecture pattern
+   - Implement proper error boundaries and loading states
+   - Use custom data hooks for data fetching
+   - See [TODO/forms_refactoring.md](TODO/forms_refactoring.md) for the complete list
+   - Will improve error handling, user experience, and maintainability
+   - *Recommended to implement last among refactoring tasks - most comprehensive change that benefits from having the other refactorings in place*
 
 ### Blocked Items
 - Compass Module (Blocked by: Dashboard)

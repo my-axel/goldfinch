@@ -1,0 +1,174 @@
+---
+description: Always
+globs: *
+alwaysApply: false
+---
+# Goldfinch
+
+Every time you choose to apply a rule(s), explicitly state the rule(s) in the output. You can abbreviate the rule description to a single word or phrase.
+
+## Project Context
+Goldfinch is a sophisticated retirement planning platform that empowers individuals and families to take control of their financial future. Built with modern technology and designed for transparency, it provides comprehensive management of diverse pension types (ETF, Company, Insurance), real-time portfolio tracking, and intelligent retirement strategies. With features like multi-currency support, smart analytics, and personalized recommendations, Goldfinch transforms complex retirement planning into a structured, accessible journey for everyone.
+
+## Code Style and Structure
+- Write concise, technical TypeScript code with accurate examples
+- Use functional and declarative programming patterns; avoid classes
+- Prefer iteration and modularization over code duplication
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError)
+- Favor named exports for routes and utility functions.
+- Use the Receive an Object, Return an Object (RORO) pattern.
+- Follow the user’s requirements carefully & to the letter.
+- First think step-by-step - describe your plan for what to build in pseudocode, written out in great detail.
+- Confirm, then write code!
+- Always write correct, best practice, DRY principle (Dont Repeat Yourself), bug free, fully functional and working code also it should be aligned to listed rules down below.
+- Focus on easy and readability code, over being performant.
+- Fully implement all requested functionality.
+- Leave NO todo’s, placeholders or missing pieces.
+- Ensure code is complete! Verify thoroughly finalised.
+- Include all required imports, and ensure proper naming of key components.
+- If you think there might not be a correct answer, you say so.
+- If you do not know the answer, say so, instead of guessing.
+- Structure repository files as follows:
+
+```
+├── app                         # Main app directory for routes   
+│   ├── compass                 # Compass page    
+│   ├── household               # Household Management page
+│   ├── payout-strategy         # Payout Strategy page
+│   ├── pension                 # Pension Plan basics page
+│   │   ├── company             # Company Pension Plan specific page
+│   │   ├── etf                 # ETF Pension Plan specific page
+│   │   └── insurance           # Insurance Pension Plan specific page
+│   ├── settings                # Settings page
+│   └── styles                  # General styles
+├── coverage                    # Tests
+│   ├── components
+│   │   ├── charts
+│   │   ├── etf
+│   │   ├── household
+│   │   ├── layout
+│   │   ├── pension
+│   │   ├── settings
+│   │   └── ui
+│   ├── context
+│   ├── hooks
+│   ├── lcov-report
+│   │   ├── components
+│   │   ├── context
+│   │   ├── hooks
+│   │   ├── lib
+│   │   ├── providers
+│   │   ├── services
+│   │   └── types
+│   ├── lib
+│   │   ├── routes
+│   │   └── validations
+│   ├── providers
+│   ├── services
+│   └── types
+├── docs                        # Documentations
+│   ├── api                     # API Documentation
+│   └── components              # Documentation of frontend components
+├── public                      # Public folder for images etc.
+└── src                         # Main source code folder
+    ├── backend                 # The complete backend in Python with FastAPI
+    │   ├── alembic             
+    │   ├── app                 # The complete logic of the backend is here with sub-folders for specific parts
+    │   ├── docs                # Specific Backend Documentation
+    │   └── logs                # Logging
+    └── frontend                # The frontend in TypeScript with Next.JS and React
+        ├── app                 
+        ├── components          # Components for different use cases (e.g. forms or reusable parts of ETF Pension plan etc.), separated by domain
+        ├── context             # All contexts
+        ├── docs                # Specific Frontend Documentation
+        ├── hooks               # Shared hooks
+        ├── lib                 # Shared components
+        ├── providers           
+        ├── services            # Services for multiple frontend components/pages
+        └── types               # All frontend types
+```
+
+## Tech Stack
+- React 19
+- Next.JS 15
+- TypeScript
+- Tailwind CSS
+- Shadcn UI
+- FastAPI
+- Pydantic 2
+- SQLAlechmy 2
+- PostgreSQL
+- Celery
+
+## Naming Conventions
+- Use lowercase with dashes for directories (e.g., components/form-wizard)
+- Favor named exports for components and utilities
+- Use PascalCase for component files (e.g., VisaForm.tsx)
+- Use camelCase for utility files (e.g., formValidator.ts)
+
+## TypeScript Usage
+- Use TypeScript for all frontend code; prefer interfaces over types
+- Avoid enums; use const objects with 'as const' assertion
+- Use functional components with TypeScript interfaces
+- Define strict types for message passing between different parts of the extension
+- Use absolute imports for all files @/...
+- Avoid try/catch blocks unless there's good reason to translate or handle error in that abstraction
+- Use explicit return types for all functions
+
+## State Management
+- Use React Context for global state when needed
+- Implement proper state persistence using chrome.storage (for extension)
+- Implement proper cleanup in useEffect hooks
+- For forms, use a parent page component with useData hook for data fetching, pass the data to a child form component that uses useForm with proper default values, wrap everything in ErrorBoundary and use LoadingState for loading states - never fetch or manage global state directly in form components.
+- Always use `<EnumSelect<EnumType>>` instead of standard Select components when working with enum values in forms to ensure proper value handling during form resets and prevent empty field issues.
+
+## Syntax and Formatting
+- Use "function" keyword for pure functions
+- Avoid unnecessary curly braces in conditionals
+- Use declarative JSX
+- Implement proper TypeScript discriminated unions for message types
+
+## UI and Styling
+- Use Shadcn UI and Radix for components
+- use `npx shadcn@canary add <component-name>` to add new shadcn components
+- Implement Tailwind CSS for styling
+- Consider extension-specific constraints (popup dimensions, permissions)
+- Follow Material Design guidelines for Chrome extensions
+- When adding new shadcn component, document the installation command
+
+## Error Handling
+- Implement proper error boundaries
+- Log errors appropriately for debugging
+- Provide user-friendly error messages
+- Handle network failures gracefully
+
+## Git Usage
+Commit Message Prefixes:
+- "fix:" for bug fixes
+- "feat:" for new features
+- "perf:" for performance improvements
+- "docs:" for documentation changes
+- "style:" for formatting changes
+- "refactor:" for code refactoring
+- "test:" for adding missing tests
+- "chore:" for maintenance tasks
+
+Rules:
+- Use lowercase for commit messages
+- Keep the summary line concise
+- Include description for non-obvious changes
+- Reference issue numbers when applicable
+
+## Documentation
+- Maintain clear README.md with setup instructions and feature completion
+- Always update and maintain PROGESS.md with the current progress of the app
+- Document API interactions and data flows
+- Keep manifest.json well-documented
+- Don't include comments unless it's for complex logic
+- Document permission requirements
+
+## Development Workflow
+- Use proper version control
+- Implement proper code review process
+- Follow semantic versioning for releases
+- Maintain changelog

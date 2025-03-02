@@ -42,10 +42,20 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
   const [contributionInputs, setContributionInputs] = useState<string[]>([])
   const [statementValueInputs, setStatementValueInputs] = useState<string[]>([])
   const [projectionInputs, setProjectionInputs] = useState<{[key: string]: string}>({})
+  const [currencyDisplay, setCurrencyDisplay] = useState("")
+  const [placeholder, setPlaceholder] = useState("0.00")
+  const [decimalSeparator, setDecimalSeparator] = useState(".")
   // Add a counter to force re-renders when projections change
   const [projectionCounter, setProjectionCounter] = useState(0)
-  const decimalSeparator = getDecimalSeparator(settings.number_locale)
-  const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
+  
+  useEffect(() => {
+    setCurrencyDisplay(getCurrencySymbol(settings.number_locale, settings.currency))
+    setDecimalSeparator(getDecimalSeparator(settings.number_locale))
+  }, [settings.number_locale, settings.currency])
+
+  useEffect(() => {
+    setPlaceholder(`0${decimalSeparator}00`)
+  }, [decimalSeparator])
   
   // Add a state to directly track projections for each statement
   const [statementsWithProjections, setStatementsWithProjections] = useState<{[key: number]: RetirementProjection[]}>({});
@@ -374,7 +384,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
             name="contribution_amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Regular Contribution Amount ({currencySymbol})</FormLabel>
+                <FormLabel>Regular Contribution Amount {currencyDisplay && `(${currencyDisplay})`}</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
@@ -402,7 +412,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                         }
                         field.onBlur()
                       }}
-                      placeholder={`0${decimalSeparator}00`}
+                      placeholder={placeholder}
                     />
                   </div>
                 </FormControl>
@@ -477,7 +487,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                 name={`contribution_plan_steps.${index}.amount`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount ({currencySymbol})</FormLabel>
+                    <FormLabel>Amount {currencyDisplay && `(${currencyDisplay})`}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -512,7 +522,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                             }
                             field.onBlur()
                           }}
-                          placeholder={`0${decimalSeparator}00`}
+                          placeholder={placeholder}
                         />
                       </div>
                     </FormControl>
@@ -695,7 +705,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                     name={`statements.${statementIndex}.value`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Value ({currencySymbol})</FormLabel>
+                        <FormLabel>Value {currencyDisplay && `(${currencyDisplay})`}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
@@ -730,7 +740,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                                 }
                                 field.onBlur()
                               }}
-                              placeholder={`0${decimalSeparator}00`}
+                              placeholder={placeholder}
                             />
                           </div>
                         </FormControl>
@@ -804,7 +814,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                             name={`statements.${statementIndex}.retirement_projections.${projectionIndex}.monthly_payout`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Monthly Payout ({currencySymbol})</FormLabel>
+                                <FormLabel>Monthly Payout {currencyDisplay && `(${currencyDisplay})`}</FormLabel>
                                 <FormControl>
                                   <div className="relative">
                                     <Input
@@ -842,7 +852,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                                         }
                                         field.onBlur()
                                       }}
-                                      placeholder={`0${decimalSeparator}00`}
+                                      placeholder={placeholder}
                                     />
                                   </div>
                                 </FormControl>
@@ -856,7 +866,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                             name={`statements.${statementIndex}.retirement_projections.${projectionIndex}.total_capital`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Total Capital ({currencySymbol})</FormLabel>
+                                <FormLabel>Total Capital {currencyDisplay && `(${currencyDisplay})`}</FormLabel>
                                 <FormControl>
                                   <div className="relative">
                                     <Input
@@ -894,7 +904,7 @@ export function AddCompanyPensionForm({ form }: CompanyPensionFormProps) {
                                         }
                                         field.onBlur()
                                       }}
-                                      placeholder={`0${decimalSeparator}00`}
+                                      placeholder={placeholder}
                                     />
                                   </div>
                                 </FormControl>
