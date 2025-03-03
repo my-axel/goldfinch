@@ -19,9 +19,9 @@ import {
 } from "@/frontend/components/ui/explanation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { companyPensionSchema } from "@/frontend/lib/validations/pension"
-import { BasicInformationCard } from "@/frontend/components/pension/company/components/BasicInformationCard"
-import { ContributionPlanCard } from "@/frontend/components/pension/company/components/ContributionPlanCard"
-import { PensionStatementsCard } from "@/frontend/components/pension/company/components/PensionStatementsCard"
+import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
+import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
+import { PensionStatementsCard } from "@/frontend/components/pension/company/PensionStatementsCard"
 
 export default function NewCompanyPensionPage() {
   const router = useRouter()

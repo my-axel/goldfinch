@@ -27,13 +27,14 @@ import { formatMemberName } from "@/frontend/types/household-helpers"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
 import { ContributionFrequency } from '@/frontend/types/pension'
 import { OneTimeInvestmentModal } from "../etf/components/OneTimeInvestmentModal"
-import { YearlyInvestmentModal } from "../company/components/YearlyInvestmentModal"
+import { YearlyInvestmentModal } from "../company/YearlyInvestmentModal"
 import { Badge } from "@/frontend/components/ui/badge"
 import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatNumber, formatCurrency, formatPercent } from "@/frontend/lib/transforms"
 import { getPensionEditRoute } from "@/frontend/lib/routes"
+import { useHousehold } from "@/frontend/context/HouseholdContext"
 
 /**
  * Props for the PensionList component
@@ -180,8 +181,23 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
  */
 function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
   const { settings } = useSettings()
+  const { members } = useHousehold()
   const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
   const [showYearlyInvestment, setShowYearlyInvestment] = useState(false)
+  
+  // Find the household member associated with this pension
+  const member = members.find(m => m.id === pension.member_id)
+  
+  // Get the latest statement and its projections if available
+  const latestStatement = pension.statements && pension.statements.length > 0 
+    ? pension.statements.sort((a, b) => new Date(b.statement_date).getTime() - new Date(a.statement_date).getTime())[0] 
+    : undefined
+  
+  // Get the projection that matches the member's planned retirement age, or fall back to the first one
+  const latestProjection = latestStatement?.retirement_projections && latestStatement.retirement_projections.length > 0
+    ? (member && latestStatement.retirement_projections.find(p => p.retirement_age === member.retirement_age_planned)) || 
+      latestStatement.retirement_projections[0]
+    : undefined
 
   return (
     <>
@@ -212,13 +228,13 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         </div>
       )}
       
-      {pension.projections && pension.projections.length > 0 && (
+      {latestProjection && (
         <div>
           <dt className="text-muted-foreground">Projected Monthly Payout</dt>
-          <dd>{formatCurrency(pension.projections[0].monthly_payout, {
+          <dd>{formatCurrency(latestProjection.monthly_payout, {
             locale: settings.number_locale,
             currency: settings.currency
-          }).formatted} at age {pension.projections[0].retirement_age}</dd>
+          }).formatted} at age {latestProjection.retirement_age}</dd>
         </div>
       )}
       
@@ -230,10 +246,10 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         }).formatted}</dd>
       </div>
       
-      {pension.latest_statement_date && (
+      {latestStatement && (
         <div>
           <dt className="text-muted-foreground">Latest Statement</dt>
-          <dd>{new Date(pension.latest_statement_date).toLocaleDateString(settings.ui_locale)}</dd>
+          <dd>{new Date(latestStatement.statement_date).toLocaleDateString(settings.ui_locale)}</dd>
         </div>
       )}
 

@@ -18,15 +18,15 @@ import {
   ExplanationList,
   ExplanationListItem
 } from "@/frontend/components/ui/explanation"
-import { ContributionHistoryCard } from "@/frontend/components/pension/company/components/ContributionHistoryCard"
+import { ContributionHistoryCard } from "@/frontend/components/pension/company/ContributionHistoryCard"
 import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
 import { LoadingState } from "@/frontend/components/shared/LoadingState"
 import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { ContributionFrequency } from "@/frontend/types/pension"
-import { BasicInformationCard } from "@/frontend/components/pension/company/components/BasicInformationCard"
-import { ContributionPlanCard } from "@/frontend/components/pension/company/components/ContributionPlanCard"
-import { PensionStatementsCard } from "@/frontend/components/pension/company/components/PensionStatementsCard"
+import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
+import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
+import { PensionStatementsCard } from "@/frontend/components/pension/company/PensionStatementsCard"
 
 interface EditCompanyPensionPageProps {
   params: {
