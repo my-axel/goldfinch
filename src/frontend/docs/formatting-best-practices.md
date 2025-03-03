@@ -10,6 +10,7 @@ This guide outlines best practices for formatting numbers, currencies, percentag
 4. Examples
 5. Common Pitfalls
 6. Date Handling in Forms
+7. DateUtils Utility
 
 ## Understanding Hydration Mismatches
 
@@ -348,4 +349,90 @@ const processDate = (dateField: Date | string) => {
 5. Handle nullable date fields appropriately
 6. Consider implementing a centralized date processing utility
 
-By following these patterns, you can ensure robust date handling across your application, preventing type-related errors and providing consistent date formatting for API submissions. 
+By following these patterns, you can ensure robust date handling across your application, preventing type-related errors and providing consistent date formatting for API submissions.
+
+### Implementation Plan
+
+For a comprehensive implementation plan to address date handling issues across the application, refer to the detailed guide in `src/frontend/docs/TODO/date_formatting_best_practice.md`. This document outlines a step-by-step approach to standardize date handling, including:
+
+- Creating robust date utility functions
+- Implementing reusable date input components
+- Standardizing form submission handlers
+- Enhancing schema validation for dates
+- Testing strategies and rollout plan
+
+## DateUtils Utility
+
+To standardize date handling across the application, we've created a dedicated utility module (`src/frontend/lib/dateUtils.ts`) with the following key functions:
+
+### `toDateObject(value: any): Date | null`
+
+Safely converts any date-like value to a JavaScript Date object:
+
+```typescript
+import { toDateObject } from "@/frontend/lib/dateUtils"
+
+// Examples
+toDateObject("2024-05-15") // Returns Date object
+toDateObject(new Date()) // Returns the same Date object
+toDateObject("invalid") // Returns null
+toDateObject(null) // Returns null
+```
+
+### `toISODateString(value: any): string`
+
+Safely converts a date to ISO format string (YYYY-MM-DD):
+
+```typescript
+import { toISODateString } from "@/frontend/lib/dateUtils"
+
+// Examples
+toISODateString("2024-05-15") // Returns "2024-05-15"
+toISODateString(new Date(2024, 4, 15)) // Returns "2024-05-15"
+toISODateString("invalid") // Returns ""
+```
+
+### `processDateForAPI(value: Date | string | null | undefined): string | null`
+
+Safely processes a date for API submission:
+
+```typescript
+import { processDateForAPI } from "@/frontend/lib/dateUtils"
+
+// Examples
+processDateForAPI(new Date(2024, 4, 15)) // Returns "2024-05-15"
+processDateForAPI("2024-05-15") // Returns "2024-05-15"
+processDateForAPI(null) // Returns null
+```
+
+### `processDateFromAPI(value: string | null | undefined): Date | null`
+
+Safely processes a date from API response:
+
+```typescript
+import { processDateFromAPI } from "@/frontend/lib/dateUtils"
+
+// Examples
+processDateFromAPI("2024-05-15") // Returns Date object
+processDateFromAPI(null) // Returns null
+```
+
+### Reusable Date Components
+
+For consistent date handling in forms, use the reusable components:
+
+```typescript
+// DateInput component for form fields
+<FormField
+  control={form.control}
+  name="start_date"
+  render={({ field }) => (
+    <DateInput field={field} label="Start Date" />
+  )}
+/>
+
+// DateDisplay component for displaying dates
+<DateDisplay date={pension.start_date} fallback="Not set" />
+```
+
+By using these utilities and components consistently, we can prevent common date-related errors and ensure a consistent user experience across the application. 

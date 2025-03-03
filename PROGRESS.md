@@ -3,26 +3,67 @@
 ## 📋 Current Status & Next Steps
 
 ### Active Development
-- 🔄 **Form Component Improvements**
-  - ⚠️ **Re-design PensionStatementsCard.tsx**
-    - Improve UI to better fit our design language
-    - Make the component more intuitive and easier to use
-    - Ensure consistent styling with other pension components
-  - ⚠️ **Create Date Handling Best Practices**
-    - Document proper date handling in forms to prevent "TypeError: pension.start_date.toISOString is not a function"
-    - Establish consistent patterns for date conversion between API and form
-    - Determine if this will be addressed by planned form refactorings (form_reset_hook.md and forms_refactoring.md)
-    - Create interim solution until full form refactoring is implemented
 - 🔄 **Form Refactoring Implementation**
   - ✅ Completed EnumSelect refactoring for all pension forms
   - ✅ Implemented EnumSelect for ContributionFrequency fields
   - ✅ Improved form reset handling for enum-based selects
   - ✅ Completed Settings page enum refactoring with proper type definitions
   - 🔄 Next: Implement Form Reset Hook
+    - Will incorporate the date handling utilities from the date formatting best practices
+
+### Implementation Order Recommendation
+1. 🔥 **Date Utilities Implementation** (1-2 days)
+   - Create `src/frontend/lib/dateUtils.ts` with core utility functions:
+     - `toDateObject()`: Convert any value to a proper Date object or null
+     - `toISODateString()`: Safely convert to ISO format string
+     - `formatDisplayDate()`: Format dates for display with locale support
+     - `parseFormDate()`: Parse dates from form inputs
+   - This provides immediate fixes for critical date-related errors
+
+2. 🔥 **Form Reset Hook Implementation** (3-5 days)
+   - Implement the hook as described in `src/frontend/docs/TODO/form_reset_hook.md`
+   - Incorporate the date utilities into form transformers
+   - This provides a foundation for consistent form reset behavior
+   - See `src/frontend/docs/TODO/form_reset_hook.md` for implementation details
+
+3. 🔥 **DateInput Component Implementation** (2-3 days)
+   - Create reusable date input component using the date utilities
+   - Implement in highest-priority forms first (pension forms)
+   - This component will work with both the Form Reset Hook and Forms Architecture pattern
+
+4. 🔥 **Forms Architecture Refactoring** (ongoing)
+   - Apply the comprehensive architecture pattern from `src/frontend/docs/TODO/forms_refactoring.md`
+   - Incorporate both the Form Reset Hook and DateInput component
+   - Implement in order of form complexity/usage frequency
 
 <details>
 <summary><strong>✅ Recently Completed</strong></summary>
 
+- ✅ Date Handling Best Practices
+  - Created comprehensive implementation plan for consistent date handling across forms
+  - Designed DateUtils utility with robust type-safe functions
+  - Developed reusable DateInput component for form fields
+  - Established patterns for form submission and reset with proper date handling
+  - Added documentation to formatting-best-practices.md
+  - Implementation plan available at `src/frontend/docs/TODO/date_formatting_best_practice.md`
+  - Determined integration with planned form refactorings (form_reset_hook.md and forms_refactoring.md)
+  - The date utilities will complement the Form Reset Hook by providing standardized date transformation functions
+  - The DateInput component will work with the Forms Architecture Refactoring pattern
+- ✅ PensionStatementsCard Redesign
+  - Improved UI to better fit our design language
+  - Made the component more intuitive and easier to use
+  - Ensured consistent styling with other pension components
+  - Integrated functionality from obsolete components (StatementsList, AddStatementForm)
+- ✅ Code Cleanup & Component Removal
+  - Identified and removed obsolete components (StatementsList, AddStatementForm)
+  - Verified no active imports or dependencies on removed components
+  - Ensured functionality was properly migrated to PensionStatementsCard
+  - Reduced codebase size and maintenance overhead
+- ✅ PensionList Component Fixes
+  - Fixed CompanyPensionContent to work with the updated CompanyPension type structure
+  - Enhanced retirement projection selection to prioritize the household member's planned retirement age
+  - Improved code to handle missing statements or projections gracefully
+  - Added integration with HouseholdContext for personalized projections
 - ✅ Settings Page Enum Refactoring
   - Created proper enum definitions for UI locale, number locale, and currency
   - Implemented type-safe Select components with enum values
@@ -595,6 +636,9 @@ graph LR
 
 #### 2. 🔍 Code Quality
 - [x] Create formatting best practices documentation
+- [x] Fix PensionList component to work with updated data structures
+- [x] Identify obsolete components (StatementsList, AddStatementForm)
+- [x] Create date handling best practices documentation and implementation plan
 - [ ] Increase test coverage
 - [ ] Improve error handling
 - [ ] Add comprehensive logging
