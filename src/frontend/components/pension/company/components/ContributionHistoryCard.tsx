@@ -1,8 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
-import { Button } from "@/frontend/components/ui/button"
-import { Plus } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { useState } from "react"
 import { YearlyInvestmentModal } from "./YearlyInvestmentModal"
 import { CompanyPension, ExtraContribution } from "@/frontend/types/pension"
@@ -60,23 +58,20 @@ export function ContributionHistoryCard({ pension }: ContributionHistoryCardProp
   return (
     <>
       <Card key={refreshKey}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xl font-bold">Contribution History</CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAddContribution(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contribution
-          </Button>
+        <CardHeader className="pb-7">
+          <div className="space-y-1.5">
+            <CardTitle>Contribution History</CardTitle>
+            <CardDescription>
+              View your past contributions to this pension plan
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           {sortedContributions.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               <p>No contributions recorded yet.</p>
               <p className="text-sm mt-1">
-                Add your first contribution to track your pension growth.
+                Contributions will appear here once they are recorded.
               </p>
             </div>
           ) : (

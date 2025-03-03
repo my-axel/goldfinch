@@ -2,7 +2,6 @@
 
 import { useForm } from "react-hook-form"
 import { useRouter, useParams } from "next/navigation"
-import { EditCompanyPensionForm } from "@/frontend/components/pension/company/forms/EditCompanyPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
@@ -25,6 +24,9 @@ import { LoadingState } from "@/frontend/components/shared/LoadingState"
 import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { ContributionFrequency } from "@/frontend/types/pension"
+import { BasicInformationCard } from "@/frontend/components/pension/company/components/BasicInformationCard"
+import { ContributionPlanCard } from "@/frontend/components/pension/company/components/ContributionPlanCard"
+import { PensionStatementsCard } from "@/frontend/components/pension/company/components/PensionStatementsCard"
 
 interface EditCompanyPensionPageProps {
   params: {
@@ -173,113 +175,145 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
   return (
     <ErrorBoundary>
       <div className="container mx-auto py-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Left column (8/12) - Form and Cards */}
-          <div className="md:col-span-8 space-y-6">
-            <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">Edit Company Pension Plan</h1>
-                <p className="text-muted-foreground mt-2">
-                  Update your company pension plan details and contribution schedule.
-                </p>
-              </div>
-              
-              <div className="flex space-x-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  form="company-pension-form"
-                  disabled={isLoading}
-                >
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <LoadingState message="Loading pension details..." />
-            ) : error ? (
-              <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error.message}</AlertDescription>
-              </Alert>
-            ) : !pension ? (
-              <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>Pension not found</AlertDescription>
-              </Alert>
-            ) : pension.type !== PensionType.COMPANY ? (
-              <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>Invalid pension type</AlertDescription>
-              </Alert>
-            ) : (
-              <>
-                {/* Form */}
-                <Form {...form}>
-                  <form 
-                    id="company-pension-form"
-                    onSubmit={form.handleSubmit(handleSubmit)} 
-                    className="space-y-8"
-                  >
-                    <EditCompanyPensionForm form={form} />
-                  </form>
-                </Form>
-
-                {/* Contribution History Card */}
-                <ContributionHistoryCard pension={pension} />
-              </>
-            )}
+        {/* Page header with title and buttons */}
+        <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Company Pension Plan</h1>
+            <p className="text-muted-foreground mt-2">
+              Update your company pension plan details and contribution schedule.
+            </p>
           </div>
-
-          {/* Right column (4/12) - Explanation */}
-          <div className="md:col-span-4">
-            <div className="sticky top-6 space-y-6">
-              <Explanation>
-                <ExplanationHeader>Managing Your Company Pension</ExplanationHeader>
-                <ExplanationContent>
-                  <p>
-                    Review and update your pension details based on the latest
-                    statement from your company. You can add yearly investments
-                    when you make additional contributions.
-                  </p>
-                  <p className="mt-2">
-                    The contribution history shows all your past investments by month.
-                    The projection values should reflect the latest estimates
-                    provided by your company&apos;s pension plan statement.
-                  </p>
-                </ExplanationContent>
-                
-                <ExplanationAlert className="mt-4">
-                  Regular updates to your pension information help you track your
-                  retirement progress more accurately.
-                </ExplanationAlert>
-                
-                <ExplanationHeader className="mt-6">Key Management Tasks</ExplanationHeader>
-                <ExplanationList>
-                  <ExplanationListItem>
-                    <strong>Update Contribution Amount:</strong> When your contribution changes
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Add Yearly Investments:</strong> Record additional contributions
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Update Projections:</strong> When you receive a new statement
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Track History:</strong> View your contribution history
-                  </ExplanationListItem>
-                </ExplanationList>
-              </Explanation>
-            </div>
+          
+          <div className="flex space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              form="company-pension-form"
+              disabled={isLoading}
+            >
+              Save Changes
+            </Button>
           </div>
         </div>
+
+        {isLoading ? (
+          <LoadingState message="Loading pension details..." />
+        ) : error ? (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        ) : !pension ? (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Pension not found</AlertDescription>
+          </Alert>
+        ) : pension.type !== PensionType.COMPANY ? (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Invalid pension type</AlertDescription>
+          </Alert>
+        ) : (
+          <Form {...form}>
+            <form 
+              id="company-pension-form"
+              onSubmit={form.handleSubmit(handleSubmit)} 
+            >
+              {/* Grid Layout with aligned explanations */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                {/* Row 1: Basic Information */}
+                <div className="md:col-span-8">
+                  <BasicInformationCard form={form} />
+                </div>
+                <div className="md:col-span-4">
+                  <Explanation>
+                    <ExplanationHeader>Basic Information</ExplanationHeader>
+                    <ExplanationContent>
+                      <p>
+                        Keep your pension details up to date with the latest information from your employer.
+                        The basic information section contains essential details about your company pension plan.
+                      </p>
+                    </ExplanationContent>
+                    <ExplanationAlert className="mt-4">
+                      You can pause your pension if contributions are temporarily stopped and resume it when they restart.
+                    </ExplanationAlert>
+                  </Explanation>
+                </div>
+
+                {/* Row 2: Contribution Plan */}
+                <div className="md:col-span-8">
+                  <ContributionPlanCard form={form} />
+                </div>
+                <div className="md:col-span-4">
+                  <Explanation>
+                    <ExplanationHeader>Contribution Plan</ExplanationHeader>
+                    <ExplanationContent>
+                      <p>
+                        The contribution plan allows you to track changes in your contribution amount over time.
+                        Add steps to record when your contribution amount changes.
+                      </p>
+                      <ExplanationList className="mt-4">
+                        <ExplanationListItem>Each step represents a period with a specific contribution amount</ExplanationListItem>
+                        <ExplanationListItem>Set an end date when you know how long this contribution will last</ExplanationListItem>
+                        <ExplanationListItem>Leave the end date empty for ongoing contributions</ExplanationListItem>
+                      </ExplanationList>
+                    </ExplanationContent>
+                  </Explanation>
+                </div>
+
+                {/* Row 3: Pension Statements */}
+                <div className="md:col-span-8">
+                  <PensionStatementsCard form={form} />
+                </div>
+                <div className="md:col-span-4">
+                  <Explanation>
+                    <ExplanationHeader>Pension Statements</ExplanationHeader>
+                    <ExplanationContent>
+                      <p>
+                        Record the information from your pension statements to track the growth of your pension over time.
+                        Add retirement projections to see how your pension might perform in the future.
+                      </p>
+                      <ExplanationList className="mt-4">
+                        <ExplanationListItem>Add a statement each time you receive one from your provider</ExplanationListItem>
+                        <ExplanationListItem>Record the projected monthly payout and total capital at retirement</ExplanationListItem>
+                        <ExplanationListItem>Compare projections for different retirement ages</ExplanationListItem>
+                      </ExplanationList>
+                    </ExplanationContent>
+                  </Explanation>
+                </div>
+
+                {/* Row 4: Contribution History */}
+                <div className="md:col-span-8">
+                  <ContributionHistoryCard pension={pension} />
+                </div>
+                <div className="md:col-span-4">
+                  <Explanation>
+                    <ExplanationHeader>Contribution History</ExplanationHeader>
+                    <ExplanationContent>
+                      <p>
+                        Your contribution history shows all past contributions to this pension plan.
+                        This helps you track your investment over time.
+                      </p>
+                      <p className="mt-2">
+                        Contributions are automatically recorded based on your contribution plan,
+                        but you can also manually add one-time contributions.
+                      </p>
+                    </ExplanationContent>
+                    <ExplanationAlert className="mt-4">
+                      Regular tracking of contributions helps you understand your pension&apos;s growth pattern.
+                    </ExplanationAlert>
+                  </Explanation>
+                </div>
+              </div>
+            </form>
+          </Form>
+        )}
       </div>
     </ErrorBoundary>
   )

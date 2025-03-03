@@ -3,15 +3,36 @@
 ## 📋 Current Status & Next Steps
 
 ### Active Development
-- 🔄 **Form Refactoring Planning**
-  - Created detailed TODO lists for form refactoring tasks
-  - Documented implementation order for refactoring tasks
-  - Prepared implementation guides for each refactoring type
-  - Next: Begin EnumSelect refactoring implementation
+- 🔄 **Form Component Improvements**
+  - ⚠️ **Re-design PensionStatementsCard.tsx**
+    - Improve UI to better fit our design language
+    - Make the component more intuitive and easier to use
+    - Ensure consistent styling with other pension components
+  - ⚠️ **Create Date Handling Best Practices**
+    - Document proper date handling in forms to prevent "TypeError: pension.start_date.toISOString is not a function"
+    - Establish consistent patterns for date conversion between API and form
+    - Determine if this will be addressed by planned form refactorings (form_reset_hook.md and forms_refactoring.md)
+    - Create interim solution until full form refactoring is implemented
+- 🔄 **Form Refactoring Implementation**
+  - ✅ Completed EnumSelect refactoring for all pension forms
+  - ✅ Implemented EnumSelect for ContributionFrequency fields
+  - ✅ Improved form reset handling for enum-based selects
+  - ✅ Completed Settings page enum refactoring with proper type definitions
+  - 🔄 Next: Implement Form Reset Hook
 
 <details>
 <summary><strong>✅ Recently Completed</strong></summary>
 
+- ✅ Settings Page Enum Refactoring
+  - Created proper enum definitions for UI locale, number locale, and currency
+  - Implemented type-safe Select components with enum values
+  - Added human-readable labels for all enum options
+  - Improved code maintainability and type safety
+- ✅ Form Refactoring Planning
+  - Created detailed TODO lists for form refactoring tasks
+  - Documented implementation order for refactoring tasks
+  - Prepared implementation guides for each refactoring type
+  - Implemented EnumSelect refactoring for pension forms
 - ✅ Pension Status Management System
   - Added status field to company pension model
   - Created API endpoint for updating company pension status
@@ -50,11 +71,11 @@
    - Can start: Portfolio overview for ETF and Company pensions
    - Full implementation requires all pension types
 
-4. 🔥 **EnumSelect Refactoring**
-   - Refactor all enum-based select fields to use the new EnumSelect component
-   - See [TODO/enum_selects.md](TODO/enum_selects.md) for the complete list
-   - Will improve form handling and prevent empty field issues
-   - *Recommended to implement first among refactoring tasks - isolated changes with immediate benefits*
+4. ✅ **EnumSelect Refactoring**
+   - ✅ Refactored all enum-based select fields to use the new EnumSelect component
+   - ✅ Created proper enum definitions for settings page
+   - ✅ Improved form handling and prevented empty field issues
+   - ✅ See [TODO/enum_selects.md](TODO/enum_selects.md) for the completed list
 
 5. 🔥 **Form Reset Hook Implementation**
    - Create a reusable hook to standardize form reset logic across all forms
@@ -62,7 +83,7 @@
    - Handle complex nested data structures, dates, and enums consistently
    - See [TODO/form_reset_hook.md](TODO/form_reset_hook.md) for implementation details
    - Will reduce code duplication, improve type safety, and prevent reset-related bugs
-   - *Recommended to implement second among refactoring tasks - builds on EnumSelect and provides foundation for architecture refactoring*
+   - *Recommended to implement next among refactoring tasks - builds on EnumSelect and provides foundation for architecture refactoring*
 
 6. 🔥 **Forms Architecture Refactoring**
    - Standardize all form pages to follow the new architecture pattern

@@ -211,10 +211,10 @@ const config: Config = {
   // transform: undefined,
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
-  // transformIgnorePatterns: [
-  //   "/node_modules/",
-  //   "\\.pnp\\.[^\\/]+$"
-  // ],
+  transformIgnorePatterns: [
+    // Transform ESM modules in node_modules
+    '/node_modules/(?!(lucide-react|@radix-ui|@floating-ui|cmdk|class-variance-authority|tailwind-merge|tailwindcss|clsx)/)',
+  ],
 
   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
   // unmockedModulePathPatterns: undefined,

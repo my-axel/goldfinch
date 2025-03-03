@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import { Label } from "@/frontend/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select"
+import { Currency, CURRENCY_LABELS, NumberLocale, NUMBER_LOCALE_LABELS, UILocale, UI_LOCALE_LABELS } from "@/frontend/types/enums"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { useEffect, useState } from "react"
 import { RateInput } from "@/frontend/components/ui/rate-input"
@@ -273,9 +274,11 @@ export default function SettingsPage() {
                       <SelectValue placeholder="Select Language" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="en-US">English (US)</SelectItem>
-                      <SelectItem value="en-GB">English (UK)</SelectItem>
-                      <SelectItem value="de-DE">Deutsch</SelectItem>
+                      {Object.values(UILocale).map((locale) => (
+                        <SelectItem key={locale} value={locale}>
+                          {UI_LOCALE_LABELS[locale as UILocale]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -308,9 +311,11 @@ export default function SettingsPage() {
                       <SelectValue placeholder="Select Format" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="en-US">123,456.78 | 02/23/2024</SelectItem>
-                      <SelectItem value="en-GB">123,456.78 | 23/02/2024</SelectItem>
-                      <SelectItem value="de-DE">123.456,78 | 23.02.2024</SelectItem>
+                      {Object.values(NumberLocale).map((locale) => (
+                        <SelectItem key={locale} value={locale}>
+                          {NUMBER_LOCALE_LABELS[locale as NumberLocale]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -328,9 +333,11 @@ export default function SettingsPage() {
                       <SelectValue placeholder="Select Currency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                      <SelectItem value="GBP">British Pound (GBP)</SelectItem>
+                      {Object.values(Currency).map((currency) => (
+                        <SelectItem key={currency} value={currency}>
+                          {CURRENCY_LABELS[currency as Currency]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

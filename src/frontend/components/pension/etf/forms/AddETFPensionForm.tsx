@@ -7,7 +7,6 @@ import { Button } from "@/frontend/components/ui/button"
 import { Plus, Trash2, ChevronDownIcon, PlusCircle, History, BarChart3 } from "lucide-react"
 import { ContributionFrequency } from "@/frontend/types/pension"
 import { ETFSearchCombobox } from "@/frontend/components/etf/ETFSearchCombobox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select"
 import { Input } from "@/frontend/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover"
 import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/components/ui/command"
@@ -16,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/frontend/components/ui/radio-group
 import { Label } from "@/frontend/components/ui/label"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { parseNumber, getDecimalSeparator, getCurrencySymbol } from "@/frontend/lib/transforms"
+import { EnumSelect } from "@/frontend/components/ui/enum-select"
 
 interface ETFPensionFormProps {
   form: UseFormReturn<ETFPensionFormData>
@@ -346,31 +346,18 @@ export function AddETFPensionForm({ form, isEditing = false }: ETFPensionFormPro
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
+                    <EnumSelect<ContributionFrequency, ETFPensionFormData>
                       name={`contribution_plan_steps.${index}.frequency`}
-                      render={({ field }) => (
-                        <FormItem className="space-y-0">
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select frequency" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value={ContributionFrequency.MONTHLY}>Monthly</SelectItem>
-                              <SelectItem value={ContributionFrequency.QUARTERLY}>Quarterly</SelectItem>
-                              <SelectItem value={ContributionFrequency.SEMI_ANNUALLY}>Semi-Annually</SelectItem>
-                              <SelectItem value={ContributionFrequency.ANNUALLY}>Annually</SelectItem>
-                              <SelectItem value={ContributionFrequency.ONE_TIME}>One-Time</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      control={form.control}
+                      label=""
+                      options={[
+                        { value: ContributionFrequency.MONTHLY, label: "Monthly" },
+                        { value: ContributionFrequency.QUARTERLY, label: "Quarterly" },
+                        { value: ContributionFrequency.SEMI_ANNUALLY, label: "Semi-Annually" },
+                        { value: ContributionFrequency.ANNUALLY, label: "Annually" },
+                        { value: ContributionFrequency.ONE_TIME, label: "One-Time" }
+                      ]}
+                      defaultValue={ContributionFrequency.MONTHLY}
                     />
 
                     <FormField

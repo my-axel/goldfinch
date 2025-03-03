@@ -2,7 +2,6 @@
 
 import { useForm } from "react-hook-form"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AddCompanyPensionForm } from "@/frontend/components/pension/company/forms/AddCompanyPensionForm"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
@@ -20,6 +19,9 @@ import {
 } from "@/frontend/components/ui/explanation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { companyPensionSchema } from "@/frontend/lib/validations/pension"
+import { BasicInformationCard } from "@/frontend/components/pension/company/components/BasicInformationCard"
+import { ContributionPlanCard } from "@/frontend/components/pension/company/components/ContributionPlanCard"
+import { PensionStatementsCard } from "@/frontend/components/pension/company/components/PensionStatementsCard"
 
 export default function NewCompanyPensionPage() {
   const router = useRouter()
@@ -102,91 +104,127 @@ export default function NewCompanyPensionPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left column (8/12) - Form */}
-        <div className="md:col-span-8 space-y-6">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Create Company Pension Plan</h1>
-              <p className="text-muted-foreground mt-2">
-                Set up a new company pension plan. You&apos;ll need to provide employer information
-                and set up your contribution plan.
-              </p>
-            </div>
-            
-            <div className="flex space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                form="company-pension-form"
-              >
-                Create Pension
-              </Button>
-            </div>
-          </div>
-
-          {/* Form */}
-          <Form {...form}>
-            <form 
-              id="company-pension-form"
-              onSubmit={form.handleSubmit(handleSubmit)} 
-              className="space-y-8"
-            >
-              <AddCompanyPensionForm form={form} />
-            </form>
-          </Form>
+      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Create Company Pension Plan</h1>
+          <p className="text-muted-foreground mt-2">
+            Set up a new company pension plan. You&apos;ll need to provide employer information
+            and set up your contribution plan.
+          </p>
         </div>
-
-        {/* Right column (4/12) - Explanation */}
-        <div className="md:col-span-4">
-          <div className="sticky top-6 space-y-6">
-            <Explanation>
-              <ExplanationHeader>Creating a Company Pension</ExplanationHeader>
-              <ExplanationContent>
-                <p>
-                  Enter the basic information about your company pension plan.
-                  The contribution amount and frequency help you track your
-                  regular investments.
-                </p>
-                <p className="mt-2">
-                  Add the latest projection values from your company&apos;s pension 
-                  statement to keep track of your expected retirement benefits.
-                </p>
-              </ExplanationContent>
-              
-              <ExplanationAlert className="mt-4">
-                Regular updates to your pension information help you track your
-                retirement progress more accurately.
-              </ExplanationAlert>
-              
-              <ExplanationHeader className="mt-6">Key Information</ExplanationHeader>
-              <ExplanationList>
-                <ExplanationListItem>
-                  <strong>Employer:</strong> The company providing the pension plan
-                </ExplanationListItem>
-                <ExplanationListItem>
-                  <strong>Contribution Amount:</strong> Your regular contribution
-                </ExplanationListItem>
-                <ExplanationListItem>
-                  <strong>Contribution Frequency:</strong> How often you contribute
-                </ExplanationListItem>
-                <ExplanationListItem>
-                  <strong>Statements:</strong> Records of your pension value over time
-                </ExplanationListItem>
-                <ExplanationListItem>
-                  <strong>Projections:</strong> Expected retirement benefits based on your statements
-                </ExplanationListItem>
-              </ExplanationList>
-            </Explanation>
-          </div>
+        
+        <div className="flex space-x-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit"
+            form="company-pension-form"
+          >
+            Create Pension
+          </Button>
         </div>
       </div>
+
+      {/* Form */}
+      <Form {...form}>
+        <form 
+          id="company-pension-form"
+          onSubmit={form.handleSubmit(handleSubmit)} 
+        >
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Row 1: Basic Information Card and its explanation */}
+            <div className="md:col-span-8">
+              <BasicInformationCard form={form} />
+            </div>
+            <div className="md:col-span-4">
+              <Explanation>
+                <ExplanationHeader>Basic Information</ExplanationHeader>
+                <ExplanationContent>
+                  <p>
+                    Enter the basic information about your company pension plan.
+                    The contribution amount and frequency help you track your
+                    regular investments.
+                  </p>
+                </ExplanationContent>
+                <ExplanationList className="mt-4">
+                  <ExplanationListItem>
+                    <strong>Name:</strong> A descriptive name for your pension plan
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Employer:</strong> The company providing the pension plan
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Start Date:</strong> When you joined the pension plan
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Contribution:</strong> Your regular contribution amount and frequency
+                  </ExplanationListItem>
+                </ExplanationList>
+              </Explanation>
+            </div>
+
+            {/* Row 2: Contribution Plan Card and its explanation */}
+            <div className="md:col-span-8">
+              <ContributionPlanCard form={form} />
+            </div>
+            <div className="md:col-span-4">
+              <Explanation>
+                <ExplanationHeader>Contribution Plan</ExplanationHeader>
+                <ExplanationContent>
+                  <p>
+                    Set up your contribution plan steps to track changes in your
+                    contribution amount or frequency over time.
+                  </p>
+                  <p className="mt-2">
+                    Each step represents a period with a specific contribution
+                    amount and frequency.
+                  </p>
+                </ExplanationContent>
+                <ExplanationAlert className="mt-4">
+                  Adding detailed contribution steps helps you track your
+                  pension growth more accurately.
+                </ExplanationAlert>
+              </Explanation>
+            </div>
+
+            {/* Row 3: Pension Statements Card and its explanation */}
+            <div className="md:col-span-8">
+              <PensionStatementsCard form={form} />
+            </div>
+            <div className="md:col-span-4">
+              <Explanation>
+                <ExplanationHeader>Pension Statements</ExplanationHeader>
+                <ExplanationContent>
+                  <p>
+                    Add statements from your pension provider to track the value
+                    of your pension over time.
+                  </p>
+                  <p className="mt-2">
+                    For each statement, you can add retirement projections that
+                    show expected benefits at different retirement ages.
+                  </p>
+                </ExplanationContent>
+                <ExplanationList className="mt-4">
+                  <ExplanationListItem>
+                    <strong>Statement Date:</strong> When the statement was issued
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Value:</strong> The current value of your pension
+                  </ExplanationListItem>
+                  <ExplanationListItem>
+                    <strong>Projections:</strong> Expected retirement benefits
+                  </ExplanationListItem>
+                </ExplanationList>
+              </Explanation>
+            </div>
+          </div>
+        </form>
+      </Form>
     </div>
   )
 } 

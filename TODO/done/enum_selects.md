@@ -6,23 +6,25 @@ This document lists all places in the codebase where the `EnumSelect` component 
 
 ### Company Pension Forms
 - [x] `src/frontend/components/pension/company/forms/EditCompanyPensionForm.tsx` (line ~442) - Already implemented
-- [ ] `src/frontend/components/pension/company/forms/AddCompanyPensionForm.tsx` (line ~425)
-- [ ] `src/frontend/components/pension/company/forms/AddCompanyPensionForm.tsx` (line ~539) - Contribution step frequency
+- [x] `src/frontend/components/pension/company/forms/AddCompanyPensionForm.tsx` (line ~425)
+- [x] `src/frontend/components/pension/company/forms/AddCompanyPensionForm.tsx` (line ~539) - Contribution step frequency
 
 ### Insurance Pension Forms
-- [ ] `src/frontend/components/pension/insurance/forms/AddInsurancePensionForm.tsx` (line ~226)
-- [ ] `src/frontend/components/pension/insurance/forms/EditInsurancePensionForm.tsx` (line ~316)
+- [x] `src/frontend/components/pension/insurance/forms/AddInsurancePensionForm.tsx` (line ~226)
+- [x] `src/frontend/components/pension/insurance/forms/EditInsurancePensionForm.tsx` (line ~316)
 
 ### ETF Pension Forms
-- [ ] `src/frontend/components/pension/etf/forms/AddETFPensionForm.tsx` (line ~353)
-- [ ] `src/frontend/components/pension/etf/forms/EditETFPensionContributionStepsForm.tsx` (line ~186)
+- [x] `src/frontend/components/pension/etf/forms/AddETFPensionForm.tsx` (line ~353)
+- [x] `src/frontend/components/pension/etf/forms/EditETFPensionContributionStepsForm.tsx` (line ~186)
 
 ## Other Enum Selects
 
 ### Settings Page
-- [ ] `app/settings/page.tsx` (line ~266) - Language selection
-- [ ] `app/settings/page.tsx` (line ~301) - Number format selection
-- [ ] `app/settings/page.tsx` (line ~321) - Currency selection
+- [x] `app/settings/page.tsx` (line ~266) - Language selection
+- [x] `app/settings/page.tsx` (line ~301) - Number format selection
+- [x] `app/settings/page.tsx` (line ~321) - Currency selection
+
+**Note:** For the settings page, we created proper enums in `src/frontend/types/enums.ts` but kept using the standard Select component with mapped enum values instead of EnumSelect. This is because the settings page doesn't use react-hook-form and has its own state management, making it incompatible with the current EnumSelect implementation which is designed for react-hook-form.
 
 ## Implementation Guide
 
