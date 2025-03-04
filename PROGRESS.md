@@ -3,35 +3,29 @@
 ## 📋 Current Status & Next Steps
 
 ### Active Development
-- 🔄 **Form Refactoring Implementation**
-  - ✅ Completed EnumSelect refactoring for all pension forms
-  - ✅ Implemented EnumSelect for ContributionFrequency fields
-  - ✅ Improved form reset handling for enum-based selects
-  - ✅ Completed Settings page enum refactoring with proper type definitions
-  - 🔄 Next: Implement Form Reset Hook
-    - Will incorporate the date handling utilities from the date formatting best practices
+- 🔥 **Company Pension Statement Bug Fix**
+  - Fix issue where statements from Company Pensions are not saved in the backend
+  - Issue occurs in both add and edit operations
+  - Affects statement management across company pension module
+  - High priority due to data persistence concerns
+- 🔥 **Form Reset Hook Implementation**
+  - Create reusable hook to standardize form reset logic
+  - Centralize data transformation between API and form formats
+  - Handle complex nested data structures consistently
 
 ### Implementation Order Recommendation
-1. 🔥 **Date Utilities Implementation** (1-2 days)
-   - Create `src/frontend/lib/dateUtils.ts` with core utility functions:
-     - `toDateObject()`: Convert any value to a proper Date object or null
-     - `toISODateString()`: Safely convert to ISO format string
-     - `formatDisplayDate()`: Format dates for display with locale support
-     - `parseFormDate()`: Parse dates from form inputs
-   - This provides immediate fixes for critical date-related errors
-
-2. 🔥 **Form Reset Hook Implementation** (3-5 days)
+1. 🔥 **Form Reset Hook Implementation** (3-5 days)
    - Implement the hook as described in `src/frontend/docs/TODO/form_reset_hook.md`
    - Incorporate the date utilities into form transformers
    - This provides a foundation for consistent form reset behavior
    - See `src/frontend/docs/TODO/form_reset_hook.md` for implementation details
 
-3. 🔥 **DateInput Component Implementation** (2-3 days)
+2. 🔥 **DateInput Component Implementation** (2-3 days)
    - Create reusable date input component using the date utilities
    - Implement in highest-priority forms first (pension forms)
    - This component will work with both the Form Reset Hook and Forms Architecture pattern
 
-4. 🔥 **Forms Architecture Refactoring** (ongoing)
+3. 🔥 **Forms Architecture Refactoring** (ongoing)
    - Apply the comprehensive architecture pattern from `src/frontend/docs/TODO/forms_refactoring.md`
    - Incorporate both the Form Reset Hook and DateInput component
    - Implement in order of form complexity/usage frequency
@@ -39,6 +33,20 @@
 <details>
 <summary><strong>✅ Recently Completed</strong></summary>
 
+- ✅ Company Pension Date Handling Improvements
+  - Updated all company pension functions to use dateUtils consistently
+  - Fixed date handling in pension creation and updates
+  - Improved statement date handling in all company pension operations
+  - Ensured consistent date formatting across the company pension module
+  - Implemented proper date handling for contribution plan steps
+  - Fixed date-related errors in form submissions
+- ✅ Date Utilities Implementation
+  - Created core date utility functions in `dateUtils.ts`
+  - Implemented basic test suite for core utilities
+  - Added deprecation notices to old date functions
+  - Prepared migration path for existing components
+  - Component tests temporarily skipped due to complexity
+  - Added comprehensive testing strategy documentation
 - ✅ Date Handling Best Practices
   - Created comprehensive implementation plan for consistent date handling across forms
   - Designed DateUtils utility with robust type-safe functions
@@ -665,8 +673,6 @@ graph LR
    - [x] Provider integration tests
    - [x] Hook usage tests
    - [x] Error handling tests
-   - [x] State management tests
-   - [x] API integration mocking
 
 ##### Priority Testing Areas
 

@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/frontend/components/ui/alert-dialog"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
@@ -35,6 +35,7 @@ import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatNumber, formatCurrency, formatPercent } from "@/frontend/lib/transforms"
 import { getPensionEditRoute } from "@/frontend/lib/routes"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
+import { formatDisplayDate } from "@/frontend/lib/dateUtils"
 
 /**
  * Props for the PensionList component
@@ -75,6 +76,31 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
   const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
   const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
   const { settings } = useSettings()
+  
+  // State for formatted values to avoid hydration mismatches
+  const [formattedValues, setFormattedValues] = useState({
+    contribution: "",
+    totalUnits: "",
+    currentValue: ""
+  })
+  
+  // Format values client-side only after hydration
+  useEffect(() => {
+    setFormattedValues({
+      contribution: currentStep ? formatCurrency(currentStep.amount, {
+        locale: settings.number_locale,
+        currency: settings.currency
+      }).formatted : "",
+      totalUnits: formatNumber(Number(pension.total_units || 0), {
+        locale: settings.number_locale,
+        decimals: 3
+      }).formatted,
+      currentValue: formatCurrency(pension.current_value, {
+        locale: settings.number_locale,
+        currency: settings.currency
+      }).formatted
+    })
+  }, [pension, currentStep, settings])
 
   return (
     <>
@@ -91,26 +117,17 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
         <div>
           <dt className="text-muted-foreground">Current Contribution</dt>
           <dd>
-            {formatCurrency(currentStep.amount, {
-              locale: settings.number_locale,
-              currency: settings.currency
-            }).formatted} {formatFrequency(currentStep.frequency)}
+            {formattedValues.contribution} {formatFrequency(currentStep.frequency)}
           </dd>
         </div>
       )}
       <div>
         <dt className="text-muted-foreground">Total Units</dt>
-        <dd>{formatNumber(Number(pension.total_units || 0), {
-          locale: settings.number_locale,
-          decimals: 3
-        }).formatted}</dd>
+        <dd>{formattedValues.totalUnits}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{formatCurrency(pension.current_value, {
-          locale: settings.number_locale,
-          currency: settings.currency
-        }).formatted}</dd>
+        <dd>{formattedValues.currentValue}</dd>
       </div>
 
       {pension.status !== 'PAUSED' && (
@@ -140,6 +157,31 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
  */
 function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
   const { settings } = useSettings()
+  
+  // State for formatted values to avoid hydration mismatches
+  const [formattedValues, setFormattedValues] = useState({
+    guaranteedInterest: "",
+    expectedReturn: "",
+    currentValue: ""
+  })
+  
+  // Format values client-side only after hydration
+  useEffect(() => {
+    setFormattedValues({
+      guaranteedInterest: formatPercent(pension.guaranteed_interest, {
+        locale: settings.number_locale,
+        decimals: 2
+      }).formatted,
+      expectedReturn: formatPercent(pension.expected_return, {
+        locale: settings.number_locale,
+        decimals: 2
+      }).formatted,
+      currentValue: formatCurrency(pension.current_value, {
+        locale: settings.number_locale,
+        currency: settings.currency
+      }).formatted
+    })
+  }, [pension, settings])
 
   return (
     <>
@@ -153,24 +195,15 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
       </div>
       <div>
         <dt className="text-muted-foreground">Guaranteed Interest</dt>
-        <dd>{formatPercent(pension.guaranteed_interest, {
-          locale: settings.number_locale,
-          decimals: 2
-        }).formatted}</dd>
+        <dd>{formattedValues.guaranteedInterest}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Expected Return</dt>
-        <dd>{formatPercent(pension.expected_return, {
-          locale: settings.number_locale,
-          decimals: 2
-        }).formatted}</dd>
+        <dd>{formattedValues.expectedReturn}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{formatCurrency(pension.current_value, {
-          locale: settings.number_locale,
-          currency: settings.currency
-        }).formatted}</dd>
+        <dd>{formattedValues.currentValue}</dd>
       </div>
     </>
   )
@@ -184,6 +217,15 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
   const { members } = useHousehold()
   const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
   const [showYearlyInvestment, setShowYearlyInvestment] = useState(false)
+  const [formattedStatementDate, setFormattedStatementDate] = useState("")
+  
+  // State for formatted values to avoid hydration mismatches
+  const [formattedValues, setFormattedValues] = useState({
+    regularContribution: "",
+    currentContribution: "",
+    projectedPayout: "",
+    currentValue: ""
+  })
   
   // Find the household member associated with this pension
   const member = members.find(m => m.id === pension.member_id)
@@ -199,6 +241,40 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       latestStatement.retirement_projections[0]
     : undefined
 
+  // Format values client-side only after hydration
+  useEffect(() => {
+    // Format the statement date
+    if (latestStatement) {
+      setFormattedStatementDate(formatDisplayDate(latestStatement.statement_date, settings.ui_locale));
+    }
+    
+    // Format currency and number values
+    setFormattedValues({
+      regularContribution: pension.contribution_amount && pension.contribution_frequency 
+        ? formatCurrency(pension.contribution_amount, {
+            locale: settings.number_locale,
+            currency: settings.currency
+          }).formatted
+        : "",
+      currentContribution: currentStep
+        ? formatCurrency(currentStep.amount, {
+            locale: settings.number_locale,
+            currency: settings.currency
+          }).formatted
+        : "",
+      projectedPayout: latestProjection
+        ? formatCurrency(latestProjection.monthly_payout, {
+            locale: settings.number_locale,
+            currency: settings.currency
+          }).formatted
+        : "",
+      currentValue: formatCurrency(pension.current_value, {
+        locale: settings.number_locale,
+        currency: settings.currency
+      }).formatted
+    });
+  }, [pension, currentStep, latestStatement, latestProjection, settings]);
+
   return (
     <>
       <div>
@@ -209,10 +285,7 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       {pension.contribution_amount && pension.contribution_frequency && (
         <div>
           <dt className="text-muted-foreground">Regular Contribution</dt>
-          <dd>{formatCurrency(pension.contribution_amount, {
-            locale: settings.number_locale,
-            currency: settings.currency
-          }).formatted} {formatFrequency(pension.contribution_frequency)}</dd>
+          <dd>{formattedValues.regularContribution} {formatFrequency(pension.contribution_frequency)}</dd>
         </div>
       )}
       
@@ -220,10 +293,7 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         <div>
           <dt className="text-muted-foreground">Current Contribution</dt>
           <dd>
-            {formatCurrency(currentStep.amount, {
-              locale: settings.number_locale,
-              currency: settings.currency
-            }).formatted} {formatFrequency(currentStep.frequency)}
+            {formattedValues.currentContribution} {formatFrequency(currentStep.frequency)}
           </dd>
         </div>
       )}
@@ -231,25 +301,19 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       {latestProjection && (
         <div>
           <dt className="text-muted-foreground">Projected Monthly Payout</dt>
-          <dd>{formatCurrency(latestProjection.monthly_payout, {
-            locale: settings.number_locale,
-            currency: settings.currency
-          }).formatted} at age {latestProjection.retirement_age}</dd>
+          <dd>{formattedValues.projectedPayout} at age {latestProjection.retirement_age}</dd>
         </div>
       )}
       
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{formatCurrency(pension.current_value, {
-          locale: settings.number_locale,
-          currency: settings.currency
-        }).formatted}</dd>
+        <dd>{formattedValues.currentValue}</dd>
       </div>
       
       {latestStatement && (
         <div>
           <dt className="text-muted-foreground">Latest Statement</dt>
-          <dd>{new Date(latestStatement.statement_date).toLocaleDateString(settings.ui_locale)}</dd>
+          <dd>{formattedStatementDate}</dd>
         </div>
       )}
 
@@ -371,8 +435,8 @@ function PensionCard({
  */
 function AddPensionCard({ onClick }: { onClick: () => void }) {
   return (
-    <Card className="flex flex-col items-center justify-center h-full w-[270px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
-      <CardContent className="flex flex-col items-center justify-center py-6 w-full">
+    <Card className="flex flex-col items-center justify-center w-[270px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+      <CardContent className="flex flex-col items-center justify-center py-6 w-full h-full">
         <PlusCircle className="h-6 w-6 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">Add New Pension Plan</p>
       </CardContent>

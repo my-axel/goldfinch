@@ -4,6 +4,10 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.api.v1 import deps
 from app.crud import pension_company
+import logging
+
+# Use the app.api namespace to ensure logs go to the right place
+logger = logging.getLogger("app.api.v1.endpoints.pension.company")
 
 router = APIRouter()
 
@@ -43,10 +47,37 @@ def update_company_pension(
     pension_in: schemas.pension_company.PensionCompanyUpdate,
 ) -> schemas.pension_company.PensionCompanyResponse:
     """Update a company pension."""
-    pension = pension_company.get(db=db, id=pension_id)
-    if not pension:
-        raise HTTPException(status_code=404, detail="Company Pension not found")
-    return pension_company.update(db=db, db_obj=pension, obj_in=pension_in)
+    logger.info(f"API: Updating company pension {pension_id}")
+    
+    try:
+        # Check if pension exists
+        pension = pension_company.get(db=db, id=pension_id)
+        if not pension:
+            logger.warning(f"API: Company Pension {pension_id} not found")
+            raise HTTPException(status_code=404, detail="Company Pension not found")
+        
+        # Log the pension data being sent for update
+        logger.debug(f"API: Pension update data: {pension_in.dict(exclude_unset=True)}")
+        
+        # Call the CRUD operation with the new signature
+        updated_pension = pension_company.update(
+            db=db, 
+            db_obj=pension, 
+            obj_in=pension_in
+        )
+        
+        # Log successful update
+        logger.info(f"API: Company pension updated successfully. Pension ID: {updated_pension.id}")
+        
+        # Return the updated pension
+        return updated_pension
+        
+    except Exception as e:
+        logger.error(f"API: Failed to update company pension: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update company pension: {str(e)}",
+        )
 
 @router.delete("/{pension_id}")
 def delete_company_pension(
@@ -205,12 +236,51 @@ def update_company_pension_statement(
     statement_in: schemas.pension_company.PensionCompanyStatementUpdate,
 ) -> schemas.pension_company.PensionCompanyStatementResponse:
     """Update a statement for a company pension."""
-    pension = pension_company.get(db=db, id=pension_id)
-    if not pension:
-        raise HTTPException(status_code=404, detail="Company Pension not found")
+    logger.info(f"API: Updating statement {statement_id} for pension {pension_id}")
     
-    statement = pension_company.get_statement(db=db, statement_id=statement_id)
-    if not statement or statement.pension_id != pension_id:
-        raise HTTPException(status_code=404, detail="Statement not found")
-    
-    return pension_company.update_statement(db=db, db_obj=statement, obj_in=statement_in) 
+    try:
+        # Check if pension exists
+        pension = pension_company.get(db=db, id=pension_id)
+        if not pension:
+            logger.warning(f"API: Company Pension {pension_id} not found")
+            raise HTTPException(status_code=404, detail="Company Pension not found")
+        
+        # Check if statement exists and belongs to the pension
+        statement = pension_company.get_statement(db=db, statement_id=statement_id)
+        if not statement or statement.pension_id != pension_id:
+            logger.warning(f"API: Statement {statement_id} not found for pension {pension_id}")
+            raise HTTPException(status_code=404, detail="Statement not found")
+        
+        # Log the statement data being sent for update
+        update_data = statement_in.dict(exclude_unset=True)
+        logger.debug(f"API: Statement update data: {update_data}")
+        
+        # Log retirement projections specifically
+        if "retirement_projections" in update_data:
+            projections = update_data["retirement_projections"]
+            logger.debug(f"API: Statement update includes {len(projections)} retirement projections")
+            for i, proj in enumerate(projections):
+                logger.debug(f"API: Projection {i+1}: retirement_age={proj.get('retirement_age')}, monthly_payout={proj.get('monthly_payout')}, total_capital={proj.get('total_capital')}")
+        else:
+            logger.debug("API: Statement update does not include retirement projections")
+        
+        # Call the CRUD operation with the new signature
+        updated_statement = pension_company.update_statement(
+            db=db, 
+            statement_id=statement_id,
+            obj_in=statement_in
+        )
+        
+        # Log successful update
+        logger.info(f"API: Statement updated successfully. Statement ID: {updated_statement.id}")
+        logger.debug(f"API: Updated statement has {len(updated_statement.retirement_projections)} retirement projections")
+        
+        # Return the updated statement
+        return updated_statement
+        
+    except Exception as e:
+        logger.error(f"API: Failed to update statement: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update statement: {str(e)}"
+        ) 

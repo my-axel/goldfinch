@@ -69,12 +69,13 @@ class PensionCompanyStatement(Base):
     id = Column(Integer, primary_key=True, index=True)
     pension_id = Column(Integer, ForeignKey("pension_company.id", ondelete="CASCADE"), nullable=False)
     statement_date = Column(Date, nullable=False)
-    notes = Column(Text, nullable=True)
+    value = Column(Numeric(precision=20, scale=2), nullable=False)  # Total capital/value at statement date
+    note = Column(Text, nullable=True)  # Renamed from notes to note
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Relationships
     pension = relationship("PensionCompany", back_populates="statements")
-    projections = relationship("PensionCompanyRetirementProjection", back_populates="statement", cascade="all, delete-orphan")
+    retirement_projections = relationship("PensionCompanyRetirementProjection", back_populates="statement", cascade="all, delete-orphan")
 
 class PensionCompanyRetirementProjection(Base):
     """
@@ -86,11 +87,11 @@ class PensionCompanyRetirementProjection(Base):
     id = Column(Integer, primary_key=True, index=True)
     statement_id = Column(Integer, ForeignKey("pension_company_statements.id", ondelete="CASCADE"), nullable=False)
     retirement_age = Column(Integer, nullable=False)
-    monthly_payout = Column(Numeric(precision=10, scale=2), nullable=False)
-    total_capital = Column(Numeric(precision=10, scale=2), nullable=False)
+    monthly_payout = Column(Numeric(precision=10, scale=2), nullable=True)  # Made nullable
+    total_capital = Column(Numeric(precision=10, scale=2), nullable=True)   # Made nullable
 
     # Relationships
-    statement = relationship("PensionCompanyStatement", back_populates="projections")
+    statement = relationship("PensionCompanyStatement", back_populates="retirement_projections")
     
     # Indexes
     __table_args__ = (

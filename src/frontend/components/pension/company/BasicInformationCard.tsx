@@ -18,6 +18,7 @@ import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/R
 import { CompanyPension } from "@/frontend/types/pension"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { EnumSelect } from "@/frontend/components/ui/enum-select"
+import { DateInput } from '@/frontend/components/ui/date-input'
 
 interface BasicInformationCardProps {
   form: UseFormReturn<CompanyPensionFormData>
@@ -157,21 +158,10 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
                 control={form.control}
                 name="start_date"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                        onChange={(e) => {
-                          const date = new Date(e.target.value)
-                          date.setUTCHours(0, 0, 0, 0)
-                          field.onChange(date)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <DateInput
+                    field={field}
+                    label="Start Date"
+                  />
                 )}
               />
 

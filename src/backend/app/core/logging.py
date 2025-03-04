@@ -41,7 +41,7 @@ def setup_logging() -> None:
     root_logger.addHandler(console_handler)
     
     # Set up component-specific loggers
-    components = ['api', 'services', 'tasks', 'models']
+    components = ['api', 'services', 'tasks', 'models', 'crud']
     for component in components:
         logger = logging.getLogger(f"app.{component}")
         
@@ -58,6 +58,27 @@ def setup_logging() -> None:
         
         # Prevent duplicate logging
         logger.propagate = False
+    
+    # Set specific loggers to DEBUG level for detailed logging
+    debug_loggers = [
+        "app.crud.pension_company",
+        "app.api.v1.endpoints.pension.company"
+    ]
+    
+    for logger_name in debug_loggers:
+        debug_logger = logging.getLogger(logger_name)
+        debug_logger.setLevel(logging.DEBUG)
+        
+        # Add a specific debug file handler
+        debug_log_file = Path(settings.LOG_DIR) / f"{logger_name.replace('.', '_')}_debug.log"
+        debug_handler = logging.handlers.RotatingFileHandler(
+            debug_log_file,
+            maxBytes=settings.LOG_FILE_MAX_BYTES,
+            backupCount=settings.LOG_FILE_BACKUP_COUNT
+        )
+        debug_handler.setFormatter(formatter)
+        debug_handler.setLevel(logging.DEBUG)
+        debug_logger.addHandler(debug_handler)
 
 # Initialize logging when module is imported
 setup_logging() 

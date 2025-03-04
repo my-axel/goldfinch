@@ -14,6 +14,9 @@ export interface SafeNumber {
   value: number;        // Raw value (e.g., 1234.56)
 }
 
+/**
+ * @deprecated Use types from dateUtils.ts instead. This will be removed when all components are migrated.
+ */
 export interface SafeDate {
   formatted: string;    // Display value (e.g., "23.02.2024")
   value: string;        // Backend value (e.g., "2024-02-23")
@@ -79,6 +82,7 @@ export function formatPercent(value: number, options?: Omit<FormatOptions, 'styl
 }
 
 /**
+ * @deprecated Use formatDisplayDate() from dateUtils.ts instead. This will be removed when all components are migrated.
  * Formats a date according to the given locale
  */
 export function formatDate(date: string | Date, options?: Pick<FormatOptions, 'locale'>): SafeDate {
@@ -147,6 +151,7 @@ export function parseNumber(input: string, locale: string): number {
 }
 
 /**
+ * @deprecated Use toISODateString() from dateUtils.ts instead. This will be removed when all components are migrated.
  * Parses a localized date string back to ISO format (YYYY-MM-DD)
  */
 export function parseDate(input: string): string {

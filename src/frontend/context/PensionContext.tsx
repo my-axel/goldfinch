@@ -22,6 +22,7 @@ import {
   getPensionStatusRoute,
 } from '@/frontend/lib/routes/api/pension'
 import { getETFByIdRoute } from '@/frontend/lib/routes/api/etf'
+import { toISODateString } from "@/frontend/lib/dateUtils"
 
 export interface PensionContribution {
   id: number
@@ -42,10 +43,39 @@ interface PensionContextType {
   fetchPension: (id: number, pensionType?: PensionType) => Promise<void>
   createEtfPension: (pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
   createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>
-  createCompanyPension: (pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<void>
+  createCompanyPension: (pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<CompanyPension>
+  createCompanyPensionWithStatement: (
+    pension: Omit<CompanyPension, 'id' | 'current_value'>,
+    statement: {
+      statement_date: string,
+      value: number,
+      note?: string,
+      retirement_projections?: Array<{
+        retirement_age: number,
+        monthly_payout: number,
+        total_capital: number
+      }>
+    }
+  ) => Promise<void>
   updateEtfPension: (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
   updateInsurancePension: (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>
   updateCompanyPension: (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<void>
+  updateCompanyPensionWithStatement: (
+    id: number, 
+    pension: Omit<CompanyPension, 'id' | 'current_value'>,
+    statements: Array<{
+      id: number,
+      statement_date: string,
+      value: number,
+      note?: string,
+      retirement_projections?: Array<{
+        id?: number,
+        retirement_age: number,
+        monthly_payout: number,
+        total_capital: number
+      }>
+    }>
+  ) => Promise<void>
   deletePension: (id: number) => Promise<void>
   addOneTimeInvestment: (pensionId: number, data: { 
     amount: number, 
@@ -454,29 +484,34 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [post, fetchPensions])
 
-  const createCompanyPension = useCallback(async (pension: Omit<CompanyPension, 'id' | 'current_value'>): Promise<void> => {
+  const createCompanyPension = useCallback(async (pension: Omit<CompanyPension, 'id' | 'current_value'>): Promise<CompanyPension> => {
     try {
+      // Format the pension data for the API
       const pensionData = {
         name: pension.name,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
         notes: pension.notes,
         employer: pension.employer,
-        start_date: typeof pension.start_date === 'string' ? pension.start_date : pension.start_date.toISOString().split('T')[0],
-        contribution_amount: pension.contribution_amount ? Number(pension.contribution_amount) : null,
-        contribution_frequency: pension.contribution_frequency || null,
+        start_date: pension.start_date,
+        contribution_amount: pension.contribution_amount ? Number(pension.contribution_amount) : undefined,
+        contribution_frequency: pension.contribution_frequency || undefined,
         status: pension.status || 'ACTIVE',
-        paused_at: pension.paused_at,
-        resume_at: pension.resume_at,
-        contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
+        paused_at: pension.paused_at || undefined,
+        resume_at: pension.resume_at || undefined,
+        type: PensionType.COMPANY,
+        contribution_plan_steps: pension.contribution_plan_steps?.map(step => ({
           amount: Number(step.amount),
           frequency: step.frequency,
-          start_date: step.start_date instanceof Date ? step.start_date.toISOString().split('T')[0] : new Date(step.start_date).toISOString().split('T')[0],
-          end_date: step.end_date ? (step.end_date instanceof Date ? step.end_date.toISOString().split('T')[0] : new Date(step.end_date).toISOString().split('T')[0]) : null
-        }))
-      }
+          start_date: step.start_date,
+          end_date: step.end_date || undefined,
+          note: step.note || undefined
+        })) || []
+      } as const
       
-      await post<CompanyPension>(getPensionApiRoute(PensionType.COMPANY), pensionData)
+      // Send data to the API - type is handled by the endpoint
+      const response = await post<CompanyPension>(getPensionApiRoute(PensionType.COMPANY), pensionData)
       await fetchPensions()
+      return response
     } catch (err) {
       toast.error('Error', {
         description: 'Failed to create company pension'
@@ -484,6 +519,98 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       throw err
     }
   }, [post, fetchPensions])
+
+  // Add new methods for statements
+  const createCompanyPensionStatement = useCallback(async (
+    pensionId: number, 
+    data: {
+      statement_date: string,
+      value: number,
+      note?: string,
+      retirement_projections?: Array<{
+        retirement_age: number,
+        monthly_payout: number,
+        total_capital: number
+      }>
+    }
+  ) => {
+    try {
+      await post(`${getPensionApiRoute(PensionType.COMPANY)}/${pensionId}/statements`, {
+        ...data,
+        statement_date: toISODateString(data.statement_date)
+      })
+      
+      // Refresh the pension data
+      if (selectedPension?.id === pensionId) {
+        await fetchPension(pensionId)
+      }
+      
+      toast.success('Success', {
+        description: 'Statement has been added'
+      })
+    } catch (error: unknown) {
+      toast.error('Error', {
+        description: 'Failed to add statement'
+      })
+      throw error
+    }
+  }, [post, fetchPension, selectedPension])
+
+  const createCompanyPensionWithStatement = useCallback(async (
+    pension: Omit<CompanyPension, 'id' | 'current_value'>,
+    statement: {
+      statement_date: string,
+      value: number,
+      note?: string,
+      retirement_projections?: Array<{
+        retirement_age: number,
+        monthly_payout: number,
+        total_capital: number
+      }>
+    }
+  ) => {
+    try {
+      // Format the pension data for the API
+      const pensionData = {
+        name: pension.name,
+        member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
+        notes: pension.notes,
+        employer: pension.employer,
+        start_date: pension.start_date,
+        contribution_amount: pension.contribution_amount ? Number(pension.contribution_amount) : undefined,
+        contribution_frequency: pension.contribution_frequency || undefined,
+        status: pension.status || 'ACTIVE',
+        paused_at: pension.paused_at || undefined,
+        resume_at: pension.resume_at || undefined,
+        type: PensionType.COMPANY,
+        contribution_plan_steps: pension.contribution_plan_steps?.map(step => ({
+          amount: Number(step.amount),
+          frequency: step.frequency,
+          start_date: step.start_date,
+          end_date: step.end_date || undefined,
+          note: step.note || undefined
+        })) || []
+      } as const
+      
+      // Create pension - type is handled by the endpoint
+      const createdPension = await createCompanyPension(pensionData)
+      
+      // Use createCompanyPensionStatement instead of direct API call
+      await createCompanyPensionStatement(createdPension.id, statement)
+
+      // Refresh pensions list
+      await fetchPensions()
+      
+      toast.success('Success', {
+        description: 'Company pension and statement created successfully'
+      })
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to create company pension with statement'
+      })
+      throw err
+    }
+  }, [createCompanyPension, createCompanyPensionStatement, fetchPensions])
 
   const deletePension = useCallback(async (id: number) => {
     try {
@@ -636,11 +763,23 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
   const updateCompanyPension = useCallback(async (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => {
     try {
       await put<Pension>(getPensionApiRouteWithId(PensionType.COMPANY, id), {
-        ...pension,
+        name: pension.name,
         member_id: typeof pension.member_id === 'string' ? parseInt(pension.member_id) : pension.member_id,
-        start_date: pension.start_date.toISOString().split('T')[0],
-        contribution_amount: pension.contribution_amount ? Number(pension.contribution_amount) : null,
-        contribution_frequency: pension.contribution_frequency || null
+        notes: pension.notes,
+        employer: pension.employer,
+        start_date: toISODateString(pension.start_date),
+        contribution_amount: pension.contribution_amount ? Number(pension.contribution_amount) : undefined,
+        contribution_frequency: pension.contribution_frequency || undefined,
+        status: pension.status || 'ACTIVE',
+        paused_at: pension.paused_at || undefined,
+        resume_at: pension.resume_at || undefined,
+        contribution_plan_steps: (pension.contribution_plan_steps || []).map(step => ({
+          amount: Number(step.amount),
+          frequency: step.frequency,
+          start_date: toISODateString(step.start_date),
+          end_date: step.end_date ? toISODateString(step.end_date) : null,
+          note: step.note || null
+        }))
       })
       
       fetchPensions()
@@ -753,39 +892,6 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [get, pensions])
 
-  // Add new methods for statements
-  const createCompanyPensionStatement = useCallback(async (
-    pensionId: number, 
-    data: {
-      statement_date: string,
-      value: number,
-      note?: string,
-      retirement_projections?: Array<{
-        retirement_age: number,
-        monthly_payout: number,
-        total_capital: number
-      }>
-    }
-  ) => {
-    try {
-      await post(`${getPensionApiRoute(PensionType.COMPANY)}/${pensionId}/statements`, data)
-      
-      // Refresh the pension data
-      if (selectedPension?.id === pensionId) {
-        await fetchPension(pensionId)
-      }
-      
-      toast.success('Success', {
-        description: 'Statement has been added'
-      })
-    } catch (error: unknown) {
-      toast.error('Error', {
-        description: 'Failed to add statement'
-      })
-      throw error
-    }
-  }, [post, fetchPension, selectedPension])
-
   const getCompanyPensionStatements = useCallback(async (pensionId: number): Promise<PensionCompanyStatement[]> => {
     try {
       const response = await get<PensionCompanyStatement[]>(`${getPensionApiRoute(PensionType.COMPANY)}/${pensionId}/statements`)
@@ -810,7 +916,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: unknown) {
       // If no statements exist, return null instead of showing an error
-      if ('response' in error && typeof error.response === 'object' && error.response && 'status' in error.response && error.response.status === 404) {
+      if (error instanceof Error && 'response' in error && typeof error.response === 'object' && error.response && 'status' in error.response && error.response.status === 404) {
         return null
       }
       
@@ -851,7 +957,10 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   ) => {
     try {
-      await put(`${getPensionApiRoute(PensionType.COMPANY)}/${pensionId}/statements/${statementId}`, data)
+      await put(`${getPensionApiRoute(PensionType.COMPANY)}/${pensionId}/statements/${statementId}`, {
+        ...data,
+        statement_date: toISODateString(data.statement_date)
+      })
       
       // Refresh the pension data
       if (selectedPension?.id === pensionId) {
@@ -869,6 +978,60 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [put, fetchPension, selectedPension])
 
+  const updateCompanyPensionWithStatement = useCallback(async (
+    id: number, 
+    pension: Omit<CompanyPension, 'id' | 'current_value'>,
+    statements: Array<{
+      id: number,
+      statement_date: string,
+      value: number,
+      note?: string,
+      retirement_projections?: Array<{
+        id?: number,
+        retirement_age: number,
+        monthly_payout: number,
+        total_capital: number
+      }>
+    }>
+  ) => {
+    try {
+      // First, update the pension without statements
+      // Use a type assertion to handle the pension update
+      const pensionData = { ...pension };
+      // Ensure we're not sending statements in the pension update
+      if ('statements' in pensionData) {
+        // Use a type that includes optional statements property
+        type PensionWithOptionalStatements = Omit<CompanyPension, 'id' | 'current_value'> & { statements?: unknown };
+        delete (pensionData as PensionWithOptionalStatements).statements;
+      }
+      
+      await updateCompanyPension(id, pensionData as Omit<CompanyPension, 'id' | 'current_value'>)
+      
+      // Then, update each statement separately
+      if (statements && statements.length > 0) {
+        for (const statement of statements) {
+          const { id: statementId, ...statementData } = statement
+          
+          await updateCompanyPensionStatement(id, statementId, statementData)
+        }
+      }
+      
+      // Refresh the pension data
+      if (selectedPension?.id === id) {
+        await fetchPension(id)
+      }
+      
+      toast.success('Success', {
+        description: 'Company pension and statements updated successfully'
+      })
+    } catch (error: unknown) {
+      toast.error('Error', {
+        description: 'Failed to update company pension with statements'
+      })
+      throw error
+    }
+  }, [updateCompanyPension, updateCompanyPensionStatement, fetchPension, selectedPension])
+
   return (
     <PensionContext.Provider
       value={{
@@ -881,9 +1044,11 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         createEtfPension,
         createInsurancePension,
         createCompanyPension,
+        createCompanyPensionWithStatement,
         updateEtfPension,
         updateInsurancePension,
         updateCompanyPension,
+        updateCompanyPensionWithStatement,
         deletePension,
         addOneTimeInvestment,
         createContributionHistory,
@@ -893,11 +1058,11 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         pensionStatistics,
         isLoadingStatistics,
         fetchPensionStatistics,
-        createCompanyPensionStatement,
         getCompanyPensionStatements,
         getLatestCompanyPensionStatement,
         getCompanyPensionStatement,
-        updateCompanyPensionStatement
+        updateCompanyPensionStatement,
+        createCompanyPensionStatement,
       }}
     >
       {children}

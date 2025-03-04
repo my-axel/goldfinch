@@ -87,117 +87,130 @@ formatDate('2024-05-15', {
 
 ## Client-Side Only Formatting Pattern
 
-To avoid hydration mismatches, follow this pattern for formatting in client components:
-
-1. Use `useState` to initialize with simple values
-2. Use `useEffect` to update with formatted values after hydration
-3. Use the formatted values from state in your JSX
-
-### Pattern Template
+To avoid hydration mismatches, we now provide a `useDateFormat` hook that handles locale-aware date formatting:
 
 ```tsx
 "use client"
 
-import { useState, useEffect } from "react"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatCurrency } from "@/frontend/lib/transforms"
+import { useDateFormat } from "@/frontend/hooks/useDateFormat"
 
-function MyComponent({ value }) {
-  const { settings } = useSettings()
-  const [formattedValue, setFormattedValue] = useState("0")
-
-  useEffect(() => {
-    // Format values client-side only after hydration
-    setFormattedValue(formatCurrency(value, {
-      locale: settings.number_locale,
-      currency: settings.currency
-    }).formatted)
-  }, [value, settings])
-
-  return <div>{formattedValue}</div>
-}
-```
-
-## Examples
-
-### Example 1: Formatting Multiple Values
-
-```tsx
-"use client"
-
-import { useState, useEffect } from "react"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatCurrency, formatPercent } from "@/frontend/lib/transforms"
-
-function InvestmentSummary({ principal, returns, rate }) {
-  const { settings } = useSettings()
-  const [formatted, setFormatted] = useState({
-    principal: "0",
-    returns: "0",
-    rate: "0%"
-  })
-
-  useEffect(() => {
-    setFormatted({
-      principal: formatCurrency(principal, {
-        locale: settings.number_locale,
-        currency: settings.currency
-      }).formatted,
-      returns: formatCurrency(returns, {
-        locale: settings.number_locale,
-        currency: settings.currency
-      }).formatted,
-      rate: formatPercent(rate, {
-        locale: settings.number_locale,
-        decimals: 1
-      }).formatted
-    })
-  }, [principal, returns, rate, settings])
+function MyComponent({ date }) {
+  const { formatDate, toISOString, parseFormDate, toDateObject } = useDateFormat()
 
   return (
     <div>
-      <p>Principal: {formatted.principal}</p>
-      <p>Returns: {formatted.returns}</p>
-      <p>Rate: {formatted.rate}</p>
+      <p>Formatted Date: {formatDate(date)}</p>
+      <input 
+        type="date" 
+        value={toISOString(date)}
+        onChange={(e) => {
+          const newDate = parseFormDate(e.target.value)
+          // Handle the new date...
+        }}
+      />
     </div>
   )
 }
 ```
 
-### Example 2: Conditional Formatting
+The `useDateFormat` hook provides:
+- `formatDate`: Formats dates according to user's locale
+- `toISOString`: Converts dates to YYYY-MM-DD format
+- `parseFormDate`: Parses form input dates to Date objects
+- `toDateObject`: Safely converts any value to a Date object
+
+### Reusable Date Components
+
+We provide two main date components that use the `useDateFormat` hook internally:
+
+```tsx
+// DateInput for form fields
+<FormField
+  control={form.control}
+  name="start_date"
+  render={({ field }) => (
+    <DateInput field={field} label="Start Date" />
+  )}
+/>
+
+// DateEndPicker for end date selection with duration options
+<FormField
+  control={form.control}
+  name="end_date"
+  render={({ field }) => (
+    <DateEndPicker 
+      field={field} 
+      startDate={startDate}
+      retirementDate={retirementDate}
+    />
+  )}
+/>
+```
+
+These components handle all date formatting, parsing, and locale considerations internally.
+
+## Examples
+
+### Example 1: Using DateInput and DateEndPicker
 
 ```tsx
 "use client"
 
-import { useState, useEffect } from "react"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatCurrency } from "@/frontend/lib/transforms"
-import { cn } from "@/frontend/lib/utils"
+import { DateInput } from "@/frontend/components/ui/date-input"
+import { DateEndPicker } from "@/frontend/components/ui/date-end-picker"
+import { useForm } from "react-hook-form"
 
-function ProfitLossIndicator({ value }) {
-  const { settings } = useSettings()
-  const [formatted, setFormatted] = useState({
-    value: "0",
-    isPositive: false
-  })
-
-  useEffect(() => {
-    setFormatted({
-      value: formatCurrency(value, {
-        locale: settings.number_locale,
-        currency: settings.currency
-      }).formatted,
-      isPositive: value >= 0
-    })
-  }, [value, settings])
+function ContributionPlanForm() {
+  const form = useForm()
 
   return (
-    <span className={cn(
-      formatted.isPositive ? "text-green-600" : "text-red-600"
-    )}>
-      {formatted.value}
-    </span>
+    <form>
+      <FormField
+        control={form.control}
+        name="start_date"
+        render={({ field }) => (
+          <DateInput field={field} label="Start Date" />
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="end_date"
+        render={({ field }) => (
+          <DateEndPicker
+            field={field}
+            startDate={form.watch('start_date')}
+            retirementDate={retirementDate}
+            durations={[
+              { years: 1, label: '+1 Year' },
+              { years: 2, label: '+2 Years' },
+              { years: 5, label: '+5 Years' },
+              { years: 10, label: '+10 Years' },
+              { years: 20, label: '+20 Years' }
+            ]}
+          />
+        )}
+      />
+    </form>
   )
+}
+```
+
+### Example 2: Using useDateFormat Directly
+
+```tsx
+"use client"
+
+import { useDateFormat } from "@/frontend/hooks/useDateFormat"
+
+function DateDisplay({ date }) {
+  const { formatDate } = useDateFormat()
+  const [formattedDate, setFormattedDate] = useState("")
+
+  useEffect(() => {
+    setFormattedDate(formatDate(date))
+  }, [date, formatDate])
+
+  return <span>{formattedDate}</span>
 }
 ```
 

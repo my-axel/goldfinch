@@ -22,6 +22,7 @@ import { companyPensionSchema } from "@/frontend/lib/validations/pension"
 import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
 import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
 import { PensionStatementsCard } from "@/frontend/components/pension/company/PensionStatementsCard"
+import { toISODateString } from "@/frontend/lib/dateUtils"
 
 export default function NewCompanyPensionPage() {
   const router = useRouter()
@@ -60,21 +61,21 @@ export default function NewCompanyPensionPage() {
         name: data.name,
         member_id: memberId,
         employer: data.employer,
-        start_date: data.start_date instanceof Date ? data.start_date.toISOString().split('T')[0] : new Date(data.start_date).toISOString().split('T')[0],
+        start_date: toISODateString(data.start_date),
         contribution_amount: data.contribution_amount !== undefined ? Number(data.contribution_amount) : null,
         contribution_frequency: data.contribution_frequency || null,
         notes: data.notes || "",
         contribution_plan_steps: data.contribution_plan_steps.map(step => ({
           amount: typeof step.amount === 'string' ? parseFloat(step.amount) : step.amount,
           frequency: step.frequency,
-          start_date: step.start_date instanceof Date ? step.start_date.toISOString().split('T')[0] : new Date(step.start_date).toISOString().split('T')[0],
-          end_date: step.end_date ? (step.end_date instanceof Date ? step.end_date.toISOString().split('T')[0] : new Date(step.end_date).toISOString().split('T')[0]) : null,
+          start_date: toISODateString(step.start_date),
+          end_date: step.end_date ? toISODateString(step.end_date) : null,
           note: step.note || null
         })),
         status: 'ACTIVE',
         statements: data.statements && data.statements.length > 0 
           ? data.statements.map(statement => ({
-              statement_date: statement.statement_date instanceof Date ? statement.statement_date.toISOString().split('T')[0] : new Date(statement.statement_date).toISOString().split('T')[0],
+              statement_date: toISODateString(statement.statement_date),
               value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
               note: statement.note || "",
               retirement_projections: statement.retirement_projections && statement.retirement_projections.length > 0

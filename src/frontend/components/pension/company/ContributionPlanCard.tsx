@@ -7,13 +7,14 @@ import { Button } from "@/frontend/components/ui/button"
 import { Plus, Trash2 } from "lucide-react"
 import { ContributionFrequency } from "@/frontend/types/pension"
 import { Input } from "@/frontend/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover"
-import { Command, CommandGroup, CommandItem, CommandList } from "@/frontend/components/ui/command"
 import { useState, useEffect } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { parseNumber, getDecimalSeparator } from "@/frontend/lib/transforms"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { EnumSelect } from "@/frontend/components/ui/enum-select"
+import { DateEndPicker } from "@/frontend/components/ui/date-end-picker"
+import { useHousehold } from "@/frontend/context/HouseholdContext"
+import { DateInput } from '@/frontend/components/ui/date-input'
 
 interface ContributionPlanCardProps {
   form: UseFormReturn<CompanyPensionFormData>
@@ -30,9 +31,14 @@ export function ContributionPlanCard({ form }: ContributionPlanCardProps) {
   })
   
   const { settings } = useSettings()
-  const [open, setOpen] = useState<number | null>(null)
+  const { members } = useHousehold()
   const [contributionInputs, setContributionInputs] = useState<string[]>([])
   const decimalSeparator = getDecimalSeparator(settings.number_locale)
+
+  // Get member's retirement date from form data and members
+  const memberId = form.getValues('member_id') as string
+  const member = members.find(m => m.id === parseInt(memberId, 10))
+  const retirementDate = member?.retirement_date_planned
 
   // Initialize contribution inputs when fields change
   useEffect(() => {
@@ -72,24 +78,6 @@ export function ContributionPlanCard({ form }: ContributionPlanCardProps) {
     
     // Add a new entry to the contributionInputs array
     setContributionInputs([...contributionInputs, ""])
-  }
-
-  const handleDurationSelect = (index: number, years?: number) => {
-    const startDate = form.getValues(`contribution_plan_steps.${index}.start_date`)
-    
-    if (!startDate) return
-    
-    if (years === undefined) {
-      // Set no end date for "until retirement" option
-      form.setValue(`contribution_plan_steps.${index}.end_date`, undefined)
-      setOpen(null)
-      return
-    }
-
-    const endDate = new Date(startDate)
-    endDate.setFullYear(endDate.getFullYear() + years)
-    form.setValue(`contribution_plan_steps.${index}.end_date`, endDate)
-    setOpen(null)
   }
 
   return (
@@ -194,20 +182,10 @@ export function ContributionPlanCard({ form }: ContributionPlanCardProps) {
                   control={form.control}
                   name={`contribution_plan_steps.${index}.start_date`}
                   render={({ field }) => (
-                    <FormItem className="space-y-0">
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                          onChange={(e) => {
-                            const date = new Date(e.target.value)
-                            date.setUTCHours(0, 0, 0, 0)
-                            field.onChange(date)
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <DateInput
+                      field={field}
+                      className="space-y-0"
+                    />
                   )}
                 />
 
@@ -215,65 +193,12 @@ export function ContributionPlanCard({ form }: ContributionPlanCardProps) {
                   control={form.control}
                   name={`contribution_plan_steps.${index}.end_date`}
                   render={({ field }) => (
-                    <FormItem className="space-y-0">
-                      <FormControl>
-                        <Popover open={open === index} onOpenChange={(isOpen) => isOpen ? setOpen(index) : setOpen(null)}>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className="w-full justify-between font-normal h-9"
-                              >
-                                {field.value ? new Date(field.value).toLocaleDateString() : "No end date"}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[280px] p-0">
-                            <Command>
-                              <CommandList>
-                                <CommandGroup>
-                                  <CommandItem onSelect={() => handleDurationSelect(index, 1)}>
-                                    1 year
-                                  </CommandItem>
-                                  <CommandItem onSelect={() => handleDurationSelect(index, 2)}>
-                                    2 years
-                                  </CommandItem>
-                                  <CommandItem onSelect={() => handleDurationSelect(index, 5)}>
-                                    5 years
-                                  </CommandItem>
-                                  <CommandItem onSelect={() => handleDurationSelect(index, 10)}>
-                                    10 years
-                                  </CommandItem>
-                                  <CommandItem onSelect={() => handleDurationSelect(index)}>
-                                    No end date
-                                  </CommandItem>
-                                </CommandGroup>
-                                <CommandGroup>
-                                  <div className="p-2 border-t">
-                                    <Input
-                                      type="date"
-                                      value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                                      onChange={(e) => {
-                                        const date = e.target.value ? new Date(e.target.value) : undefined
-                                        if (date) {
-                                          date.setUTCHours(0, 0, 0, 0)
-                                        }
-                                        field.onChange(date)
-                                        setOpen(null)
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="w-full"
-                                    />
-                                  </div>
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <DateEndPicker
+                      field={field}
+                      startDate={form.getValues(`contribution_plan_steps.${index}.start_date`)}
+                      retirementDate={retirementDate}
+                      className="space-y-0"
+                    />
                   )}
                 />
 

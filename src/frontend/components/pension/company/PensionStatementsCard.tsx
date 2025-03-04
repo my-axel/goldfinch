@@ -11,6 +11,7 @@ import { useSettings } from "@/frontend/context/SettingsContext"
 import { parseNumber, getDecimalSeparator, getCurrencySymbol } from "@/frontend/lib/transforms"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
+import { DateInput } from '@/frontend/components/ui/date-input'
 
 interface PensionStatementsCardProps {
   form: UseFormReturn<CompanyPensionFormData>
@@ -232,21 +233,10 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
             control={form.control}
             name={`statements.${latestIndex}.statement_date`}
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Statement Date</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                    onChange={(e) => {
-                      const date = new Date(e.target.value)
-                      date.setUTCHours(0, 0, 0, 0)
-                      field.onChange(date)
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <DateInput
+                field={field}
+                label="Statement Date"
+              />
             )}
           />
 

@@ -27,6 +27,7 @@ import { ContributionFrequency } from "@/frontend/types/pension"
 import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
 import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
 import { PensionStatementsCard } from "@/frontend/components/pension/company/PensionStatementsCard"
+import { toISODateString } from "@/frontend/lib/dateUtils"
 
 interface EditCompanyPensionPageProps {
   params: {
@@ -40,7 +41,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
   const pensionId = parseInt(id)
   
   const router = useRouter()
-  const { updateCompanyPension } = usePension()
+  const { updateCompanyPensionWithStatement } = usePension()
   const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
 
   const form = useForm<CompanyPensionFormData>({
@@ -126,42 +127,71 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
         name: data.name,
         member_id: memberId,
         employer: data.employer,
-        start_date: data.start_date.toISOString().split('T')[0],
+        start_date: toISODateString(data.start_date),
         contribution_amount: data.contribution_amount !== undefined ? Number(data.contribution_amount) : null,
         contribution_frequency: data.contribution_frequency || null,
         notes: data.notes || "",
         contribution_plan_steps: data.contribution_plan_steps.map(step => ({
           amount: typeof step.amount === 'string' ? parseFloat(step.amount) : step.amount,
           frequency: step.frequency,
-          start_date: step.start_date.toISOString().split('T')[0],
-          end_date: step.end_date ? step.end_date.toISOString().split('T')[0] : null,
+          start_date: toISODateString(step.start_date),
+          end_date: step.end_date ? toISODateString(step.end_date) : null,
           note: step.note || null
         })),
-        status: pension?.status || "ACTIVE",
-        statements: data.statements && data.statements.length > 0 
-          ? data.statements.map(statement => ({
-              id: statement.id,
-              statement_date: statement.statement_date.toISOString().split('T')[0],
-              value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
-              note: statement.note || "",
-              retirement_projections: statement.retirement_projections && statement.retirement_projections.length > 0
-                ? statement.retirement_projections.map(projection => ({
-                    id: projection.id,
-                    retirement_age: typeof projection.retirement_age === 'string' ? 
-                      parseInt(projection.retirement_age) : projection.retirement_age,
-                    monthly_payout: typeof projection.monthly_payout === 'string' ? 
-                      parseFloat(projection.monthly_payout) : projection.monthly_payout,
-                    total_capital: typeof projection.total_capital === 'string' ? 
-                      parseFloat(projection.total_capital) : projection.total_capital
-                  }))
-                : []
-            }))
-          : []
+        status: pension?.status || "ACTIVE"
       }
 
-      // The API expects dates as strings but the type definition uses Date objects
-      // Use a type assertion to bridge this gap
-      await updateCompanyPension(pensionId, pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
+      // Extract statements data
+      const statements = data.statements && data.statements.length > 0 
+        ? data.statements.map(statement => ({
+            id: statement.id,
+            statement_date: toISODateString(statement.statement_date),
+            value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
+            note: statement.note || "",
+            retirement_projections: statement.retirement_projections && statement.retirement_projections.length > 0
+              ? statement.retirement_projections.map(projection => ({
+                  id: projection.id,
+                  retirement_age: typeof projection.retirement_age === 'string' ? 
+                    parseInt(projection.retirement_age) : projection.retirement_age,
+                  monthly_payout: typeof projection.monthly_payout === 'string' ? 
+                    parseFloat(projection.monthly_payout) : projection.monthly_payout,
+                  total_capital: typeof projection.total_capital === 'string' ? 
+                    parseFloat(projection.total_capital) : projection.total_capital
+                }))
+              : []
+          }))
+        : []
+
+      // Filter out statements without an ID or ensure all have a valid ID
+      const validStatements = statements
+        .filter(statement => typeof statement.id === 'number')
+        .map(statement => ({
+          ...statement,
+          retirement_projections: statement.retirement_projections
+            ? statement.retirement_projections.map(projection => ({
+                ...projection,
+                id: projection.id || undefined // Make id optional instead of potentially undefined
+              }))
+            : undefined
+        }))
+
+      // Use the new method that handles both pension and statements updates
+      await updateCompanyPensionWithStatement(
+        pensionId, 
+        pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
+        validStatements as Array<{
+          id: number;
+          statement_date: string;
+          value: number;
+          note?: string;
+          retirement_projections?: Array<{
+            id?: number;
+            retirement_age: number;
+            monthly_payout: number;
+            total_capital: number;
+          }>;
+        }>
+      )
 
       toast.success("Success", { description: "Company pension updated successfully" })
       router.push(getPensionListRoute())
