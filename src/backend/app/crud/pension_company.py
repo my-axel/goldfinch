@@ -431,4 +431,36 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
             PensionCompanyStatement.pension_id == pension_id
         ).order_by(desc(PensionCompanyStatement.statement_date)).first()
 
+    def remove_statement(
+        self,
+        db: Session,
+        *,
+        statement_id: int
+    ) -> bool:
+        """Remove a pension company statement."""
+        try:
+            logger.debug(f"CRUD: Starting deletion of statement ID: {statement_id}")
+            
+            # Get the statement to delete
+            statement = db.query(PensionCompanyStatement).filter(
+                PensionCompanyStatement.id == statement_id
+            ).first()
+            
+            if not statement:
+                logger.warning(f"CRUD: Statement with ID {statement_id} not found")
+                return False
+            
+            # Delete the statement
+            # Note: retirement_projections will be deleted automatically due to cascade
+            db.delete(statement)
+            db.commit()
+            
+            logger.debug(f"CRUD: Successfully deleted statement ID: {statement_id}")
+            return True
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"CRUD: Failed to delete statement: {str(e)}", exc_info=True)
+            raise
+
 pension_company = CRUDPensionCompany(PensionCompany) 

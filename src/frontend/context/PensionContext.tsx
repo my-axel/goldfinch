@@ -117,6 +117,7 @@ interface PensionContextType {
       total_capital: number
     }>
   }) => Promise<void>
+  deleteCompanyPensionStatement: (pensionId: number, statementId: number) => Promise<void>
 }
 
 const PensionContext = createContext<PensionContextType | undefined>(undefined)
@@ -1032,6 +1033,29 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [updateCompanyPension, updateCompanyPensionStatement, fetchPension, selectedPension])
 
+  const deleteCompanyPensionStatement = useCallback(async (
+    pensionId: number,
+    statementId: number
+  ) => {
+    try {
+      await del(`${getPensionApiRoute(PensionType.COMPANY)}/${pensionId}/statements/${statementId}`)
+      
+      // Refresh the pension data
+      if (selectedPension?.id === pensionId) {
+        await fetchPension(pensionId)
+      }
+      
+      toast.success('Success', {
+        description: 'Statement has been deleted'
+      })
+    } catch (error: unknown) {
+      toast.error('Error', {
+        description: 'Failed to delete statement'
+      })
+      throw error
+    }
+  }, [del, fetchPension, selectedPension])
+
   return (
     <PensionContext.Provider
       value={{
@@ -1063,6 +1087,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         getCompanyPensionStatement,
         updateCompanyPensionStatement,
         createCompanyPensionStatement,
+        deleteCompanyPensionStatement,
       }}
     >
       {children}

@@ -41,7 +41,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
   const pensionId = parseInt(id)
   
   const router = useRouter()
-  const { updateCompanyPensionWithStatement } = usePension()
+  const { updateCompanyPensionWithStatement, updateCompanyPension, createCompanyPensionStatement } = usePension()
   const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
 
   const form = useForm<CompanyPensionFormData>({
@@ -162,36 +162,45 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
           }))
         : []
 
-      // Filter out statements without an ID or ensure all have a valid ID
-      const validStatements = statements
-        .filter(statement => typeof statement.id === 'number')
-        .map(statement => ({
-          ...statement,
-          retirement_projections: statement.retirement_projections
-            ? statement.retirement_projections.map(projection => ({
-                ...projection,
-                id: projection.id || undefined // Make id optional instead of potentially undefined
-              }))
-            : undefined
-        }))
+      // Separate existing and new statements
+      const existingStatements = statements.filter(statement => typeof statement.id === 'number')
+      const newStatements = statements.filter(statement => !statement.id)
 
-      // Use the new method that handles both pension and statements updates
-      await updateCompanyPensionWithStatement(
-        pensionId, 
-        pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
-        validStatements as Array<{
-          id: number;
-          statement_date: string;
-          value: number;
-          note?: string;
-          retirement_projections?: Array<{
-            id?: number;
-            retirement_age: number;
-            monthly_payout: number;
-            total_capital: number;
-          }>;
-        }>
-      )
+      // First update the pension and existing statements
+      if (existingStatements.length > 0) {
+        await updateCompanyPensionWithStatement(
+          pensionId, 
+          pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
+          existingStatements as Array<{
+            id: number;
+            statement_date: string;
+            value: number;
+            note?: string;
+            retirement_projections?: Array<{
+              id?: number;
+              retirement_age: number;
+              monthly_payout: number;
+              total_capital: number;
+            }>;
+          }>
+        )
+      } else {
+        // If no existing statements, just update the pension data
+        await updateCompanyPension(pensionId, pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
+      }
+
+      // Then create any new statements
+      for (const statement of newStatements) {
+        await createCompanyPensionStatement(
+          pensionId,
+          {
+            statement_date: statement.statement_date,
+            value: statement.value,
+            note: statement.note,
+            retirement_projections: statement.retirement_projections
+          }
+        )
+      }
 
       toast.success("Success", { description: "Company pension updated successfully" })
       router.push(getPensionListRoute())
@@ -299,7 +308,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
 
                 {/* Row 3: Pension Statements */}
                 <div className="md:col-span-8">
-                  <PensionStatementsCard form={form} />
+                  <PensionStatementsCard form={form} pensionId={pensionId} />
                 </div>
                 <div className="md:col-span-4">
                   <Explanation>

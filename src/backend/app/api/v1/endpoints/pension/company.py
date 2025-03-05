@@ -283,4 +283,48 @@ def update_company_pension_statement(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to update statement: {str(e)}"
+        )
+
+@router.delete(
+    "/{pension_id}/statements/{statement_id}",
+    response_model=dict,
+    responses={
+        200: {"description": "Statement deleted"},
+        404: {"description": "Company Pension or Statement not found"}
+    }
+)
+def delete_company_pension_statement(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    statement_id: int,
+) -> dict:
+    """Delete a statement for a company pension."""
+    logger.info(f"API: Deleting statement {statement_id} for pension {pension_id}")
+    
+    try:
+        # Check if pension exists
+        pension = pension_company.get(db=db, id=pension_id)
+        if not pension:
+            logger.warning(f"API: Company Pension {pension_id} not found")
+            raise HTTPException(status_code=404, detail="Company Pension not found")
+        
+        # Check if statement exists and belongs to the pension
+        statement = pension_company.get_statement(db=db, statement_id=statement_id)
+        if not statement or statement.pension_id != pension_id:
+            logger.warning(f"API: Statement {statement_id} not found for pension {pension_id}")
+            raise HTTPException(status_code=404, detail="Statement not found")
+        
+        # Delete the statement using the CRUD method
+        if not pension_company.remove_statement(db=db, statement_id=statement_id):
+            raise HTTPException(status_code=404, detail="Statement not found")
+        
+        logger.info(f"API: Successfully deleted statement {statement_id}")
+        return {"ok": True}
+        
+    except Exception as e:
+        logger.error(f"API: Failed to delete statement: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete statement: {str(e)}"
         ) 

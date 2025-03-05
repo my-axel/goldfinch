@@ -3,11 +3,6 @@
 ## 📋 Current Status & Next Steps
 
 ### Active Development
-- 🔥 **Company Pension Statement Bug Fix**
-  - Fix issue where statements from Company Pensions are not saved in the backend
-  - Issue occurs in both add and edit operations
-  - Affects statement management across company pension module
-  - High priority due to data persistence concerns
 - 🔥 **Form Reset Hook Implementation**
   - Create reusable hook to standardize form reset logic
   - Centralize data transformation between API and form formats
@@ -20,12 +15,7 @@
    - This provides a foundation for consistent form reset behavior
    - See `src/frontend/docs/TODO/form_reset_hook.md` for implementation details
 
-2. 🔥 **DateInput Component Implementation** (2-3 days)
-   - Create reusable date input component using the date utilities
-   - Implement in highest-priority forms first (pension forms)
-   - This component will work with both the Form Reset Hook and Forms Architecture pattern
-
-3. 🔥 **Forms Architecture Refactoring** (ongoing)
+2. 🔥 **Forms Architecture Refactoring** (ongoing)
    - Apply the comprehensive architecture pattern from `src/frontend/docs/TODO/forms_refactoring.md`
    - Incorporate both the Form Reset Hook and DateInput component
    - Implement in order of form complexity/usage frequency
@@ -101,6 +91,23 @@
   - Fixed issues with form resets and default values
   - Implemented in EditCompanyPensionForm for contribution_frequency
   - Created refactoring plan for other enum-based selects in the codebase
+- ✅ Company Pension Statement Deletion Improvements
+  - Added confirmation dialog to prevent accidental deletions
+  - Improved error handling in deletion process
+  - Made pensionId prop optional for create/edit form compatibility
+  - Enhanced user experience with clear confirmation messages
+  - Implemented proper state cleanup after deletion
+- ✅ DateInput Component Implementation
+  - Created reusable date input component using the date utilities
+  - Implemented in pension forms (company pension statements)
+  - Ensured compatibility with Form Reset Hook and Forms Architecture pattern
+  - Added proper form field integration with validation
+  - Implemented consistent date formatting across components
+- ✅ EnumSelect Refactoring
+  - Refactored all enum-based select fields to use the new EnumSelect component
+  - Created proper enum definitions for settings page
+  - Improved form handling and prevented empty field issues
+  - See [TODO/enum_selects.md](TODO/enum_selects.md) for the completed list
 </details>
 
 ### Ready to Implement
@@ -120,13 +127,7 @@
    - Can start: Portfolio overview for ETF and Company pensions
    - Full implementation requires all pension types
 
-4. ✅ **EnumSelect Refactoring**
-   - ✅ Refactored all enum-based select fields to use the new EnumSelect component
-   - ✅ Created proper enum definitions for settings page
-   - ✅ Improved form handling and prevented empty field issues
-   - ✅ See [TODO/enum_selects.md](TODO/enum_selects.md) for the completed list
-
-5. 🔥 **Form Reset Hook Implementation**
+4. 🔥 **Form Reset Hook Implementation**
    - Create a reusable hook to standardize form reset logic across all forms
    - Centralize data transformation between API and form formats
    - Handle complex nested data structures, dates, and enums consistently
@@ -134,7 +135,7 @@
    - Will reduce code duplication, improve type safety, and prevent reset-related bugs
    - *Recommended to implement next among refactoring tasks - builds on EnumSelect and provides foundation for architecture refactoring*
 
-6. 🔥 **Forms Architecture Refactoring**
+5. 🔥 **Forms Architecture Refactoring**
    - Standardize all form pages to follow the new architecture pattern
    - Implement proper error boundaries and loading states
    - Use custom data hooks for data fetching

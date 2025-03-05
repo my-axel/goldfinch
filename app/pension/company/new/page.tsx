@@ -27,7 +27,7 @@ import { toISODateString } from "@/frontend/lib/dateUtils"
 export default function NewCompanyPensionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { createCompanyPension } = usePension()
+  const { createCompanyPension, createCompanyPensionWithStatement } = usePension()
   
   const memberId = searchParams?.get('member_id') || ""
 
@@ -72,27 +72,34 @@ export default function NewCompanyPensionPage() {
           end_date: step.end_date ? toISODateString(step.end_date) : null,
           note: step.note || null
         })),
-        status: 'ACTIVE',
-        statements: data.statements && data.statements.length > 0 
-          ? data.statements.map(statement => ({
-              statement_date: toISODateString(statement.statement_date),
-              value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
-              note: statement.note || "",
-              retirement_projections: statement.retirement_projections && statement.retirement_projections.length > 0
-                ? statement.retirement_projections.map(projection => ({
-                    retirement_age: typeof projection.retirement_age === 'string' ? 
-                      parseInt(projection.retirement_age) : projection.retirement_age,
-                    monthly_payout: typeof projection.monthly_payout === 'string' ? 
-                      parseFloat(projection.monthly_payout) : projection.monthly_payout,
-                    total_capital: typeof projection.total_capital === 'string' ? 
-                      parseFloat(projection.total_capital) : projection.total_capital
-                  }))
-                : []
-            }))
-          : []
+        status: 'ACTIVE'
       }
 
-      await createCompanyPension(pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
+      // If there are statements, use createCompanyPensionWithStatement
+      if (data.statements && data.statements.length > 0) {
+        const firstStatement = data.statements[0]
+        await createCompanyPensionWithStatement(
+          pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
+          {
+            statement_date: toISODateString(firstStatement.statement_date),
+            value: typeof firstStatement.value === 'string' ? parseFloat(firstStatement.value) : firstStatement.value,
+            note: firstStatement.note || "",
+            retirement_projections: firstStatement.retirement_projections && firstStatement.retirement_projections.length > 0
+              ? firstStatement.retirement_projections.map(projection => ({
+                  retirement_age: typeof projection.retirement_age === 'string' ? 
+                    parseInt(projection.retirement_age) : projection.retirement_age,
+                  monthly_payout: typeof projection.monthly_payout === 'string' ? 
+                    parseFloat(projection.monthly_payout) : projection.monthly_payout,
+                  total_capital: typeof projection.total_capital === 'string' ? 
+                    parseFloat(projection.total_capital) : projection.total_capital
+                }))
+              : []
+          }
+        )
+      } else {
+        // If no statements, use regular createCompanyPension
+        await createCompanyPension(pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
+      }
 
       toast.success("Success", { description: "Company pension created successfully" })
       router.push(getPensionListRoute())

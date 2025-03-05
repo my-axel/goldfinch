@@ -291,7 +291,7 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       
       {currentStep && (
         <div>
-          <dt className="text-muted-foreground">Current Contribution</dt>
+          <dt className="text-muted-foreground">Current Own Contribution</dt>
           <dd>
             {formattedValues.currentContribution} {formatFrequency(currentStep.frequency)}
           </dd>
@@ -304,11 +304,6 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
           <dd>{formattedValues.projectedPayout} at age {latestProjection.retirement_age}</dd>
         </div>
       )}
-      
-      <div>
-        <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{formattedValues.currentValue}</dd>
-      </div>
       
       {latestStatement && (
         <div>

@@ -12,27 +12,44 @@ import { parseNumber, getDecimalSeparator, getCurrencySymbol } from "@/frontend/
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
+import { useDateFormat } from "@/frontend/hooks/useDateFormat"
+import { usePension } from "@/frontend/context/PensionContext"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/frontend/components/ui/alert-dialog"
 
 interface PensionStatementsCardProps {
   form: UseFormReturn<CompanyPensionFormData>
+  pensionId?: number
 }
 
 /**
  * Card component for managing pension statements and retirement projections.
  * Handles adding, editing, and removing statements and their associated projections.
  */
-export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
+export function PensionStatementsCard({ form, pensionId }: PensionStatementsCardProps) {
   const { fields: statementFields, append: appendStatement, remove: removeStatement } = useFieldArray({
     control: form.control,
     name: "statements"
   })
   
   const { settings } = useSettings()
+  const { deleteCompanyPensionStatement } = usePension()
+  const { formatDate } = useDateFormat()
   const [statementValueInputs, setStatementValueInputs] = useState<string[]>([])
   const [projectionInputs, setProjectionInputs] = useState<{[key: string]: string}>({})
   const [statementsWithProjections, setStatementsWithProjections] = useState<{[key: number]: RetirementProjection[]}>({})
   const [projectionCounter, setProjectionCounter] = useState(0)
   const [expandedStatements, setExpandedStatements] = useState<{[key: number]: boolean}>({})
+  const [formattedDates, setFormattedDates] = useState<{[key: number]: string}>({})
+  const [statementToDelete, setStatementToDelete] = useState<{ index: number, date: string } | null>(null)
   const decimalSeparator = getDecimalSeparator(settings.number_locale)
   const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
 
@@ -76,6 +93,20 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
     }
   }, [form, decimalSeparator]);
 
+  // Format dates when form data changes
+  useEffect(() => {
+    const statements = form.getValues("statements");
+    if (statements) {
+      const newFormattedDates: {[key: number]: string} = {};
+      statements.forEach((statement, index) => {
+        if (statement.statement_date) {
+          newFormattedDates[index] = formatDate(statement.statement_date);
+        }
+      });
+      setFormattedDates(newFormattedDates);
+    }
+  }, [form, formatDate]);
+
   // Validate if the input is a valid number format
   const isValidNumberFormat = (value: string): boolean => {
     if (!value) return true
@@ -96,10 +127,16 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
     
     setStatementValueInputs([...statementValueInputs, "0"])
     
-    const newStatementIndex = form.getValues("statements")?.length || 0;
+    const newStatementIndex = statementFields.length;
     setStatementsWithProjections(prev => ({
       ...prev,
-      [newStatementIndex - 1]: []
+      [newStatementIndex]: []
+    }));
+
+    // Format and set the date for the new statement
+    setFormattedDates(prev => ({
+      ...prev,
+      [newStatementIndex]: formatDate(statementDate)
     }));
   }
 
@@ -207,6 +244,89 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
     }));
   };
 
+  const handleRemoveStatement = async (index: number) => {
+    const currentFormData = form.getValues()
+    const statements = currentFormData.statements || []
+    const statement = statements[index]
+    
+    // If the statement has an ID and we have a pensionId, it exists in the database and needs to be deleted
+    if (statement?.id && pensionId) {
+      try {
+        await deleteCompanyPensionStatement(pensionId, statement.id)
+      } catch {
+        // Error is handled by the context
+        return
+      }
+    }
+    
+    // Remove the statement from the form state
+    removeStatement(index)
+    
+    // Update all state using the current form data to ensure consistency
+    const updatedFormData = form.getValues()
+    const updatedStatements = updatedFormData.statements || []
+    
+    // Reset all state based on current form data
+    setStatementValueInputs(
+      updatedStatements.map(statement => 
+        statement.value ? statement.value.toString().replace('.', decimalSeparator) : ""
+      )
+    )
+    
+    // Reset projections state
+    const newProjectionInputs: {[key: string]: string} = {}
+    const newStatementsWithProjections: {[key: number]: RetirementProjection[]} = {}
+    
+    updatedStatements.forEach((statement, idx) => {
+      if (statement.retirement_projections) {
+        statement.retirement_projections.forEach((projection, projIdx) => {
+          newProjectionInputs[`${idx}.${projIdx}.monthly_payout`] = 
+            projection.monthly_payout ? projection.monthly_payout.toString().replace('.', decimalSeparator) : ""
+          newProjectionInputs[`${idx}.${projIdx}.total_capital`] = 
+            projection.total_capital ? projection.total_capital.toString().replace('.', decimalSeparator) : ""
+        })
+        newStatementsWithProjections[idx] = [...statement.retirement_projections]
+      } else {
+        newStatementsWithProjections[idx] = []
+      }
+    })
+    
+    setProjectionInputs(newProjectionInputs)
+    setStatementsWithProjections(newStatementsWithProjections)
+    
+    // Reset formatted dates
+    const newFormattedDates: {[key: number]: string} = {}
+    updatedStatements.forEach((statement, idx) => {
+      if (statement.statement_date) {
+        newFormattedDates[idx] = formatDate(statement.statement_date)
+      }
+    })
+    setFormattedDates(newFormattedDates)
+    
+    // Explicitly set the statements array in the form to ensure the change is tracked
+    form.setValue('statements', updatedStatements, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    })
+
+    // Force the form to recognize the change
+    form.trigger('statements')
+    
+    // Clear the statement to delete
+    setStatementToDelete(null)
+  }
+
+  const confirmDeleteStatement = (index: number) => {
+    const statement = form.getValues().statements?.[index]
+    if (statement) {
+      setStatementToDelete({
+        index,
+        date: formatDate(statement.statement_date)
+      })
+    }
+  }
+
   // Render the latest statement form (the one with the highest index)
   const renderLatestStatementForm = () => {
     if (statementFields.length === 0) return null;
@@ -222,7 +342,7 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => removeStatement(latestIndex)}
+            onClick={() => confirmDeleteStatement(latestIndex)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -498,27 +618,22 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
   const renderPreviousStatements = () => {
     if (statementFields.length <= 1) return null;
     
-    // Get all statements except the latest one and reverse them (newest first)
-    const previousStatements = statementFields.slice(0, -1).reverse();
+    // Get all statements except the latest one
+    const previousStatements = statementFields.slice(0, -1);
     
     return (
       <div className="mt-8 space-y-4">
         <h4 className="font-medium text-sm text-muted-foreground">Previous Statements</h4>
-        {previousStatements.map((statementField, reversedIndex) => {
-          // Calculate the actual index in the original array
-          const originalIndex = statementFields.length - 2 - reversedIndex;
-          
-          // Get the statement date for the title
-          const statementDate = form.getValues(`statements.${originalIndex}.statement_date`);
-          const formattedDate = statementDate 
-            ? new Date(statementDate).toLocaleDateString(settings.number_locale)
-            : 'Unknown date';
+        {previousStatements.map((statementField, index) => {
+          // Get the actual form data for this statement
+          const statement = form.getValues().statements?.[index];
+          if (!statement) return null;
           
           return (
             <Collapsible
               key={statementField.id}
-              open={expandedStatements[originalIndex]}
-              onOpenChange={() => toggleStatement(originalIndex)}
+              open={expandedStatements[index]}
+              onOpenChange={() => toggleStatement(index)}
               className="border rounded-md overflow-hidden"
             >
               <div className="p-4 flex justify-between items-center bg-muted/30">
@@ -528,80 +643,265 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
                     variant="ghost" 
                     className="p-0 h-auto flex items-center gap-2 hover:bg-transparent"
                   >
-                    {expandedStatements[originalIndex] ? (
+                    {expandedStatements[index] ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
                       <ChevronRight className="h-4 w-4" />
                     )}
-                    <h4 className="font-medium">Statement from {formattedDate}</h4>
+                    <h4 className="font-medium">
+                      Statement from {formattedDates[index] || 'Unknown date'}
+                    </h4>
                   </Button>
                 </CollapsibleTrigger>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={() => removeStatement(originalIndex)}
+                  onClick={() => confirmDeleteStatement(index)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
               
               <CollapsibleContent>
-                <div className="p-4 space-y-4">
+                <div className="space-y-4 p-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium">Statement Date</p>
-                      <p className="text-sm">
-                        {form.getValues(`statements.${originalIndex}.statement_date`) 
-                          ? new Date(form.getValues(`statements.${originalIndex}.statement_date`)).toLocaleDateString(settings.number_locale) 
-                          : 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Value</p>
-                      <p className="text-sm">
-                        {form.getValues(`statements.${originalIndex}.value`) 
-                          ? `${form.getValues(`statements.${originalIndex}.value`)} ${currencySymbol}` 
-                          : '0'}
-                      </p>
-                    </div>
-                    {form.getValues(`statements.${originalIndex}.note`) && (
-                      <div className="col-span-2">
-                        <p className="text-sm font-medium">Note</p>
-                        <p className="text-sm">{form.getValues(`statements.${originalIndex}.note`)}</p>
-                      </div>
-                    )}
+                    <FormField
+                      control={form.control}
+                      name={`statements.${index}.statement_date`}
+                      render={({ field }) => (
+                        <DateInput
+                          field={field}
+                          label="Statement Date"
+                        />
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`statements.${index}.value`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Value ({currencySymbol})</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="text"
+                                inputMode="decimal"
+                                value={statementValueInputs[index] || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (isValidNumberFormat(value)) {
+                                    const newInputs = [...statementValueInputs];
+                                    newInputs[index] = value;
+                                    setStatementValueInputs(newInputs);
+                                    
+                                    const parsedValue = parseNumber(value, settings.number_locale);
+                                    field.onChange(parsedValue);
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const value = e.target.value;
+                                  const parsedValue = parseNumber(value, settings.number_locale);
+                                  const formattedValue = parsedValue.toString().replace('.', decimalSeparator);
+                                  
+                                  const newInputs = [...statementValueInputs];
+                                  newInputs[index] = formattedValue;
+                                  setStatementValueInputs(newInputs);
+                                  
+                                  field.onChange(parsedValue);
+                                }}
+                                placeholder={`0${decimalSeparator}00`}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`statements.${index}.note`}
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>Note</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Additional information about this statement" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
-                  {(() => {
-                    const projections = form.getValues(`statements.${originalIndex}.retirement_projections`) || [];
+                  <div className="pt-4 border-t">
+                    <div className="flex justify-between items-center mb-4">
+                      <h5 className="font-medium text-sm">Retirement Projections</h5>
+                    </div>
                     
-                    if (projections.length === 0) return null;
-                    
-                    return (
-                      <div className="pt-4 border-t">
-                        <h5 className="font-medium text-sm mb-4">Retirement Projections</h5>
-                        <div className="space-y-4">
-                          {projections.map((projection, projIndex) => (
-                            <div key={`prev-${originalIndex}-${projIndex}`} className="grid grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-sm font-medium">Retirement Age</p>
-                                <p className="text-sm">{projection.retirement_age}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium">Monthly Payout</p>
-                                <p className="text-sm">{projection.monthly_payout} {currencySymbol}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium">Total Capital</p>
-                                <p className="text-sm">{projection.total_capital} {currencySymbol}</p>
-                              </div>
+                    <div className="relative">
+                      {(() => {
+                        const projections = statementsWithProjections[index] || 
+                          form.getValues()?.statements?.[index]?.retirement_projections || [];
+                        
+                        if (projections.length > 0) {
+                          return (
+                            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 mb-2 px-2">
+                              <div className="text-sm font-medium text-muted-foreground">Retirement Age</div>
+                              <div className="text-sm font-medium text-muted-foreground">Monthly Payout</div>
+                              <div className="text-sm font-medium text-muted-foreground">Total Capital</div>
+                              <div className="w-9"></div>
                             </div>
-                          ))}
-                        </div>
+                          );
+                        }
+                        
+                        return null;
+                      })()}
+                      
+                      <div className="space-y-2">
+                        {statementsWithProjections[index]?.map((projection, projIndex) => (
+                          <div key={`${index}-${projIndex}-${projectionCounter}`} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end p-2 pt-1 rounded-lg bg-muted">
+                            <FormField
+                              control={form.control}
+                              name={`statements.${index}.retirement_projections.${projIndex}.retirement_age`}
+                              render={({ field }) => (
+                                <FormItem className="space-y-0">
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      min="50" 
+                                      max="100" 
+                                      {...field} 
+                                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 67)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`statements.${index}.retirement_projections.${projIndex}.monthly_payout`}
+                              render={({ field }) => (
+                                <FormItem className="space-y-0">
+                                  <FormControl>
+                                    <div className="relative">
+                                      <Input
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={projectionInputs[`${index}.${projIndex}.monthly_payout`] || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (isValidNumberFormat(value)) {
+                                            setProjectionInputs(prev => ({
+                                              ...prev,
+                                              [`${index}.${projIndex}.monthly_payout`]: value
+                                            }));
+                                            
+                                            const parsedValue = parseNumber(value, settings.number_locale);
+                                            field.onChange(parsedValue);
+                                          }
+                                        }}
+                                        onBlur={(e) => {
+                                          const value = e.target.value;
+                                          const parsedValue = parseNumber(value, settings.number_locale);
+                                          const formattedValue = parsedValue.toString().replace('.', decimalSeparator);
+                                          
+                                          setProjectionInputs(prev => ({
+                                            ...prev,
+                                            [`${index}.${projIndex}.monthly_payout`]: formattedValue
+                                          }));
+                                          
+                                          field.onChange(parsedValue);
+                                        }}
+                                        placeholder={`0${decimalSeparator}00`}
+                                      />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`statements.${index}.retirement_projections.${projIndex}.total_capital`}
+                              render={({ field }) => (
+                                <FormItem className="space-y-0">
+                                  <FormControl>
+                                    <div className="relative">
+                                      <Input
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={projectionInputs[`${index}.${projIndex}.total_capital`] || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (isValidNumberFormat(value)) {
+                                            setProjectionInputs(prev => ({
+                                              ...prev,
+                                              [`${index}.${projIndex}.total_capital`]: value
+                                            }));
+                                            
+                                            const parsedValue = parseNumber(value, settings.number_locale);
+                                            field.onChange(parsedValue);
+                                          }
+                                        }}
+                                        onBlur={(e) => {
+                                          const value = e.target.value;
+                                          const parsedValue = parseNumber(value, settings.number_locale);
+                                          const formattedValue = parsedValue.toString().replace('.', decimalSeparator);
+                                          
+                                          setProjectionInputs(prev => ({
+                                            ...prev,
+                                            [`${index}.${projIndex}.total_capital`]: formattedValue
+                                          }));
+                                          
+                                          field.onChange(parsedValue);
+                                        }}
+                                        placeholder={`0${decimalSeparator}00`}
+                                      />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveProjection(index, projIndex)}
+                              className="h-9 w-9 self-end"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
+                          onClick={() => handleAddProjectionToStatement(index)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {(() => {
+                            const projections = statementsWithProjections[index] || 
+                              form.getValues()?.statements?.[index]?.retirement_projections || [];
+                            
+                            return projections.length === 0 ? (
+                              <span>No retirement projections yet. Click to add your first projection.</span>
+                            ) : (
+                              <span>Add Projection</span>
+                            );
+                          })()}
+                        </Button>
                       </div>
-                    );
-                  })()}
+                    </div>
+                  </div>
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -612,48 +912,77 @@ export function PensionStatementsCard({ form }: PensionStatementsCardProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
-        <div className="space-y-1.5">
-          <CardTitle>Pension Statements</CardTitle>
-          <CardDescription>
-            Track your pension statements and retirement projections
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-8">
-          {statementFields.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
-              onClick={handleAddStatement}
+    <>
+      <AlertDialog 
+        open={statementToDelete !== null}
+        onOpenChange={(open) => !open && setStatementToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Statement</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the statement from {statementToDelete?.date}? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (statementToDelete) {
+                  handleRemoveStatement(statementToDelete.index)
+                }
+              }}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              <span>Add a new statement</span>
-            </Button>
-          )}
-          
-          {/* Latest Statement Form */}
-          {renderLatestStatementForm()}
-          
-          {/* Previous Statements List */}
-          {renderPreviousStatements()}
-          
-          {statementFields.length === 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
-              onClick={handleAddStatement}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              <span>No statements added yet. Click to add your first statement.</span>
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
+          <div className="space-y-1.5">
+            <CardTitle>Pension Statements</CardTitle>
+            <CardDescription>
+              Track your pension statements and retirement projections
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-8">
+            {statementFields.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
+                onClick={handleAddStatement}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Add a new statement</span>
+              </Button>
+            )}
+            
+            {/* Latest Statement Form */}
+            {renderLatestStatementForm()}
+            
+            {/* Previous Statements List */}
+            {renderPreviousStatements()}
+            
+            {statementFields.length === 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
+                onClick={handleAddStatement}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span>No statements added yet. Click to add your first statement.</span>
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </>
   )
 } 
