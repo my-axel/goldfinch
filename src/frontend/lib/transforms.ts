@@ -7,6 +7,7 @@ export interface FormatOptions {
   currency?: string;
   decimals?: number;
   compact?: boolean;
+  currencyPosition?: 'prefix' | 'suffix';
 }
 
 export interface SafeNumber {
@@ -40,6 +41,58 @@ export function getCurrencySymbol(locale: string, currency: string): string {
 }
 
 /**
+ * Gets the default currency position for a given locale
+ */
+export function getDefaultCurrencyPosition(locale: string): 'prefix' | 'suffix' {
+  try {
+    const formatted = (0).toLocaleString(locale, {
+      style: 'currency',
+      currency: 'USD', // Use USD as a reference
+    });
+    return formatted.startsWith('$') ? 'prefix' : 'suffix';
+  } catch (error) {
+    console.error('Error detecting currency position:', error);
+    return 'prefix'; // Default to prefix
+  }
+}
+
+/**
+ * Formats a currency value according to the given locale and position
+ */
+export function formatCurrency(value: number, options?: Omit<FormatOptions, 'style'>): SafeNumber {
+  try {
+    const locale = options?.locale || 'en';
+    const currency = options?.currency || 'USD';
+    const position = options?.currencyPosition || getDefaultCurrencyPosition(locale);
+    const symbol = getCurrencySymbol(locale, currency);
+
+    // Format number without currency
+    const numberPart = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: options?.decimals ?? 2,
+      maximumFractionDigits: options?.decimals ?? 2,
+      notation: options?.compact ? 'compact' : 'standard',
+      useGrouping: true,
+    }).format(value);
+
+    // Combine number and currency symbol based on position
+    const formatted = position === 'prefix' 
+      ? `${symbol}${numberPart}`
+      : `${numberPart} ${symbol}`;
+
+    return {
+      formatted,
+      value,
+    };
+  } catch (error) {
+    console.error('Error formatting currency:', error);
+    return {
+      formatted: value.toString(),
+      value,
+    };
+  }
+}
+
+/**
  * Formats a number according to the given locale and options
  */
 export function formatNumber(value: number, options?: FormatOptions): SafeNumber {
@@ -65,13 +118,6 @@ export function formatNumber(value: number, options?: FormatOptions): SafeNumber
       value,
     };
   }
-}
-
-/**
- * Formats a currency value according to the given locale
- */
-export function formatCurrency(value: number, options?: Omit<FormatOptions, 'style'>): SafeNumber {
-  return formatNumber(value, { ...options, style: 'currency' });
 }
 
 /**

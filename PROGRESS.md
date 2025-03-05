@@ -1,5 +1,112 @@
 # 🎯 Retirement Planning Application - Project Progress & Plan
 
+> <details>
+> <summary><strong>🤖 AI Assistant Guide</strong></summary>
+>
+> ## Purpose
+> This document tracks the progress and planning of the retirement planning application. It serves as the single source of truth for project status and implementation priorities.
+>
+> ## Document Structure
+> 
+> ### 1. Current Status & Next Steps
+> This section is the primary reference point and should always be checked first.
+> 
+> #### Active Development
+> - Lists tasks currently being worked on
+> - Each task should include:
+>   - Brief description of what's being done
+>   - Link to detailed implementation plan if available
+>   - Current subtasks or progress
+>
+> #### Ready to Implement
+> Organized in three categories by dependency status:
+> 1. **Technical Improvements** - No external dependencies
+> 2. **Core Features** - Dependencies ready
+> 3. **Cross-Cutting Features** - Partial dependencies
+>
+> Each entry should include:
+> - Estimated duration (if known)
+> - Link to detailed implementation plan if available
+> - Current dependency status
+>
+> #### Blocked Items
+> - Lists features that cannot be started
+> - Must include what's blocking them
+>
+> ### 2. Module Dependencies
+> The mermaid graph visualizes:
+> - Module relationships (solid arrows = direct, dotted = indirect)
+> - Module status (✅ Complete, ⚠️ Partial, 📝 Not Started)
+> - Module weights for progress calculation
+>
+> ### 3. Implementation Status Table
+> Shows detailed status of all modules:
+> - Status indicators (✅, ⚠️, 📝)
+> - Progress percentage
+> - Dependencies
+> - Brief notes
+>
+> ### 4. Project Milestones
+> Each milestone includes:
+> - Duration estimate
+> - Current status
+> - Key deliverables
+> - Link to detailed implementation plan
+>
+> ## Working with this Document
+>
+> ### When Starting Work
+> 1. Check "Current Status & Next Steps"
+> 2. Review "Ready to Implement" section
+> 3. Verify dependencies in the mermaid graph
+> 4. Move selected task to "Active Development"
+>
+> ### When Updating Progress
+> 1. Update relevant sections in this order:
+>    - Active Development status
+>    - Implementation Status table
+>    - Module Dependencies graph
+>    - Project Milestones
+> 2. Recalculate overall progress if needed
+> 3. Move completed tasks to appropriate sections
+>
+> ### When Adding New Tasks
+> 1. Add detailed implementation plan in `docs/plans/`
+> 2. Add to appropriate section:
+>    - `active/` for immediate work
+>    - `upcoming/` for planned work
+> 3. Update "Ready to Implement" or "Blocked Items"
+> 4. Update Implementation Status table
+>
+> ### Progress Calculation
+> - Module progress based on completed features
+> - Overall progress calculation:
+>   ```
+>   Sum of (Module Weight × Module Progress)
+>   ```
+> - Update progress percentages in Implementation Status table
+>
+> ### Documentation Organization
+> - Active plans: `docs/plans/active/`
+> - Upcoming plans: `docs/plans/upcoming/`
+> - Technical docs: `docs/tech/`
+> - Implementation details linked from this file
+>
+> ## Status Indicators
+> - ✅ Complete: Fully implemented, tested, production-ready
+> - ⚠️ Partial: Partially implemented or UI-only
+> - 📝 Not Started: In planning phase
+> - 🟡 In Progress: Currently being worked on
+>
+> ## Rules & Best Practices
+> 1. Keep "Current Status & Next Steps" updated
+> 2. Always verify dependencies before starting work
+> 3. Link to detailed implementation plans
+> 4. Use consistent status indicators
+> 5. Update all affected sections when making changes
+> 6. Never modify completed (✅) modules without explicit instruction
+> </details>
+
 ## 📋 Current Status & Next Steps
 
 ### Active Development
@@ -7,156 +114,30 @@
   - Create reusable hook to standardize form reset logic
   - Centralize data transformation between API and form formats
   - Handle complex nested data structures consistently
-
-### Implementation Order Recommendation
-1. 🔥 **Form Reset Hook Implementation** (3-5 days)
-   - Implement the hook as described in `src/frontend/docs/TODO/form_reset_hook.md`
-   - Incorporate the date utilities into form transformers
-   - This provides a foundation for consistent form reset behavior
-   - See `src/frontend/docs/TODO/form_reset_hook.md` for implementation details
-
-2. 🔥 **Forms Architecture Refactoring** (ongoing)
-   - Apply the comprehensive architecture pattern from `src/frontend/docs/TODO/forms_refactoring.md`
-   - Incorporate both the Form Reset Hook and DateInput component
-   - Implement in order of form complexity/usage frequency
-
-<details>
-<summary><strong>✅ Recently Completed</strong></summary>
-
-- ✅ Company Pension Date Handling Improvements
-  - Updated all company pension functions to use dateUtils consistently
-  - Fixed date handling in pension creation and updates
-  - Improved statement date handling in all company pension operations
-  - Ensured consistent date formatting across the company pension module
-  - Implemented proper date handling for contribution plan steps
-  - Fixed date-related errors in form submissions
-- ✅ Date Utilities Implementation
-  - Created core date utility functions in `dateUtils.ts`
-  - Implemented basic test suite for core utilities
-  - Added deprecation notices to old date functions
-  - Prepared migration path for existing components
-  - Component tests temporarily skipped due to complexity
-  - Added comprehensive testing strategy documentation
-- ✅ Date Handling Best Practices
-  - Created comprehensive implementation plan for consistent date handling across forms
-  - Designed DateUtils utility with robust type-safe functions
-  - Developed reusable DateInput component for form fields
-  - Established patterns for form submission and reset with proper date handling
-  - Added documentation to formatting-best-practices.md
-  - Implementation plan available at `src/frontend/docs/TODO/date_formatting_best_practice.md`
-  - Determined integration with planned form refactorings (form_reset_hook.md and forms_refactoring.md)
-  - The date utilities will complement the Form Reset Hook by providing standardized date transformation functions
-  - The DateInput component will work with the Forms Architecture Refactoring pattern
-- ✅ PensionStatementsCard Redesign
-  - Improved UI to better fit our design language
-  - Made the component more intuitive and easier to use
-  - Ensured consistent styling with other pension components
-  - Integrated functionality from obsolete components (StatementsList, AddStatementForm)
-- ✅ Code Cleanup & Component Removal
-  - Identified and removed obsolete components (StatementsList, AddStatementForm)
-  - Verified no active imports or dependencies on removed components
-  - Ensured functionality was properly migrated to PensionStatementsCard
-  - Reduced codebase size and maintenance overhead
-- ✅ PensionList Component Fixes
-  - Fixed CompanyPensionContent to work with the updated CompanyPension type structure
-  - Enhanced retirement projection selection to prioritize the household member's planned retirement age
-  - Improved code to handle missing statements or projections gracefully
-  - Added integration with HouseholdContext for personalized projections
-- ✅ Settings Page Enum Refactoring
-  - Created proper enum definitions for UI locale, number locale, and currency
-  - Implemented type-safe Select components with enum values
-  - Added human-readable labels for all enum options
-  - Improved code maintainability and type safety
-- ✅ Form Refactoring Planning
-  - Created detailed TODO lists for form refactoring tasks
-  - Documented implementation order for refactoring tasks
-  - Prepared implementation guides for each refactoring type
-  - Implemented EnumSelect refactoring for pension forms
-- ✅ Pension Status Management System
-  - Added status field to company pension model
-  - Created API endpoint for updating company pension status
-  - Optimized fetchPension method to reduce unnecessary API calls
-  - Updated UI to display pension status badges
-- ✅ ETF Pension Edit Page Fixes
-  - Fixed hydration mismatch errors with currency formatting
-  - Resolved race conditions in data fetching
-  - Improved error handling for statistics loading
-- ✅ Formatting Best Practices Documentation
-  - Created comprehensive guide for number and currency formatting
-  - Documented patterns to avoid hydration mismatches
-  - Added examples for client-side only formatting
-  - Provided templates for consistent implementation
-- ✅ EnumSelect Component Implementation
-  - Created reusable EnumSelect component for handling enum-based select fields
-  - Fixed issues with form resets and default values
-  - Implemented in EditCompanyPensionForm for contribution_frequency
-  - Created refactoring plan for other enum-based selects in the codebase
-- ✅ Company Pension Statement Deletion Improvements
-  - Added confirmation dialog to prevent accidental deletions
-  - Improved error handling in deletion process
-  - Made pensionId prop optional for create/edit form compatibility
-  - Enhanced user experience with clear confirmation messages
-  - Implemented proper state cleanup after deletion
-- ✅ DateInput Component Implementation
-  - Created reusable date input component using the date utilities
-  - Implemented in pension forms (company pension statements)
-  - Ensured compatibility with Form Reset Hook and Forms Architecture pattern
-  - Added proper form field integration with validation
-  - Implemented consistent date formatting across components
-- ✅ EnumSelect Refactoring
-  - Refactored all enum-based select fields to use the new EnumSelect component
-  - Created proper enum definitions for settings page
-  - Improved form handling and prevented empty field issues
-  - See [TODO/enum_selects.md](TODO/enum_selects.md) for the completed list
-</details>
+  > **Implementation Details**: [Form Reset Hook Plan](docs/plans/active/form_reset_hook.md)
 
 ### Ready to Implement
-1. 🔥 **Insurance Pension** (High Priority)
-   - Currently at 0% progress
-   - Also blocking Dashboard implementation
-   - Next: Implement basic CRUD
+Listed by priority and dependency readiness:
 
-2. 🔥 **State Pension** (High Priority)
-   - Currently at 0% progress
-   - Simpler than Insurance Pension
-   - Also blocking Dashboard implementation
-   - Next: Implement basic CRUD
+1. **Technical Improvements** (No external dependencies)
+   - Form Reset Hook (3-5 days)
+   - Forms Architecture Refactoring
+   > **Details**: [Form Reset Hook Plan](docs/plans/active/form_reset_hook.md) | [Forms Refactoring Plan](docs/plans/active/forms_refactoring.md)
 
-3. 🔥 **Dashboard Core Features**
-   - Blocked by: Insurance Pension and State Pension completion
-   - Can start: Portfolio overview for ETF and Company pensions
-   - Full implementation requires all pension types
+2. **Core Features** (Dependencies ready)
+   - State Pension Implementation
+   - Insurance Pension Implementation
+   > **Details**: [Pension Plans Implementation](docs/plans/active/pension_plans.md)
 
-4. 🔥 **Form Reset Hook Implementation**
-   - Create a reusable hook to standardize form reset logic across all forms
-   - Centralize data transformation between API and form formats
-   - Handle complex nested data structures, dates, and enums consistently
-   - See [TODO/form_reset_hook.md](TODO/form_reset_hook.md) for implementation details
-   - Will reduce code duplication, improve type safety, and prevent reset-related bugs
-   - *Recommended to implement next among refactoring tasks - builds on EnumSelect and provides foundation for architecture refactoring*
-
-5. 🔥 **Forms Architecture Refactoring**
-   - Standardize all form pages to follow the new architecture pattern
-   - Implement proper error boundaries and loading states
-   - Use custom data hooks for data fetching
-   - See [TODO/forms_refactoring.md](TODO/forms_refactoring.md) for the complete list
-   - Will improve error handling, user experience, and maintainability
-   - *Recommended to implement last among refactoring tasks - most comprehensive change that benefits from having the other refactorings in place*
+3. **Cross-Cutting Features** (Partial dependencies)
+   - Currency System Frontend Integration (1-2 weeks)
+   - Internationalization Implementation (4-5 weeks)
+   > **Details**: [Currency System Plan](docs/plans/active/currency_system.md) | [i18n Plan](docs/plans/active/internationalization.md)
 
 ### Blocked Items
 - Compass Module (Blocked by: Dashboard)
 - Payout Strategy (Blocked by: Dashboard)
 - Full Settings Implementation (Blocked by: i18n)
-
-### Implementation Order
-1. ✅ Complete Company Pension
-2. Start State Pension implementation (simpler model)
-3. Start Insurance Pension implementation
-4. Start Dashboard with ETF and Company support (parallel track)
-5. Complete State Pension
-6. Complete Insurance Pension
-7. Complete Dashboard with all pension types
-8. Proceed with Compass
 
 ### Module Dependencies
 ```mermaid
@@ -200,7 +181,6 @@ graph TD
     class IP,S partial
     class SP,CS,I18n,D,C,PS notStarted
 ```
-
 <details>
 <summary><strong>📊 Graph Legend</strong></summary>
 
@@ -239,252 +219,12 @@ graph LR
 </details>
 <br>
 
-> <details>
-> <summary><strong>🤖 AI Assistant Guide</strong></summary>
->
-> **Quick Reference**:
-> This is a project tracking document for a retirement planning application.
-> 
-> **Core Rules**:
-> 1. Always check "Current Status & Next Steps" first - this is the source of truth
-> 2. Use the mermaid graph to verify dependencies before any changes
-> 3. Calculate progress accurately using module weights
-> 4. Handle technical debt alongside feature work
-> 5. Update all affected sections when making changes
-> 6. Never modify completed modules (✅) without explicit instruction
-> 
-> ### 1. Status Indicators
-> - ✅ Complete: All features implemented, tested, and ready for production
-> - ⚠️ Partial: Some features implemented or UI-only implementation
-> - 📝 Not Started: Planning phase or backlog
-> 
-> ### 2. Progress Calculation
-> - Task level: Count completed checkboxes
-> - Feature level: All tasks must be complete
-> - Module level: Use weighted progress (see "Module Weights" in Implementation Status)
-> - Overall: Apply module weights to calculate total
-> 
-> ### 3. Document Sections
-> #### Primary Sections (In order of importance)
-> 1. Current Status & Next Steps
->    - Active Development
->    - Ready to Implement
->    - Blocked Items
->    - Implementation Order
-> 2. Module Dependencies (mermaid graph)
-> 3. Implementation Status
-> 4. Progress Overview
-> 
-> ### 4. Workflow
-> #### When Starting Work:
-> 1. Check Current Status section
-> 2. Verify dependencies
-> 3. Move task to Active Development
-> 4. Resolve blockers
-> 
-> #### When Updating Progress:
-> 1. Update task checkboxes
-> 2. Update feature status
-> 3. Recalculate progress
-> 4. Update all related sections
-> 
-> #### When Handling Technical Debt:
-> 1. Check debt items in affected module
-> 2. Update test coverage
-> 3. Update documentation
-> </details>
-
 ## 📊 Implementation Status `[Overall Progress: ~25%]`
 
-### Core Modules
-[Module 1/8 Complete]
-
-> <details>
-> <summary><strong>⚖️ Module Weights</strong></summary>
->
-> Weights are based on complexity, business logic, and scope:
-> - High (25%): Dashboard, Compass
-> - Medium (15%): Pension Plans, Payout Strategy, Currency System
-> - Low (10%): Settings, Household
-> - Cross-cutting (20%): Internationalization
-> </details>
-
-#### 1. 💰 Pension Plans Module
-
-##### ETF Pension Management ✅
-- [x] Basic CRUD operations
-- [x] Contribution tracking
-- [x] Value tracking
-- [x] Basic projections
-- [x] Historical performance charts
-
-##### Company Pension ✅
-- [x] CRUD operations
-- [x] Contribution management
-- [x] Value tracking
-- [x] Integration with projections
-- [x] Status management (pause/resume functionality)
-
-##### Insurance Pension ⚠️
-- [ ] CRUD operations
-- [ ] Premium management
-- [ ] Value tracking
-- [ ] Integration with projections
-
-##### State Pension 📝
-- [ ] CRUD operations
-- [ ] Expected payout tracking
-- [ ] Retirement age eligibility
-- [ ] Early retirement options
-- [ ] Integration with projections
-
-##### Cross-Pension Features 📝
-> Detailed implementation plan: [Contribution Management System](TODO/contribution_management.md)
-- [ ] Automated contribution management
-  - Daily contribution realization
-  - Special case handling (weekends, holidays)
-  - Monitoring and error recovery
-- [ ] Advanced value tracking
-- [ ] Unified projection system
-
-#### 2. 👨‍👩‍👧‍👦 Household Module ✅
-- [x] Member CRUD operations
-- [x] Birthday and retirement age tracking
-- [x] Retirement date calculations
-- [x] Member form validation
-- [x] Integration with pension plans
-
-#### 3. ⚙️ Settings Module ⚠️
-##### Complete Features ✅
-- [x] Locale selection UI
-- [x] Currency selection UI
-- [x] Projection rates configuration
-- [x] Inflation rate settings
-- [x] Settings persistence
-- [x] Form validation
-
-##### Missing Features ⚠️
-###### Currency System (Frontend)
-- [ ] Currency conversion UI components
-- [ ] Display converted values across all views
-- [ ] Format monetary values according to locale
-- [ ] Handle currency changes in forms
-- [ ] Real-time conversion updates
-
-###### Internationalization System
-- [ ] Translation management system
-- [ ] Language file structure
-- [ ] Dynamic text loading
-- [ ] RTL support for applicable languages
-- [ ] Date/time localization
-- [ ] Number format localization
-
-##### Complete Features ✅
-###### Currency System (Backend)
-- [x] Exchange rate service integration (ECB)
-- [x] Real-time currency conversion API
-- [x] Historical exchange rates tracking
-- [x] Backend conversion utilities
-- [x] Automatic daily updates
-- [x] Fallback mechanisms
-- [x] Error handling and monitoring
-
-#### 4. 📈 Dashboard Module ⚠️
-
-> Currently only UI mockup exists
-
-##### Missing Components:
-- [ ] Total portfolio value aggregation
-- [ ] Contributions tracking system
-- [ ] Investment returns calculations
-- [ ] Quick actions functionality
-- [ ] Historical charts implementation
-- [ ] Retirement goal progress tracking
-- [ ] Scenario analysis engine
-- [ ] Personalized recommendations system
-
-#### 5. 🧭 Compass Module ⚠️
-
-> Currently only UI mockup exists
-
-##### Missing Components:
-- [ ] Gap analysis calculations
-- [ ] Risk assessment system
-- [ ] Smart recommendations engine
-- [ ] Interactive planning tools
-- [ ] Real-time impact calculations
-- [ ] Data integration with pension plans
-
-#### 6. 💸 Payout Strategy Module ⚠️
-
-> Currently only UI mockup exists
-
-##### Missing Components:
-- [ ] Timeline visualization
-- [ ] Market condition simulations
-- [ ] Withdrawal strategies calculator
-- [ ] Adaptive recommendations
-- [ ] Life stage guidance system
-- [ ] Portfolio rebalancing logic
-
-### Cross-Cutting Features
-
-#### 1. 💱 Currency System Frontend Integration `1-2 weeks`
-> **Status**: 📝 Not Started
-
-##### Frontend Components (Week 1)
-- [ ] Create currency conversion hooks
-- [ ] Implement currency formatting utilities
-- [ ] Add currency selection persistence
-- [ ] Create reusable currency display components
-
-##### Application Integration (Week 1-2)
-- [ ] Update pension value displays
-- [ ] Modify contribution forms
-- [ ] Adapt projection displays
-- [ ] Update dashboard calculations
-
-##### Testing & Validation (Week 2)
-- [ ] Add component unit tests
-- [ ] Implement integration tests
-- [ ] Test currency switching
-- [ ] Verify formatting across locales
-
-#### 2. 🌐 Internationalization Implementation `4-5 weeks`
-> **Status**: 📝 Not Started
-
-##### Translation System Setup (Week 1)
-- [ ] Set up i18n framework
-- [ ] Create translation file structure
-- [ ] Implement translation loading system
-- [ ] Add language detection
-
-##### Content Translation (Week 1-3)
-- [ ] Extract all UI text
-- [ ] Create base translation files
-- [ ] Implement translation workflow
-- [ ] Add translation validation
-
-##### Application Integration (Week 3-4)
-- [ ] Update all components
-- [ ] Implement RTL support
-- [ ] Add number formatting
-- [ ] Implement date/time formatting
-
-##### Testing & QA (Week 4-5)
-- [ ] Test all supported languages
-- [ ] Verify RTL layouts
-- [ ] Test number/date formats
-- [ ] Performance testing
-
-## 📈 Progress Overview
-> Last Updated: March 1, 2025
-> Next Milestone: Core Dashboard Implementation
-
-| Module | Status | Progress | Dependencies | Complexity Notes |
-|--------|---------|-----------|--------------|-----------------|
+| Module | Status | Progress | Dependencies | Notes |
+|--------|---------|-----------|--------------|-------|
 | ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts |
-| Company Pension | ✅ Complete | 100% | None | Contribution tracking + projections |
+| Company Pension | ✅ Complete | 100% | None | Contribution tracking |
 | Insurance Pension | ⚠️ UI Only | 0% | None | Premium logic |
 | State Pension | 📝 Not Started | 0% | None | Payout tracking |
 | Household | ✅ Complete | 100% | None | Basic CRUD |
@@ -492,294 +232,51 @@ graph LR
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
 | Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms |
 | Payout Strategy | ⚠️ UI Only | 10% | Dashboard | Financial modeling |
-| Currency System (Backend) | ✅ Complete | 100% | None | Exchange rates + API |
-| Currency System (Frontend) | 📝 Not Started | 0% | None | UI integration |
-| Internationalization | 📝 Not Started | 0% | None | Full app coverage |
-
-> 🎯 **Overall Progress**: ~25%
-> 
-> **Module Completion**:
-> - 4 of 12 modules complete (ETF Pension, Company Pension, Household, Currency Backend)
-> - 5 modules partially implemented
-> - 3 modules not started
-> - Technical Debt: Improved API optimization for pension fetching
+| Currency System Backend | ✅ Complete | 100% | None | Exchange rates + API |
+| Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
+| Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
 
 ## 🎯 Project Milestones
 
-### Milestone 1: Core Dashboard Implementation `4-6 weeks`
+### Milestone 1: Core Dashboard Implementation (4-6 weeks)
 > **Status**: 🟡 Planning Phase
+> **Details**: [Dashboard Implementation Plan](docs/plans/drafts/core_dashboard.md)
 
-#### 1. Portfolio Overview (Week 1-2)
-- [ ] Implement data aggregation from all pension types
-- [ ] Create total portfolio value calculator
-- [ ] Build month/year-over-year growth calculator
-- [ ] Add basic portfolio distribution chart
+#### Key Deliverables:
+1. Portfolio Overview
+2. Contribution Tracking
+3. Returns & Performance
+4. Quick Actions & Integration
 
-#### 2. Contribution Tracking (Week 2-3)
-- [ ] Implement total contributions calculator
-- [ ] Create year-to-date contributions tracker
-- [ ] Add contribution history visualization
-- [ ] Build contribution patterns analyzer
-
-#### 3. Returns & Performance (Week 3-4)
-- [ ] Implement investment returns calculator
-- [ ] Create XIRR calculation system
-- [ ] Build performance comparison tools
-- [ ] Add historical performance charts
-
-#### 4. Quick Actions & Integration (Week 4-6)
-- [ ] Implement contribution recording system
-- [ ] Create plan value update mechanism
-- [ ] Add basic health check functionality
-- [ ] Build notification system for updates
-
-### Milestone 2: Complete Pension Plans `4-5 weeks`
+### Milestone 2: Complete Pension Plans (4-5 weeks)
 > **Status**: 🟡 In Progress
+> **Details**: [Pension Plans Implementation](docs/plans/active/pension_plans.md)
 
-#### 1. Company Pension Implementation (Week 1-2)
-- [x] Create CRUD operations
-- [x] Implement contribution management
-- [x] Add value tracking system
-- [x] Integrate with projections
+#### Key Deliverables:
+1. ✅ Company Pension Implementation
+2. State Pension Implementation
+3. Insurance Pension Implementation
+4. ✅ ETF Pension Enhancements
 
-#### 2. State Pension Implementation (Week 1-2)
-- [ ] Create CRUD operations
-- [ ] Implement expected payout tracking
-- [ ] Add retirement age eligibility options
-- [ ] Integrate with projections
-
-#### 3. Insurance Pension Implementation (Week 2-3)
-- [ ] Create CRUD operations
-- [ ] Implement premium management
-- [ ] Add value tracking system
-- [ ] Integrate with projections
-
-#### 4. ETF Pension Enhancements (Week 3-4)
-- [x] Improve error handling
-- [x] Add validation rules
-- [x] Enhance projection accuracy
-- [x] Optimize performance
-- [x] Optimize pension fetching to reduce API calls
-
-### Milestone 3: Compass Implementation `4-5 weeks`
+### Milestone 3: Compass Implementation (4-5 weeks)
 > **Status**: 🟡 Planning Phase
+> **Details**: [Compass Implementation Plan](docs/plans/drafts/compass.md)
 
-#### 1. Gap Analysis (Week 1-2)
-- [ ] Create wage-based calculator
-- [ ] Implement pension gap analyzer
-- [ ] Build real-time update system
-- [ ] Add comparison visualizations
+#### Key Deliverables:
+1. Gap Analysis
+2. Risk Assessment
+3. Planning Tools
 
-#### 2. Risk Assessment (Week 2-3)
-- [ ] Implement risk level calculator
-- [ ] Create risk tolerance questionnaire
-- [ ] Build risk visualization tools
-- [ ] Add risk adjustment recommendations
-
-#### 3. Planning Tools (Week 3-5)
-- [ ] Create retirement age calculator
-- [ ] Implement scenario simulator
-- [ ] Build timeline visualizer
-- [ ] Add impact analysis tools
-
-### Milestone 4: Payout Strategy Implementation `4-5 weeks`
+### Milestone 4: Payout Strategy Implementation (4-5 weeks)
 > **Status**: 🟡 Planning Phase
+> **Details**: [Payout Strategy Plan](docs/plans/drafts/payout_strategy.md)
 
-#### 1. Basic Framework (Week 1-2)
-- [ ] Create withdrawal calculator
-- [ ] Implement basic timeline visualization
-- [ ] Build phase management system
-- [ ] Add basic strategy comparison tools
+#### Key Deliverables:
+1. Basic Framework
+2. Advanced Features
+3. Guidance System
 
-#### 2. Advanced Features (Week 2-3)
-- [ ] Implement market condition simulator
-- [ ] Create tax efficiency calculator
-- [ ] Build dynamic withdrawal system
-- [ ] Add rebalancing tools
-
-#### 3. Guidance System (Week 3-5)
-- [ ] Create life stage analyzer
-- [ ] Implement recommendation engine
-- [ ] Build strategy optimization tools
-- [ ] Add monitoring and alert system
-
-## 🚀 Future Enhancements
-
-### Phase 2 Features
-
-#### 1. 📊 Advanced Analytics
-- Machine learning for pattern recognition
-- Predictive modeling for market conditions
-- Advanced risk analysis tools
-
-#### 2. 🔌 Integration Capabilities
-- External financial account integration
-- Tax system integration
-- Market data feeds
-
-#### 3. 🎨 Enhanced User Experience
-- Mobile application
-- Customizable dashboards
-- Advanced visualization options
-
-### Phase 3 Features
-
-#### 1. 👥 Social Features
-- Anonymous peer comparison
-- Community insights
-- Expert advice integration
-
-#### 2. 📝 Advanced Planning
-- Estate planning integration
-- Healthcare cost planning
-- Geographic cost-of-living analysis
-
-## 🛠️ Technical Debt & Optimization
-
-### Current Issues to Address
-
-#### 1. ⚡ Performance Optimization
-- [ ] Optimize database queries
-- [ ] Implement caching system
-- [ ] Improve front-end rendering
-
-#### 2. 🔍 Code Quality
-- [x] Create formatting best practices documentation
-- [x] Fix PensionList component to work with updated data structures
-- [x] Identify obsolete components (StatementsList, AddStatementForm)
-- [x] Create date handling best practices documentation and implementation plan
-- [ ] Increase test coverage
-- [ ] Improve error handling
-- [ ] Add comprehensive logging
-
-#### 3. 🔄 Task System Cleanup & Migration
-> Detailed migration plan: [Task Monitoring Migration](TODO/task_monitoring_migration.md)
-
-##### Current State Analysis
-- [ ] Audit TaskStatus table usage
-- [ ] Document dependencies on TaskStatus
-- [ ] Map out migration path
-
-##### Migration Tasks
-- [ ] Create specialized tracking for ETF pension creation
-- [ ] Update ETF pension processing to use new tracking
-- [ ] Remove TaskStatus table
-- [ ] Update affected documentation
-
-#### 4. 🧪 Testing Implementation
-
-##### Completed Tests ✅
-1. **Context Testing**
-   - [x] HouseholdContext test setup with Jest and React Testing Library
-   - [x] Provider integration tests
-   - [x] Hook usage tests
-   - [x] Error handling tests
-
-##### Priority Testing Areas
-
-###### Immediate Testing Needs
-1. **Complex Calculation Functions**
-   - [ ] `calculateMemberFields` (household-helpers.ts) - age and retirement calculations
-   - [ ] `generateFutureContributions` (contribution-plan.ts) - pension contribution projections
-   - [ ] `analyzeContributionStep` (ContributionImpactAnalysis.tsx) - growth opportunities
-   - [ ] `calculateProjection` (projection-preview.tsx) - financial projections with inflation
-
-2. **Business Logic Validators**
-   - [ ] `validateRetirementAges` (household-helpers.ts)
-   - [ ] Pension validation schemas (validations/pension.ts)
-
-3. **Data Transformation Functions**
-   - [ ] `getContributionForDate` (projection-utils.ts)
-   - [ ] `formatPensionSummary` (pension-helpers.ts)
-
-###### Future Feature Testing Requirements
-1. **Currency System Integration**
-   - [ ] Currency conversion utilities
-   - [ ] Currency formatting functions
-   - [ ] Exchange rate calculations
-   - [ ] Multi-currency portfolio aggregation
-
-2. **Enhanced Projection & Analysis**
-   - [ ] Multi-pension type projections
-   - [ ] Market condition scenarios
-   - [ ] Tax implication calculations
-   - [ ] Inflation scenario handling
-   - [ ] Gap analysis algorithms
-   - [ ] Risk assessment calculations
-
-3. **Advanced Contribution Management**
-   - [ ] Company matching rules
-   - [ ] Insurance premium patterns
-   - [ ] Variable contribution schedules
-   - [ ] Tax-limit validations
-   - [ ] Cross-pension contribution optimization
-
-4. **Payout Strategy Calculations**
-   - [ ] Withdrawal calculation algorithms
-   - [ ] Phase transition logic
-   - [ ] Market condition simulation
-   - [ ] Portfolio rebalancing functions
-   - [ ] Tax-efficient withdrawal strategies
-
-5. **Dashboard Data Aggregation**
-   - [ ] Cross-pension portfolio aggregation
-   - [ ] XIRR calculations
-   - [ ] Performance comparison algorithms
-   - [ ] Distribution analysis functions
-   - [ ] Real-time update calculations
-
-##### Test Infrastructure Setup ✅
-- [x] Jest configuration for React components
-- [x] React Testing Library setup
-- [x] API mocking utilities
-- [x] Test helper functions
-- [ ] Setup CI/CD test pipeline
-- [ ] Implement test coverage reporting
-- [ ] Create testing documentation
-- [ ] Setup automated test runs
-- [ ] Configure test environments
-
-##### Frontend Testing
-- [x] Basic context testing patterns established
-- [ ] Unit tests for React components (Jest + React Testing Library)
-  - [ ] Form validation logic
-  - [ ] Component state management
-  - [ ] UI interactions and events
-  - [ ] Currency formatting utilities
-  - [ ] Date handling utilities
-- [ ] Integration tests
-  - [x] Context provider integration
-  - [ ] User flows (form submissions, navigation)
-  - [ ] API integration points
-  - [ ] State management integration
-- [ ] E2E tests (Cypress/Playwright)
-  - [ ] Critical user journeys
-  - [ ] Pension plan creation flow
-  - [ ] Settings modification flow
-  - [ ] Dashboard interactions
-- [ ] Accessibility testing (axe-core)
-- [ ] Performance testing (Lighthouse CI)
-
-##### Backend Testing
-- [ ] Unit tests (pytest)
-  - [ ] Data models and schemas
-  - [ ] Utility functions
-  - [ ] Service layer logic
-  - [ ] Currency conversion logic
-- [ ] Integration tests
-  - [ ] API endpoints
-  - [ ] Database operations
-  - [ ] External service integrations
-- [ ] Load testing (k6)
-  - [ ] API endpoint performance
-  - [ ] Concurrent user simulation
-  - [ ] Database query performance
-- [ ] Security testing
-  - [ ] Input validation
-  - [ ] Authentication flows
-  - [ ] API security headers
-
-#### 6. 📚 Documentation
-- [ ] Complete API documentation
-- [ ] Add user guides
-- [ ] Create maintenance documentation
+## 📚 Documentation Index
+- [Technical Debt & Optimization](docs/tech/debt/README.md)
+- [Testing Strategy & Status](docs/tech/testing/README.md)
+- [Future Enhancements](docs/plans/future_enhancements.md)

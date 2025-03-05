@@ -328,7 +328,7 @@ const { resetWithData } = useFormReset({
 
 ### 5.2 Update Form Architecture Documentation
 
-1. Update `docs/rules/form_architecture_rule.md` to include information about the form reset hook
+1. Update `docs/tech/best-practices/form_architecture.md` to include information about the form reset hook
 2. Add examples of using the hook in the form architecture pattern
 
 ## 6. Implementation Order

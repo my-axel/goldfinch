@@ -2,7 +2,7 @@
 
 /**
  * This component follows the formatting best practices documented in:
- * src/frontend/docs/formatting-best-practices.md
+ * docs/frontend/guides/formatting-best-practices.md
  * 
  * It uses client-side only formatting with useState and useEffect to avoid hydration mismatches.
  */

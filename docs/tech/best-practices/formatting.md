@@ -1,8 +1,3 @@
----
-description: Formatting a number, currency or date to the users locale setting
-globs: *.tsx
-alwaysApply: false
----
 # Formatting & Date Handling Best Practices
 
 > <details>
