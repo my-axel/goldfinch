@@ -1,5 +1,5 @@
 ---
-description: Always
+description: Always for every request
 globs: *
 alwaysApply: false
 ---
@@ -32,60 +32,77 @@ Goldfinch is a sophisticated retirement planning platform that empowers individu
 
 ```
 ├── app                         # Main app directory for routes   
-│   ├── compass                 # Compass page    
-│   ├── household               # Household Management page
-│   ├── payout-strategy         # Payout Strategy page
-│   ├── pension                 # Pension Plan basics page
-│   │   ├── company             # Company Pension Plan specific page
-│   │   ├── etf                 # ETF Pension Plan specific page
-│   │   └── insurance           # Insurance Pension Plan specific page
-│   ├── settings                # Settings page
-│   └── styles                  # General styles
-├── coverage                    # Tests
-│   ├── components
-│   │   ├── charts
-│   │   ├── etf
-│   │   ├── household
-│   │   ├── layout
-│   │   ├── pension
-│   │   ├── settings
-│   │   └── ui
-│   ├── context
-│   ├── hooks
-│   ├── lcov-report
-│   │   ├── components
-│   │   ├── context
-│   │   ├── hooks
-│   │   ├── lib
-│   │   ├── providers
-│   │   ├── services
-│   │   └── types
-│   ├── lib
-│   │   ├── routes
-│   │   └── validations
-│   ├── providers
-│   ├── services
-│   └── types
-├── docs                        # Documentations
-│   ├── api                     # API Documentation
-│   └── components              # Documentation of frontend components
-├── public                      # Public folder for images etc.
-└── src                         # Main source code folder
-    ├── backend                 # The complete backend in Python with FastAPI
-    │   ├── alembic             
-    │   ├── app                 # The complete logic of the backend is here with sub-folders for specific parts
-    │   ├── docs                # Specific Backend Documentation
-    │   └── logs                # Logging
-    └── frontend                # The frontend in TypeScript with Next.JS and React
-        ├── app                 
-        ├── components          # Components for different use cases (e.g. forms or reusable parts of ETF Pension plan etc.), separated by domain
-        ├── context             # All contexts
-        ├── docs                # Specific Frontend Documentation
-        ├── hooks               # Shared hooks
-        ├── lib                 # Shared components
-        ├── providers           
-        ├── services            # Services for multiple frontend components/pages
-        └── types               # All frontend types
+│   ├── compass                 # Compass page    
+│   ├── household               # Household Management page
+│   ├── payout-strategy         # Payout Strategy page
+│   ├── pension                 # Pension Plan basics page
+│   │   ├── company             # Company Pension Plan specific page
+│   │   │   ├── [id]            # Company pension detail pages
+│   │   │   └── new             # New company pension creation
+│   │   ├── etf                 # ETF Pension Plan specific page
+│   │   │   ├── [id]            # ETF pension detail pages
+│   │   │   └── new             # New ETF pension creation
+│   │   └── insurance          # Insurance Pension Plan specific page
+│   │       ├── [id]            # Insurance pension detail pages
+│   │       └── new             # New insurance pension creation
+│   ├── settings               # Settings page
+│   └── styles                 # General styles
+├── docs                       # Documentations
+│   ├── backend                # Backend specific documentation
+│   │   └── services           # Service documentation
+│   │       ├── company_pension # Company pension service docs
+│   │       ├── etf            # ETF service docs
+│   │       ├── exchange_rates # Exchange rates service docs
+│   │       └── settings       # Settings service docs
+│   ├── frontend               # Frontend specific documentation
+│   │   └── components         # Component documentation
+│   ├── plans                  # Project planning documentation
+│   │   ├── active            # Active development plans
+│   │   ├── done              # Completed plans
+│   │   ├── drafts            # Draft plans
+│   │   └── templates         # Plan templates
+│   └── tech                   # Technical documentation
+│       ├── architecture       # Architecture documentation
+│       ├── best-practices    # Best practices documentation
+│       ├── debt              # Technical debt documentation
+│       ├── refactoring       # Refactoring documentation
+│       │   ├── active        # Active refactoring tasks
+│       │   └── done          # Completed refactoring tasks
+│       └── testing           # Testing documentation
+├── public                     # Public folder for images etc.
+├── scripts                    # Project scripts
+└── src                        # Main source code folder
+    ├── backend                # The complete backend in Python with FastAPI
+    │   ├── alembic            # Database migrations
+    │   ├── app                # The complete logic of the backend is here
+    │   │   ├── api            # API endpoints
+    │   │   ├── core           # Core functionality
+    │   │   ├── crud           # Database operations
+    │   │   ├── db             # Database configuration
+    │   │   ├── models         # Database models
+    │   │   ├── schemas        # Pydantic schemas
+    │   │   ├── services       # Business logic services
+    │   │   └── tasks          # Background tasks
+    │   └── logs               # Logging
+    └── frontend               # The frontend in TypeScript with Next.JS and React
+        ├── components         # Components for different use cases
+        │   ├── charts         # Chart components
+        │   ├── etf            # ETF specific components
+        │   ├── household      # Household components
+        │   ├── layout         # Layout components
+        │   ├── pension        # Pension components
+        │   ├── settings       # Settings components
+        │   ├── shared         # Shared components
+        │   └── ui             # UI components
+        ├── context            # All contexts
+        ├── hooks              # Shared hooks
+        ├── lib                # Shared utilities
+        │   ├── hooks          # Utility hooks
+        │   ├── routes         # Route definitions
+        │   └── validations    # Form validations
+        ├── providers          # Context providers
+        ├── services           # Frontend services
+        └── types              # All frontend types
 ```
 
 ## Tech Stack

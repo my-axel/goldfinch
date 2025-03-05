@@ -5,54 +5,71 @@
 │   ├── payout-strategy
 │   ├── pension
 │   │   ├── company
+│   │   │   ├── [id]
+│   │   │   └── new
 │   │   ├── etf
+│   │   │   ├── [id]
+│   │   │   └── new
 │   │   └── insurance
+│   │       ├── [id]
+│   │       └── new
 │   ├── settings
 │   └── styles
-├── coverage
-│   ├── components
-│   │   ├── charts
-│   │   ├── etf
-│   │   ├── household
-│   │   ├── layout
-│   │   ├── pension
-│   │   ├── settings
-│   │   └── ui
-│   ├── context
-│   ├── hooks
-│   ├── lcov-report
-│   │   ├── components
-│   │   ├── context
-│   │   ├── hooks
-│   │   ├── lib
-│   │   ├── providers
-│   │   ├── services
-│   │   └── types
-│   ├── lib
-│   │   ├── routes
-│   │   └── validations
-│   ├── providers
-│   ├── services
-│   └── types
 ├── docs
-│   ├── api
-│   └── components
+│   ├── backend
+│   │   └── services
+│   │       ├── company_pension
+│   │       ├── etf
+│   │       ├── exchange_rates
+│   │       └── settings
+│   ├── frontend
+│   │   └── components
+│   ├── plans
+│   │   ├── active
+│   │   ├── done
+│   │   ├── drafts
+│   │   └── templates
+│   └── tech
+│       ├── architecture
+│       ├── best-practices
+│       ├── debt
+│       ├── refactoring
+│       │   ├── active
+│       │   └── done
+│       └── testing
 ├── public
+├── scripts
 └── src
     ├── backend
     │   ├── alembic
     │   ├── app
-    │   ├── docs
+    │   │   ├── api
+    │   │   ├── core
+    │   │   ├── crud
+    │   │   ├── db
+    │   │   ├── models
+    │   │   ├── schemas
+    │   │   ├── services
+    │   │   └── tasks
     │   └── logs
     └── frontend
-        ├── app
         ├── components
+        │   ├── charts
+        │   ├── etf
+        │   ├── household
+        │   ├── layout
+        │   ├── pension
+        │   ├── settings
+        │   ├── shared
+        │   └── ui
         ├── context
-        ├── docs
         ├── hooks
         ├── lib
+        │   ├── hooks
+        │   ├── routes
+        │   └── validations
         ├── providers
         ├── services
         └── types
 
-56 directories
+73 directories
