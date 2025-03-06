@@ -22,25 +22,9 @@ from app.models.enums import PensionStatus
 from datetime import date
 from decimal import Decimal
 from fastapi import HTTPException
-import os
-
-# Set up a direct file handler for debugging
-debug_logger = logging.getLogger("pension_company_debug")
-debug_logger.setLevel(logging.DEBUG)
-# Create logs directory if it doesn't exist
-os.makedirs("src/backend/logs", exist_ok=True)
-# Add a file handler that writes directly to a debug log file
-debug_handler = logging.FileHandler("src/backend/logs/pension_company_debug.log")
-debug_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-debug_logger.addHandler(debug_handler)
-# Prevent propagation to avoid duplicate logs
-debug_logger.propagate = False
 
 # Use the app.crud logger namespace to ensure logs go to the right place
 logger = logging.getLogger("app.crud.pension_company")
-
-# Add a debug message to verify this file is being loaded
-debug_logger.debug("pension_company.py module loaded")
 
 class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionCompanyUpdate]):
     def create(

@@ -1,18 +1,18 @@
 "use client"
 
 import { memo, useEffect, useState } from "react"
-import { usePension } from "@/frontend/context/PensionContext"
+import { usePension } from "@/frontend/context/pension"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency, formatPercent } from "@/frontend/lib/transforms"
-import { CalendarClock, TrendingUp, Wallet, CircleDot } from "lucide-react"
+import {
+  ExplanationStats,
+  ExplanationStat,
+  Explanation,
+  ExplanationHeader
+} from "@/frontend/components/ui/explanation"
+import { CalendarClock, CircleDot, TrendingUp, Wallet } from "lucide-react"
 import { cn } from "@/frontend/lib/utils"
 import { PensionType } from "@/frontend/types/pension"
-import {
-  Explanation,
-  ExplanationHeader,
-  ExplanationStats,
-  ExplanationStat
-} from "@/frontend/components/ui/explanation"
 
 interface ETFPensionStatsProps {
   pensionId: number

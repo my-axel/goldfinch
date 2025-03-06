@@ -4,11 +4,11 @@
 
 import { renderHook, act } from '@testing-library/react'
 import { usePensionData } from '../usePensionData'
-import { usePension } from '@/frontend/context/PensionContext'
 import { PensionType } from '@/frontend/types/pension'
+import { usePension } from '@/frontend/context/pension'
 
 // Mock the usePension hook
-jest.mock('@/frontend/context/PensionContext')
+jest.mock('@/frontend/context/pension')
 
 describe('usePensionData', () => {
   const mockPension = {

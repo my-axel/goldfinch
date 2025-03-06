@@ -17,7 +17,7 @@ interface EnumSelectProps<
 > {
   name: TName
   control: Control<TFieldValues>
-  label: string
+  label?: string
   options: EnumOption<T>[]
   defaultValue?: T
   placeholder?: string
@@ -35,7 +35,7 @@ export function EnumSelect<
 >({
   name,
   control,
-  label,
+  label = "",
   options,
   defaultValue,
   placeholder = "Select an option",
@@ -57,7 +57,7 @@ export function EnumSelect<
         
         return (
           <FormItem>
-            <FormLabel>{label}</FormLabel>
+            {label !== "" && <FormLabel>{label}</FormLabel>}
             <Select
               value={currentValue}
               onValueChange={(value) => {

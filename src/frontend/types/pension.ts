@@ -142,17 +142,45 @@ export interface InsurancePension {
   name: string
   member_id: number           // Links to household member
   start_date: Date
-  initial_capital: number     // Initial investment amount
-  current_value: number       // Current total value of the pension
+  retirement_date?: Date      // Optional retirement date
   notes?: string
   provider: string           // Insurance company name
-  contract_number: string
-  guaranteed_interest: number // Minimum guaranteed return
-  expected_return: number    // Expected return including non-guaranteed portions
+  contract_number?: string   // Optional contract number
+  guaranteed_interest?: number // Minimum guaranteed return
+  expected_return?: number    // Expected return including non-guaranteed portions
   contribution_plan_steps: ContributionStep[]
   status: 'ACTIVE' | 'PAUSED'
   paused_at?: string
   resume_at?: string
+  statements?: InsurancePensionStatement[]  // Insurance pension statements
+}
+
+/**
+ * Insurance pension statement with projections and cost details
+ */
+export interface InsurancePensionStatement {
+  id?: number                // Optional for new statements
+  pension_id?: number        // Optional for new statements
+  statement_date: string
+  value: number
+  total_contributions: number
+  total_benefits: number
+  costs_amount: number
+  costs_percentage: number
+  note?: string
+  projections?: InsurancePensionProjection[]
+}
+
+/**
+ * Insurance pension projection with different scenarios
+ */
+export interface InsurancePensionProjection {
+  id?: number               // Optional for new projections
+  statement_id?: number     // Optional for new projections
+  scenario_type: 'with_contributions' | 'without_contributions'
+  return_rate: number
+  value_at_retirement: number
+  monthly_payout: number
 }
 
 /** 

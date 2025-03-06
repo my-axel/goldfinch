@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import schemas
@@ -77,10 +77,135 @@ def list_insurance_pensions(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    member_id: int | None = None,
+    member_id: Optional[int] = None,
 ) -> List[schemas.pension_insurance.PensionInsuranceResponse]:
     """List all insurance pensions."""
     filters = {}
     if member_id is not None:
         filters["member_id"] = member_id
-    return pension_insurance.get_multi(db, skip=skip, limit=limit, filters=filters) 
+    return pension_insurance.get_multi(db, skip=skip, limit=limit, filters=filters)
+
+# New endpoints for statements, benefits, and projections
+
+@router.post(
+    "/{pension_id}/statements",
+    response_model=schemas.pension_insurance.StatementResponse,
+    status_code=201,
+    responses={
+        201: {"description": "Statement created successfully"},
+        404: {"description": "Insurance Pension not found"},
+        422: {"description": "Validation error"}
+    }
+)
+def create_insurance_statement(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    statement_in: schemas.pension_insurance.StatementCreate,
+) -> schemas.pension_insurance.StatementResponse:
+    """Create a new statement for an insurance pension."""
+    try:
+        return pension_insurance.create_statement(
+            db=db, pension_id=pension_id, obj_in=statement_in
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.get(
+    "/{pension_id}/statements",
+    response_model=List[schemas.pension_insurance.StatementResponse],
+    responses={
+        200: {"description": "List of statements retrieved successfully"},
+        404: {"description": "Insurance Pension not found"}
+    }
+)
+def list_insurance_statements(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+) -> List[schemas.pension_insurance.StatementResponse]:
+    """List all statements for an insurance pension."""
+    pension = pension_insurance.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Insurance Pension not found")
+    return pension.statements
+
+@router.get(
+    "/{pension_id}/statements/latest",
+    response_model=schemas.pension_insurance.StatementResponse,
+    responses={
+        200: {"description": "Latest statement retrieved successfully"},
+        404: {"description": "Insurance Pension or statement not found"}
+    }
+)
+def get_latest_insurance_statement(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+) -> schemas.pension_insurance.StatementResponse:
+    """Get the latest statement for an insurance pension."""
+    statement = pension_insurance.get_latest_statement(db=db, pension_id=pension_id)
+    if not statement:
+        raise HTTPException(status_code=404, detail="No statements found for this pension")
+    return statement
+
+@router.delete(
+    "/statements/{statement_id}",
+    responses={
+        200: {"description": "Statement deleted successfully"},
+        404: {"description": "Statement not found"}
+    }
+)
+def delete_insurance_statement(
+    *,
+    db: Session = Depends(deps.get_db),
+    statement_id: int,
+) -> dict:
+    """Delete a statement from an insurance pension."""
+    success = pension_insurance.delete_statement(db=db, statement_id=statement_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Statement not found")
+    return {"ok": True}
+
+@router.post(
+    "/{pension_id}/benefits",
+    response_model=schemas.pension_insurance.BenefitResponse,
+    status_code=201,
+    responses={
+        201: {"description": "Benefit created successfully"},
+        404: {"description": "Insurance Pension not found"},
+        422: {"description": "Validation error"}
+    }
+)
+def create_insurance_benefit(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    benefit_in: schemas.pension_insurance.BenefitCreate,
+) -> schemas.pension_insurance.BenefitResponse:
+    """Create a new benefit for an insurance pension."""
+    try:
+        return pension_insurance.create_benefit(
+            db=db, pension_id=pension_id, obj_in=benefit_in
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.get(
+    "/{pension_id}/benefits",
+    response_model=List[schemas.pension_insurance.BenefitResponse],
+    responses={
+        200: {"description": "List of benefits retrieved successfully"},
+        404: {"description": "Insurance Pension not found"}
+    }
+)
+def list_insurance_benefits(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+) -> List[schemas.pension_insurance.BenefitResponse]:
+    """List all benefits for an insurance pension."""
+    pension = pension_insurance.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Insurance Pension not found")
+    return pension.benefits 

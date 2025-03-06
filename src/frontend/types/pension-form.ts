@@ -50,20 +50,49 @@ export type ETFPensionFormData = {
 }
 
 /**
- * Insurance Pension form data
+ * Insurance pension statement projection data
+ */
+export interface InsurancePensionProjectionFormData {
+  id?: number               // Optional for new projections
+  statement_id?: number     // Optional for new projections
+  scenario_type: 'with_contributions' | 'without_contributions'
+  return_rate: number
+  value_at_retirement: number
+  monthly_payout: number
+}
+
+/**
+ * Insurance pension statement data
+ */
+export interface InsurancePensionStatementFormData {
+  id?: number                // Optional for new statements
+  pension_id?: number        // Optional for new statements
+  statement_date: Date       // Use Date for form state
+  value: number
+  total_contributions: number
+  total_benefits: number
+  costs_amount: number
+  costs_percentage: number
+  note?: string
+  projections: InsurancePensionProjectionFormData[]
+}
+
+/**
+ * Insurance Pension form data - matches InsurancePension type exactly,
+ * except member_id is string for form input handling
  */
 export type InsurancePensionFormData = {
   type: PensionType.INSURANCE
   name: string
-  member_id: string
-  notes?: string
+  member_id: string         // String for form input, converted to number on submit
   start_date: Date
+  notes?: string
   provider: string
-  initial_capital: number
-  contract_number: string
-  guaranteed_interest: number
-  expected_return: number
+  contract_number?: string
+  guaranteed_interest?: number
+  expected_return?: number
   contribution_plan_steps: ContributionPlanStep[]
+  statements: InsurancePensionStatementFormData[]
 }
 
 /**

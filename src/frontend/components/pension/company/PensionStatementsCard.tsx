@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/fro
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { useDateFormat } from "@/frontend/hooks/useDateFormat"
-import { usePension } from "@/frontend/context/PensionContext"
+import { usePension } from "@/frontend/context/pension"
 import {
   AlertDialog,
   AlertDialogAction,

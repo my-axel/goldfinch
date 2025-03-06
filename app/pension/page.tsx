@@ -1,10 +1,11 @@
 "use client"
 
+import { useState, useEffect, useRef, useCallback } from "react"
+import { usePension } from "@/frontend/context/pension"
 import { PensionList } from "@/frontend/components/pension/shared/PensionList"
-import { useEffect, useCallback, useRef } from "react"
-import { usePension } from "@/frontend/context/PensionContext"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { toast } from "sonner"
+import { LoadingState } from "@/frontend/components/shared/LoadingState"
 
 /**
  * Main pension management page component. Displays a list of all pension plans
@@ -19,21 +20,30 @@ import { toast } from "sonner"
 export default function PensionPage() {
   const { 
     pensions, 
-    isLoading, 
+    isLoading: isPensionsLoading, 
     error,
     fetchPensions,
     deletePension,
   } = usePension()
-  const { members, fetchMembers } = useHousehold()
+  const { members, isLoading: isMembersLoading, fetchMembers } = useHousehold()
   const initialized = useRef(false)
+  const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
     if (!initialized.current) {
-      Promise.all([
-        fetchPensions(),
-        fetchMembers()
-      ])
-      initialized.current = true
+      const initialize = async () => {
+        try {
+          await Promise.all([
+            fetchPensions(),
+            fetchMembers()
+          ])
+        } finally {
+          initialized.current = true
+          setIsInitializing(false)
+        }
+      }
+      
+      initialize()
     }
   }, [fetchPensions, fetchMembers])
 
@@ -61,6 +71,9 @@ export default function PensionPage() {
     }
   }, [deletePension])
 
+  // Determine if we're still loading data
+  const isLoading = isInitializing || isPensionsLoading || isMembersLoading
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-8">
@@ -73,7 +86,7 @@ export default function PensionPage() {
       </div>
 
       {isLoading ? (
-        <div>Loading...</div>
+        <LoadingState message="Loading pension plans..." />
       ) : (
         <PensionList
           pensions={pensions}

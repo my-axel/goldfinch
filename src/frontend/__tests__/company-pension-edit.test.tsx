@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRouter, useParams } from 'next/navigation'
-import { usePension } from '@/frontend/context/PensionContext'
+import { usePension } from '@/frontend/context/pension'
 import { useSettings } from '@/frontend/context/SettingsContext'
 import { usePensionData } from '@/frontend/lib/hooks/usePensionData'
 import { PensionType, ContributionFrequency } from '@/frontend/types/pension'
@@ -14,10 +14,10 @@ import { ReactNode } from 'react'
 // Mock the necessary dependencies
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
-  useParams: jest.fn()
+  useParams: jest.fn(() => ({ id: '1' }))
 }))
 
-jest.mock('@/frontend/context/PensionContext', () => ({
+jest.mock('@/frontend/context/pension', () => ({
   usePension: jest.fn()
 }))
 

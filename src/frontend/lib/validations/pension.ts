@@ -16,6 +16,30 @@ const contributionStepSchema = z.object({
   note: z.string().optional()
 })
 
+const insurancePensionProjectionSchema = z.object({
+  id: z.number().optional(),
+  statement_id: z.number().optional(),
+  scenario_type: z.enum(["with_contributions", "without_contributions"]),
+  return_rate: z.number()
+    .min(-10, "Return rate must be between -10% and +10%")
+    .max(10, "Return rate must be between -10% and +10%"),
+  value_at_retirement: z.number().min(0, "Value at retirement must be positive"),
+  monthly_payout: z.number().min(0, "Monthly payout must be positive")
+})
+
+const insurancePensionStatementSchema = z.object({
+  id: z.number().optional(),
+  pension_id: z.number().optional(),
+  statement_date: z.date().max(new Date(), "Statement date cannot be in the future"),
+  value: z.number().min(0, "Value must be positive"),
+  total_contributions: z.number().min(0, "Total contributions must be positive"),
+  total_benefits: z.number().min(0, "Total benefits must be positive"),
+  costs_amount: z.number().min(0, "Costs amount must be positive"),
+  costs_percentage: z.number().min(0, "Costs percentage must be positive").max(100, "Costs percentage cannot exceed 100%"),
+  note: z.string().optional(),
+  projections: z.array(insurancePensionProjectionSchema)
+})
+
 export const etfPensionSchema = basePensionSchema.extend({
   type: z.literal(PensionType.ETF_PLAN),
   etf_id: z.string().min(1, "ETF selection is required"),
@@ -29,13 +53,19 @@ export const etfPensionSchema = basePensionSchema.extend({
 
 export const insurancePensionSchema = basePensionSchema.extend({
   type: z.literal(PensionType.INSURANCE),
-  provider: z.string().min(1, "Provider is required"),
-  contract_number: z.string().min(1, "Contract number is required"),
+  provider: z.string().min(1),
+  contract_number: z.string().optional(),
   start_date: z.date(),
-  initial_capital: z.number(),
-  guaranteed_interest: z.number(),
-  expected_return: z.number(),
-  contribution_plan_steps: z.array(contributionStepSchema)
+  guaranteed_interest: z.number()
+    .min(0, "Guaranteed interest must be positive")
+    .max(100, "Guaranteed interest cannot exceed 100%")
+    .optional(),
+  expected_return: z.number()
+    .min(0, "Expected return must be positive")
+    .max(100, "Expected return cannot exceed 100%")
+    .optional(),
+  contribution_plan_steps: z.array(contributionStepSchema),
+  statements: z.array(insurancePensionStatementSchema)
 })
 
 export const companyPensionSchema = basePensionSchema.extend({

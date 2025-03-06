@@ -32,7 +32,7 @@ import { Badge } from "@/frontend/components/ui/badge"
 import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
 import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatNumber, formatCurrency, formatPercent } from "@/frontend/lib/transforms"
+import { formatNumber, formatCurrency, formatPercent, safeNumberValue } from "@/frontend/lib/transforms"
 import { getPensionEditRoute } from "@/frontend/lib/routes"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { formatDisplayDate } from "@/frontend/lib/dateUtils"
@@ -152,6 +152,11 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
   )
 }
 
+// Define an interface for pension with current_value
+interface PensionWithCurrentValue extends InsurancePension {
+  current_value?: number;
+}
+
 /**
  * Displays insurance pension specific information
  */
@@ -167,16 +172,26 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
   
   // Format values client-side only after hydration
   useEffect(() => {
+    // Get values safely
+    const safeGuaranteedInterest = safeNumberValue(pension.guaranteed_interest)
+    const safeExpectedReturn = safeNumberValue(pension.expected_return)
+    // Use a default value of 0 for current_value since it might not exist on the type
+    const currentValue = (pension as PensionWithCurrentValue).current_value ?? 0
+    
     setFormattedValues({
-      guaranteedInterest: formatPercent(pension.guaranteed_interest, {
-        locale: settings.number_locale,
-        decimals: 2
-      }).formatted,
-      expectedReturn: formatPercent(pension.expected_return, {
-        locale: settings.number_locale,
-        decimals: 2
-      }).formatted,
-      currentValue: formatCurrency(pension.current_value, {
+      guaranteedInterest: safeGuaranteedInterest !== undefined
+        ? formatPercent(safeGuaranteedInterest, {
+            locale: settings.number_locale,
+            decimals: 2
+          }).formatted
+        : "N/A",
+      expectedReturn: safeExpectedReturn !== undefined
+        ? formatPercent(safeExpectedReturn, {
+            locale: settings.number_locale,
+            decimals: 2
+          }).formatted
+        : "N/A",
+      currentValue: formatCurrency(currentValue, {
         locale: settings.number_locale,
         currency: settings.currency
       }).formatted
@@ -510,11 +525,19 @@ export function PensionList({ pensions, members = [], onDelete }: PensionListPro
     router.push(getPensionEditRoute(pension.type, pension.id))
   }
 
+  // Only show the no members message if we're sure there are no members
+  // This prevents flickering during loading
   if (!members || members.length === 0) {
     return (
       <Card className="p-6 text-center text-muted-foreground">
-        <p>No household members found.</p>
-        <p className="text-sm">Add your first household member before adding a pension.</p>
+        <p className="text-lg font-medium mb-2">No household members found.</p>
+        <p className="text-sm mb-4">Add your first household member before adding a pension.</p>
+        <Button 
+          variant="outline" 
+          onClick={() => router.push('/household')}
+        >
+          Go to Household Management
+        </Button>
       </Card>
     )
   }

@@ -1,12 +1,12 @@
 "use client"
 
 import { useForm } from "react-hook-form"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
-import { PensionType, CompanyPension } from "@/frontend/types/pension"
-import { usePension } from "@/frontend/context/PensionContext"
+import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/types/pension"
+import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { useEffect } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
@@ -18,15 +18,14 @@ import {
   ExplanationList,
   ExplanationListItem
 } from "@/frontend/components/ui/explanation"
-import { ContributionHistoryCard } from "@/frontend/components/pension/company/ContributionHistoryCard"
 import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
-import { LoadingState } from "@/frontend/components/shared/LoadingState"
-import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
-import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
-import { ContributionFrequency } from "@/frontend/types/pension"
 import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
 import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
 import { PensionStatementsCard } from "@/frontend/components/pension/company/PensionStatementsCard"
+import { ContributionHistoryCard } from "@/frontend/components/pension/company/ContributionHistoryCard"
+import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
+import { LoadingState } from "@/frontend/components/shared/LoadingState"
+import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { toISODateString } from "@/frontend/lib/dateUtils"
 
 interface EditCompanyPensionPageProps {
@@ -36,13 +35,9 @@ interface EditCompanyPensionPageProps {
 }
 
 export default function EditCompanyPensionPage({ params: serverParams }: EditCompanyPensionPageProps) {
-  const clientParams = useParams<{ id: string }>()
-  const id = clientParams?.id || serverParams.id
-  const pensionId = parseInt(id)
-  
   const router = useRouter()
   const { updateCompanyPensionWithStatement, updateCompanyPension, createCompanyPensionStatement } = usePension()
-  const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
+  const { data: pension, isLoading, error } = usePensionData<CompanyPension>(parseInt(serverParams.id), PensionType.COMPANY)
 
   const form = useForm<CompanyPensionFormData>({
     defaultValues: {
@@ -169,7 +164,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
       // First update the pension and existing statements
       if (existingStatements.length > 0) {
         await updateCompanyPensionWithStatement(
-          pensionId, 
+          parseInt(serverParams.id), 
           pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
           existingStatements as Array<{
             id: number;
@@ -186,13 +181,13 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
         )
       } else {
         // If no existing statements, just update the pension data
-        await updateCompanyPension(pensionId, pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
+        await updateCompanyPension(parseInt(serverParams.id), pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
       }
 
       // Then create any new statements
       for (const statement of newStatements) {
         await createCompanyPensionStatement(
-          pensionId,
+          parseInt(serverParams.id),
           {
             statement_date: statement.statement_date,
             value: statement.value,
@@ -308,7 +303,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
 
                 {/* Row 3: Pension Statements */}
                 <div className="md:col-span-8">
-                  <PensionStatementsCard form={form} pensionId={pensionId} />
+                  <PensionStatementsCard form={form} pensionId={parseInt(serverParams.id)} />
                 </div>
                 <div className="md:col-span-4">
                   <Explanation>

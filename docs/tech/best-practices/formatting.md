@@ -77,7 +77,7 @@ import { useDateFormat } from '@/frontend/hooks/useDateFormat'
 import { toDateObject, toISODateString, formatDisplayDate } from '@/frontend/lib/dateUtils'
 
 // 3. Number/Currency Formatting
-import { formatNumber, formatCurrency, formatPercent } from '@/frontend/lib/transforms'
+import { formatNumber, formatCurrency, formatPercent, formatNumberInput, safeNumberValue } from '@/frontend/lib/transforms'
 ```
 
 ### Core Decision Rules
@@ -86,6 +86,7 @@ import { formatNumber, formatCurrency, formatPercent } from '@/frontend/lib/tran
 3. **Server Components**: Pass raw values to client components
 4. **Data Processing**: Use `dateUtils.ts` functions
 5. **Number Formatting**: Use `transforms.ts` functions
+6. **Number Input Handling**: Use `formatNumberInput` and `parseNumber` for bidirectional conversion
 
 ## Core Components & Utilities
 
@@ -158,6 +159,10 @@ const rate = formatPercent(0.1234, {
   locale: 'de-DE',
   decimals: 1
 }).formatted // Returns "12,3%"
+
+// Number Input Formatting
+const inputValue = formatNumberInput(1234.56, 'de-DE') // Returns "1234,56"
+const parsedValue = parseNumber("1234,56", 'de-DE') // Returns 1234.56
 ```
 
 > **Note**: Currency symbol position defaults to locale-specific conventions. Only override `currencyPosition` if you need to deviate from the locale standard.
@@ -518,6 +523,40 @@ interface SafeDate {
 }
 ```
 
+### Utility Functions
+
+#### safeNumberValue
+```typescript
+function safeNumberValue(value: number | null | undefined): number | undefined
+```
+
+Safely handles potentially null/undefined number values, returning undefined if the value is null or undefined.
+
+**Example**
+```typescript
+// Returns undefined
+safeNumberValue(null)
+
+// Returns 123
+safeNumberValue(123)
+```
+
+#### formatNumberInput
+```typescript
+function formatNumberInput(value: number | null | undefined, locale: string): string
+```
+
+Formats a number for input fields with proper locale-specific decimal separators, returning an empty string if the value is null or undefined.
+
+**Example**
+```typescript
+// Returns "123,45" for German locale
+formatNumberInput(123.45, 'de-DE')
+
+// Returns "" for null input
+formatNumberInput(null, 'en-US')
+```
+
 ## Number Input Validation
 
 ### Validation Pattern
@@ -529,10 +568,30 @@ const isValidNumberFormat = (value: string): boolean => {
 };
 ```
 
+### Number Input Formatting
+```typescript
+// Format a number for input display with proper locale-specific decimal separator
+const formattedInput = formatNumberInput(value, settings.number_locale);
+
+// Parse a localized input string back to a number
+const parsedValue = parseNumber(inputString, settings.number_locale);
+```
+
+This bidirectional conversion ensures that:
+1. Numbers are displayed to users with the correct decimal separator for their locale
+2. User input is correctly parsed back to numeric values for processing
+3. Null/undefined values are handled gracefully
+
 ### Complete Input Example
 ```typescript
 const [amountInput, setAmountInput] = useState("");
-const decimalSeparator = getDecimalSeparator(settings.number_locale);
+const { settings } = useSettings();
+
+// Initialize input state when form data changes
+useEffect(() => {
+  const value = form.getValues("amount");
+  setAmountInput(formatNumberInput(value, settings.number_locale));
+}, [form, settings.number_locale]);
 
 // Handle input change
 const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -550,7 +609,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 const handleBlur = () => {
   const value = parseNumber(amountInput, settings.number_locale);
   if (value >= 0) {
-    setAmountInput(value.toString().replace('.', decimalSeparator));
+    setAmountInput(formatNumberInput(value, settings.number_locale));
     field.onChange(value);
   } else {
     setAmountInput("");

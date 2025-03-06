@@ -1,7 +1,7 @@
 "use client"
 
 import { HouseholdProvider } from '@/frontend/context/HouseholdContext'
-import { PensionProvider } from '@/frontend/context/PensionContext'
+import { PensionProvider } from '@/frontend/context/pension'
 import { ETFProvider } from '@/frontend/context/ETFContext'
 import { SettingsProvider } from '@/frontend/context/SettingsContext'
 import { Toaster } from 'sonner'

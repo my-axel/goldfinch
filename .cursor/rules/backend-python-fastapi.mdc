@@ -13,6 +13,7 @@ Python/FastAPI
 - For single-line statements in conditionals, omit curly braces.
 - Use the "Receive an Object, Return an Object" pattern.
 - Use concise, one-line syntax for simple conditional statements (e.g., if condition: do_something()).
+- ALWAYS autogenerate alembic migrations and then edit them if necessary, so the migration history stays intact.
 
 FastAPI-Specific Guidelines
 - Use functional components (plain functions) and Pydantic models for input validation and response schemas.

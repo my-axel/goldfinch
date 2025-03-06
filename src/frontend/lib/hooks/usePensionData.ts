@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PensionType } from '@/frontend/types/pension'
-import { usePension } from '@/frontend/context/PensionContext'
+import { usePension } from '@/frontend/context/pension'
 
 interface UsePensionDataResult<T> {
   data: T | null
