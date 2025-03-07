@@ -8,6 +8,7 @@ import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
+import { use } from "react"
 import { useEffect } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { 
@@ -29,15 +30,17 @@ import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/al
 import { toISODateString } from "@/frontend/lib/dateUtils"
 
 interface EditCompanyPensionPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
-export default function EditCompanyPensionPage({ params: serverParams }: EditCompanyPensionPageProps) {
+export default function EditCompanyPensionPage({ params }: EditCompanyPensionPageProps) {
   const router = useRouter()
   const { updateCompanyPensionWithStatement, updateCompanyPension, createCompanyPensionStatement } = usePension()
-  const { data: pension, isLoading, error } = usePensionData<CompanyPension>(parseInt(serverParams.id), PensionType.COMPANY)
+  const resolvedParams = use(params)
+  const pensionId = parseInt(resolvedParams.id)
+  const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
 
   const form = useForm<CompanyPensionFormData>({
     defaultValues: {
@@ -164,7 +167,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
       // First update the pension and existing statements
       if (existingStatements.length > 0) {
         await updateCompanyPensionWithStatement(
-          parseInt(serverParams.id), 
+          pensionId, 
           pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
           existingStatements as Array<{
             id: number;
@@ -181,13 +184,13 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
         )
       } else {
         // If no existing statements, just update the pension data
-        await updateCompanyPension(parseInt(serverParams.id), pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
+        await updateCompanyPension(pensionId, pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
       }
 
       // Then create any new statements
       for (const statement of newStatements) {
         await createCompanyPensionStatement(
-          parseInt(serverParams.id),
+          pensionId,
           {
             statement_date: statement.statement_date,
             value: statement.value,
@@ -303,7 +306,7 @@ export default function EditCompanyPensionPage({ params: serverParams }: EditCom
 
                 {/* Row 3: Pension Statements */}
                 <div className="md:col-span-8">
-                  <PensionStatementsCard form={form} pensionId={parseInt(serverParams.id)} />
+                  <PensionStatementsCard form={form} pensionId={pensionId} />
                 </div>
                 <div className="md:col-span-4">
                   <Explanation>
