@@ -67,7 +67,11 @@ import { createEtfPensionOperation, updateEtfPensionOperation } from './etfOpera
 import { 
   createInsurancePensionOperation, 
   updateInsurancePensionOperation,
-  deleteInsurancePensionStatementOperation
+  deleteInsurancePensionStatementOperation,
+  createInsurancePensionWithStatementOperation,
+  createInsurancePensionStatementOperation,
+  updateInsurancePensionStatementOperation,
+  updateInsurancePensionWithStatementOperation
 } from './insuranceOperations'
 import { 
   createCompanyPensionOperation, 
@@ -265,6 +269,21 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     [post, fetchPensions]
   )
 
+  const createInsurancePensionStatement = useMemo(
+    () => createInsurancePensionStatementOperation(
+      post as <T>(url: string, data: unknown) => Promise<T>
+    ),
+    [post]
+  )
+
+  const createInsurancePensionWithStatement = useMemo(
+    () => createInsurancePensionWithStatementOperation(
+      createInsurancePension,
+      createInsurancePensionStatement
+    ),
+    [createInsurancePension, createInsurancePensionStatement]
+  )
+
   const updateInsurancePension = useMemo(
     () => updateInsurancePensionOperation(
       put as <T>(url: string, data: unknown) => Promise<T>,
@@ -282,6 +301,25 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
       selectedPension
     ),
     [del, fetchPension, selectedPension]
+  )
+
+  const updateInsurancePensionStatement = useMemo(
+    () => updateInsurancePensionStatementOperation(
+      put as <T>(url: string, data: unknown) => Promise<T>,
+      fetchPension,
+      selectedPension
+    ),
+    [put, fetchPension, selectedPension]
+  )
+
+  const updateInsurancePensionWithStatement = useMemo(
+    () => updateInsurancePensionWithStatementOperation(
+      updateInsurancePension,
+      updateInsurancePensionStatement,
+      fetchPension,
+      selectedPension
+    ),
+    [updateInsurancePension, updateInsurancePensionStatement, fetchPension, selectedPension]
   )
 
   // Company operations
@@ -400,6 +438,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         fetchPension,
         createEtfPension,
         createInsurancePension,
+        createInsurancePensionWithStatement,
         createCompanyPension,
         createCompanyPensionWithStatement,
         updateEtfPension,
@@ -422,6 +461,8 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         createCompanyPensionStatement,
         deleteCompanyPensionStatement,
         deleteInsurancePensionStatement,
+        updateInsurancePensionWithStatement,
+        updateInsurancePensionStatement,
       }}
     >
       {children}

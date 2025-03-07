@@ -9,7 +9,7 @@ import { ContributionFrequency } from "@/frontend/types/pension"
 import { Input } from "@/frontend/components/ui/input"
 import { useState, useEffect } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, getDecimalSeparator } from "@/frontend/lib/transforms"
+import { parseNumber, formatNumberInput, getDecimalSeparator } from "@/frontend/lib/transforms"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { EnumSelect } from "@/frontend/components/ui/enum-select"
 import { DateEndPicker } from "@/frontend/components/ui/date-end-picker"
@@ -129,7 +129,7 @@ export function ContributionDetailsCard({ form }: ContributionDetailsCardProps) 
                               const value = parseNumber(contributionInputs[index] || "", settings.number_locale)
                               if (value >= 0) {
                                 const newInputs = [...contributionInputs]
-                                newInputs[index] = value.toString().replace('.', decimalSeparator)
+                                newInputs[index] = formatNumberInput(value, settings.number_locale)
                                 setContributionInputs(newInputs)
                                 field.onChange(value)
                               } else {

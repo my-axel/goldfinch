@@ -9,7 +9,7 @@ import { Input } from "@/frontend/components/ui/input"
 import { useState, useEffect } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { usePension } from "@/frontend/context/pension"
-import { parseNumber, formatPercent, formatNumberInput } from "@/frontend/lib/transforms"
+import { parseNumber, formatNumberInput, getDecimalSeparator } from "@/frontend/lib/transforms"
 import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/dialogs/PauseConfirmationDialog"
 import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
 import { InsurancePension } from "@/frontend/types/pension"
@@ -62,13 +62,15 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
     }
 
     // Only update form if value is valid
-    if (newValue === "" || newValue === "-") {
-      form.setValue(field, undefined)
+    if (newValue === "") {
+      form.setValue(field, 0)
       return
     }
 
     const parsedValue = parseNumber(newValue, settings.number_locale)
-    form.setValue(field, parsedValue)
+    if (parsedValue >= 0) {
+      form.setValue(field, parsedValue)
+    }
   }
 
   const handlePauseConfirm = async (pauseDate: Date) => {
@@ -201,18 +203,21 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
                 <FormLabel>Guaranteed Interest Rate (%) (Optional)</FormLabel>
                 <FormControl>
                   <Input
+                    type="text"
+                    inputMode="decimal"
                     value={guaranteedInterestInput}
                     onChange={(e) => handleNumberInput(e.target.value, "guaranteed_interest")}
                     onBlur={() => {
                       const value = parseNumber(guaranteedInterestInput, settings.number_locale)
                       if (!isNaN(value)) {
-                        setGuaranteedInterestInput(formatPercent(value / 100, {
-                          locale: settings.number_locale,
-                          decimals: 2
-                        }).formatted.replace('%', ''))
+                        setGuaranteedInterestInput(formatNumberInput(value, settings.number_locale))
+                        form.setValue("guaranteed_interest", value)
+                      } else {
+                        setGuaranteedInterestInput("")
+                        form.setValue("guaranteed_interest", 0)
                       }
                     }}
-                    placeholder="e.g., 2.5"
+                    placeholder={`0${getDecimalSeparator(settings.number_locale)}00`}
                   />
                 </FormControl>
                 <FormMessage />
@@ -227,18 +232,21 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
                 <FormLabel>Expected Return Rate (%) (Optional)</FormLabel>
                 <FormControl>
                   <Input
+                    type="text"
+                    inputMode="decimal"
                     value={expectedReturnInput}
                     onChange={(e) => handleNumberInput(e.target.value, "expected_return")}
                     onBlur={() => {
                       const value = parseNumber(expectedReturnInput, settings.number_locale)
                       if (!isNaN(value)) {
-                        setExpectedReturnInput(formatPercent(value / 100, {
-                          locale: settings.number_locale,
-                          decimals: 2
-                        }).formatted.replace('%', ''))
+                        setExpectedReturnInput(formatNumberInput(value, settings.number_locale))
+                        form.setValue("expected_return", value)
+                      } else {
+                        setExpectedReturnInput("")
+                        form.setValue("expected_return", 0)
                       }
                     }}
-                    placeholder="e.g., 4.0"
+                    placeholder={`0${getDecimalSeparator(settings.number_locale)}00`}
                   />
                 </FormControl>
                 <FormMessage />

@@ -8,7 +8,7 @@ import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { Input } from "@/frontend/components/ui/input"
 import { useState, useEffect } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, getDecimalSeparator, formatCurrency, formatPercent, getCurrencySymbol } from "@/frontend/lib/transforms"
+import { parseNumber, getDecimalSeparator, getCurrencySymbol, formatNumberInput } from "@/frontend/lib/transforms"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
@@ -47,6 +47,8 @@ type FormPath = `statements.${number}.value`
   | `statements.${number}.projections.${number}.monthly_payout`
   | `statements.${number}.projections.${number}.scenario_type`
 
+type InputField = 'value' | 'total_contributions' | 'total_benefits' | 'costs_amount' | 'costs_percentage' | 'return_rate' | 'value_at_retirement' | 'monthly_payout'
+
 export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   const { fields: statementFields, append: appendStatement, remove: removeStatement } = useFieldArray({
     control: form.control,
@@ -57,8 +59,13 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   const { deleteInsurancePensionStatement } = usePension()
   const { formatDate } = useDateFormat()
   
-  // State for form inputs
-  const [statementInputs, setStatementInputs] = useState<{[key: string]: string}>({})
+  // Split state into separate concerns
+  const [statementValueInputs, setStatementValueInputs] = useState<string[]>([])
+  const [contributionInputs, setContributionInputs] = useState<string[]>([])
+  const [benefitsInputs, setBenefitsInputs] = useState<string[]>([])
+  const [costsAmountInputs, setCostsAmountInputs] = useState<string[]>([])
+  const [costsPercentageInputs, setCostsPercentageInputs] = useState<string[]>([])
+  const [projectionInputs, setProjectionInputs] = useState<{[key: string]: string}>({})
   const [expandedStatements, setExpandedStatements] = useState<{[key: number]: boolean}>({})
   const [formattedDates, setFormattedDates] = useState<{[key: number]: string}>({})
   const [statementToDelete, setStatementToDelete] = useState<{ index: number, date: string } | null>(null)
@@ -70,34 +77,40 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   useEffect(() => {
     const statements = form.getValues("statements")
     if (statements) {
-      const newStatementInputs: {[key: string]: string} = {}
-      const newFormattedDates: {[key: number]: string} = {}
+      // Initialize main statement inputs
+      const newStatementValues = statements.map(s => s.value?.toString().replace('.', decimalSeparator) || "")
+      const newContributions = statements.map(s => s.total_contributions?.toString().replace('.', decimalSeparator) || "")
+      const newBenefits = statements.map(s => s.total_benefits?.toString().replace('.', decimalSeparator) || "")
+      const newCostsAmount = statements.map(s => s.costs_amount?.toString().replace('.', decimalSeparator) || "")
+      const newCostsPercentage = statements.map(s => s.costs_percentage?.toString().replace('.', decimalSeparator) || "")
+      
+      setStatementValueInputs(newStatementValues)
+      setContributionInputs(newContributions)
+      setBenefitsInputs(newBenefits)
+      setCostsAmountInputs(newCostsAmount)
+      setCostsPercentageInputs(newCostsPercentage)
 
-      statements.forEach((statement, index) => {
-        // Initialize all numeric inputs
-        newStatementInputs[`${index}.value`] = statement.value?.toString().replace('.', decimalSeparator) || ""
-        newStatementInputs[`${index}.total_contributions`] = statement.total_contributions?.toString().replace('.', decimalSeparator) || ""
-        newStatementInputs[`${index}.total_benefits`] = statement.total_benefits?.toString().replace('.', decimalSeparator) || ""
-        newStatementInputs[`${index}.costs_amount`] = statement.costs_amount?.toString().replace('.', decimalSeparator) || ""
-        newStatementInputs[`${index}.costs_percentage`] = statement.costs_percentage?.toString().replace('.', decimalSeparator) || ""
-        
-        // Format dates
-        if (statement.statement_date) {
-          newFormattedDates[index] = formatDate(statement.statement_date)
-        }
-
-        // Initialize projections
+      // Initialize projection inputs
+      const newProjectionInputs: {[key: string]: string} = {}
+      statements.forEach((statement, statementIndex) => {
         statement.projections?.forEach((projection, projIndex) => {
-          newStatementInputs[`${index}.projections.${projIndex}.return_rate`] = 
+          newProjectionInputs[`${statementIndex}.${projIndex}.return_rate`] = 
             projection.return_rate?.toString().replace('.', decimalSeparator) || ""
-          newStatementInputs[`${index}.projections.${projIndex}.value_at_retirement`] = 
+          newProjectionInputs[`${statementIndex}.${projIndex}.value_at_retirement`] = 
             projection.value_at_retirement?.toString().replace('.', decimalSeparator) || ""
-          newStatementInputs[`${index}.projections.${projIndex}.monthly_payout`] = 
+          newProjectionInputs[`${statementIndex}.${projIndex}.monthly_payout`] = 
             projection.monthly_payout?.toString().replace('.', decimalSeparator) || ""
         })
       })
+      setProjectionInputs(newProjectionInputs)
 
-      setStatementInputs(newStatementInputs)
+      // Initialize dates
+      const newFormattedDates: {[key: number]: string} = {}
+      statements.forEach((statement, index) => {
+        if (statement.statement_date) {
+          newFormattedDates[index] = formatDate(statement.statement_date)
+        }
+      })
       setFormattedDates(newFormattedDates)
     }
   }, [form, decimalSeparator, formatDate])
@@ -116,21 +129,105 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       projections: []
     })
     
+    // Initialize with empty strings
+    setStatementValueInputs(prev => [...prev, ""])
+    setContributionInputs(prev => [...prev, ""])
+    setBenefitsInputs(prev => [...prev, ""])
+    setCostsAmountInputs(prev => [...prev, ""])
+    setCostsPercentageInputs(prev => [...prev, ""])
+    
     const newStatementIndex = statementFields.length
     setFormattedDates(prev => ({
       ...prev,
       [newStatementIndex]: formatDate(statementDate)
     }))
+  }
 
-    // Initialize inputs for the new statement
-    setStatementInputs(prev => ({
-      ...prev,
-      [`${newStatementIndex}.value`]: "0",
-      [`${newStatementIndex}.total_contributions`]: "0",
-      [`${newStatementIndex}.total_benefits`]: "0",
-      [`${newStatementIndex}.costs_amount`]: "0",
-      [`${newStatementIndex}.costs_percentage`]: "0"
-    }))
+  const isValidNumberFormat = (value: string): boolean => {
+    if (!value) return true
+    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
+    return regex.test(value)
+  }
+
+  // Updated input handlers for each type of input
+  const handleStatementValueInput = (index: number, value: string) => {
+    if (isValidNumberFormat(value)) {
+      const newInputs = [...statementValueInputs]
+      newInputs[index] = value
+      setStatementValueInputs(newInputs)
+      
+      const parsedValue = parseNumber(value, settings.number_locale)
+      if (parsedValue >= 0) {
+        form.setValue(`statements.${index}.value`, parsedValue)
+      }
+    }
+  }
+
+  const handleContributionInput = (index: number, value: string) => {
+    if (isValidNumberFormat(value)) {
+      const newInputs = [...contributionInputs]
+      newInputs[index] = value
+      setContributionInputs(newInputs)
+      
+      const parsedValue = parseNumber(value, settings.number_locale)
+      if (parsedValue >= 0) {
+        form.setValue(`statements.${index}.total_contributions`, parsedValue)
+      }
+    }
+  }
+
+  const handleBenefitsInput = (index: number, value: string) => {
+    if (isValidNumberFormat(value)) {
+      const newInputs = [...benefitsInputs]
+      newInputs[index] = value
+      setBenefitsInputs(newInputs)
+      
+      const parsedValue = parseNumber(value, settings.number_locale)
+      if (parsedValue >= 0) {
+        form.setValue(`statements.${index}.total_benefits`, parsedValue)
+      }
+    }
+  }
+
+  const handleCostsAmountInput = (index: number, value: string) => {
+    if (isValidNumberFormat(value)) {
+      const newInputs = [...costsAmountInputs]
+      newInputs[index] = value
+      setCostsAmountInputs(newInputs)
+      
+      const parsedValue = parseNumber(value, settings.number_locale)
+      if (parsedValue >= 0) {
+        form.setValue(`statements.${index}.costs_amount`, parsedValue)
+      }
+    }
+  }
+
+  const handleCostsPercentageInput = (index: number, value: string) => {
+    if (isValidNumberFormat(value)) {
+      const newInputs = [...costsPercentageInputs]
+      newInputs[index] = value
+      setCostsPercentageInputs(newInputs)
+      
+      const parsedValue = parseNumber(value, settings.number_locale)
+      if (parsedValue >= 0) {
+        form.setValue(`statements.${index}.costs_percentage`, parsedValue)
+      }
+    }
+  }
+
+  const handleProjectionInput = (statementIndex: number, projectionIndex: number, field: InputField, value: string) => {
+    if (isValidNumberFormat(value)) {
+      setProjectionInputs(prev => ({
+        ...prev,
+        [`${statementIndex}.${projectionIndex}.${field}`]: value
+      }))
+      
+      const parsedValue = parseNumber(value, settings.number_locale)
+      if (parsedValue >= 0) {
+        const path = `statements.${statementIndex}.projections.${projectionIndex}.${field}` as FormPath
+        form.setValue(path, parsedValue)
+      }
+    }
   }
 
   const handleAddProjection = (statementIndex: number) => {
@@ -148,11 +245,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     form.setValue(`statements.${statementIndex}.projections`, [...currentProjections, newProjection])
 
     const projectionIndex = currentProjections.length
-    setStatementInputs(prev => ({
+    // Initialize projection inputs with empty strings
+    setProjectionInputs(prev => ({
       ...prev,
-      [`${statementIndex}.projections.${projectionIndex}.return_rate`]: "0",
-      [`${statementIndex}.projections.${projectionIndex}.value_at_retirement`]: "0",
-      [`${statementIndex}.projections.${projectionIndex}.monthly_payout`]: "0"
+      [`${statementIndex}.${projectionIndex}.return_rate`]: "",
+      [`${statementIndex}.${projectionIndex}.value_at_retirement`]: "",
+      [`${statementIndex}.${projectionIndex}.monthly_payout`]: ""
     }))
   }
 
@@ -166,29 +264,11 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     form.setValue(`statements.${statementIndex}.projections`, currentProjections)
 
     // Clean up inputs
-    const newInputs = { ...statementInputs }
-    delete newInputs[`${statementIndex}.projections.${projectionIndex}.return_rate`]
-    delete newInputs[`${statementIndex}.projections.${projectionIndex}.value_at_retirement`]
-    delete newInputs[`${statementIndex}.projections.${projectionIndex}.monthly_payout`]
-    setStatementInputs(newInputs)
-  }
-
-  const handleNumberInput = (value: string, path: FormPath) => {
-    const newValue = value.trim()
-    setStatementInputs(prev => ({
-      ...prev,
-      [path]: newValue
-    }))
-
-    if (newValue === "") {
-      form.setValue(path, 0)
-      return
-    }
-
-    const parsedValue = parseNumber(newValue, settings.number_locale)
-    if (!isNaN(parsedValue) && parsedValue >= 0) {
-      form.setValue(path, parsedValue)
-    }
+    const newInputs = { ...projectionInputs }
+    delete newInputs[`${statementIndex}.${projectionIndex}.return_rate`]
+    delete newInputs[`${statementIndex}.${projectionIndex}.value_at_retirement`]
+    delete newInputs[`${statementIndex}.${projectionIndex}.monthly_payout`]
+    setProjectionInputs(newInputs)
   }
 
   const toggleStatement = (index: number) => {
@@ -220,6 +300,69 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     setStatementToDelete({ index, date })
   }
 
+  const renderInput = (index: number, field: InputField, value: string, onChange: (value: string) => void) => (
+    <FormControl>
+      <Input
+        type="text"
+        inputMode="decimal"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => {
+          const parsedValue = parseNumber(value ?? "", settings.number_locale)
+          if (parsedValue >= 0) {
+            const formattedValue = formatNumberInput(parsedValue, settings.number_locale)
+            switch (field) {
+              case 'value':
+                setStatementValueInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                break
+              case 'total_contributions':
+                setContributionInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                break
+              case 'total_benefits':
+                setBenefitsInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                break
+              case 'costs_amount':
+                setCostsAmountInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                break
+              case 'costs_percentage':
+                setCostsPercentageInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                break
+              default:
+                // For projection fields
+                setProjectionInputs(prev => ({
+                  ...prev,
+                  [`${index}.${field}`]: formattedValue
+                }))
+            }
+          } else {
+            // Reset to empty string if invalid
+            onChange("")
+          }
+        }}
+      />
+    </FormControl>
+  )
+
   const renderStatementForm = (index: number, isLatest: boolean = false) => (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -244,23 +387,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
             <FormItem>
               <FormLabel>Value ({currencySymbol})</FormLabel>
               <FormControl>
-                <Input
-                  value={statementInputs[`${index}.value`] || ""}
-                  onChange={(e) => handleNumberInput(e.target.value, `statements.${index}.value`)}
-                  onBlur={() => {
-                    const value = parseNumber(statementInputs[`${index}.value`] || "", settings.number_locale)
-                    if (!isNaN(value)) {
-                      setStatementInputs(prev => ({
-                        ...prev,
-                        [`${index}.value`]: formatCurrency(value, {
-                          locale: settings.number_locale,
-                          currency: settings.currency
-                        }).formatted.replace(settings.currency, '').trim()
-                      }))
-                    }
-                  }}
-                  placeholder={`0${decimalSeparator}00`}
-                />
+                {renderInput(
+                  index,
+                  'value',
+                  statementValueInputs[index] || "",
+                  (value) => handleStatementValueInput(index, value)
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -276,23 +408,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
             <FormItem>
               <FormLabel>Total Contributions ({currencySymbol})</FormLabel>
               <FormControl>
-                <Input
-                  value={statementInputs[`${index}.total_contributions`] || ""}
-                  onChange={(e) => handleNumberInput(e.target.value, `statements.${index}.total_contributions`)}
-                  onBlur={() => {
-                    const value = parseNumber(statementInputs[`${index}.total_contributions`] || "", settings.number_locale)
-                    if (!isNaN(value)) {
-                      setStatementInputs(prev => ({
-                        ...prev,
-                        [`${index}.total_contributions`]: formatCurrency(value, {
-                          locale: settings.number_locale,
-                          currency: settings.currency
-                        }).formatted.replace(settings.currency, '').trim()
-                      }))
-                    }
-                  }}
-                  placeholder={`0${decimalSeparator}00`}
-                />
+                {renderInput(
+                  index,
+                  'total_contributions',
+                  contributionInputs[index] || "",
+                  (value) => handleContributionInput(index, value)
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -306,23 +427,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
             <FormItem>
               <FormLabel>Total Benefits ({currencySymbol})</FormLabel>
               <FormControl>
-                <Input
-                  value={statementInputs[`${index}.total_benefits`] || ""}
-                  onChange={(e) => handleNumberInput(e.target.value, `statements.${index}.total_benefits`)}
-                  onBlur={() => {
-                    const value = parseNumber(statementInputs[`${index}.total_benefits`] || "", settings.number_locale)
-                    if (!isNaN(value)) {
-                      setStatementInputs(prev => ({
-                        ...prev,
-                        [`${index}.total_benefits`]: formatCurrency(value, {
-                          locale: settings.number_locale,
-                          currency: settings.currency
-                        }).formatted.replace(settings.currency, '').trim()
-                      }))
-                    }
-                  }}
-                  placeholder={`0${decimalSeparator}00`}
-                />
+                {renderInput(
+                  index,
+                  'total_benefits',
+                  benefitsInputs[index] || "",
+                  (value) => handleBenefitsInput(index, value)
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -338,23 +448,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
             <FormItem>
               <FormLabel>Costs Amount ({currencySymbol})</FormLabel>
               <FormControl>
-                <Input
-                  value={statementInputs[`${index}.costs_amount`] || ""}
-                  onChange={(e) => handleNumberInput(e.target.value, `statements.${index}.costs_amount`)}
-                  onBlur={() => {
-                    const value = parseNumber(statementInputs[`${index}.costs_amount`] || "", settings.number_locale)
-                    if (!isNaN(value)) {
-                      setStatementInputs(prev => ({
-                        ...prev,
-                        [`${index}.costs_amount`]: formatCurrency(value, {
-                          locale: settings.number_locale,
-                          currency: settings.currency
-                        }).formatted.replace(settings.currency, '').trim()
-                      }))
-                    }
-                  }}
-                  placeholder={`0${decimalSeparator}00`}
-                />
+                {renderInput(
+                  index,
+                  'costs_amount',
+                  costsAmountInputs[index] || "",
+                  (value) => handleCostsAmountInput(index, value)
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -368,23 +467,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
             <FormItem>
               <FormLabel>Costs Percentage (%)</FormLabel>
               <FormControl>
-                <Input
-                  value={statementInputs[`${index}.costs_percentage`] || ""}
-                  onChange={(e) => handleNumberInput(e.target.value, `statements.${index}.costs_percentage`)}
-                  onBlur={() => {
-                    const value = parseNumber(statementInputs[`${index}.costs_percentage`] || "", settings.number_locale)
-                    if (!isNaN(value)) {
-                      setStatementInputs(prev => ({
-                        ...prev,
-                        [`${index}.costs_percentage`]: formatPercent(value / 100, {
-                          locale: settings.number_locale,
-                          decimals: 2
-                        }).formatted.replace('%', '')
-                      }))
-                    }
-                  }}
-                  placeholder={`0${decimalSeparator}00`}
-                />
+                {renderInput(
+                  index,
+                  'costs_percentage',
+                  costsPercentageInputs[index] || "",
+                  (value) => handleCostsPercentageInput(index, value)
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -430,7 +518,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                 render={({ field }) => (
                   <FormItem className="space-y-0">
                     <Select
-                      value={field.value.toString()}
+                      value={field.value?.toString() || 'with_contributions'}
                       onValueChange={(value) => field.onChange(value as 'with_contributions' | 'without_contributions')}
                     >
                       <FormControl>
@@ -454,29 +542,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                 render={() => (
                   <FormItem className="space-y-0">
                     <FormControl>
-                      <Input
-                        value={statementInputs[`${index}.projections.${projectionIndex}.return_rate`] || ""}
-                        onChange={(e) => handleNumberInput(
-                          e.target.value,
-                          `statements.${index}.projections.${projectionIndex}.return_rate`
-                        )}
-                        onBlur={() => {
-                          const value = parseNumber(
-                            statementInputs[`${index}.projections.${projectionIndex}.return_rate`] || "",
-                            settings.number_locale
-                          )
-                          if (!isNaN(value)) {
-                            setStatementInputs(prev => ({
-                              ...prev,
-                              [`${index}.projections.${projectionIndex}.return_rate`]: formatPercent(value / 100, {
-                                locale: settings.number_locale,
-                                decimals: 2
-                              }).formatted.replace('%', '')
-                            }))
-                          }
-                        }}
-                        placeholder={`0${decimalSeparator}00`}
-                      />
+                      {renderInput(
+                        index,
+                        'return_rate',
+                        projectionInputs[`${index}.${projectionIndex}.return_rate`] || "",
+                        (value) => handleProjectionInput(index, projectionIndex, 'return_rate', value)
+                      )}
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -489,29 +560,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                 render={() => (
                   <FormItem className="space-y-0">
                     <FormControl>
-                      <Input
-                        value={statementInputs[`${index}.projections.${projectionIndex}.value_at_retirement`] || ""}
-                        onChange={(e) => handleNumberInput(
-                          e.target.value,
-                          `statements.${index}.projections.${projectionIndex}.value_at_retirement`
-                        )}
-                        onBlur={() => {
-                          const value = parseNumber(
-                            statementInputs[`${index}.projections.${projectionIndex}.value_at_retirement`] || "",
-                            settings.number_locale
-                          )
-                          if (!isNaN(value)) {
-                            setStatementInputs(prev => ({
-                              ...prev,
-                              [`${index}.projections.${projectionIndex}.value_at_retirement`]: formatCurrency(value, {
-                                locale: settings.number_locale,
-                                currency: settings.currency
-                              }).formatted.replace(settings.currency, '').trim()
-                            }))
-                          }
-                        }}
-                        placeholder={`0${decimalSeparator}00`}
-                      />
+                      {renderInput(
+                        index,
+                        'value_at_retirement',
+                        projectionInputs[`${index}.${projectionIndex}.value_at_retirement`] || "",
+                        (value) => handleProjectionInput(index, projectionIndex, 'value_at_retirement', value)
+                      )}
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -524,29 +578,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                 render={() => (
                   <FormItem className="space-y-0">
                     <FormControl>
-                      <Input
-                        value={statementInputs[`${index}.projections.${projectionIndex}.monthly_payout`] || ""}
-                        onChange={(e) => handleNumberInput(
-                          e.target.value,
-                          `statements.${index}.projections.${projectionIndex}.monthly_payout`
-                        )}
-                        onBlur={() => {
-                          const value = parseNumber(
-                            statementInputs[`${index}.projections.${projectionIndex}.monthly_payout`] || "",
-                            settings.number_locale
-                          )
-                          if (!isNaN(value)) {
-                            setStatementInputs(prev => ({
-                              ...prev,
-                              [`${index}.projections.${projectionIndex}.monthly_payout`]: formatCurrency(value, {
-                                locale: settings.number_locale,
-                                currency: settings.currency
-                              }).formatted.replace(settings.currency, '').trim()
-                            }))
-                          }
-                        }}
-                        placeholder={`0${decimalSeparator}00`}
-                      />
+                      {renderInput(
+                        index,
+                        'monthly_payout',
+                        projectionInputs[`${index}.${projectionIndex}.monthly_payout`] || "",
+                        (value) => handleProjectionInput(index, projectionIndex, 'monthly_payout', value)
+                      )}
                     </FormControl>
                     <FormMessage />
                   </FormItem>

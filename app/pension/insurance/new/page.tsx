@@ -18,6 +18,7 @@ import { ContributionDetailsExplanation } from "@/frontend/components/pension/in
 import { StatementsExplanation } from "@/frontend/components/pension/insurance/explanations/StatementsExplanation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { insurancePensionSchema } from "@/frontend/lib/validations/pension"
+import { toISODateString } from "@/frontend/lib/dateUtils"
 
 const defaultValues: InsurancePensionFormData = {
   type: PensionType.INSURANCE,
@@ -36,7 +37,7 @@ const defaultValues: InsurancePensionFormData = {
 export default function AddInsurancePensionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { createInsurancePension } = usePension()
+  const { createInsurancePensionWithStatement } = usePension()
   
   const memberId = searchParams?.get('member_id') || ""
 
@@ -50,20 +51,33 @@ export default function AddInsurancePensionPage() {
 
   const onSubmit = async (data: InsurancePensionFormData) => {
     try {
-      await createInsurancePension({
-        type: PensionType.INSURANCE,
-        name: data.name,
-        member_id: data.member_id,
-        notes: data.notes,
-        provider: data.provider,
-        contract_number: data.contract_number,
-        start_date: data.start_date,
-        guaranteed_interest: data.guaranteed_interest,
-        expected_return: data.expected_return,
-        contribution_plan_steps: data.contribution_plan_steps,
-        status: "ACTIVE",
-        statements: data.statements
-      } as unknown as Omit<InsurancePension, 'id' | 'current_value'>)
+      const { statements, ...pensionData } = data
+      
+      await createInsurancePensionWithStatement(
+        {
+          type: PensionType.INSURANCE,
+          name: pensionData.name,
+          member_id: pensionData.member_id,
+          notes: pensionData.notes,
+          provider: pensionData.provider,
+          contract_number: pensionData.contract_number,
+          start_date: pensionData.start_date,
+          guaranteed_interest: pensionData.guaranteed_interest,
+          expected_return: pensionData.expected_return,
+          contribution_plan_steps: pensionData.contribution_plan_steps,
+          status: "ACTIVE"
+        } as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
+        statements.map(statement => ({
+          statement_date: toISODateString(statement.statement_date),
+          value: statement.value,
+          total_contributions: statement.total_contributions,
+          total_benefits: statement.total_benefits,
+          costs_amount: statement.costs_amount,
+          costs_percentage: statement.costs_percentage,
+          note: statement.note,
+          projections: statement.projections
+        }))
+      )
 
       toast.success('Success', {
         description: 'Insurance pension created successfully'

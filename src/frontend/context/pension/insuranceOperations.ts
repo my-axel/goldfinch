@@ -9,6 +9,7 @@
  * ----------
  * - createInsurancePensionOperation: Creates a new Insurance pension
  * - updateInsurancePensionOperation: Updates an existing Insurance pension
+ * - createInsurancePensionWithStatementOperation: Creates an Insurance pension with statements
  * - deleteInsurancePensionStatementOperation: Deletes a statement from an Insurance pension
  * 
  * How to Add a New Insurance Operation:
@@ -41,7 +42,7 @@ export function createInsurancePensionOperation(
   post: ApiPost,
   fetchPensions: () => Promise<void>
 ) {
-  return async (pension: Omit<InsurancePension, 'id' | 'current_value'>): Promise<void> => {
+  return async (pension: Omit<InsurancePension, 'id' | 'current_value'>): Promise<InsurancePension> => {
     try {
       const pensionData = {
         ...pension,
@@ -54,31 +55,176 @@ export function createInsurancePensionOperation(
           frequency: step.frequency,
           start_date: toISODateString(step.start_date),
           end_date: step.end_date ? toISODateString(step.end_date) : null
-        })),
-        statements: pension.statements?.map(statement => ({
-          statement_date: toISODateString(statement.statement_date),
-          value: Number(statement.value),
-          total_contributions: Number(statement.total_contributions),
-          total_benefits: Number(statement.total_benefits),
-          costs_amount: Number(statement.costs_amount),
-          costs_percentage: Number(statement.costs_percentage),
-          note: statement.note,
-          projections: statement.projections?.map(projection => ({
-            scenario_type: projection.scenario_type,
-            return_rate: Number(projection.return_rate),
-            value_at_retirement: Number(projection.value_at_retirement),
-            monthly_payout: Number(projection.monthly_payout)
-          })) || []
-        })) || []
+        }))
       }
       
-      await post<InsurancePension>(getPensionApiRoute(PensionType.INSURANCE), pensionData)
+      const response = await post<InsurancePension>(getPensionApiRoute(PensionType.INSURANCE), pensionData)
       await fetchPensions()
+      return response
     } catch (err) {
       toast.error('Error', {
         description: 'Failed to create insurance pension'
       })
       throw err
+    }
+  }
+}
+
+/**
+ * Creates a new statement for an Insurance pension
+ */
+export function createInsurancePensionStatementOperation(
+  post: ApiPost
+) {
+  return async (
+    pensionId: number,
+    data: {
+      statement_date: string,
+      value: number,
+      total_contributions: number,
+      total_benefits: number,
+      costs_amount: number,
+      costs_percentage: number,
+      note?: string,
+      projections?: Array<{
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+      }>
+    }
+  ): Promise<void> => {
+    try {
+      await post(
+        `${getPensionApiRoute(PensionType.INSURANCE)}/${pensionId}/statements`,
+        data
+      )
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to create insurance pension statement'
+      })
+      throw err
+    }
+  }
+}
+
+/**
+ * Updates a statement for an Insurance pension
+ * 
+ * @param put - The API put function
+ * @param fetchPension - Function to fetch a specific pension
+ * @param selectedPension - The currently selected pension
+ * @returns A function that updates an Insurance pension statement
+ */
+export function updateInsurancePensionStatementOperation(
+  put: ApiPut,
+  fetchPension: (id: number) => Promise<void>,
+  selectedPension: Pension | null
+) {
+  return async (
+    pensionId: number,
+    statementId: number,
+    data: {
+      statement_date: string,
+      value: number,
+      total_contributions: number,
+      total_benefits: number,
+      costs_amount: number,
+      costs_percentage: number,
+      note?: string,
+      projections?: Array<{
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+      }>
+    }
+  ): Promise<void> => {
+    try {
+      await put(
+        `${getPensionApiRoute(PensionType.INSURANCE)}/${pensionId}/statements/${statementId}`,
+        {
+          ...data,
+          statement_date: toISODateString(data.statement_date)
+        }
+      )
+      
+      // Refresh the pension data
+      if (selectedPension?.id === pensionId) {
+        await fetchPension(pensionId)
+      }
+      
+      toast.success('Success', {
+        description: 'Statement has been updated'
+      })
+    } catch (error: unknown) {
+      toast.error('Error', {
+        description: 'Failed to update statement'
+      })
+      throw error
+    }
+  }
+}
+
+/**
+ * Creates an Insurance pension with statements
+ */
+export function createInsurancePensionWithStatementOperation(
+  createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<InsurancePension>,
+  createInsurancePensionStatement: (
+    pensionId: number,
+    data: {
+      statement_date: string,
+      value: number,
+      total_contributions: number,
+      total_benefits: number,
+      costs_amount: number,
+      costs_percentage: number,
+      note?: string,
+      projections?: Array<{
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+      }>
+    }
+  ) => Promise<void>
+) {
+  return async (
+    pension: Omit<InsurancePension, 'id' | 'current_value'>,
+    statements: Array<{
+      statement_date: string,
+      value: number,
+      total_contributions: number,
+      total_benefits: number,
+      costs_amount: number,
+      costs_percentage: number,
+      note?: string,
+      projections?: Array<{
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+      }>
+    }>
+  ): Promise<void> => {
+    try {
+      // First create the pension
+      const newPension = await createInsurancePension(pension)
+      
+      // Then create each statement
+      for (const statement of statements) {
+        await createInsurancePensionStatement(newPension.id, statement)
+      }
+      
+      toast.success('Success', {
+        description: 'Insurance pension with statements created successfully'
+      })
+    } catch (error: unknown) {
+      toast.error('Error', {
+        description: 'Failed to create insurance pension with statements'
+      })
+      throw error
     }
   }
 }
@@ -142,6 +288,97 @@ export function updateInsurancePensionOperation(
         description: 'Failed to update insurance pension'
       })
       throw err
+    }
+  }
+}
+
+/**
+ * Updates an Insurance pension with statements
+ * 
+ * @param updateInsurancePension - Function to update an Insurance pension
+ * @param updateInsurancePensionStatement - Function to update an Insurance pension statement
+ * @param fetchPension - Function to fetch a specific pension
+ * @param selectedPension - The currently selected pension
+ * @returns A function that updates an Insurance pension with statements
+ */
+export function updateInsurancePensionWithStatementOperation(
+  updateInsurancePension: (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>,
+  updateInsurancePensionStatement: (
+    pensionId: number, 
+    statementId: number, 
+    data: {
+      statement_date: string,
+      value: number,
+      total_contributions: number,
+      total_benefits: number,
+      costs_amount: number,
+      costs_percentage: number,
+      note?: string,
+      projections?: Array<{
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+      }>
+    }
+  ) => Promise<void>,
+  fetchPension: (id: number) => Promise<void>,
+  selectedPension: Pension | null
+) {
+  return async (
+    id: number, 
+    pension: Omit<InsurancePension, 'id' | 'current_value'>,
+    statements: Array<{
+      id: number,
+      statement_date: string,
+      value: number,
+      total_contributions: number,
+      total_benefits: number,
+      costs_amount: number,
+      costs_percentage: number,
+      note?: string,
+      projections?: Array<{
+        id?: number,
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+      }>
+    }>
+  ): Promise<void> => {
+    try {
+      // First, update the pension without statements
+      const pensionData = { ...pension };
+      // Ensure we're not sending statements in the pension update
+      if ('statements' in pensionData) {
+        type PensionWithOptionalStatements = Omit<InsurancePension, 'id' | 'current_value'> & { statements?: unknown };
+        delete (pensionData as PensionWithOptionalStatements).statements;
+      }
+      
+      await updateInsurancePension(id, pensionData as Omit<InsurancePension, 'id' | 'current_value'>)
+      
+      // Then, update each statement separately
+      if (statements && statements.length > 0) {
+        for (const statement of statements) {
+          const { id: statementId, ...statementData } = statement
+          
+          await updateInsurancePensionStatement(id, statementId, statementData)
+        }
+      }
+      
+      // Refresh the pension data
+      if (selectedPension?.id === id) {
+        await fetchPension(id)
+      }
+      
+      toast.success('Success', {
+        description: 'Insurance pension and statements updated successfully'
+      })
+    } catch (error: unknown) {
+      toast.error('Error', {
+        description: 'Failed to update insurance pension with statements'
+      })
+      throw error
     }
   }
 }

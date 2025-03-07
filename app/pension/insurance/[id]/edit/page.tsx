@@ -24,6 +24,7 @@ import { LoadingState } from "@/frontend/components/shared/LoadingState"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
 import { insurancePensionToForm } from "@/frontend/lib/transformers/insurancePensionTransformers"
+import { toISODateString } from "@/frontend/lib/dateUtils"
 
 interface EditInsurancePensionPageProps {
   params: Promise<{
@@ -47,7 +48,7 @@ const defaultValues: InsurancePensionFormData = {
 
 export default function EditInsurancePensionPage({ params }: EditInsurancePensionPageProps) {
   const router = useRouter()
-  const { updateInsurancePension } = usePension()
+  const { updateInsurancePensionWithStatement } = usePension()
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
   const { data: pension, isLoading, error } = usePensionData<InsurancePension>(pensionId, PensionType.INSURANCE)
@@ -67,20 +68,35 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
 
   const onSubmit = async (data: InsurancePensionFormData) => {
     try {
-      await updateInsurancePension(pensionId, {
-        type: PensionType.INSURANCE,
-        name: data.name,
-        member_id: data.member_id,
-        notes: data.notes,
-        provider: data.provider,
-        contract_number: data.contract_number,
-        start_date: data.start_date,
-        guaranteed_interest: data.guaranteed_interest,
-        expected_return: data.expected_return,
-        contribution_plan_steps: data.contribution_plan_steps,
-        status: pension?.status || "ACTIVE",
-        statements: data.statements
-      } as unknown as Omit<InsurancePension, 'id' | 'current_value'>)
+      const { statements, ...pensionData } = data
+      
+      await updateInsurancePensionWithStatement(
+        pensionId,
+        {
+          type: PensionType.INSURANCE,
+          name: pensionData.name,
+          member_id: pensionData.member_id,
+          notes: pensionData.notes,
+          provider: pensionData.provider,
+          contract_number: pensionData.contract_number,
+          start_date: pensionData.start_date,
+          guaranteed_interest: pensionData.guaranteed_interest,
+          expected_return: pensionData.expected_return,
+          contribution_plan_steps: pensionData.contribution_plan_steps,
+          status: pension?.status || "ACTIVE"
+        } as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
+        statements.map(statement => ({
+          id: statement.id!,
+          statement_date: toISODateString(statement.statement_date),
+          value: statement.value,
+          total_contributions: statement.total_contributions,
+          total_benefits: statement.total_benefits,
+          costs_amount: statement.costs_amount,
+          costs_percentage: statement.costs_percentage,
+          note: statement.note,
+          projections: statement.projections
+        }))
+      )
 
       toast.success('Success', {
         description: 'Insurance pension updated successfully'

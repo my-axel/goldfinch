@@ -54,7 +54,25 @@ selectedPension: Pension | null
 fetchPensions: (memberId?: number) => Promise<void>
 fetchPension: (id: number, pensionType?: PensionType) => Promise<void>
 createEtfPension: (pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
-createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>
+createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<InsurancePension>
+createInsurancePensionWithStatement: (
+    pension: Omit<InsurancePension, 'id' | 'current_value'>,
+    statements: Array<{
+    statement_date: string,
+    value: number,
+    total_contributions: number,
+    total_benefits: number,
+    costs_amount: number,
+    costs_percentage: number,
+    note?: string,
+    projections?: Array<{
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+    }>
+    }>
+) => Promise<void>
 createCompanyPension: (pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<CompanyPension>
 createCompanyPensionWithStatement: (
     pension: Omit<CompanyPension, 'id' | 'current_value'>,
@@ -131,4 +149,44 @@ updateCompanyPensionStatement: (pensionId: number, statementId: number, data: {
 }) => Promise<void>
 deleteCompanyPensionStatement: (pensionId: number, statementId: number) => Promise<void>
 deleteInsurancePensionStatement: (pensionId: number, statementId: number) => Promise<void>
+updateInsurancePensionWithStatement: (
+    id: number,
+    pension: Omit<InsurancePension, 'id' | 'current_value'>,
+    statements: Array<{
+    id: number,
+    statement_date: string,
+    value: number,
+    total_contributions: number,
+    total_benefits: number,
+    costs_amount: number,
+    costs_percentage: number,
+    note?: string,
+    projections?: Array<{
+        id?: number,
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+    }>
+    }>
+) => Promise<void>
+updateInsurancePensionStatement: (
+    pensionId: number,
+    statementId: number,
+    data: {
+    statement_date: string,
+    value: number,
+    total_contributions: number,
+    total_benefits: number,
+    costs_amount: number,
+    costs_percentage: number,
+    note?: string,
+    projections?: Array<{
+        scenario_type: 'with_contributions' | 'without_contributions',
+        return_rate: number,
+        value_at_retirement: number,
+        monthly_payout: number
+    }>
+    }
+) => Promise<void>
 }

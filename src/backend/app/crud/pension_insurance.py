@@ -94,15 +94,6 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
                         pension_insurance_id=db_obj.id
                     )
                     db.add(db_benefit)
-            
-            # Create statements if provided
-            if obj_in.statements:
-                for statement in obj_in.statements:
-                    self._create_statement_with_projections(
-                        db=db,
-                        pension_id=db_obj.id,
-                        statement_data=statement
-                    )
 
             # Commit all changes
             db.commit()
@@ -310,40 +301,48 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
         Returns:
             Created PensionInsuranceStatement object with projections
         """
-        # Extract projections
-        projections_data = statement_data.dict().pop("projections")
-        
-        # Create statement
-        statement = PensionInsuranceStatement(
-            **statement_data.dict(),
-            pension_insurance_id=pension_id
-        )
-        db.add(statement)
-        db.flush()  # Flush to get the statement ID
-        
-        # Create projections
-        for projection in projections_data:
-            db_projection = PensionInsuranceProjection(
-                **projection,
-                statement_id=statement.id
+        try:
+            # Create statement without projections first
+            statement_dict = statement_data.dict(exclude={"projections"})
+            statement = PensionInsuranceStatement(
+                **statement_dict,
+                pension_insurance_id=pension_id
             )
-            db.add(db_projection)
-        
-        # Update pension current value
-        pension = db.query(PensionInsurance).get(pension_id)
-        pension.current_value = statement_data.value
-        
-        db.commit()
-        
-        # Instead of using db.refresh, query the object with its relationships
-        return (
-            db.query(PensionInsuranceStatement)
-            .options(
-                selectinload(PensionInsuranceStatement.projections)
+            db.add(statement)
+            db.flush()  # Flush to get the statement ID
+            
+            # Create projections if provided
+            if statement_data.projections:
+                for projection in statement_data.projections:
+                    # Convert ProjectionCreate to dict
+                    projection_dict = projection.dict()
+                    db_projection = PensionInsuranceProjection(
+                        **projection_dict,
+                        statement_id=statement.id
+                    )
+                    db.add(db_projection)
+            
+            # Update pension current value
+            pension = db.query(PensionInsurance).get(pension_id)
+            if pension:
+                pension.current_value = statement_data.value
+            
+            db.commit()
+            
+            # Return fresh instance with projections loaded
+            return (
+                db.query(PensionInsuranceStatement)
+                .options(
+                    selectinload(PensionInsuranceStatement.projections)
+                )
+                .filter(PensionInsuranceStatement.id == statement.id)
+                .first()
             )
-            .filter(PensionInsuranceStatement.id == statement.id)
-            .first()
-        )
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to create statement with projections: {str(e)}")
+            raise
     
     def get_latest_statement(
         self,
