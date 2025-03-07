@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/fro
 import { EnumSelect, EnumOption } from "@/frontend/components/ui/enum-select"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
+import { Badge } from "@/frontend/components/ui/badge"
 
 interface BasicInformationCardProps {
   form: UseFormReturn<InsurancePensionFormData>
@@ -103,11 +104,44 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Basic Information</CardTitle>
-        <CardDescription>
-          Enter the basic details of your insurance pension plan
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
+        <div className="space-y-1.5">
+          <CardTitle>Basic Information</CardTitle>
+          <CardDescription>
+            Enter the basic details of your insurance pension plan
+          </CardDescription>
+        </div>
+        {insurancePension && (
+          <div className="flex items-center gap-3">
+            <Badge variant={insurancePension.status === 'ACTIVE' ? 'default' : 'secondary'}>
+              {insurancePension.status === 'ACTIVE' ? 'Active' : 'Paused'}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => {
+                if (insurancePension.status === 'ACTIVE') {
+                  setShowPauseDialog(true)
+                } else {
+                  setShowResumeDialog(true)
+                }
+              }}
+            >
+              {insurancePension.status === 'ACTIVE' ? (
+                <>
+                  <PauseCircle className="h-4 w-4 mr-2" />
+                  Pause
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Resume
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Name and Provider */}
@@ -254,31 +288,6 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
             )}
           />
         </div>
-
-        {/* Status Controls */}
-        {insurancePension && (
-          <div className="flex justify-end space-x-2">
-            {insurancePension.status === "ACTIVE" ? (
-              <Button
-                variant="outline"
-                onClick={() => setShowPauseDialog(true)}
-                type="button"
-              >
-                <PauseCircle className="mr-2 h-4 w-4" />
-                Pause Contributions
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={() => setShowResumeDialog(true)}
-                type="button"
-              >
-                <PlayCircle className="mr-2 h-4 w-4" />
-                Resume Contributions
-              </Button>
-            )}
-          </div>
-        )}
       </CardContent>
 
       {/* Dialogs */}

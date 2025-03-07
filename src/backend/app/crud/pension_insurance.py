@@ -15,11 +15,14 @@ from app.schemas.pension_insurance import (
     ContributionHistoryCreate,
     BenefitCreate,
     StatementCreate,
-    ProjectionCreate
+    ProjectionCreate,
+    PensionStatusUpdate
 )
 from datetime import date
 from decimal import Decimal
 import logging
+from fastapi import HTTPException
+from app.models.enums import PensionStatus
 
 logger = logging.getLogger(__name__)
 
@@ -413,5 +416,138 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
         
         db.commit()
         return True
+
+    def update_statement(
+        self,
+        db: Session,
+        *,
+        statement_id: int,
+        obj_in: Union[Dict[str, Any], "StatementUpdate"]
+    ) -> PensionInsuranceStatement:
+        """
+        Update a statement and its projections.
+        
+        Args:
+            db: Database session object
+            statement_id: ID of the statement to update
+            obj_in: StatementUpdate object or dict containing update data
+            
+        Returns:
+            Updated PensionInsuranceStatement object with projections
+            
+        Raises:
+            ValueError: If statement not found
+        """
+        try:
+            # Get the statement with projections
+            statement = (
+                db.query(PensionInsuranceStatement)
+                .options(selectinload(PensionInsuranceStatement.projections))
+                .filter(PensionInsuranceStatement.id == statement_id)
+                .first()
+            )
+            if not statement:
+                raise ValueError("Statement not found")
+
+            # Convert input to dict if it's a Pydantic model
+            update_data = obj_in if isinstance(obj_in, dict) else obj_in.dict(exclude_unset=True)
+
+            # Handle projections separately if provided
+            if "projections" in update_data:
+                # Delete existing projections
+                for projection in statement.projections:
+                    db.delete(projection)
+                
+                # Create new projections
+                for projection_data in update_data.pop("projections"):
+                    projection_dict = projection_data.dict() if hasattr(projection_data, 'dict') else projection_data
+                    db_projection = PensionInsuranceProjection(
+                        **projection_dict,
+                        statement_id=statement.id
+                    )
+                    db.add(db_projection)
+
+            # Update statement fields
+            for field, value in update_data.items():
+                if hasattr(statement, field) and value is not None:
+                    setattr(statement, field, value)
+
+            # If this is the latest statement, update the pension's current value
+            pension = db.query(PensionInsurance).get(statement.pension_insurance_id)
+            latest_statement = (
+                db.query(PensionInsuranceStatement)
+                .filter(PensionInsuranceStatement.pension_insurance_id == statement.pension_insurance_id)
+                .order_by(PensionInsuranceStatement.statement_date.desc())
+                .first()
+            )
+            if latest_statement and latest_statement.id == statement.id:
+                pension.current_value = statement.value
+
+            db.commit()
+            
+            # Return fresh instance with projections loaded
+            return (
+                db.query(PensionInsuranceStatement)
+                .options(selectinload(PensionInsuranceStatement.projections))
+                .filter(PensionInsuranceStatement.id == statement.id)
+                .first()
+            )
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to update statement: {str(e)}")
+            raise
+
+    def get_statement(
+        self,
+        db: Session,
+        *,
+        statement_id: int
+    ) -> Optional[PensionInsuranceStatement]:
+        """
+        Get a statement by ID.
+        
+        Args:
+            db: Database session object
+            statement_id: ID of the statement to get
+            
+        Returns:
+            PensionInsuranceStatement object or None if not found
+        """
+        return db.query(PensionInsuranceStatement).get(statement_id)
+
+    def update_status(
+        self,
+        db: Session,
+        *,
+        db_obj: PensionInsurance,
+        obj_in: "PensionStatusUpdate"
+    ) -> PensionInsurance:
+        """Update the status of an insurance pension."""
+        try:
+            # Validate status transition
+            if obj_in.status == PensionStatus.PAUSED:
+                if not obj_in.paused_at:
+                    obj_in.paused_at = date.today()
+                if db_obj.status == PensionStatus.PAUSED:
+                    raise HTTPException(status_code=400, detail="Pension is already paused")
+            elif obj_in.status == PensionStatus.ACTIVE:
+                if db_obj.status == PensionStatus.ACTIVE:
+                    raise HTTPException(status_code=400, detail="Pension is already active")
+                if not obj_in.resume_at and not db_obj.resume_at:
+                    obj_in.resume_at = date.today()
+
+            # Update status and related fields
+            for field, value in obj_in.dict(exclude_unset=True).items():
+                setattr(db_obj, field, value)
+
+            db.add(db_obj)
+            db.commit()
+            db.refresh(db_obj)
+            return db_obj
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to update pension status: {str(e)}")
+            raise
 
 pension_insurance = CRUDPensionInsurance(PensionInsurance) 

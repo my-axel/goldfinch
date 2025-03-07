@@ -95,7 +95,7 @@ export function createCompanyPensionOperation(
 export function updateCompanyPensionOperation(
   put: ApiPut,
   fetchPensions: () => Promise<void>,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   selectedPension: Pension | null
 ) {
   return async (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>): Promise<void> => {
@@ -115,7 +115,7 @@ export function updateCompanyPensionOperation(
       
       fetchPensions()
       if (selectedPension?.id === id) {
-        fetchPension(id)
+        await fetchPension(id, PensionType.COMPANY)
       }
     } catch (err) {
       toast.error('Error', {
@@ -206,7 +206,7 @@ export function updateCompanyPensionWithStatementOperation(
       }>
     }
   ) => Promise<void>,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   selectedPension: Pension | null
 ) {
   return async (
@@ -249,7 +249,7 @@ export function updateCompanyPensionWithStatementOperation(
       
       // Refresh the pension data
       if (selectedPension?.id === id) {
-        await fetchPension(id)
+        await fetchPension(id, PensionType.COMPANY)
       }
       
       toast.success('Success', {
@@ -274,7 +274,7 @@ export function updateCompanyPensionWithStatementOperation(
  */
 export function addOneTimeInvestmentOperation(
   post: ApiPost,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   pensions: Pension[]
 ) {
   return async (
@@ -297,7 +297,7 @@ export function addOneTimeInvestmentOperation(
         amount: Number(data.amount),
         investment_date: toISODateString(data.investment_date)
       })
-      await fetchPension(pensionId)
+      await fetchPension(pensionId, PensionType.COMPANY)
       
       toast.success('Success', {
         description: 'One-time investment has been added'
@@ -321,7 +321,7 @@ export function addOneTimeInvestmentOperation(
  */
 export function createContributionHistoryOperation(
   post: ApiPost,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   pensions: Pension[]
 ) {
   return async (
@@ -346,7 +346,7 @@ export function createContributionHistoryOperation(
       }
 
       await post(`${getPensionApiRoute(pension.type)}/${pensionId}/contribution-history`, data)
-      await fetchPension(pensionId)
+      await fetchPension(pensionId, PensionType.COMPANY)
       
       toast.success('Success', {
         description: 'Contribution has been added'

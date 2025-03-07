@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 from typing import List, Optional, Union, Literal
 from pydantic import BaseModel, Field, validator, root_validator
+from app.models.enums import ContributionFrequency, PensionStatus
 
 class ContributionPlanStepBase(BaseModel):
     amount: Decimal = Field(gt=0, description="Contribution amount (must be positive)")
@@ -151,6 +152,28 @@ class StatementBase(BaseModel):
 class StatementCreate(StatementBase):
     projections: List[ProjectionCreate] = Field(description="Projections for this statement")
 
+class StatementUpdate(BaseModel):
+    statement_date: Optional[date] = None
+    value: Optional[Decimal] = None
+    total_contributions: Optional[Decimal] = None
+    total_benefits: Optional[Decimal] = None
+    costs_amount: Optional[Decimal] = Field(None, gt=0, description="Costs amount must be positive")
+    costs_percentage: Optional[Decimal] = Field(None, ge=0, le=100, description="Costs percentage must be between 0 and 100")
+    note: Optional[str] = None
+    projections: Optional[List[ProjectionCreate]] = None
+
+    @validator('costs_amount')
+    def validate_costs_amount(cls, v):
+        if v is not None and v <= 0:
+            raise ValueError("Costs amount must be positive")
+        return v
+
+    @validator('costs_percentage')
+    def validate_costs_percentage(cls, v):
+        if v is not None and (v < 0 or v > 100):
+            raise ValueError("Costs percentage must be between 0 and 100")
+        return v
+
 class StatementResponse(StatementBase):
     id: int
     pension_insurance_id: int
@@ -256,4 +279,9 @@ class PensionInsuranceUpdate(BaseModel):
     def policy_duration_years_must_be_positive(cls, v):
         if v is not None and v <= 0:
             raise ValueError('Policy duration years must be positive')
-        return v 
+        return v
+
+class PensionStatusUpdate(BaseModel):
+    status: PensionStatus
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None 

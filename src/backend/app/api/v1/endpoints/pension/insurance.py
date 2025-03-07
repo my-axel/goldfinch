@@ -85,6 +85,19 @@ def list_insurance_pensions(
         filters["member_id"] = member_id
     return pension_insurance.get_multi(db, skip=skip, limit=limit, filters=filters)
 
+@router.put("/{pension_id}/status", response_model=schemas.pension_insurance.PensionInsuranceResponse)
+def update_insurance_pension_status(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    status_in: schemas.pension_insurance.PensionStatusUpdate,
+) -> schemas.pension_insurance.PensionInsuranceResponse:
+    """Update the status of an insurance pension."""
+    pension = pension_insurance.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Insurance Pension not found")
+    return pension_insurance.update_status(db=db, db_obj=pension, obj_in=status_in)
+
 # New endpoints for statements, benefits, and projections
 
 @router.post(
@@ -166,6 +179,42 @@ def delete_insurance_statement(
     if not success:
         raise HTTPException(status_code=404, detail="Statement not found")
     return {"ok": True}
+
+@router.put(
+    "/{pension_id}/statements/{statement_id}",
+    response_model=schemas.pension_insurance.StatementResponse,
+    responses={
+        200: {"description": "Statement updated successfully"},
+        404: {"description": "Insurance Pension or Statement not found"},
+        422: {"description": "Validation error"}
+    }
+)
+def update_insurance_statement(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    statement_id: int,
+    statement_in: schemas.pension_insurance.StatementUpdate,
+) -> schemas.pension_insurance.StatementResponse:
+    """Update a statement for an insurance pension."""
+    # Check if pension exists
+    pension = pension_insurance.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Insurance Pension not found")
+    
+    # Check if statement exists and belongs to the pension
+    statement = pension_insurance.get_statement(db=db, statement_id=statement_id)
+    if not statement or statement.pension_insurance_id != pension_id:
+        raise HTTPException(status_code=404, detail="Statement not found")
+    
+    # Update the statement
+    updated_statement = pension_insurance.update_statement(
+        db=db,
+        statement_id=statement_id,
+        obj_in=statement_in
+    )
+    
+    return updated_statement
 
 @router.post(
     "/{pension_id}/benefits",

@@ -48,14 +48,15 @@ const defaultValues: InsurancePensionFormData = {
 
 export default function EditInsurancePensionPage({ params }: EditInsurancePensionPageProps) {
   const router = useRouter()
-  const { updateInsurancePensionWithStatement } = usePension()
+  const { updateInsurancePensionWithStatement, createInsurancePensionStatement } = usePension()
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
   const { data: pension, isLoading, error } = usePensionData<InsurancePension>(pensionId, PensionType.INSURANCE)
 
   const form = useForm<InsurancePensionFormData>({
     resolver: zodResolver(insurancePensionSchema),
-    defaultValues
+    defaultValues,
+    mode: "onChange"
   })
 
   // Use the form reset hook
@@ -66,46 +67,108 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
     defaultValues
   })
 
-  const onSubmit = async (data: InsurancePensionFormData) => {
+  const handleSubmit = async (data: InsurancePensionFormData) => {
     try {
-      const { statements, ...pensionData } = data
-      
-      await updateInsurancePensionWithStatement(
-        pensionId,
-        {
-          type: PensionType.INSURANCE,
-          name: pensionData.name,
-          member_id: pensionData.member_id,
-          notes: pensionData.notes,
-          provider: pensionData.provider,
-          contract_number: pensionData.contract_number,
-          start_date: pensionData.start_date,
-          guaranteed_interest: pensionData.guaranteed_interest,
-          expected_return: pensionData.expected_return,
-          contribution_plan_steps: pensionData.contribution_plan_steps,
-          status: pension?.status || "ACTIVE"
-        } as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
-        statements.map(statement => ({
-          id: statement.id!,
-          statement_date: toISODateString(statement.statement_date),
-          value: statement.value,
-          total_contributions: statement.total_contributions,
-          total_benefits: statement.total_benefits,
-          costs_amount: statement.costs_amount,
-          costs_percentage: statement.costs_percentage,
-          note: statement.note,
-          projections: statement.projections
-        }))
-      )
+      // Format pension data
+      const pensionData = {
+        ...data,
+        member_id: typeof data.member_id === 'string' ? parseInt(data.member_id) : data.member_id,
+        start_date: toISODateString(data.start_date)
+      }
 
-      toast.success('Success', {
-        description: 'Insurance pension updated successfully'
-      })
+      // Extract and format statements
+      const statements = data.statements?.map(statement => ({
+        id: statement.id,
+        statement_date: toISODateString(statement.statement_date),
+        value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
+        total_contributions: typeof statement.total_contributions === 'string' ? 
+          parseFloat(statement.total_contributions) : statement.total_contributions,
+        total_benefits: typeof statement.total_benefits === 'string' ? 
+          parseFloat(statement.total_benefits) : statement.total_benefits,
+        costs_amount: typeof statement.costs_amount === 'string' ? 
+          parseFloat(statement.costs_amount) : statement.costs_amount,
+        costs_percentage: typeof statement.costs_percentage === 'string' ? 
+          parseFloat(statement.costs_percentage) : statement.costs_percentage,
+        note: statement.note || "",
+        projections: statement.projections?.map(proj => ({
+          id: proj.id,
+          scenario_type: proj.scenario_type,
+          return_rate: typeof proj.return_rate === 'string' ? 
+            parseFloat(proj.return_rate) : proj.return_rate,
+          value_at_retirement: typeof proj.value_at_retirement === 'string' ? 
+            parseFloat(proj.value_at_retirement) : proj.value_at_retirement,
+          monthly_payout: typeof proj.monthly_payout === 'string' ? 
+            parseFloat(proj.monthly_payout) : proj.monthly_payout
+        }))
+      })) || []
+
+      // Separate existing and new statements
+      const existingStatements = statements.filter(statement => typeof statement.id === 'number')
+      const newStatements = statements.filter(statement => !statement.id)
+
+      // First update the pension and existing statements
+      if (existingStatements.length > 0) {
+        await updateInsurancePensionWithStatement(
+          pensionId,
+          pensionData as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
+          existingStatements as Array<{
+            id: number;
+            statement_date: string;
+            value: number;
+            total_contributions: number;
+            total_benefits: number;
+            costs_amount: number;
+            costs_percentage: number;
+            note?: string;
+            projections?: Array<{
+              id?: number;
+              scenario_type: 'with_contributions' | 'without_contributions';
+              return_rate: number;
+              value_at_retirement: number;
+              monthly_payout: number;
+            }>;
+          }>
+        )
+      } else {
+        // If no existing statements, just update the pension data
+        await updateInsurancePensionWithStatement(
+          pensionId,
+          pensionData as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
+          []
+        )
+      }
+
+      // Then create any new statements
+      for (const statement of newStatements) {
+        await createInsurancePensionStatement(
+          pensionId,
+          {
+            statement_date: statement.statement_date,
+            value: statement.value,
+            total_contributions: statement.total_contributions,
+            total_benefits: statement.total_benefits,
+            costs_amount: statement.costs_amount,
+            costs_percentage: statement.costs_percentage,
+            note: statement.note,
+            projections: statement.projections
+          }
+        )
+      }
+
+      toast.success("Success", { description: "Insurance pension updated successfully" })
       router.push(getPensionListRoute())
-    } catch {
-      toast.error('Error', {
-        description: 'Failed to update insurance pension'
-      })
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to update pension:', error)
+      if (error instanceof Error) {
+        toast.error('Error', {
+          description: error.message || 'Failed to update insurance pension'
+        })
+      } else {
+        toast.error('Error', {
+          description: 'Failed to update insurance pension'
+        })
+      }
     }
   }
 
@@ -153,7 +216,12 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
           </Alert>
         ) : (
           <Form {...form}>
-            <form id="insurance-pension-form" onSubmit={form.handleSubmit(onSubmit)}>
+            <form id="insurance-pension-form" onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+              console.error('Form validation errors:', errors)
+              toast.error('Error', {
+                description: 'Please fix the validation errors before submitting'
+              })
+            })}>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 {/* Basic Information Section */}
                 <div className="md:col-span-8">

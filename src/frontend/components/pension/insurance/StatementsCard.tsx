@@ -1,14 +1,14 @@
 "use client"
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/frontend/components/ui/form"
-import { UseFormReturn, useFieldArray } from "react-hook-form"
+import { UseFormReturn, useFieldArray, Path } from "react-hook-form"
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { Button } from "@/frontend/components/ui/button"
 import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { Input } from "@/frontend/components/ui/input"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, getDecimalSeparator, getCurrencySymbol, formatNumberInput } from "@/frontend/lib/transforms"
+import { parseNumber, getDecimalSeparator, getCurrencySymbol, formatNumberInput, safeNumberValue } from "@/frontend/lib/transforms"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
@@ -37,7 +37,8 @@ interface StatementsCardProps {
   pensionId?: number
 }
 
-type FormPath = `statements.${number}.value` 
+type FormPath = 
+  | `statements.${number}.value` 
   | `statements.${number}.total_contributions`
   | `statements.${number}.total_benefits`
   | `statements.${number}.costs_amount`
@@ -46,6 +47,7 @@ type FormPath = `statements.${number}.value`
   | `statements.${number}.projections.${number}.value_at_retirement`
   | `statements.${number}.projections.${number}.monthly_payout`
   | `statements.${number}.projections.${number}.scenario_type`
+  | `statements.${number}.projections`
 
 type InputField = 'value' | 'total_contributions' | 'total_benefits' | 'costs_amount' | 'costs_percentage' | 'return_rate' | 'value_at_retirement' | 'monthly_payout'
 
@@ -73,33 +75,55 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   const decimalSeparator = getDecimalSeparator(settings.number_locale)
   const currencySymbol = getCurrencySymbol(settings.ui_locale, settings.currency)
 
+  // Get the latest statement by sorting the statements array
+  const sortedStatements = useMemo(() => {
+    const statements = form.getValues("statements") || []
+    return [...statements].sort((a, b) => {
+      const dateA = new Date(a.statement_date).getTime()
+      const dateB = new Date(b.statement_date).getTime()
+      return dateB - dateA // Sort in descending order (latest first)
+    })
+  }, [form.getValues("statements")])
+
+  const latestStatementIndex = useMemo(() => {
+    if (!sortedStatements.length) return -1
+    const latestDate = new Date(sortedStatements[0].statement_date).getTime()
+    return statementFields.findIndex(
+      field => new Date(field.statement_date).getTime() === latestDate
+    )
+  }, [sortedStatements, statementFields])
+
   // Initialize input states when form data changes
   useEffect(() => {
     const statements = form.getValues("statements")
     if (statements) {
-      // Initialize main statement inputs
-      const newStatementValues = statements.map(s => s.value?.toString().replace('.', decimalSeparator) || "")
-      const newContributions = statements.map(s => s.total_contributions?.toString().replace('.', decimalSeparator) || "")
-      const newBenefits = statements.map(s => s.total_benefits?.toString().replace('.', decimalSeparator) || "")
-      const newCostsAmount = statements.map(s => s.costs_amount?.toString().replace('.', decimalSeparator) || "")
-      const newCostsPercentage = statements.map(s => s.costs_percentage?.toString().replace('.', decimalSeparator) || "")
-      
-      setStatementValueInputs(newStatementValues)
-      setContributionInputs(newContributions)
-      setBenefitsInputs(newBenefits)
-      setCostsAmountInputs(newCostsAmount)
-      setCostsPercentageInputs(newCostsPercentage)
+      // Initialize main statement inputs with proper formatting
+      setStatementValueInputs(
+        statements.map(s => formatNumberInput(safeNumberValue(s.value) ?? 0, settings.number_locale))
+      )
+      setContributionInputs(
+        statements.map(s => formatNumberInput(safeNumberValue(s.total_contributions) ?? 0, settings.number_locale))
+      )
+      setBenefitsInputs(
+        statements.map(s => formatNumberInput(safeNumberValue(s.total_benefits) ?? 0, settings.number_locale))
+      )
+      setCostsAmountInputs(
+        statements.map(s => formatNumberInput(safeNumberValue(s.costs_amount) ?? 0, settings.number_locale))
+      )
+      setCostsPercentageInputs(
+        statements.map(s => formatNumberInput(safeNumberValue(s.costs_percentage) ?? 0, settings.number_locale))
+      )
 
-      // Initialize projection inputs
+      // Initialize projection inputs with proper formatting
       const newProjectionInputs: {[key: string]: string} = {}
       statements.forEach((statement, statementIndex) => {
         statement.projections?.forEach((projection, projIndex) => {
           newProjectionInputs[`${statementIndex}.${projIndex}.return_rate`] = 
-            projection.return_rate?.toString().replace('.', decimalSeparator) || ""
+            formatNumberInput(safeNumberValue(projection.return_rate) ?? 0, settings.number_locale)
           newProjectionInputs[`${statementIndex}.${projIndex}.value_at_retirement`] = 
-            projection.value_at_retirement?.toString().replace('.', decimalSeparator) || ""
+            formatNumberInput(safeNumberValue(projection.value_at_retirement) ?? 0, settings.number_locale)
           newProjectionInputs[`${statementIndex}.${projIndex}.monthly_payout`] = 
-            projection.monthly_payout?.toString().replace('.', decimalSeparator) || ""
+            formatNumberInput(safeNumberValue(projection.monthly_payout) ?? 0, settings.number_locale)
         })
       })
       setProjectionInputs(newProjectionInputs)
@@ -112,8 +136,23 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
         }
       })
       setFormattedDates(newFormattedDates)
+
+      // Ensure all form values are properly set with numbers
+      statements.forEach((statement, index) => {
+        form.setValue(`statements.${index}.value` as Path<InsurancePensionFormData>, safeNumberValue(statement.value) ?? 0)
+        form.setValue(`statements.${index}.total_contributions` as Path<InsurancePensionFormData>, safeNumberValue(statement.total_contributions) ?? 0)
+        form.setValue(`statements.${index}.total_benefits` as Path<InsurancePensionFormData>, safeNumberValue(statement.total_benefits) ?? 0)
+        form.setValue(`statements.${index}.costs_amount` as Path<InsurancePensionFormData>, safeNumberValue(statement.costs_amount) ?? 0)
+        form.setValue(`statements.${index}.costs_percentage` as Path<InsurancePensionFormData>, safeNumberValue(statement.costs_percentage) ?? 0)
+
+        statement.projections?.forEach((projection, projIndex) => {
+          form.setValue(`statements.${index}.projections.${projIndex}.return_rate` as Path<InsurancePensionFormData>, safeNumberValue(projection.return_rate) ?? 0)
+          form.setValue(`statements.${index}.projections.${projIndex}.value_at_retirement` as Path<InsurancePensionFormData>, safeNumberValue(projection.value_at_retirement) ?? 0)
+          form.setValue(`statements.${index}.projections.${projIndex}.monthly_payout` as Path<InsurancePensionFormData>, safeNumberValue(projection.monthly_payout) ?? 0)
+        })
+      })
     }
-  }, [form, decimalSeparator, formatDate])
+  }, [form, settings.number_locale, formatDate])
 
   const handleAddStatement = () => {
     const statementDate = new Date()
@@ -126,6 +165,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       total_benefits: 0,
       costs_amount: 0,
       costs_percentage: 0,
+      note: "",
       projections: []
     })
     
@@ -158,7 +198,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       
       const parsedValue = parseNumber(value, settings.number_locale)
       if (parsedValue >= 0) {
-        form.setValue(`statements.${index}.value`, parsedValue)
+        form.setValue(`statements.${index}.value` as Path<InsurancePensionFormData>, parsedValue)
       }
     }
   }
@@ -171,7 +211,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       
       const parsedValue = parseNumber(value, settings.number_locale)
       if (parsedValue >= 0) {
-        form.setValue(`statements.${index}.total_contributions`, parsedValue)
+        form.setValue(`statements.${index}.total_contributions` as Path<InsurancePensionFormData>, parsedValue)
       }
     }
   }
@@ -184,7 +224,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       
       const parsedValue = parseNumber(value, settings.number_locale)
       if (parsedValue >= 0) {
-        form.setValue(`statements.${index}.total_benefits`, parsedValue)
+        form.setValue(`statements.${index}.total_benefits` as Path<InsurancePensionFormData>, parsedValue)
       }
     }
   }
@@ -196,8 +236,8 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       setCostsAmountInputs(newInputs)
       
       const parsedValue = parseNumber(value, settings.number_locale)
-      if (parsedValue >= 0) {
-        form.setValue(`statements.${index}.costs_amount`, parsedValue)
+      if (parsedValue > 0) {
+        form.setValue(`statements.${index}.costs_amount` as Path<InsurancePensionFormData>, parsedValue)
       }
     }
   }
@@ -209,8 +249,8 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       setCostsPercentageInputs(newInputs)
       
       const parsedValue = parseNumber(value, settings.number_locale)
-      if (parsedValue >= 0) {
-        form.setValue(`statements.${index}.costs_percentage`, parsedValue)
+      if (parsedValue >= 0 && parsedValue <= 100) {
+        form.setValue(`statements.${index}.costs_percentage` as Path<InsurancePensionFormData>, parsedValue)
       }
     }
   }
@@ -225,7 +265,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       const parsedValue = parseNumber(value, settings.number_locale)
       if (parsedValue >= 0) {
         const path = `statements.${statementIndex}.projections.${projectionIndex}.${field}` as FormPath
-        form.setValue(path, parsedValue)
+        form.setValue(path as Path<InsurancePensionFormData>, parsedValue)
       }
     }
   }
@@ -242,7 +282,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       monthly_payout: 0
     }
 
-    form.setValue(`statements.${statementIndex}.projections`, [...currentProjections, newProjection])
+    form.setValue(`statements.${statementIndex}.projections` as Path<InsurancePensionFormData>, [...currentProjections, newProjection])
 
     const projectionIndex = currentProjections.length
     // Initialize projection inputs with empty strings
@@ -261,7 +301,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     const currentProjections = [...statements[statementIndex].projections]
     currentProjections.splice(projectionIndex, 1)
 
-    form.setValue(`statements.${statementIndex}.projections`, currentProjections)
+    form.setValue(`statements.${statementIndex}.projections` as Path<InsurancePensionFormData>, currentProjections)
 
     // Clean up inputs
     const newInputs = { ...projectionInputs }
@@ -293,6 +333,27 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
 
     removeStatement(index)
     setStatementToDelete(null)
+
+    // Update all state using the current form data to ensure consistency
+    const updatedFormData = form.getValues()
+    const updatedStatements = updatedFormData.statements || []
+    
+    // Reset all state based on current form data
+    setStatementValueInputs(
+      updatedStatements.map(s => formatNumberInput(safeNumberValue(s.value) ?? 0, settings.number_locale))
+    )
+    setContributionInputs(
+      updatedStatements.map(s => formatNumberInput(safeNumberValue(s.total_contributions) ?? 0, settings.number_locale))
+    )
+    setBenefitsInputs(
+      updatedStatements.map(s => formatNumberInput(safeNumberValue(s.total_benefits) ?? 0, settings.number_locale))
+    )
+    setCostsAmountInputs(
+      updatedStatements.map(s => formatNumberInput(safeNumberValue(s.costs_amount) ?? 0, settings.number_locale))
+    )
+    setCostsPercentageInputs(
+      updatedStatements.map(s => formatNumberInput(safeNumberValue(s.costs_percentage) ?? 0, settings.number_locale))
+    )
   }
 
   const confirmDeleteStatement = (index: number) => {
@@ -305,10 +366,10 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       <Input
         type="text"
         inputMode="decimal"
-        value={value ?? ""}
+        value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         onBlur={() => {
-          const parsedValue = parseNumber(value ?? "", settings.number_locale)
+          const parsedValue = parseNumber(value || "", settings.number_locale)
           if (parsedValue >= 0) {
             const formattedValue = formatNumberInput(parsedValue, settings.number_locale)
             switch (field) {
@@ -318,6 +379,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                   newInputs[index] = formattedValue
                   return newInputs
                 })
+                form.setValue(`statements.${index}.value` as Path<InsurancePensionFormData>, parsedValue)
                 break
               case 'total_contributions':
                 setContributionInputs(prev => {
@@ -325,6 +387,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                   newInputs[index] = formattedValue
                   return newInputs
                 })
+                form.setValue(`statements.${index}.total_contributions` as Path<InsurancePensionFormData>, parsedValue)
                 break
               case 'total_benefits':
                 setBenefitsInputs(prev => {
@@ -332,6 +395,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                   newInputs[index] = formattedValue
                   return newInputs
                 })
+                form.setValue(`statements.${index}.total_benefits` as Path<InsurancePensionFormData>, parsedValue)
                 break
               case 'costs_amount':
                 setCostsAmountInputs(prev => {
@@ -339,6 +403,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                   newInputs[index] = formattedValue
                   return newInputs
                 })
+                form.setValue(`statements.${index}.costs_amount` as Path<InsurancePensionFormData>, parsedValue)
                 break
               case 'costs_percentage':
                 setCostsPercentageInputs(prev => {
@@ -346,6 +411,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                   newInputs[index] = formattedValue
                   return newInputs
                 })
+                form.setValue(`statements.${index}.costs_percentage` as Path<InsurancePensionFormData>, parsedValue)
                 break
               default:
                 // For projection fields
@@ -353,17 +419,74 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                   ...prev,
                   [`${index}.${field}`]: formattedValue
                 }))
+                const [statementIndex, projectionIndex] = field.split('.')
+                if (statementIndex && projectionIndex) {
+                  form.setValue(`statements.${statementIndex}.projections.${projectionIndex}.${field}` as Path<InsurancePensionFormData>, parsedValue)
+                }
             }
           } else {
-            // Reset to empty string if invalid
-            onChange("")
+            // Reset to 0 if invalid and update form
+            const formattedValue = formatNumberInput(0, settings.number_locale)
+            switch (field) {
+              case 'value':
+                setStatementValueInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                form.setValue(`statements.${index}.value` as Path<InsurancePensionFormData>, 0)
+                break
+              case 'total_contributions':
+                setContributionInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                form.setValue(`statements.${index}.total_contributions` as Path<InsurancePensionFormData>, 0)
+                break
+              case 'total_benefits':
+                setBenefitsInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                form.setValue(`statements.${index}.total_benefits` as Path<InsurancePensionFormData>, 0)
+                break
+              case 'costs_amount':
+                setCostsAmountInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                form.setValue(`statements.${index}.costs_amount` as Path<InsurancePensionFormData>, 0)
+                break
+              case 'costs_percentage':
+                setCostsPercentageInputs(prev => {
+                  const newInputs = [...prev]
+                  newInputs[index] = formattedValue
+                  return newInputs
+                })
+                form.setValue(`statements.${index}.costs_percentage` as Path<InsurancePensionFormData>, 0)
+                break
+              default:
+                // For projection fields
+                setProjectionInputs(prev => ({
+                  ...prev,
+                  [`${index}.${field}`]: formattedValue
+                }))
+                const [statementIndex, projectionIndex] = field.split('.')
+                if (statementIndex && projectionIndex) {
+                  form.setValue(`statements.${statementIndex}.projections.${projectionIndex}.${field}` as Path<InsurancePensionFormData>, 0)
+                }
+            }
           }
         }}
+        placeholder={`0${decimalSeparator}00`}
       />
     </FormControl>
   )
 
-  const renderStatementForm = (index: number, isLatest: boolean = false) => (
+  const renderStatementForm = (index: number) => (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <FormField
@@ -487,7 +610,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
           <FormItem>
             <FormLabel>Note (Optional)</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Additional information about this statement" />
+              <Input {...field} value={field.value || ""} placeholder="Additional information about this statement" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -615,18 +738,6 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
           </Button>
         </div>
       </div>
-
-      {!isLatest && (
-        <Button
-          type="button"
-          variant="destructive"
-          size="sm"
-          onClick={() => confirmDeleteStatement(index)}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Remove Statement
-        </Button>
-      )}
     </div>
   )
 
@@ -653,11 +764,11 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
         )}
 
         {/* Latest Statement */}
-        {statementFields.length > 0 && (
+        {latestStatementIndex >= 0 && (
           <div className="space-y-6">
             <h3 className="text-lg font-medium">Latest Statement</h3>
             <div className="p-4 border rounded-md">
-              {renderStatementForm(0, true)}
+              {renderStatementForm(latestStatementIndex)}
             </div>
           </div>
         )}
@@ -666,14 +777,19 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
         {statementFields.length > 1 && (
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Previous Statements</h3>
-            {statementFields.slice(1).map((field, index) => {
-              // Add 1 to index since we're starting from the second statement
-              const statementIndex = index + 1
-              return (
+            {statementFields
+              .map((field, index) => ({ field, index }))
+              .filter(({ index }) => index !== latestStatementIndex)
+              .sort((a, b) => {
+                const dateA = new Date(form.getValues(`statements.${a.index}.statement_date`)).getTime()
+                const dateB = new Date(form.getValues(`statements.${b.index}.statement_date`)).getTime()
+                return dateB - dateA // Sort in descending order
+              })
+              .map(({ field, index }) => (
                 <Collapsible
                   key={field.id}
-                  open={expandedStatements[statementIndex]}
-                  onOpenChange={() => toggleStatement(statementIndex)}
+                  open={expandedStatements[index]}
+                  onOpenChange={() => toggleStatement(index)}
                   className="border rounded-md overflow-hidden"
                 >
                   <div className="p-4 flex justify-between items-center bg-muted/30">
@@ -683,13 +799,13 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                         variant="ghost" 
                         className="p-0 h-auto flex items-center gap-2 hover:bg-transparent"
                       >
-                        {expandedStatements[statementIndex] ? (
+                        {expandedStatements[index] ? (
                           <ChevronDown className="h-4 w-4" />
                         ) : (
                           <ChevronRight className="h-4 w-4" />
                         )}
                         <h4 className="font-medium">
-                          Statement from {formattedDates[statementIndex]}
+                          Statement from {formattedDates[index]}
                         </h4>
                       </Button>
                     </CollapsibleTrigger>
@@ -697,17 +813,16 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => confirmDeleteStatement(statementIndex)}
+                      onClick={() => confirmDeleteStatement(index)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                   <CollapsibleContent className="p-4">
-                    {renderStatementForm(statementIndex)}
+                    {renderStatementForm(index)}
                   </CollapsibleContent>
                 </Collapsible>
-              )
-            })}
+              ))}
           </div>
         )}
 

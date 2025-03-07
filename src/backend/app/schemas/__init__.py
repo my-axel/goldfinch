@@ -8,4 +8,5 @@ from .task import TaskStatusResponse
 
 __all__ = [
     "TaskStatusResponse",
+    "PensionStatusUpdate",
 ] 

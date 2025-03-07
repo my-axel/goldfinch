@@ -81,7 +81,7 @@ export function createEtfPensionOperation(
 export function updateEtfPensionOperation(
   put: ApiPut,
   fetchPensions: () => Promise<void>,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   selectedPension: Pension | null
 ) {
   return async (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>): Promise<void> => {
@@ -101,7 +101,7 @@ export function updateEtfPensionOperation(
       
       fetchPensions()
       if (selectedPension?.id === id) {
-        fetchPension(id)
+        await fetchPension(id, PensionType.ETF_PLAN)
       }
     } catch (err) {
       toast.error('Error', {

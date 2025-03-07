@@ -307,7 +307,7 @@ export function deletePensionOperation(
  */
 export function realizeHistoricalContributionsOperation(
   post: <T>(url: string, data: unknown) => Promise<T>,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   pensions: Pension[]
 ) {
   return async (pensionId: number) => {
@@ -320,7 +320,7 @@ export function realizeHistoricalContributionsOperation(
   
         // Then use the appropriate endpoint
         await post(getPensionRealizeHistoricalRoute(pension.type, pensionId), {})
-        await fetchPension(pensionId)
+        await fetchPension(pensionId, pension.type)
         
         toast.success('Success', {
           description: 'Historical contributions have been realized'
@@ -377,7 +377,7 @@ export function fetchPensionStatisticsOperation(
  */
 export function updatePensionStatusOperation(
   put: <T>(url: string, data: unknown) => Promise<T>,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   pensions: Pension[]
 ) {
   return async (pensionId: number, status: PensionStatusUpdate) => {
@@ -389,19 +389,17 @@ export function updatePensionStatusOperation(
         }
   
       // Then use the appropriate endpoint
-        await put(getPensionStatusRoute(pension.type, pensionId), status as unknown as Record<string, unknown>)
-        
-      // Refresh the pension data
-      await fetchPension(pensionId)
+        await put(getPensionStatusRoute(pension.type, pensionId), status)
+        await fetchPension(pensionId, pension.type)
         
         toast.success('Success', {
-        description: 'Pension status has been updated'
+          description: 'Pension status has been updated'
         })
       } catch (err) {
         toast.error('Error', {
-        description: 'Failed to update pension status'
+          description: 'Failed to update pension status'
         })
         throw err
       }
   }
-  } 
+} 

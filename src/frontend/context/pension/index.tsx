@@ -438,6 +438,7 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
         fetchPension,
         createEtfPension,
         createInsurancePension,
+        createInsurancePensionStatement,
         createInsurancePensionWithStatement,
         createCompanyPension,
         createCompanyPensionWithStatement,

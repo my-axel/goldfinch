@@ -118,7 +118,7 @@ export function createInsurancePensionStatementOperation(
  */
 export function updateInsurancePensionStatementOperation(
   put: ApiPut,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   selectedPension: Pension | null
 ) {
   return async (
@@ -151,7 +151,7 @@ export function updateInsurancePensionStatementOperation(
       
       // Refresh the pension data
       if (selectedPension?.id === pensionId) {
-        await fetchPension(pensionId)
+        await fetchPension(pensionId, PensionType.INSURANCE)
       }
       
       toast.success('Success', {
@@ -241,7 +241,7 @@ export function createInsurancePensionWithStatementOperation(
 export function updateInsurancePensionOperation(
   put: ApiPut,
   fetchPensions: () => Promise<void>,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   selectedPension: Pension | null
 ) {
   return async (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>): Promise<void> => {
@@ -279,9 +279,9 @@ export function updateInsurancePensionOperation(
         })) || []
       })
       
-      fetchPensions()
+      await fetchPensions()
       if (selectedPension?.id === id) {
-        fetchPension(id)
+        await fetchPension(id, PensionType.INSURANCE)
       }
     } catch (err) {
       toast.error('Error', {
@@ -322,7 +322,7 @@ export function updateInsurancePensionWithStatementOperation(
       }>
     }
   ) => Promise<void>,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   selectedPension: Pension | null
 ) {
   return async (
@@ -348,14 +348,15 @@ export function updateInsurancePensionWithStatementOperation(
   ): Promise<void> => {
     try {
       // First, update the pension without statements
-      const pensionData = { ...pension };
+      const pensionData = { ...pension }
       // Ensure we're not sending statements in the pension update
       if ('statements' in pensionData) {
-        type PensionWithOptionalStatements = Omit<InsurancePension, 'id' | 'current_value'> & { statements?: unknown };
-        delete (pensionData as PensionWithOptionalStatements).statements;
+        // Use a type that includes optional statements property
+        type PensionWithOptionalStatements = Omit<InsurancePension, 'id' | 'current_value'> & { statements?: unknown }
+        delete (pensionData as PensionWithOptionalStatements).statements
       }
       
-      await updateInsurancePension(id, pensionData as Omit<InsurancePension, 'id' | 'current_value'>)
+      await updateInsurancePension(id, pensionData)
       
       // Then, update each statement separately
       if (statements && statements.length > 0) {
@@ -368,7 +369,7 @@ export function updateInsurancePensionWithStatementOperation(
       
       // Refresh the pension data
       if (selectedPension?.id === id) {
-        await fetchPension(id)
+        await fetchPension(id, PensionType.INSURANCE)
       }
       
       toast.success('Success', {
@@ -393,7 +394,7 @@ export function updateInsurancePensionWithStatementOperation(
  */
 export function deleteInsurancePensionStatementOperation(
   del: ApiDelete,
-  fetchPension: (id: number) => Promise<void>,
+  fetchPension: (id: number, pensionType?: PensionType) => Promise<void>,
   selectedPension: Pension | null
 ) {
   return async (pensionId: number, statementId: number): Promise<void> => {
@@ -402,7 +403,7 @@ export function deleteInsurancePensionStatementOperation(
       
       // Refresh the pension data
       if (selectedPension?.id === pensionId) {
-        await fetchPension(pensionId)
+        await fetchPension(pensionId, PensionType.INSURANCE)
       }
       
       toast.success('Success', {

@@ -55,6 +55,24 @@ fetchPensions: (memberId?: number) => Promise<void>
 fetchPension: (id: number, pensionType?: PensionType) => Promise<void>
 createEtfPension: (pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
 createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<InsurancePension>
+createInsurancePensionStatement: (
+    pensionId: number,
+    data: {
+    statement_date: string,
+    value: number,
+    total_contributions: number,
+    total_benefits: number,
+    costs_amount: number,
+    costs_percentage: number,
+    note?: string,
+    projections?: Array<{
+    scenario_type: 'with_contributions' | 'without_contributions',
+    return_rate: number,
+    value_at_retirement: number,
+    monthly_payout: number
+    }>
+    }
+) => Promise<void>
 createInsurancePensionWithStatement: (
     pension: Omit<InsurancePension, 'id' | 'current_value'>,
     statements: Array<{
