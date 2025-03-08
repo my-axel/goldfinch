@@ -13,7 +13,7 @@
 1. **Complex Calculation Functions**
    - [ ] `calculateMemberFields` (household-helpers.ts) - age and retirement calculations
    - [ ] `generateFutureContributions` (contribution-plan.ts) - pension contribution projections
-   - [ ] `analyzeContributionStep` (ContributionImpactAnalysis.tsx) - growth opportunities
+   - [ ] `analyzeContributionStep` (ContributionPlanExplanation.tsx) - growth opportunities
    - [ ] `calculateProjection` (projection-preview.tsx) - financial projections with inflation
 
 2. **Business Logic Validators**

@@ -2,9 +2,6 @@
 
 import { useForm, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import { EditETFPensionBasicInformationForm } from "@/frontend/components/pension/etf/forms/EditETFPensionBasicInformationForm"
-import { EditETFPensionContributionStepsForm } from "@/frontend/components/pension/etf/forms/EditETFPensionContributionStepsForm"
-import { ETFPensionStats } from "@/frontend/components/pension/etf/components/ETFPensionStats"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
@@ -20,10 +17,20 @@ import {
   CombinedProjectionChart,
   HistoricalPerformanceChart
 } from "@/frontend/components/charts"
-import { ProjectionExplanations } from "@/frontend/components/pension/etf/components/ProjectionExplanations"
-import { ContributionImpactAnalysis } from "@/frontend/components/pension/etf/components/ContributionImpactAnalysis"
 import { useProjectionScenarios } from "@/frontend/hooks/useProjectionScenarios"
-import { ProjectionRatesSummary } from "@/frontend/components/pension/etf/components/ProjectionRatesSummary"
+import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
+import { LoadingState } from "@/frontend/components/shared/LoadingState"
+import { Alert, AlertTitle, AlertDescription } from "@/frontend/components/ui/alert"
+import { FormLayout, FormSection } from "@/frontend/components/shared"
+import { BasicInformationCard } from "@/frontend/components/pension/etf/BasicInformationCard"
+import { ContributionPlanCard } from "@/frontend/components/pension/etf/ContributionPlanCard"
+import { PensionStatusActions } from "@/frontend/components/pension/shared/PensionStatusActions"
+import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/dialogs/PauseConfirmationDialog"
+import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
+import { ValueProjectionExplanation } from "@/frontend/components/pension/etf/explanations/ValueProjectionExplanation"
+import { HistoricalPerformanceExplanation } from "@/frontend/components/pension/etf/explanations/HistoricalPerformanceExplanation"
+import { ContributionPlanExplanation } from "@/frontend/components/pension/etf/explanations/ContributionPlanExplanation"
+import { TrendingUp } from "lucide-react"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -83,13 +90,16 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     updateEtfPension, 
     pensionStatistics,
     isLoadingStatistics,
-    fetchPensionStatistics
+    fetchPensionStatistics,
+    updatePensionStatus
   } = usePension()
   const { members, fetchMembers } = useHousehold()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
   const statistics = pensionStatistics[pensionId]
+  const [showPauseDialog, setShowPauseDialog] = useState(false)
+  const [showResumeDialog, setShowResumeDialog] = useState(false)
 
   // Get the member's retirement date
   const member = pension ? members.find(m => m.id === pension.member_id) : null
@@ -166,7 +176,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     }
 
     loadData()
-  }, [pensionId]) // Only depend on pensionId to prevent unnecessary refetches
+  }, [pensionId, fetchPension, fetchMembers]) // Only depend on pensionId to prevent unnecessary refetches
 
   // Separate effect for fetching statistics after pension is loaded
   useEffect(() => {
@@ -215,18 +225,52 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     }
   }
 
+  const handlePauseConfirm = async (pauseDate: Date) => {
+    if (!pension) return
+
+    try {
+      await updatePensionStatus(pensionId, {
+        status: 'PAUSED',
+        paused_at: pauseDate.toISOString().split('T')[0]
+      })
+      setShowPauseDialog(false)
+    } catch (error) {
+      console.error('Error updating pension status:', error)
+      toast.error('Error', {
+        description: 'Failed to update pension status'
+      })
+    }
+  }
+
+  const handleResumeConfirm = async (resumeDate: Date) => {
+    if (!pension) return
+
+    try {
+      await updatePensionStatus(pensionId, {
+        status: 'ACTIVE',
+        resume_at: resumeDate.toISOString().split('T')[0]
+      })
+      setShowResumeDialog(false)
+    } catch (error) {
+      console.error('Error updating pension status:', error)
+      toast.error('Error', {
+        description: 'Failed to update pension status'
+      })
+    }
+  }
+
   return (
-    <div className="container py-10">
-      <div className="space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <ErrorBoundary>
+      <div className="container mx-auto py-10">
+        {/* Page Header */}
+        <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Edit ETF Pension Plan</h1>
             <p className="text-muted-foreground mt-2">
               Update your ETF-based pension plan details and contribution schedule.
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex space-x-4">
             <Button
               type="button"
               variant="outline"
@@ -234,51 +278,65 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              form="etf-pension-form"
-              disabled={loadingState.isAnyLoading}
-            >
+            <Button type="submit" form="etf-pension-form" disabled={loadingState.isAnyLoading}>
               Save Changes
             </Button>
           </div>
         </div>
 
-        <Form {...form}>
-          <form id="etf-pension-form" onSubmit={form.handleSubmit(handleSubmit)}>
-            <div className="space-y-6">
-              {/* Basic Information and Stats */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8">
-                  {loadingState.isPageLoading ? (
-                    <Skeleton className="h-[200px] w-full" />
-                  ) : (
-                    <EditETFPensionBasicInformationForm form={form} />
-                  )}
-                </div>
-              </div>
+        {loadingState.isPageLoading ? (
+          <LoadingState message="Loading pension details..." />
+        ) : !pension ? (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Pension not found</AlertDescription>
+          </Alert>
+        ) : pension.type !== PensionType.ETF_PLAN ? (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Invalid pension type</AlertDescription>
+          </Alert>
+        ) : (
+          <Form {...form}>
+            <form id="etf-pension-form" onSubmit={form.handleSubmit(handleSubmit)}>
+              <FormLayout>
+                {/* Basic Information Section */}
+                <FormSection
+                  title="Basic Information"
+                  description="Enter the basic details of your ETF pension plan"
+                  headerActions={
+                    <PensionStatusActions
+                      status={pension.status}
+                      onPause={() => setShowPauseDialog(true)}
+                      onResume={() => setShowResumeDialog(true)}
+                    />
+                  }
+                >
+                  <BasicInformationCard form={form} isEditing={true} />
+                </FormSection>
 
-              {/* Contribution Plan and History */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8">
-                  {loadingState.isPageLoading ? (
-                    <Skeleton className="h-[400px] w-full" />
-                  ) : (
-                    <EditETFPensionContributionStepsForm form={form} />
-                  )}
-                </div>
-                {/* Right side with dynamic analysis */}
-                <div className="lg:col-span-4 space-y-6 mt-6">
-                  <ContributionImpactAnalysis 
-                    form={form}
-                    retirementDate={retirementDate}
-                  />
-                </div>
-              </div>
+                {/* Contribution Plan Section */}
+                <FormSection
+                  title="Contribution Plan"
+                  description="Set up your contribution schedule"
+                  explanation={<ContributionPlanExplanation form={form} retirementDate={retirementDate} />}
+                  explanationTitle={
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" /> 
+                      <span>Growth Opportunity</span>
+                    </div>
+                  }
+                >
+                  <ContributionPlanCard form={form} />
+                </FormSection>
 
-              {/* Historical Performance and Stats */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8">
+                {/* Historical Performance Section */}
+                <FormSection
+                  title="Historical Performance"
+                  description="Track the performance of your pension plan"
+                  explanation={<HistoricalPerformanceExplanation pensionId={pensionId} />}
+                  explanationTitle="Historical Statistics"
+                >
                   {loadingState.isStatisticsLoading ? (
                     <Skeleton className="h-[400px] w-full" />
                   ) : statistics?.value_history ? (
@@ -288,17 +346,32 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                         date: new Date(point.date),
                         value: parseFloat(point.value.toString())
                       }))}
+                      asCard={false}
                     />
-                  ) : null}
-                </div>
-                <div className="lg:col-span-4 mt-6">
-                  <ETFPensionStats pensionId={pensionId} />
-                </div>
-              </div>
+                  ) : (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No historical data available
+                    </div>
+                  )}
+                </FormSection>
 
-              {/* Value Projection and Scenarios */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8 ">
+                {/* Value Projection Section */}
+                <FormSection
+                  title="Value Projection"
+                  description="Projected future value of your pension plan"
+                  explanation={
+                    !loadingState.isStatisticsLoading && (
+                      <ValueProjectionExplanation
+                        scenarios={scenarios?.scenarios || {
+                          pessimistic: { type: 'pessimistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 2 },
+                          realistic: { type: 'realistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 5 },
+                          optimistic: { type: 'optimistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 8 }
+                        }}
+                      />
+                    )
+                  }
+                  explanationTitle="Scenario Analysis"
+                >
                   {loadingState.isStatisticsLoading ? (
                     <Skeleton className="h-[400px] w-full" />
                   ) : statistics?.value_history ? (
@@ -316,28 +389,35 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                       }}
                       height={600}
                       expandable={false}
+                      asCard={false}
                     />
-                  ) : null}
-                </div>
-                <div className="lg:col-span-4 space-y-6">
-                  {!loadingState.isStatisticsLoading && (
-                    <>
-                      <ProjectionRatesSummary
-                        scenarios={scenarios?.scenarios || {
-                          pessimistic: { type: 'pessimistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 2 },
-                          realistic: { type: 'realistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 5 },
-                          optimistic: { type: 'optimistic', dataPoints: [], finalValue: 0, totalContributions: 0, totalReturns: 0, returnRate: 8 }
-                        }}
-                      />
-                      <ProjectionExplanations />
-                    </>
+                  ) : (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No projection data available
+                    </div>
                   )}
-                </div>
-              </div>
-            </div>
-          </form>
-        </Form>
+                </FormSection>
+              </FormLayout>
+            </form>
+          </Form>
+        )}
+
+        {/* Dialogs */}
+        {showPauseDialog && (
+          <PauseConfirmationDialog
+            open={showPauseDialog}
+            onOpenChange={setShowPauseDialog}
+            onConfirm={handlePauseConfirm}
+          />
+        )}
+        {showResumeDialog && (
+          <ResumeDateDialog
+            open={showResumeDialog}
+            onOpenChange={setShowResumeDialog}
+            onConfirm={handleResumeConfirm}
+          />
+        )}
       </div>
-    </div>
+    </ErrorBoundary>
   )
 } 

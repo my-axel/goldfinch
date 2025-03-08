@@ -68,28 +68,39 @@ export function safeNumberValue(value: number | null | undefined): number | unde
 
 /**
  * Formats a number for input fields with proper locale-specific decimal separators
- * Returns an empty string if the value is null/undefined
  * 
- * @param value - The number value to format, which might be null or undefined
+ * @param value - The number value to format
  * @param locale - The locale to use for formatting (e.g., 'en-US', 'de-DE')
- * @returns A string representation of the number with the correct decimal separator for the locale,
- *          or an empty string if the input was null or undefined
+ * @param decimals - The number of decimal places to show (optional)
+ * @returns A string representation of the number with proper decimal separator
  * 
  * @example
  * // Returns "123,45" for German locale
  * formatNumberInput(123.45, 'de-DE')
  * 
  * @example
+ * // Returns "123,450" for German locale with 3 decimals
+ * formatNumberInput(123.45, 'de-DE', 3)
+ * 
+ * @example
  * // Returns "" for null input
  * formatNumberInput(null, 'en-US')
  */
-export function formatNumberInput(value: number | null | undefined, locale: string): string {
+export function formatNumberInput(value: number | null | undefined, locale: string, decimals?: number): string {
   const safeValue = safeNumberValue(value);
   if (safeValue === undefined) {
     return "";
   }
   
   const decimalSeparator = getDecimalSeparator(locale);
+  
+  // If decimals is specified, format with fixed decimal places
+  if (decimals !== undefined) {
+    const formatted = safeValue.toFixed(decimals);
+    return formatted.replace('.', decimalSeparator);
+  }
+  
+  // Otherwise, just replace the decimal separator
   return safeValue.toString().replace('.', decimalSeparator);
 }
 

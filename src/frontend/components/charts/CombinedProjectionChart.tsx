@@ -451,7 +451,30 @@ export function CombinedProjectionChart({
   if (!asCard) {
     return (
       <ChartErrorBoundary title="Portfolio Value Projection" height={chartHeight}>
-        {chartContent}
+        <div className="space-y-4">
+          <div className="flex flex-row items-center justify-end">
+            <div className="flex items-center gap-4">
+              <ChartLegend payload={legendPayload} />
+              {expandable && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  type="button"
+                  className="h-8 w-8"
+                  title={isExpanded ? "Collapse chart" : "Expand chart"}
+                >
+                  {isExpanded ? (
+                    <Shrink className="h-4 w-4" />
+                  ) : (
+                    <Expand className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+          {chartContent}
+        </div>
       </ChartErrorBoundary>
     )
   }

@@ -117,7 +117,7 @@ function ExplanationStats({ className, columns = 1, style, ...props }: Explanati
   return (
     <div
       className={cn(
-        "w-full grid gap-4",
+        "w-full grid gap-2",
         colsClass,
         className
       )}
@@ -142,7 +142,7 @@ function ExplanationStat({
   return (
     <div className={cn("flex items-start gap-3", className)} {...props}>
       {Icon && (
-        <div className="p-1.5 bg-primary/10 rounded-full mt-0.5">
+        <div className="p-1 bg-primary/10 rounded-full mt-0.5">
           <Icon className="h-4 w-4 text-primary" />
         </div>
       )}
@@ -151,7 +151,7 @@ function ExplanationStat({
         <div className="space-y-0.5">
           <div className="flex items-baseline gap-1.5">
             <p className={cn(
-              "text-lg font-bold leading-none opacity-80",
+              "text-base font-bold leading-none opacity-80",
               valueClassName
             )}>
               {value}
@@ -164,7 +164,7 @@ function ExplanationStat({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <p className={cn(
-                        "text-sm font-medium leading-none opacity-80 cursor-default",
+                        "text-xs font-medium leading-none opacity-80 cursor-default",
                         subValueClassName
                       )}>
                         {subValue}

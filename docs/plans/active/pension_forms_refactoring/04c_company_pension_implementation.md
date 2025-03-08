@@ -43,15 +43,18 @@ This plan focuses on implementing the standardized patterns for Company Pension 
 
 ### Add Form
 
-- [ ] **Apply Layout Standardization**
-  - [ ] Implement flexible two-column grid
-  - [ ] Create dedicated explanation components
-  - [ ] Use `FormLayout` and `FormSection` components
+- [x] **Apply Layout Standardization**
+  - [x] Implement flexible two-column grid
+  - [x] Create dedicated explanation components
+  - [x] Use `FormLayout` and `FormSection` components
 
 - [ ] **Apply Formatting Standardization**
-  - [ ] Replace custom formatting with centralized utilities
-  - [ ] Implement client-side formatting pattern
-  - [ ] Use formatting components for inputs and displays
+  - [ ] Replace direct JSX formatting with `formatCurrency` in ContributionHistoryCard.tsx
+  - [ ] Replace direct date formatting with `toLocaleDateString` in ContributionHistoryCard.tsx
+  - [ ] Replace complex state management for formatted inputs in PensionStatementsCard.tsx
+  - [ ] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
+  - [ ] Implement client-side useState/useEffect pattern for all displayed values
+  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Add `useFormReset` hook
@@ -60,15 +63,18 @@ This plan focuses on implementing the standardized patterns for Company Pension 
 
 ### Edit Form
 
-- [ ] **Apply Layout Standardization**
-  - [ ] Implement flexible two-column grid
-  - [ ] Create dedicated explanation components
-  - [ ] Use `FormLayout` and `FormSection` components
+- [x] **Apply Layout Standardization**
+  - [x] Implement flexible two-column grid
+  - [x] Create dedicated explanation components
+  - [x] Use `FormLayout` and `FormSection` components
 
 - [ ] **Apply Formatting Standardization**
-  - [ ] Replace custom formatting with centralized utilities
-  - [ ] Implement client-side formatting pattern
-  - [ ] Use formatting components for inputs and displays
+  - [ ] Replace direct JSX formatting with `formatCurrency` in ContributionHistoryCard.tsx
+  - [ ] Replace direct date formatting with `toLocaleDateString` in ContributionHistoryCard.tsx
+  - [ ] Replace complex state management for formatted inputs in PensionStatementsCard.tsx
+  - [ ] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
+  - [ ] Implement client-side useState/useEffect pattern for all displayed values
+  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Replace manual reset logic with `useFormReset` hook
@@ -76,15 +82,15 @@ This plan focuses on implementing the standardized patterns for Company Pension 
 
 ### Error Handling and Loading States
 
-- [ ] **Verify Error Boundary Usage**
-  - [ ] Confirm ErrorBoundary is properly implemented in both Add and Edit forms
-  - [ ] Ensure consistent error messaging and recovery options
-  - [ ] Document as reference implementation
+- [x] **Verify Error Boundary Usage**
+  - [x] Confirm ErrorBoundary is properly implemented in both Add and Edit forms
+  - [x] Ensure consistent error messaging and recovery options
+  - [x] Document as reference implementation
 
-- [ ] **Verify Loading State Implementation**
-  - [ ] Confirm LoadingState component is used consistently in Edit form
-  - [ ] Verify loading indicators for async operations
-  - [ ] Document as reference implementation
+- [x] **Verify Loading State Implementation**
+  - [x] Confirm LoadingState component is used consistently in Edit form
+  - [x] Verify loading indicators for async operations
+  - [x] Document as reference implementation
 
 ## 🔍 Implementation Details
 

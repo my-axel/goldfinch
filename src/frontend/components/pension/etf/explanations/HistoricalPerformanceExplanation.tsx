@@ -7,18 +7,16 @@ import { formatCurrency, formatPercent } from "@/frontend/lib/transforms"
 import {
   ExplanationStats,
   ExplanationStat,
-  Explanation,
-  ExplanationHeader
 } from "@/frontend/components/ui/explanation"
 import { CalendarClock, CircleDot, TrendingUp, Wallet } from "lucide-react"
 import { cn } from "@/frontend/lib/utils"
 import { PensionType } from "@/frontend/types/pension"
 
-interface ETFPensionStatsProps {
+interface HistoricalPerformanceExplanationProps {
   pensionId: number
 }
 
-export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFPensionStatsProps) {
+export const HistoricalPerformanceExplanation = memo(function HistoricalPerformanceExplanation({ pensionId }: HistoricalPerformanceExplanationProps) {
   const { pensionStatistics, isLoadingStatistics, fetchPensionStatistics, pensions, fetchPension } = usePension()
   const { settings } = useSettings()
   const statistics = pensionStatistics[pensionId]
@@ -77,15 +75,14 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
 
   if (!pension || isLoading) {
     return (
-      <Explanation>
-        <ExplanationHeader>Portfolio Statistics</ExplanationHeader>
+      <div>
         <ExplanationStats columns={2}>
           <div className="h-20 animate-pulse bg-muted rounded-lg" />
           <div className="h-20 animate-pulse bg-muted rounded-lg" />
           <div className="h-20 animate-pulse bg-muted rounded-lg" />
           <div className="h-20 animate-pulse bg-muted rounded-lg" />
         </ExplanationStats>
-      </Explanation>
+      </div>
     )
   }
 
@@ -100,8 +97,7 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
     : undefined
 
   return (
-    <Explanation>
-      <ExplanationHeader>Historical Statistics</ExplanationHeader>
+    <div>
       <ExplanationStats columns={2}>
         <ExplanationStat
           icon={Wallet}
@@ -134,6 +130,6 @@ export const ETFPensionStats = memo(function ETFPensionStats({ pensionId }: ETFP
           )}
         />
       </ExplanationStats>
-    </Explanation>
+    </div>
   )
 }) 

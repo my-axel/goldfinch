@@ -43,15 +43,18 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
 
 ### Add Form
 
-- [ ] **Apply Layout Standardization**
-  - [ ] Implement flexible two-column grid
-  - [ ] Create dedicated explanation components
-  - [ ] Use `FormLayout` and `FormSection` components
+- [x] **Apply Layout Standardization**
+  - [x] Implement flexible two-column grid
+  - [x] Create dedicated explanation components
+  - [x] Use `FormLayout` and `FormSection` components
 
 - [ ] **Apply Formatting Standardization**
-  - [ ] Replace custom formatting with centralized utilities
-  - [ ] Implement client-side formatting pattern
-  - [ ] Use formatting components for inputs and displays
+  - [ ] Replace custom `isValidNumberFormat` function in BasicInformationCard.tsx and ContributionPlanCard.tsx
+  - [ ] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
+  - [ ] Replace manual state management for formatted inputs with `NumberInput` and `CurrencyInput` components
+  - [ ] Replace direct date formatting with `toISOString().split('T')[0]` with `DateInput` component
+  - [ ] Replace manual decimal separator handling with standardized input components
+  - [ ] Implement client-side formatting pattern for all displayed values
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Add `useFormReset` hook
@@ -60,15 +63,18 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
 
 ### Edit Form
 
-- [ ] **Apply Layout Standardization**
-  - [ ] Implement flexible two-column grid
-  - [ ] Create dedicated explanation components
-  - [ ] Use `FormLayout` and `FormSection` components
+- [x] **Apply Layout Standardization**
+  - [x] Implement flexible two-column grid
+  - [x] Create dedicated explanation components
+  - [x] Use `FormLayout` and `FormSection` components
 
 - [ ] **Apply Formatting Standardization**
-  - [ ] Replace custom formatting with centralized utilities
-  - [ ] Implement client-side formatting pattern
-  - [ ] Use formatting components for inputs and displays
+  - [ ] Replace custom `isValidNumberFormat` function in BasicInformationCard.tsx and ContributionPlanCard.tsx
+  - [ ] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
+  - [ ] Replace manual state management for formatted inputs with `NumberInput` and `CurrencyInput` components
+  - [ ] Replace direct date formatting with `toISOString().split('T')[0]` with `DateInput` component
+  - [ ] Replace manual decimal separator handling with standardized input components
+  - [ ] Implement client-side formatting pattern for all displayed values
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Replace manual reset logic with `useFormReset` hook
@@ -76,15 +82,15 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
 
 ### Error Handling and Data Loading
 
-- [ ] **Implement Error Boundary**
-  - [ ] Wrap both Add and Edit forms with ErrorBoundary component
-  - [ ] Add consistent error messaging and recovery options
-  - [ ] Ensure error states are properly handled in UI
+- [x] **Implement Error Boundary**
+  - [x] Wrap both Add and Edit forms with ErrorBoundary component
+  - [x] Add consistent error messaging and recovery options
+  - [x] Ensure error states are properly handled in UI
 
-- [ ] **Standardize Loading State Implementation**
-  - [ ] Replace custom loading state with standard LoadingState component
-  - [ ] Implement skeleton loaders for form sections during data loading
-  - [ ] Ensure consistent loading indicators for async operations
+- [x] **Standardize Loading State Implementation**
+  - [x] Replace custom loading state with standard LoadingState component
+  - [x] Implement skeleton loaders for form sections during data loading
+  - [x] Ensure consistent loading indicators for async operations
 
 - [ ] **Refactor Data Loading Pattern**
   - [ ] Replace direct context usage with usePensionData hook

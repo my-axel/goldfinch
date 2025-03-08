@@ -210,7 +210,34 @@ export function HistoricalPerformanceChart({
   if (!asCard) {
     return (
       <ChartErrorBoundary title="Historical Performance" height={height}>
-        {chartContent}
+        <div className={className}>
+          <div className="flex flex-row items-center justify-end space-y-0 pb-2">
+            <div className="flex items-center gap-4">
+              <ChartLegend payload={legendPayload} />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsExpanded(!isExpanded)}
+                type="button"
+                className="h-8 w-8"
+                title={isExpanded ? "Collapse chart" : "Expand chart"}
+              >
+                {isExpanded ? (
+                  <Shrink className="h-4 w-4" />
+                ) : (
+                  <Expand className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div className="pt-2">
+            {isLoading ? (
+              <Skeleton className="w-full" style={{ height }} />
+            ) : (
+              chartContent
+            )}
+          </div>
+        </div>
       </ChartErrorBoundary>
     )
   }

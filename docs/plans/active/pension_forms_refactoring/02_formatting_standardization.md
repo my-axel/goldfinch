@@ -57,28 +57,28 @@ This plan addresses the inconsistent formatting patterns across pension forms by
 
 ### 1. Audit Current Formatting Implementations
 
-- [ ] **Identify Custom Formatting Logic**
-  - [ ] Scan ETF Pension forms for custom formatting
-  - [ ] Scan Company Pension forms for custom formatting
-  - [ ] Scan Insurance Pension forms for custom formatting
-  - [ ] Document patterns that need to be replaced in the respective pension type plans (04a, 04b, 04c)
+- [x] **Identify Custom Formatting Logic**
+  - [x] Scan ETF Pension forms for custom formatting
+  - [x] Scan Company Pension forms for custom formatting
+  - [x] Scan Insurance Pension forms for custom formatting
+  - [x] Document patterns that need to be replaced in the respective pension type plans (04a, 04b, 04c)
 
-- [ ] **Identify Hydration Issues**
-  - [ ] Look for direct JSX formatting (potential hydration mismatches)
-  - [ ] Document components with inconsistent client/server rendering in the respective pension type plans (04a, 04b, 04c)
+- [x] **Identify Hydration Issues**
+  - [x] Look for direct JSX formatting (potential hydration mismatches)
+  - [x] Document components with inconsistent client/server rendering in the respective pension type plans (04a, 04b, 04c)
 
 ### 2. Create Reusable Formatting Components
 
-- [ ] **Create Value Display Components**
-  - [ ] Create `FormattedCurrency` component in `src/frontend/components/shared/formatting/FormattedCurrency.tsx`
-  - [ ] Create `FormattedNumber` component in `src/frontend/components/shared/formatting/FormattedNumber.tsx`
-  - [ ] Create `FormattedPercent` component in `src/frontend/components/shared/formatting/FormattedPercent.tsx`
-  - [ ] Create `FormattedDate` component in `src/frontend/components/shared/formatting/FormattedDate.tsx`
+- [x] **Create Value Display Components**
+  - [x] Create `FormattedCurrency` component in `src/frontend/components/shared/formatting/FormattedCurrency.tsx`
+  - [x] Create `FormattedNumber` component in `src/frontend/components/shared/formatting/FormattedNumber.tsx`
+  - [x] Create `FormattedPercent` component in `src/frontend/components/shared/formatting/FormattedPercent.tsx`
+  - [x] Create `FormattedDate` component in `src/frontend/components/shared/formatting/FormattedDate.tsx`
 
-- [ ] **Create Input Handling Components**
-  - [ ] Create `NumberInput` component in `src/frontend/components/shared/inputs/NumberInput.tsx`
-  - [ ] Create `CurrencyInput` component in `src/frontend/components/shared/inputs/CurrencyInput.tsx`
-  - [ ] Create `PercentInput` component in `src/frontend/components/shared/inputs/PercentInput.tsx`
+- [x] **Create Input Handling Components**
+  - [x] Create `NumberInput` component in `src/frontend/components/shared/inputs/NumberInput.tsx`
+  - [x] Create `CurrencyInput` component in `src/frontend/components/shared/inputs/CurrencyInput.tsx`
+  - [x] Create `PercentInput` component in `src/frontend/components/shared/inputs/PercentInput.tsx`
 
 - [x] **Verify Existing Date Components**
   - [x] Confirm `DateInput` and `DateEndPicker` components use the correct utilities

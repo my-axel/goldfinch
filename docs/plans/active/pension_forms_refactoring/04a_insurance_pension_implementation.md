@@ -41,10 +41,10 @@ This plan focuses on verifying and finalizing the Insurance Pension forms as the
 
 ### Add Form
 
-- [ ] **Verify Layout Implementation**
-  - [ ] Confirm use of flexible two-column grid
-  - [ ] Verify all sections have corresponding explanations
-  - [ ] Document as reference implementation
+- [x] **Verify Layout Implementation**
+  - [x] Confirm use of flexible two-column grid
+  - [x] Verify all sections have corresponding explanations
+  - [x] Document as reference implementation
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Add `useFormReset` hook
@@ -52,16 +52,19 @@ This plan focuses on verifying and finalizing the Insurance Pension forms as the
   - [ ] Remove any manual initialization logic
 
 - [ ] **Verify Formatting Implementation**
-  - [ ] Confirm use of centralized formatting utilities
-  - [ ] Verify proper hydration mismatch prevention
+  - [ ] Replace direct use of `parseNumber`, `formatNumberInput`, `getDecimalSeparator` in BasicInformationCard.tsx
+  - [ ] Replace custom `handleNumberInput` function with standardized `NumberInput` component
+  - [ ] Replace direct JSX formatting in StatementsCard.tsx with client-side useState/useEffect pattern
+  - [ ] Replace complex state management for multiple formatted inputs with standardized components
+  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
   - [ ] Document as reference implementation
 
 ### Edit Form
 
-- [ ] **Verify Layout Implementation**
-  - [ ] Confirm use of flexible two-column grid
-  - [ ] Verify all sections have corresponding explanations
-  - [ ] Document as reference implementation
+- [x] **Verify Layout Implementation**
+  - [x] Confirm use of flexible two-column grid
+  - [x] Verify all sections have corresponding explanations
+  - [x] Document as reference implementation
 
 - [ ] **Verify Form Reset Implementation**
   - [ ] Confirm use of `useFormReset` hook
@@ -75,15 +78,15 @@ This plan focuses on verifying and finalizing the Insurance Pension forms as the
 
 ### Error Handling and Loading States
 
-- [ ] **Verify Error Boundary Usage**
-  - [ ] Confirm ErrorBoundary is properly implemented in both Add and Edit forms
-  - [ ] Ensure consistent error messaging and recovery options
-  - [ ] Document as reference implementation
+- [x] **Verify Error Boundary Usage**
+  - [x] Confirm ErrorBoundary is properly implemented in both Add and Edit forms
+  - [x] Ensure consistent error messaging and recovery options
+  - [x] Document as reference implementation
 
-- [ ] **Verify Loading State Implementation**
-  - [ ] Confirm LoadingState component is used consistently in Edit form
-  - [ ] Verify loading indicators for async operations
-  - [ ] Document as reference implementation
+- [x] **Verify Loading State Implementation**
+  - [x] Confirm LoadingState component is used consistently in Edit form
+  - [x] Verify loading indicators for async operations
+  - [x] Document as reference implementation
 
 ## 🔍 Implementation Details
 

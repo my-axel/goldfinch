@@ -3,12 +3,6 @@
 import { useWatch, type UseFormReturn } from "react-hook-form"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency } from "@/frontend/lib/transforms"
-import {
-  Explanation,
-  ExplanationHeader,
-  ExplanationContent,
-} from "@/frontend/components/ui/explanation"
-import { TrendingUp } from "lucide-react"
 import { type ETFPensionFormData } from "@/frontend/types/pension-form"
 import { type ContributionStep } from "@/frontend/types/pension"
 
@@ -87,12 +81,12 @@ function analyzeContributionStep(
   }
 }
 
-interface ContributionImpactAnalysisProps {
+interface ContributionPlanExplanationProps {
   form: UseFormReturn<ETFPensionFormData>
   retirementDate?: Date
 }
 
-export function ContributionImpactAnalysis({ form, retirementDate }: ContributionImpactAnalysisProps) {
+export function ContributionPlanExplanation({ form, retirementDate }: ContributionPlanExplanationProps) {
   const { settings } = useSettings()
   const contributions = useWatch({
     control: form.control,
@@ -132,14 +126,7 @@ export function ContributionImpactAnalysis({ form, retirementDate }: Contributio
   if (analysis.additionalMonthly <= 0) return null
 
   return (
-    <Explanation className="space-y-0">
-      <ExplanationHeader>
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" /> 
-          <span>Growth Opportunity</span>
-        </div>
-      </ExplanationHeader>
-      <ExplanationContent className="space-y-0">
+        <div>
             Increasing your {currentStep.frequency.toLowerCase()} contribution to{' '}
             <span className="font-medium text-foreground">
               {formatCurrency(analysis.suggestedAmount, {
@@ -160,7 +147,6 @@ export function ContributionImpactAnalysis({ form, retirementDate }: Contributio
               }).formatted}
             </span>
             {' '}to your retirement savings.
-      </ExplanationContent>
-    </Explanation>
+        </div>
   )
-}
+} 

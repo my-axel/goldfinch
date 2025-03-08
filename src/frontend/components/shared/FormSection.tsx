@@ -6,6 +6,7 @@ interface FormSectionProps {
   title: string;
   description?: string;
   explanation?: React.ReactNode; // Optional explanation
+  explanationTitle?: React.ReactNode; // Optional title for the explanation section (can be string or JSX)
   headerActions?: React.ReactNode; // Optional header actions (badges, buttons, etc.)
   children: React.ReactNode;
   className?: string;
@@ -21,6 +22,7 @@ interface FormSectionProps {
  * @param title - Section title
  * @param description - Optional section description
  * @param explanation - Optional explanation component to render in the right column
+ * @param explanationTitle - Optional title for the explanation section (can be string or JSX, if not provided, no header will be shown)
  * @param headerActions - Optional actions to display in the header next to the title
  * @param children - Form fields to render in the left column
  * @param className - Optional additional CSS classes for the left column
@@ -29,6 +31,7 @@ export function FormSection({
   title, 
   description, 
   explanation, 
+  explanationTitle,
   headerActions,
   children,
   className = ''
@@ -61,7 +64,7 @@ export function FormSection({
       <div className="md:col-span-4">
         {explanation && (
           <Explanation>
-            <ExplanationHeader>{title}</ExplanationHeader>
+            {explanationTitle && <ExplanationHeader>{explanationTitle}</ExplanationHeader>}
             <ExplanationContent>
               {explanation}
             </ExplanationContent>
