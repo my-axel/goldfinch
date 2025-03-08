@@ -15,8 +15,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { companyPensionSchema } from "@/frontend/lib/validations/pension"
 import { ContributionFrequency } from "@/frontend/types/pension"
 import { toISODateString } from "@/frontend/lib/dateUtils"
-import { Explanation, ExplanationHeader, ExplanationContent, ExplanationAlert, ExplanationList, ExplanationListItem } from "@/frontend/components/ui/explanation"
 import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
+import { FormLayout, FormSection } from "@/frontend/components/shared"
+import { BasicInformationExplanation } from "@/frontend/components/pension/company/explanations/BasicInformationExplanation"
+import { ContributionPlanExplanation } from "@/frontend/components/pension/company/explanations/ContributionPlanExplanation"
+import { StatementsExplanation } from "@/frontend/components/pension/company/explanations/StatementsExplanation"
+
 export default function NewCompanyPensionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -137,93 +141,34 @@ export default function NewCompanyPensionPage() {
           id="company-pension-form"
           onSubmit={form.handleSubmit(handleSubmit)} 
         >
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Row 1: Basic Information Card and its explanation */}
-            <div className="md:col-span-8">
+          <FormLayout>
+            {/* Basic Information Section */}
+            <FormSection
+              title="Basic Information"
+              description="Manage your company pension plan details and status"
+              explanation={<BasicInformationExplanation />}
+            >
               <BasicInformationCard form={form} />
-            </div>
-            <div className="md:col-span-4">
-              <Explanation>
-                <ExplanationHeader>Basic Information</ExplanationHeader>
-                <ExplanationContent>
-                  <p>
-                    Enter the basic information about your company pension plan.
-                    The contribution amount and frequency help you track your
-                    regular investments.
-                  </p>
-                </ExplanationContent>
-                <ExplanationList className="mt-4">
-                  <ExplanationListItem>
-                    <strong>Name:</strong> A descriptive name for your pension plan
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Employer:</strong> The company providing the pension plan
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Start Date:</strong> When you joined the pension plan
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Contribution:</strong> Your regular contribution amount and frequency
-                  </ExplanationListItem>
-                </ExplanationList>
-              </Explanation>
-            </div>
-
-            {/* Row 2: Contribution Plan Card and its explanation */}
-            <div className="md:col-span-8">
+            </FormSection>
+            
+            {/* Contribution Plan Section */}
+            <FormSection
+              title="Contribution Plan"
+              description="Set up your contribution schedule"
+              explanation={<ContributionPlanExplanation />}
+            >
               <ContributionPlanCard form={form} />
-            </div>
-            <div className="md:col-span-4">
-              <Explanation>
-                <ExplanationHeader>Contribution Plan</ExplanationHeader>
-                <ExplanationContent>
-                  <p>
-                    Set up your contribution plan steps to track changes in your
-                    contribution amount or frequency over time.
-                  </p>
-                  <p className="mt-2">
-                    Each step represents a period with a specific contribution
-                    amount and frequency.
-                  </p>
-                </ExplanationContent>
-                <ExplanationAlert className="mt-4">
-                  Adding detailed contribution steps helps you track your
-                  pension growth more accurately.
-                </ExplanationAlert>
-              </Explanation>
-            </div>
-
-            {/* Row 3: Pension Statements Card and its explanation */}
-            <div className="md:col-span-8">
+            </FormSection>
+            
+            {/* Statements Section */}
+            <FormSection
+              title="Pension Statements"
+              description="Track the value of your pension over time"
+              explanation={<StatementsExplanation />}
+            >
               <PensionStatementsCard form={form} />
-            </div>
-            <div className="md:col-span-4">
-              <Explanation>
-                <ExplanationHeader>Pension Statements</ExplanationHeader>
-                <ExplanationContent>
-                  <p>
-                    Add statements from your pension provider to track the value
-                    of your pension over time.
-                  </p>
-                  <p className="mt-2">
-                    For each statement, you can add retirement projections that
-                    show expected benefits at different retirement ages.
-                  </p>
-                </ExplanationContent>
-                <ExplanationList className="mt-4">
-                  <ExplanationListItem>
-                    <strong>Statement Date:</strong> When the statement was issued
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Value:</strong> The current value of your pension
-                  </ExplanationListItem>
-                  <ExplanationListItem>
-                    <strong>Projections:</strong> Expected retirement benefits
-                  </ExplanationListItem>
-                </ExplanationList>
-              </Explanation>
-            </div>
-          </div>
+            </FormSection>
+          </FormLayout>
         </form>
       </Form>
     </div>

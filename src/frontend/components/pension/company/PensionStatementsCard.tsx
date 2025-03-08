@@ -9,7 +9,6 @@ import { Input } from "@/frontend/components/ui/input"
 import { useState, useEffect } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { parseNumber, getDecimalSeparator, getCurrencySymbol } from "@/frontend/lib/transforms"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { useDateFormat } from "@/frontend/hooks/useDateFormat"
@@ -31,7 +30,7 @@ interface PensionStatementsCardProps {
 }
 
 /**
- * Card component for managing pension statements and retirement projections.
+ * Component for managing pension statements and retirement projections.
  * Handles adding, editing, and removing statements and their associated projections.
  */
 export function PensionStatementsCard({ form, pensionId }: PensionStatementsCardProps) {
@@ -940,49 +939,37 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
         </AlertDialogContent>
       </AlertDialog>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
-          <div className="space-y-1.5">
-            <CardTitle>Pension Statements</CardTitle>
-            <CardDescription>
-              Track your pension statements and retirement projections
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-8">
-            {statementFields.length > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
-                onClick={handleAddStatement}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <span>Add a new statement</span>
-              </Button>
-            )}
-            
-            {/* Latest Statement Form */}
-            {renderLatestStatementForm()}
-            
-            {/* Previous Statements List */}
-            {renderPreviousStatements()}
-            
-            {statementFields.length === 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
-                onClick={handleAddStatement}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <span>No statements added yet. Click to add your first statement.</span>
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-8">
+        {statementFields.length > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
+            onClick={handleAddStatement}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>Add a new statement</span>
+          </Button>
+        )}
+        
+        {/* Latest Statement Form */}
+        {renderLatestStatementForm()}
+        
+        {/* Previous Statements List */}
+        {renderPreviousStatements()}
+        
+        {statementFields.length === 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
+            onClick={handleAddStatement}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>No statements added yet. Click to add your first statement.</span>
+          </Button>
+        )}
+      </div>
     </>
   )
 } 
