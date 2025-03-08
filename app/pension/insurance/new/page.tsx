@@ -19,6 +19,7 @@ import { StatementsExplanation } from "@/frontend/components/pension/insurance/e
 import { zodResolver } from "@hookform/resolvers/zod"
 import { insurancePensionSchema } from "@/frontend/lib/validations/pension"
 import { toISODateString } from "@/frontend/lib/dateUtils"
+import { FormLayout, FormSection } from "@/frontend/components/shared"
 
 const defaultValues: InsurancePensionFormData = {
   type: PensionType.INSURANCE,
@@ -118,31 +119,34 @@ export default function AddInsurancePensionPage() {
 
         <Form {...form}>
           <form id="insurance-pension-form" onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <FormLayout>
               {/* Basic Information Section */}
-              <div className="md:col-span-8">
+              <FormSection
+                title="Basic Information"
+                description="Enter the basic details of your insurance pension plan"
+                explanation={<BasicInformationExplanation />}
+              >
                 <BasicInformationCard form={form} />
-              </div>
-              <div className="md:col-span-4">
-                <BasicInformationExplanation />
-              </div>
+              </FormSection>
 
               {/* Contribution Details Section */}
-              <div className="md:col-span-8">
+              <FormSection
+                title="Contribution Details"
+                description="Set up your contribution schedule"
+                explanation={<ContributionDetailsExplanation />}
+              >
                 <ContributionDetailsCard form={form} />
-              </div>
-              <div className="md:col-span-4">
-                <ContributionDetailsExplanation />
-              </div>
+              </FormSection>
 
               {/* Statements Section */}
-              <div className="md:col-span-8">
+              <FormSection
+                title="Statements"
+                description="Record historical statements and projections"
+                explanation={<StatementsExplanation />}
+              >
                 <StatementsCard form={form} />
-              </div>
-              <div className="md:col-span-4">
-                <StatementsExplanation />
-              </div>
-            </div>
+              </FormSection>
+            </FormLayout>
           </form>
         </Form>
       </div>

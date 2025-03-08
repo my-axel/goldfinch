@@ -1,7 +1,4 @@
 import {
-  Explanation,
-  ExplanationHeader,
-  ExplanationContent,
   ExplanationList,
   ExplanationListItem,
   ExplanationAlert
@@ -9,9 +6,7 @@ import {
 
 export function BasicInformationExplanation() {
   return (
-    <Explanation>
-      <ExplanationHeader>Basic Information</ExplanationHeader>
-      <ExplanationContent>
+    <div>
         <p>Enter the basic details of your insurance pension plan to identify and track your policy.</p>
 
         <ExplanationList>
@@ -24,7 +19,6 @@ export function BasicInformationExplanation() {
         <ExplanationAlert>
           Guaranteed interest must be lower than or equal to expected return.
         </ExplanationAlert>
-      </ExplanationContent>
-    </Explanation>
+    </div>
   )
 } 

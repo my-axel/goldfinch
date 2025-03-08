@@ -81,8 +81,8 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
   - [ ] Add consistent error messaging and recovery options
   - [ ] Ensure error states are properly handled in UI
 
-- [ ] **Implement Loading States**
-  - [ ] Add LoadingState component to Edit form
+- [ ] **Standardize Loading State Implementation**
+  - [ ] Replace custom loading state with standard LoadingState component
   - [ ] Implement skeleton loaders for form sections during data loading
   - [ ] Ensure consistent loading indicators for async operations
 
@@ -149,6 +149,8 @@ const { resetWithData } = useFormReset({
 ```
 
 ### Error Handling and Data Loading Implementation
+
+The ETF Pension forms currently use a custom loading state approach but need to be updated to use the standard ErrorBoundary and LoadingState components:
 
 #### Edit Page Refactoring
 
@@ -300,75 +302,60 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
 }
 ```
 
-#### Add Page Refactoring
+## 📋 Form Layout Audit Results
 
-```tsx
-"use client"
+The ETF Pension forms require significant changes to align with the standardized layout pattern.
 
-import { useForm } from "react-hook-form"
-import { useRouter, useSearchParams } from "next/navigation"
-import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { etfPensionSchema } from "@/frontend/lib/validations/pension"
+### Current Structure
 
-export default function NewETFPensionPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { createEtfPension } = usePension()
+- **Form Sections**: 
+  - Basic Information (name, ETF selection)
+  - Investment Details (existing investment, reference date)
+  - Contribution Plan (multiple contribution steps with amounts and dates)
+  - Edit form: Historical Performance (in Edit form only)
+  - Edit form: Value Projection (in Edit form only)
 
-  const form = useForm<ETFPensionFormData>({
-    resolver: zodResolver(etfPensionSchema),
-    defaultValues: {
-      type: PensionType.ETF_PLAN,
-      name: "",
-      member_id: searchParams.get('member_id') || "",
-      etf_id: "",
-      contribution_plan_steps: []
-    }
-  })
+- **Layout Pattern**:
+  - Uses a basic single-column layout
+  - No consistent grid structure
+  - Limited or no explanation components
+  - Inconsistent spacing between sections
 
-  const handleSubmit = async (data: ETFPensionFormData) => {
-    try {
-      // Implementation remains the same
-    } catch (error) {
-      console.error('Failed to create pension:', error)
-      toast.error("Error", { 
-        description: error instanceof Error ? error.message : "Failed to create pension"
-      })
-    }
-  }
+### Recommended Changes
 
-  return (
-    <ErrorBoundary>
-      <div className="container max-w-2xl mx-auto py-10">
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Create ETF Pension Plan</h1>
-            <p className="text-muted-foreground mt-2">
-              Set up a new ETF-based pension plan. You&apos;ll need to select an ETF
-              and set up your contribution plan.
-            </p>
-          </div>
+- Implement the `FormLayout` component with 12-column grid
+- Create `FormSection` components for each logical section
+- Develop dedicated explanation components for each section
+- Ensure consistent spacing and responsive behavior
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-              {/* Form content using FormLayout and FormSection components */}
-              <div className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  Create Pension
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
-      </div>
-    </ErrorBoundary>
-  )
-} 
+### Section Structure
+
+The ETF Pension forms should be restructured into the following sections:
+
+1. **Basic Information**
+   - ETF selection
+   - Name
+   - Notes
+
+2. **Investment Details**
+   - Existing investment toggle
+   - Existing units (if applicable)
+   - Reference date
+   - Initialization method
+
+3. **Contribution Plan**
+   - Contribution steps with:
+     - Amount
+     - Frequency
+     - Start date
+     - End date (optional)
+
+4. **Performance** (Edit form only)
+   - Historical Performance graph
+   - Current value as Explanation
+   - Total invested as Explanation
+   - Return metrics as Explanation
+
+5. **Projection** (Edit form only)
+   - Projection graph
+   - Projection Stats as Explanation

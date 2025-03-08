@@ -61,11 +61,11 @@ This plan addresses the inconsistent formatting patterns across pension forms by
   - [ ] Scan ETF Pension forms for custom formatting
   - [ ] Scan Company Pension forms for custom formatting
   - [ ] Scan Insurance Pension forms for custom formatting
-  - [ ] Document patterns that need to be replaced
+  - [ ] Document patterns that need to be replaced in the respective pension type plans (04a, 04b, 04c)
 
 - [ ] **Identify Hydration Issues**
   - [ ] Look for direct JSX formatting (potential hydration mismatches)
-  - [ ] Document components with inconsistent client/server rendering
+  - [ ] Document components with inconsistent client/server rendering in the respective pension type plans (04a, 04b, 04c)
 
 ### 2. Create Reusable Formatting Components
 

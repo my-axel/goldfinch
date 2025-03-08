@@ -1,7 +1,4 @@
 import {
-  Explanation,
-  ExplanationHeader,
-  ExplanationContent,
   ExplanationList,
   ExplanationListItem,
   ExplanationAlert
@@ -9,9 +6,7 @@ import {
 
 export function ContributionDetailsExplanation() {
   return (
-    <Explanation>
-      <ExplanationHeader>Contributions</ExplanationHeader>
-      <ExplanationContent>
+    <div>
         <p>Define your contribution plan with multiple steps for different amounts and frequencies.</p>
 
         <ExplanationList>
@@ -23,7 +18,6 @@ export function ContributionDetailsExplanation() {
         <ExplanationAlert>
           You can plan future changes in your contribution amount or frequency.
         </ExplanationAlert>
-      </ExplanationContent>
-    </Explanation>
+    </div>
   )
 } 

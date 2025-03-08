@@ -73,6 +73,18 @@ This plan focuses on verifying and finalizing the Insurance Pension forms as the
   - [ ] Verify proper hydration mismatch prevention
   - [ ] Document as reference implementation
 
+### Error Handling and Loading States
+
+- [ ] **Verify Error Boundary Usage**
+  - [ ] Confirm ErrorBoundary is properly implemented in both Add and Edit forms
+  - [ ] Ensure consistent error messaging and recovery options
+  - [ ] Document as reference implementation
+
+- [ ] **Verify Loading State Implementation**
+  - [ ] Confirm LoadingState component is used consistently in Edit form
+  - [ ] Verify loading indicators for async operations
+  - [ ] Document as reference implementation
+
 ## 🔍 Implementation Details
 
 ### Form Reset Implementation
@@ -97,6 +109,40 @@ const { resetWithData } = useFormReset({
 });
 ```
 
+### Error Handling and Loading State Implementation
+
+The Insurance Pension forms already use ErrorBoundary and LoadingState components, but they should be verified for consistency with the standardized pattern:
+
+```tsx
+// Add Form
+<ErrorBoundary>
+  <div className="container max-w-2xl mx-auto py-10">
+    {/* Form content */}
+  </div>
+</ErrorBoundary>
+
+// Edit Form
+<ErrorBoundary>
+  <div className="container py-10">
+    {/* Header */}
+    
+    {/* Loading and error states */}
+    {isLoading ? (
+      <LoadingState message="Loading pension details..." />
+    ) : error ? (
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error.message}</AlertDescription>
+      </Alert>
+    ) : (
+      <Form {...form}>
+        {/* Form content */}
+      </Form>
+    )}
+  </div>
+</ErrorBoundary>
+```
+
 ### Documentation Template
 
 For each form section, document:
@@ -106,4 +152,68 @@ For each form section, document:
 3. Formatting approach
 4. Form reset implementation
 
-This documentation will serve as a reference for implementing other pension types. 
+This documentation will serve as a reference for implementing other pension types.
+
+## 📋 Form Layout Audit Results
+
+The Insurance Pension forms are closest to the target implementation and should serve as the reference for other pension types.
+
+### Current Structure
+
+- **Form Sections**: 
+  - Basic Information (name, provider, contract number)
+  - Plan Details (start date, guaranteed interest, expected return)
+  - Contribution Plan (multiple contribution steps with amounts and dates)
+  - Statements (historical statements with projections)
+
+- **Layout Pattern**:
+  - Uses a single-column layout for mobile
+  - Uses a partial grid layout for desktop, but not consistently
+  - Some sections have explanations, but not in a standardized format
+
+### Recommended Changes
+
+- Implement consistent `FormLayout` and `FormSection` components
+- Create dedicated explanation components for each section
+- Ensure proper spacing between sections
+- Standardize the responsive behavior
+
+### Reference Implementation Notes
+
+When implementing the standardized layout, use the following section structure:
+
+```tsx
+<FormLayout>
+  <FormSection
+    title="Basic Information"
+    description="Enter the basic details of your insurance pension plan"
+    explanation={<BasicInformationExplanation />}
+  >
+    {/* Basic information fields */}
+  </FormSection>
+  
+  <FormSection
+    title="Plan Details"
+    description="Set up your insurance plan parameters"
+    explanation={<PlanDetailsExplanation />}
+  >
+    {/* Plan details fields */}
+  </FormSection>
+  
+  <FormSection
+    title="Contribution Plan"
+    description="Define your contribution schedule"
+    explanation={<ContributionPlanExplanation />}
+  >
+    {/* Contribution plan fields */}
+  </FormSection>
+  
+  <FormSection
+    title="Statements"
+    description="Record historical statements and projections"
+    explanation={<StatementsExplanation />}
+  >
+    {/* Statements fields */}
+  </FormSection>
+</FormLayout>
+``` 

@@ -74,6 +74,18 @@ This plan focuses on implementing the standardized patterns for Company Pension 
   - [ ] Replace manual reset logic with `useFormReset` hook
   - [ ] Use Company-specific transformer
 
+### Error Handling and Loading States
+
+- [ ] **Verify Error Boundary Usage**
+  - [ ] Confirm ErrorBoundary is properly implemented in both Add and Edit forms
+  - [ ] Ensure consistent error messaging and recovery options
+  - [ ] Document as reference implementation
+
+- [ ] **Verify Loading State Implementation**
+  - [ ] Confirm LoadingState component is used consistently in Edit form
+  - [ ] Verify loading indicators for async operations
+  - [ ] Document as reference implementation
+
 ## 🔍 Implementation Details
 
 ### Layout Implementation
@@ -138,4 +150,88 @@ const { resetWithData } = useFormReset({
   defaultValues,
   dependencies: [settings.number_locale]
 });
-``` 
+```
+
+### Error Handling and Loading State Implementation
+
+The Company Pension forms already use ErrorBoundary and LoadingState components, but they should be verified for consistency with the standardized pattern:
+
+```tsx
+// Edit Form
+<ErrorBoundary>
+  <div className="container py-10">
+    {/* Header */}
+    
+    {/* Loading and error states */}
+    {isLoading ? (
+      <LoadingState message="Loading pension details..." />
+    ) : error ? (
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error.message}</AlertDescription>
+      </Alert>
+    ) : (
+      <Form {...form}>
+        {/* Form content */}
+      </Form>
+    )}
+  </div>
+</ErrorBoundary>
+```
+
+## 📋 Form Layout Audit Results
+
+The Company Pension forms need moderate changes to align with the standardized layout pattern.
+
+### Current Structure
+
+- **Form Sections**: 
+  - Basic Information (name, employer, status)
+  - Plan Details (start date, end date, contribution frequency)
+  - Contribution Plan (multiple contribution steps)
+  - Statements (historical statements with projections)
+  - Edit form: Contribution History (in Edit form only)
+
+- **Layout Pattern**:
+  - Uses a mixed layout approach
+  - Some sections use a partial grid layout
+  - Limited explanation components
+  - Inconsistent spacing and alignment
+
+### Recommended Changes
+
+- Implement consistent `FormLayout` and `FormSection` components
+- Create dedicated explanation components for each section
+- Standardize spacing and responsive behavior
+- Ensure consistent form field grouping
+
+### Section Structure
+
+The Company Pension forms should be restructured into the following sections:
+
+1. **Basic Information**
+   - Name
+   - Employer
+   - Member selection
+   - Status (active, inactive, etc.)
+   - Notes
+
+2. **Plan Details**
+   - Start date
+   - End date (optional)
+   - Contribution frequency
+
+3. **Contribution Plan**
+   - Contribution steps with:
+     - Amount
+     - Start date
+     - End date (optional)
+
+4. **Statements**
+   - Historical statements with:
+     - Date
+     - Value
+     - Projections (duration and projected value) 
+
+5. **Contribution History** (Edit form only)
+   - Historacal Contributions

@@ -51,59 +51,47 @@ This plan addresses the layout inconsistencies across pension forms (ETF, Compan
 
 ### 1. Create Reusable Layout Components
 
-- [ ] **Create Base Components**
-  - [ ] Create `FormLayout` component in `src/frontend/components/shared/FormLayout.tsx`
-  - [ ] Create `FormSection` component in `src/frontend/components/shared/FormSection.tsx`
-  - [ ] Add comprehensive documentation and TypeScript types
+- [x] **Create Base Components**
+  - [x] Create `FormLayout` component in `src/frontend/components/shared/FormLayout.tsx`
+  - [x] Create `FormSection` component in `src/frontend/components/shared/FormSection.tsx`
+  - [x] Add comprehensive documentation and TypeScript types
 
-- [ ] **Implement Core Functionality**
-  - [ ] Implement flexible grid layout with 8:4 column split
-  - [ ] Add support for section titles and descriptions
-  - [ ] Ensure proper spacing between sections (gap-6)
-  - [ ] Implement responsive behavior for mobile devices
+- [x] **Implement Core Functionality**
+  - [x] Implement flexible grid layout with 8:4 column split
+  - [x] Add support for section titles and descriptions
+  - [x] Ensure proper spacing between sections (gap-6)
+  - [x] Implement responsive behavior for mobile devices
 
-- [ ] **Create Example Implementation**
-  - [ ] Add usage examples in component documentation
-  - [ ] Create a simple demo form using the new components
+- [x] **Create Example Implementation**
+  - [x] Add usage examples in component documentation
+  - [x] Create a simple demo form using the new components
 
 ### 2. Audit Current Form Layouts
 
-- [ ] **Document Current Structure**
-  - [ ] Analyze ETF Pension forms (number of sections, layout pattern)
-  - [ ] Analyze Company Pension forms (number of sections, layout pattern)
-  - [ ] Analyze Insurance Pension forms (number of sections, layout pattern)
-  - [ ] Identify forms that deviate from the target pattern
+- [x] **Document Current Structure**
+  - [x] Analyze ETF Pension forms (number of sections, layout pattern)
+  - [x] Analyze Company Pension forms (number of sections, layout pattern)
+  - [x] Analyze Insurance Pension forms (number of sections, layout pattern)
+  - [x] Identify forms that deviate from the target pattern
 
-- [ ] **Identify Common Patterns**
-  - [ ] Document common section types across forms
-  - [ ] Identify inconsistencies in spacing and alignment
-  - [ ] Note any form-specific layout requirements
+- [x] **Identify Common Patterns**
+  - [x] Document common section types across forms
+  - [x] Identify inconsistencies in spacing and alignment
+  - [x] Note any form-specific layout requirements
 
 ### 3. Implement Layout in Reference Form
 
-- [ ] **Update Insurance Pension Add Form**
-  - [ ] Refactor to use new `FormLayout` and `FormSection` components
-  - [ ] Ensure all sections have corresponding explanations
-  - [ ] Verify responsive behavior
-  - [ ] Document as reference implementation
+- [x] **Update Insurance Pension Add Form**
+  - [x] Refactor to use new `FormLayout` and `FormSection` components
+  - [x] Ensure all sections have corresponding explanations
+  - [x] Verify responsive behavior
+  - [x] Document as reference implementation
 
-### 4. Implement Consistent Error Handling and Loading States
-
-- [ ] **Standardize Error Boundary Usage**
-  - [ ] Add ErrorBoundary to all pension form pages
-  - [ ] Ensure consistent error messaging and recovery options
-  - [ ] Document best practices for error handling
-
-- [ ] **Standardize Loading State Implementation**
-  - [ ] Use LoadingState component consistently in all edit forms
-  - [ ] Implement consistent loading indicators for async operations
-  - [ ] Add skeleton loaders for form sections during data loading
-
-- [ ] **Standardize Data Loading Pattern**
-  - [ ] Refactor ETF pension forms to use usePensionData hook
-  - [ ] Ensure all pension types use useFormReset for form initialization
-  - [ ] Implement consistent error handling for data fetching
-  - [ ] Document the data loading pattern for future implementations
+- [x] **Update Insurance Pension Edit Form**
+  - [x] Refactor to use new `FormLayout` and `FormSection` components
+  - [x] Ensure all sections have corresponding explanations
+  - [x] Verify responsive behavior
+  - [x] Maintain consistency with Add Form
 
 ## 🔍 Implementation Details
 
@@ -255,4 +243,4 @@ export function SectionNameExplanation() {
     </ExplanationContent>
   );
 }
-``` 
+```

@@ -9,7 +9,6 @@ import { Input } from "@/frontend/components/ui/input"
 import { useState, useEffect, useMemo } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { parseNumber, getDecimalSeparator, getCurrencySymbol, formatNumberInput, safeNumberValue } from "@/frontend/lib/transforms"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { useDateFormat } from "@/frontend/hooks/useDateFormat"
@@ -742,131 +741,123 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   )
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Statements</CardTitle>
-        <CardDescription>
-          Track your insurance policy statements and projections
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Add Statement Button - Shown at top when statements exist */}
-        {statementFields.length > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
-            onClick={handleAddStatement}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add a new statement
-          </Button>
-        )}
-
-        {/* Latest Statement */}
-        {latestStatementIndex >= 0 && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium">Latest Statement</h3>
-            <div className="p-4 border rounded-md">
-              {renderStatementForm(latestStatementIndex)}
-            </div>
-          </div>
-        )}
-
-        {/* Previous Statements */}
-        {statementFields.length > 1 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Previous Statements</h3>
-            {statementFields
-              .map((field, index) => ({ field, index }))
-              .filter(({ index }) => index !== latestStatementIndex)
-              .sort((a, b) => {
-                const dateA = new Date(form.getValues(`statements.${a.index}.statement_date`)).getTime()
-                const dateB = new Date(form.getValues(`statements.${b.index}.statement_date`)).getTime()
-                return dateB - dateA // Sort in descending order
-              })
-              .map(({ field, index }) => (
-                <Collapsible
-                  key={field.id}
-                  open={expandedStatements[index]}
-                  onOpenChange={() => toggleStatement(index)}
-                  className="border rounded-md overflow-hidden"
-                >
-                  <div className="p-4 flex justify-between items-center bg-muted/30">
-                    <CollapsibleTrigger asChild>
-                      <Button 
-                        type="button"
-                        variant="ghost" 
-                        className="p-0 h-auto flex items-center gap-2 hover:bg-transparent"
-                      >
-                        {expandedStatements[index] ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                        <h4 className="font-medium">
-                          Statement from {formattedDates[index]}
-                        </h4>
-                      </Button>
-                    </CollapsibleTrigger>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => confirmDeleteStatement(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <CollapsibleContent className="p-4">
-                    {renderStatementForm(index)}
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {statementFields.length === 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
-            onClick={handleAddStatement}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            No statements added yet. Click to add your first statement.
-          </Button>
-        )}
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog
-          open={!!statementToDelete}
-          onOpenChange={() => setStatementToDelete(null)}
+    <div className="space-y-6">
+      {/* Add Statement Button - Shown at top when statements exist */}
+      {statementFields.length > 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
+          onClick={handleAddStatement}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Statement</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete the statement from {statementToDelete?.date}?
-                This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (statementToDelete) {
-                    handleRemoveStatement(statementToDelete.index)
-                  }
-                }}
+          <Plus className="h-4 w-4 mr-2" />
+          Add a new statement
+        </Button>
+      )}
+
+      {/* Latest Statement */}
+      {latestStatementIndex >= 0 && (
+        <div className="space-y-6">
+          <h3 className="text-lg font-medium">Latest Statement</h3>
+          <div className="p-4 border rounded-md">
+            {renderStatementForm(latestStatementIndex)}
+          </div>
+        </div>
+      )}
+
+      {/* Previous Statements */}
+      {statementFields.length > 1 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Previous Statements</h3>
+          {statementFields
+            .map((field, index) => ({ field, index }))
+            .filter(({ index }) => index !== latestStatementIndex)
+            .sort((a, b) => {
+              const dateA = new Date(form.getValues(`statements.${a.index}.statement_date`)).getTime()
+              const dateB = new Date(form.getValues(`statements.${b.index}.statement_date`)).getTime()
+              return dateB - dateA // Sort in descending order
+            })
+            .map(({ field, index }) => (
+              <Collapsible
+                key={field.id}
+                open={expandedStatements[index]}
+                onOpenChange={() => toggleStatement(index)}
+                className="border rounded-md overflow-hidden"
               >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardContent>
-    </Card>
+                <div className="p-4 flex justify-between items-center bg-muted/30">
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      type="button"
+                      variant="ghost" 
+                      className="p-0 h-auto flex items-center gap-2 hover:bg-transparent"
+                    >
+                      {expandedStatements[index] ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                      <h4 className="font-medium">
+                        Statement from {formattedDates[index]}
+                      </h4>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => confirmDeleteStatement(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <CollapsibleContent className="p-4">
+                  {renderStatementForm(index)}
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {statementFields.length === 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
+          onClick={handleAddStatement}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          No statements added yet. Click to add your first statement.
+        </Button>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!statementToDelete}
+        onOpenChange={() => setStatementToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Statement</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the statement from {statementToDelete?.date}?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (statementToDelete) {
+                  handleRemoveStatement(statementToDelete.index)
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 } 

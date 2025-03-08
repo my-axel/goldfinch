@@ -25,6 +25,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/al
 import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
 import { insurancePensionToForm } from "@/frontend/lib/transformers/insurancePensionTransformers"
 import { toISODateString } from "@/frontend/lib/dateUtils"
+import { FormLayout } from "@/frontend/components/shared/FormLayout"
+import { FormSection } from "@/frontend/components/shared/FormSection"
+import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/dialogs/PauseConfirmationDialog"
+import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
+import { useState } from "react"
+import { PensionStatusActions } from "@/frontend/components/pension/shared/PensionStatusActions"
 
 interface EditInsurancePensionPageProps {
   params: Promise<{
@@ -48,10 +54,12 @@ const defaultValues: InsurancePensionFormData = {
 
 export default function EditInsurancePensionPage({ params }: EditInsurancePensionPageProps) {
   const router = useRouter()
-  const { updateInsurancePensionWithStatement, createInsurancePensionStatement } = usePension()
+  const { updateInsurancePensionWithStatement, createInsurancePensionStatement, updatePensionStatus } = usePension()
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
   const { data: pension, isLoading, error } = usePensionData<InsurancePension>(pensionId, PensionType.INSURANCE)
+  const [showPauseDialog, setShowPauseDialog] = useState(false)
+  const [showResumeDialog, setShowResumeDialog] = useState(false)
 
   const form = useForm<InsurancePensionFormData>({
     resolver: zodResolver(insurancePensionSchema),
@@ -172,6 +180,40 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
     }
   }
 
+  const handlePauseConfirm = async (pauseDate: Date) => {
+    if (!pension) return
+
+    try {
+      await updatePensionStatus(pensionId, {
+        status: 'PAUSED',
+        paused_at: pauseDate.toISOString(),
+      })
+      setShowPauseDialog(false)
+    } catch (error) {
+      console.error('Error updating pension status:', error)
+      toast.error('Error', {
+        description: 'Failed to update pension status'
+      })
+    }
+  }
+
+  const handleResumeConfirm = async (resumeDate: Date) => {
+    if (!pension) return
+
+    try {
+      await updatePensionStatus(pensionId, {
+        status: 'ACTIVE',
+        resume_at: resumeDate.toISOString(),
+      })
+      setShowResumeDialog(false)
+    } catch (error) {
+      console.error('Error updating pension status:', error)
+      toast.error('Error', {
+        description: 'Failed to update pension status'
+      })
+    }
+  }
+
   return (
     <ErrorBoundary>
       <div className="container mx-auto py-10">
@@ -222,35 +264,61 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
                 description: 'Please fix the validation errors before submitting'
               })
             })}>
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              <FormLayout>
                 {/* Basic Information Section */}
-                <div className="md:col-span-8">
+                <FormSection
+                  title="Basic Information"
+                  description="Enter the basic details of your insurance pension plan"
+                  explanation={<BasicInformationExplanation />}
+                  headerActions={
+                    <PensionStatusActions
+                      status={pension.status}
+                      onPause={() => setShowPauseDialog(true)}
+                      onResume={() => setShowResumeDialog(true)}
+                    />
+                  }
+                >
                   <BasicInformationCard form={form} />
-                </div>
-                <div className="md:col-span-4">
-                  <BasicInformationExplanation />
-                </div>
+                </FormSection>
 
                 {/* Contribution Details Section */}
-                <div className="md:col-span-8">
+                <FormSection
+                  title="Contribution Details"
+                  description="Set up your contribution plan"
+                  explanation={<ContributionDetailsExplanation />}
+                >
                   <ContributionDetailsCard form={form} />
-                </div>
-                <div className="md:col-span-4">
-                  <ContributionDetailsExplanation />
-                </div>
+                </FormSection>
 
                 {/* Statements Section */}
-                <div className="md:col-span-8">
+                <FormSection
+                  title="Statements"
+                  description="Track the performance of your pension plan"
+                  explanation={<StatementsExplanation />}
+                >
                   <StatementsCard form={form} pensionId={pensionId} />
-                </div>
-                <div className="md:col-span-4">
-                  <StatementsExplanation />
-                </div>
-              </div>
+                </FormSection>
+              </FormLayout>
             </form>
           </Form>
         )}
       </div>
+      
+      {/* Dialogs */}
+      {showPauseDialog && (
+        <PauseConfirmationDialog
+          open={showPauseDialog}
+          onOpenChange={setShowPauseDialog}
+          onConfirm={handlePauseConfirm}
+        />
+      )}
+      {showResumeDialog && (
+        <ResumeDateDialog
+          open={showResumeDialog}
+          onOpenChange={setShowResumeDialog}
+          onConfirm={handleResumeConfirm}
+        />
+      )}
     </ErrorBoundary>
   )
 } 

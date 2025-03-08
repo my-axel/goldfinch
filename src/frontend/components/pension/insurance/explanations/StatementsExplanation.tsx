@@ -1,7 +1,4 @@
 import {
-  Explanation,
-  ExplanationHeader,
-  ExplanationContent,
   ExplanationList,
   ExplanationListItem,
   ExplanationAlert
@@ -9,9 +6,7 @@ import {
 
 export function StatementsExplanation() {
   return (
-    <Explanation>
-      <ExplanationHeader>Statements</ExplanationHeader>
-      <ExplanationContent>
+    <div>
         <p>Track your pension value and future projections with periodic statements.</p>
         <ExplanationList>
           <ExplanationListItem>Track costs in amount and percentage</ExplanationListItem>
@@ -22,7 +17,6 @@ export function StatementsExplanation() {
         <ExplanationAlert>
           Statement dates must be in the past with return rates between -10% and +10%.
         </ExplanationAlert>
-      </ExplanationContent>
-    </Explanation>
+    </div>
   )
 }
