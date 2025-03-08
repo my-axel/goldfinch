@@ -116,25 +116,30 @@
   - Handle complex nested data structures consistently
   > **Implementation Details**: [Form Reset Hook Plan](docs/plans/active/form_reset_hook.md)
 
+- 🔥 **Pension Forms Standardization** (1-2 weeks)
+  - Implement consistent layout across all pension forms
+  - Standardize formatting patterns for numbers, currencies, and dates
+  - Implement form reset hook for consistent data handling
+  - Add proper error handling and loading states
+  - Refactor ETF, Company, and Insurance pension forms
+  > **Implementation Details**: [Pension Forms Standardization Plan](docs/plans/active/pension_forms_refactoring/README.md)
+
 ### Ready to Implement
 Listed by priority and dependency readiness:
 
-1. **Technical Improvements** (No external dependencies)
-   - Form Reset Hook (3-5 days)
-   - Forms Architecture Refactoring
-   > **Details**: [Form Reset Hook Plan](docs/plans/active/form_reset_hook.md) | [Forms Refactoring Plan](docs/plans/active/forms_refactoring.md)
-
-2. **Core Features** (Dependencies ready)
-   - State Pension Implementation
-   - Insurance Pension Implementation
+1. **Core Features** (Dependencies ready)
+   - State Pension Implementation (Blocked by: Pension Forms Standardization)
+   - Savings Pension Implementation (Blocked by: Pension Forms Standardization, State Pension)
    > **Details**: [Pension Plans Implementation](docs/plans/active/pension_plans.md)
 
-3. **Cross-Cutting Features** (Partial dependencies)
+2. **Cross-Cutting Features** (Partial dependencies)
    - Currency System Frontend Integration (1-2 weeks)
    - Internationalization Implementation (4-5 weeks)
    > **Details**: [Currency System Plan](docs/plans/active/currency_system.md) | [i18n Plan](docs/plans/active/internationalization.md)
 
 ### Blocked Items
+- State Pension Implementation (Blocked by: Pension Forms Standardization)
+- Savings Pension Implementation (Blocked by: Pension Forms Standardization, State Pension)
 - Compass Module (Blocked by: Dashboard)
 - Payout Strategy (Blocked by: Dashboard)
 - Full Settings Implementation (Blocked by: i18n)
@@ -145,8 +150,9 @@ graph TD
     %% Core Modules
     ETF[ETF Pension ✅<br/>Weight: 15%] --> D
     CP[Company Pension ✅<br/>Weight: 15%] --> D
-    IP[Insurance Pension ⚠️<br/>Weight: 15%] --> D
+    IP[Insurance Pension ✅<br/>Weight: 15%] --> D
     SP[State Pension 📝<br/>Weight: 10%] --> D
+    SVP[Savings Pension 📝<br/>Weight: 10%] --> D
     D[Dashboard 📝<br/>Weight: 25%] --> C
     D --> PS
     
@@ -163,6 +169,7 @@ graph TD
     S -.-> CP
     S -.-> IP
     S -.-> SP
+    S -.-> SVP
     S -.-> D
     S -.-> C
     S -.-> PS
@@ -172,14 +179,15 @@ graph TD
     H -.-> CP
     H -.-> IP
     H -.-> SP
+    H -.-> SVP
     
     %% Styling
     classDef complete fill:#90EE90,stroke:#000
     classDef partial fill:#FFE5B4,stroke:#000
     classDef notStarted fill:#FFB6C6,stroke:#000
-    class ETF,H,CP complete
-    class IP,S partial
-    class SP,CS,I18n,D,C,PS notStarted
+    class ETF,H,CP,IP complete
+    class S partial
+    class SP,SVP,CS,I18n,D,C,PS notStarted
 ```
 <details>
 <summary><strong>📊 Graph Legend</strong></summary>
@@ -219,14 +227,15 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~25%]`
+## 📊 Implementation Status `[Overall Progress: ~30%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
 | ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts |
 | Company Pension | ✅ Complete | 100% | None | Contribution tracking |
-| Insurance Pension | ⚠️ UI Only | 0% | None | Premium logic |
+| Insurance Pension | ✅ Complete | 100% | None | Premium logic (needs standardization) |
 | State Pension | 📝 Not Started | 0% | None | Payout tracking |
+| Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
 | Household | ✅ Complete | 100% | None | Basic CRUD |
 | Settings | ⚠️ Partial | 50% | i18n | Config + validation |
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
@@ -255,8 +264,9 @@ graph LR
 #### Key Deliverables:
 1. ✅ Company Pension Implementation
 2. State Pension Implementation
-3. Insurance Pension Implementation
-4. ✅ ETF Pension Enhancements
+3. ✅ Insurance Pension Implementation
+4. Savings Pension Implementation
+5. ✅ ETF Pension Enhancements
 
 ### Milestone 3: Compass Implementation (4-5 weeks)
 > **Status**: 🟡 Planning Phase

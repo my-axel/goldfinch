@@ -228,6 +228,10 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
         """
         Create a new benefit for an insurance pension.
         
+        NOTE: This method is currently not used by the frontend.
+        The PensionInsuranceBenefit model exists in the database but is not populated through the UI.
+        Currently, only the total_benefits field in PensionInsuranceStatement is used as a summary value.
+        
         Args:
             db: Database session object
             pension_id: ID of the pension insurance

@@ -30,6 +30,9 @@ class PensionInsurance(Base):
     contribution_plan_steps = relationship("PensionInsuranceContributionPlanStep", back_populates="pension", cascade="all, delete-orphan")
     contribution_history = relationship("PensionInsuranceContributionHistory", back_populates="pension", cascade="all, delete-orphan")
     statements = relationship("PensionInsuranceStatement", back_populates="pension", cascade="all, delete-orphan", order_by="desc(PensionInsuranceStatement.statement_date)")
+    # NOTE: The benefits relationship is defined but not currently used in the frontend.
+    # The PensionInsuranceBenefit model exists in the database but is not populated.
+    # Currently, only the total_benefits field in PensionInsuranceStatement is used.
     benefits = relationship("PensionInsuranceBenefit", back_populates="pension", cascade="all, delete-orphan")
 
     # Create a unique index on member_id, provider, name
@@ -67,6 +70,19 @@ class PensionInsuranceContributionHistory(Base):
 # New models as per implementation plan
 
 class PensionInsuranceBenefit(Base):
+    """
+    Model for tracking additional benefits for insurance pensions.
+    
+    NOTE: This model is currently not used in the frontend implementation.
+    The database table exists but is not populated through the UI.
+    It was designed to track individual benefits (e.g., government subsidies, 
+    employer matches, child bonuses) with specific durations and frequencies,
+    but currently only the total_benefits field in PensionInsuranceStatement 
+    is used as a summary value.
+    
+    This model may be used in future implementations to provide more detailed
+    tracking of individual benefits.
+    """
     __tablename__ = "pension_insurance_benefits"
     
     id = Column(Integer, primary_key=True, index=True)

@@ -52,6 +52,17 @@ class ContributionHistoryResponse(ContributionHistoryBase):
 # New schemas for benefits, statements, and projections
 
 class BenefitBase(BaseModel):
+    """
+    Base schema for insurance pension benefits.
+    
+    NOTE: This schema and related schemas (BenefitCreate, BenefitResponse) are currently not used
+    by the frontend. The PensionInsuranceBenefit model exists in the database but is not populated
+    through the UI. Currently, only the total_benefits field in PensionInsuranceStatement is used
+    as a summary value.
+    
+    This schema may be used in future implementations to provide more detailed tracking of
+    individual benefits (e.g., government subsidies, employer matches, child bonuses).
+    """
     source: str = Field(description="Source of the benefit (e.g., 'Government', 'Employer')")
     amount: Decimal = Field(gt=0, description="Benefit amount (must be positive)")
     frequency: str = Field(description="MONTHLY, QUARTERLY, YEARLY, ONE_TIME")  # MONTHLY, QUARTERLY, YEARLY, ONE_TIME
@@ -67,9 +78,17 @@ class BenefitBase(BaseModel):
         return v
 
 class BenefitCreate(BenefitBase):
+    """
+    Schema for creating a new insurance pension benefit.
+    Currently not used by the frontend.
+    """
     pass
 
 class BenefitResponse(BenefitBase):
+    """
+    Schema for returning an insurance pension benefit.
+    Currently not used by the frontend.
+    """
     id: int
     pension_insurance_id: int
 
@@ -235,6 +254,8 @@ class PensionInsuranceBase(BaseModel):
 
 class PensionInsuranceCreate(PensionInsuranceBase):
     contribution_plan_steps: List[ContributionPlanStepCreate]
+    # NOTE: The benefits field is defined but not currently used in the frontend.
+    # The PensionInsuranceBenefit model exists in the database but is not populated.
     benefits: Optional[List[BenefitCreate]] = None
     statements: Optional[List[StatementCreate]] = None
 

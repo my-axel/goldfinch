@@ -182,13 +182,13 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
       guaranteedInterest: safeGuaranteedInterest !== undefined
         ? formatPercent(safeGuaranteedInterest, {
             locale: settings.number_locale,
-            decimals: 2
+            decimals: 1
           }).formatted
         : "N/A",
       expectedReturn: safeExpectedReturn !== undefined
         ? formatPercent(safeExpectedReturn, {
             locale: settings.number_locale,
-            decimals: 2
+            decimals: 1
           }).formatted
         : "N/A",
       currentValue: formatCurrency(currentValue, {

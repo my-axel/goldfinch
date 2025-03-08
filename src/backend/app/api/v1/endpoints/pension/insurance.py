@@ -232,7 +232,13 @@ def create_insurance_benefit(
     pension_id: int,
     benefit_in: schemas.pension_insurance.BenefitCreate,
 ) -> schemas.pension_insurance.BenefitResponse:
-    """Create a new benefit for an insurance pension."""
+    """
+    Create a new benefit for an insurance pension.
+    
+    NOTE: This endpoint is currently not used by the frontend.
+    The PensionInsuranceBenefit model exists in the database but is not populated through the UI.
+    Currently, only the total_benefits field in PensionInsuranceStatement is used as a summary value.
+    """
     try:
         return pension_insurance.create_benefit(
             db=db, pension_id=pension_id, obj_in=benefit_in
@@ -253,7 +259,13 @@ def list_insurance_benefits(
     db: Session = Depends(deps.get_db),
     pension_id: int,
 ) -> List[schemas.pension_insurance.BenefitResponse]:
-    """List all benefits for an insurance pension."""
+    """
+    List all benefits for an insurance pension.
+    
+    NOTE: This endpoint is currently not used by the frontend.
+    The PensionInsuranceBenefit model exists in the database but is not populated through the UI.
+    Currently, only the total_benefits field in PensionInsuranceStatement is used as a summary value.
+    """
     pension = pension_insurance.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Insurance Pension not found")

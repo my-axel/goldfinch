@@ -1,8 +1,8 @@
-# 2x4 Grid Layout for Form Pages with Aligned Explanations
+# Flexible Two-Column Grid Layout for Form Pages with Aligned Explanations
 
 ## Overview
 
-This document outlines the pattern for creating form pages with a 2x4 grid layout where each form section (card) has a corresponding explanation aligned in the adjacent column. This creates a clean, intuitive interface where explanations are positioned directly next to their related form elements.
+This document outlines the pattern for creating form pages with a flexible two-column grid layout where each form section (card) has a corresponding explanation aligned in the adjacent column. This creates a clean, intuitive interface where explanations are positioned directly next to their related form elements.
 
 ## Layout Structure
 
@@ -13,6 +13,11 @@ This document outlines the pattern for creating form pages with a 2x4 grid layou
 2. **Row Organization**: Each row contains:
    - A form card in the left column
    - A corresponding explanation in the right column
+
+3. **Flexibility**: The number of rows can vary based on form complexity
+   - Simple forms may have 2-3 rows
+   - Complex forms may have 5+ rows
+   - Each row follows the same 8:4 column split pattern
 
 ## Implementation Guidelines
 
@@ -60,7 +65,7 @@ This document outlines the pattern for creating form pages with a 2x4 grid layou
              </Explanation>
            </div>
 
-           {/* Additional rows as needed */}
+           {/* Additional rows as needed based on form complexity */}
          </div>
        </form>
      </Form>
@@ -100,6 +105,75 @@ This document outlines the pattern for creating form pages with a 2x4 grid layou
    </Explanation>
    ```
 
+### Reusable Components Approach
+
+For more maintainable code, consider using reusable components:
+
+```jsx
+// FormLayout component
+function FormLayout({ children }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      {children}
+    </div>
+  )
+}
+
+// FormSection component
+function FormSection({ title, description, explanation, children }) {
+  return (
+    <>
+      <div className="md:col-span-8">
+        <Card>
+          <CardHeader className="pb-7">
+            <div className="space-y-1.5">
+              <CardTitle>{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {children}
+          </CardContent>
+        </Card>
+      </div>
+      <div className="md:col-span-4">
+        <Explanation>
+          <ExplanationHeader>{title}</ExplanationHeader>
+          <ExplanationContent>
+            {explanation}
+          </ExplanationContent>
+        </Explanation>
+      </div>
+    </>
+  )
+}
+
+// Usage example
+function PensionForm() {
+  return (
+    <FormLayout>
+      <FormSection
+        title="Basic Information"
+        description="Enter the basic details of your pension plan"
+        explanation={<BasicInformationExplanation />}
+      >
+        <BasicInformationFields />
+      </FormSection>
+      
+      <FormSection
+        title="Contribution Details"
+        description="Set up your contribution plan"
+        explanation={<ContributionExplanation />}
+      >
+        <ContributionFields />
+      </FormSection>
+      
+      {/* Additional sections as needed */}
+    </FormLayout>
+  )
+}
+```
+
 ### For Transforming Existing Forms
 
 1. **Identify Card Sections**: Identify all card components in your form.
@@ -126,4 +200,8 @@ This document outlines the pattern for creating form pages with a 2x4 grid layou
 
 5. **Concise Text**: Keep explanations concise and directly relevant to the form fields they describe.
 
-By following this pattern, you&apos;ll create a consistent, user-friendly interface where explanations are perfectly aligned with their corresponding form sections. 
+6. **Consistent Spacing**: Maintain consistent spacing (gap-6) between rows for visual harmony.
+
+7. **Flexible Row Count**: Adapt the number of rows based on form complexity, but maintain the 8:4 column split.
+
+By following this pattern, you&apos;ll create a consistent, user-friendly interface where explanations are perfectly aligned with their corresponding form sections, regardless of how simple or complex the form is. 
