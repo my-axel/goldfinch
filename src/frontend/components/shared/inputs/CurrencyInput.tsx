@@ -9,29 +9,18 @@ interface CurrencyInputProps extends Omit<React.ComponentProps<typeof NumberInpu
 }
 
 /**
- * CurrencyInput component for handling locale-specific currency input.
- * Extends NumberInput component with currency-specific features.
- * Automatically uses user settings from SettingsContext.
+ * CurrencyInput component for handling currency input.
+ * Extends NumberInput component with currency symbol display.
  * 
  * @component
  * @example
  * // Basic usage
  * <CurrencyInput 
- *   value={value} 
+ *   value={1234.56} 
  *   onChange={setValue} 
- * />
- * 
- * @example
- * // With min constraint
- * <CurrencyInput 
- *   value={value} 
- *   onChange={setValue} 
- *   min={0} 
  * />
  */
 export function CurrencyInput({ 
-  value, 
-  onChange, 
   showSymbol = true,
   decimals = 2,
   className = '',
@@ -40,6 +29,12 @@ export function CurrencyInput({
   const { settings } = useSettings()
   const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
   const currencyPosition = getDefaultCurrencyPosition(settings.number_locale)
+  
+  const symbolClassName = showSymbol 
+    ? currencyPosition === 'prefix' 
+      ? 'pl-7' 
+      : 'pr-7'
+    : ''
   
   return (
     <div className="relative">
@@ -50,11 +45,9 @@ export function CurrencyInput({
       )}
       
       <NumberInput
-        value={value}
-        onChange={onChange}
-        decimals={decimals}
-        className={`${className} ${showSymbol && currencyPosition === 'prefix' ? 'pl-7' : ''}`}
         {...props}
+        decimals={decimals}
+        className={`${className} ${symbolClassName}`}
       />
       
       {showSymbol && currencyPosition === 'suffix' && (

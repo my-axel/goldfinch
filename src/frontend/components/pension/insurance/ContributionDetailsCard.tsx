@@ -6,14 +6,11 @@ import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { Button } from "@/frontend/components/ui/button"
 import { Plus, Trash2 } from "lucide-react"
 import { ContributionFrequency } from "@/frontend/types/pension"
-import { Input } from "@/frontend/components/ui/input"
-import { useState, useEffect } from "react"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, formatNumberInput, getDecimalSeparator } from "@/frontend/lib/transforms"
 import { EnumSelect } from "@/frontend/components/ui/enum-select"
 import { DateEndPicker } from "@/frontend/components/ui/date-end-picker"
 import { DateInput } from '@/frontend/components/ui/date-input'
-import { useHousehold } from "@/frontend/context/HouseholdContext"
+// Import standardized input components
+import { CurrencyInput } from "@/frontend/components/shared/inputs/CurrencyInput"
 
 interface ContributionDetailsCardProps {
   form: UseFormReturn<InsurancePensionFormData>
@@ -25,30 +22,8 @@ export function ContributionDetailsCard({ form }: ContributionDetailsCardProps) 
     name: "contribution_plan_steps"
   })
   
-  const { settings } = useSettings()
-  const { members } = useHousehold()
-  const [contributionInputs, setContributionInputs] = useState<string[]>([])
-  const decimalSeparator = getDecimalSeparator(settings.number_locale)
-
-  // Get member's retirement date from form data and members
-  const memberId = form.getValues('member_id') as string
-  const member = members.find(m => m.id === parseInt(memberId, 10))
-  const retirementDate = member?.retirement_date_planned
-
-  // Initialize contribution inputs when fields change
-  useEffect(() => {
-    const newInputs = fields.map((field, index) => {
-      const amount = form.getValues(`contribution_plan_steps.${index}.amount`)
-      return amount ? amount.toString().replace('.', decimalSeparator) : ""
-    })
-    setContributionInputs(newInputs)
-  }, [fields, form, decimalSeparator])
-
-  const isValidNumberFormat = (value: string): boolean => {
-    if (!value) return true
-    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
-    return regex.test(value)
-  }
+  // Get member_id from form values
+  const memberId = form.watch('member_id')
 
   const handleAddContribution = () => {
     let startDate = new Date()
@@ -70,9 +45,6 @@ export function ContributionDetailsCard({ form }: ContributionDetailsCardProps) 
       start_date: startDate,
       end_date: undefined
     })
-    
-    // Add a new entry to the contributionInputs array
-    setContributionInputs([...contributionInputs, ""])
   }
 
   return (
@@ -97,42 +69,11 @@ export function ContributionDetailsCard({ form }: ContributionDetailsCardProps) 
                 render={({ field }) => (
                   <FormItem className="space-y-0">
                     <FormControl>
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={contributionInputs[index] || ""}
-                          onChange={(e) => {
-                            const newValue = e.target.value
-                            if (isValidNumberFormat(newValue)) {
-                              const newInputs = [...contributionInputs]
-                              newInputs[index] = newValue
-                              setContributionInputs(newInputs)
-                              
-                              const parsedValue = parseNumber(newValue, settings.number_locale)
-                              if (parsedValue >= 0) {
-                                field.onChange(parsedValue)
-                              }
-                            }
-                          }}
-                          onBlur={() => {
-                            const value = parseNumber(contributionInputs[index] || "", settings.number_locale)
-                            if (value >= 0) {
-                              const newInputs = [...contributionInputs]
-                              newInputs[index] = formatNumberInput(value, settings.number_locale)
-                              setContributionInputs(newInputs)
-                              field.onChange(value)
-                            } else {
-                              const newInputs = [...contributionInputs]
-                              newInputs[index] = ""
-                              setContributionInputs(newInputs)
-                              field.onChange(0)
-                            }
-                            field.onBlur()
-                          }}
-                          placeholder={`0${decimalSeparator}00`}
-                        />
-                      </div>
+                      <CurrencyInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -182,7 +123,7 @@ export function ContributionDetailsCard({ form }: ContributionDetailsCardProps) 
                   <DateEndPicker
                     field={field}
                     startDate={form.getValues(`contribution_plan_steps.${index}.start_date`)}
-                    retirementDate={retirementDate}
+                    memberId={memberId}
                     className="space-y-0"
                   />
                 )}

@@ -74,6 +74,8 @@ This plan addresses the inconsistent formatting patterns across pension forms by
   - [x] Create `FormattedNumber` component in `src/frontend/components/shared/formatting/FormattedNumber.tsx`
   - [x] Create `FormattedPercent` component in `src/frontend/components/shared/formatting/FormattedPercent.tsx`
   - [x] Create `FormattedDate` component in `src/frontend/components/shared/formatting/FormattedDate.tsx`
+  - [x] Create `FormattedEnum` component in `src/frontend/components/shared/formatting/FormattedEnum.tsx`
+  - [x] Create `FormattedFrequency` component in `src/frontend/components/shared/formatting/FormattedFrequency.tsx`
 
 - [x] **Create Input Handling Components**
   - [x] Create `NumberInput` component in `src/frontend/components/shared/inputs/NumberInput.tsx`

@@ -21,21 +21,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/frontend/components/ui/alert-dialog"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
 import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
-import { ContributionFrequency } from '@/frontend/types/pension'
 import { OneTimeInvestmentModal } from "../etf/components/OneTimeInvestmentModal"
 import { YearlyInvestmentModal } from "../company/YearlyInvestmentModal"
 import { Badge } from "@/frontend/components/ui/badge"
 import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatNumber, formatCurrency, formatPercent, safeNumberValue } from "@/frontend/lib/transforms"
 import { getPensionEditRoute } from "@/frontend/lib/routes"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
-import { formatDisplayDate } from "@/frontend/lib/dateUtils"
+
+// Import the formatting components
+import { 
+  FormattedCurrency, 
+  FormattedNumber, 
+  FormattedPercent, 
+  FormattedDate,
+  FormattedFrequency
+} from "@/frontend/components/shared/formatting"
 
 /**
  * Props for the PensionList component
@@ -50,58 +55,12 @@ interface PensionListProps {
 }
 
 /**
- * Formats the contribution frequency in a human-readable way
- */
-function formatFrequency(frequency: ContributionFrequency): string {
-  switch (frequency) {
-    case ContributionFrequency.MONTHLY:
-      return 'monthly'
-    case ContributionFrequency.QUARTERLY:
-      return 'quarterly'
-    case ContributionFrequency.SEMI_ANNUALLY:
-      return 'semi-annually'
-    case ContributionFrequency.ANNUALLY:
-      return 'annually'
-    case ContributionFrequency.ONE_TIME:
-      return 'one-time'
-    default:
-      return String(frequency).toLowerCase()
-  }
-}
-
-/**
  * Displays ETF pension specific information
  */
 function ETFPensionContent({ pension }: { pension: ETFPension }) {
   const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
   const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
-  const { settings } = useSettings()
   
-  // State for formatted values to avoid hydration mismatches
-  const [formattedValues, setFormattedValues] = useState({
-    contribution: "",
-    totalUnits: "",
-    currentValue: ""
-  })
-  
-  // Format values client-side only after hydration
-  useEffect(() => {
-    setFormattedValues({
-      contribution: currentStep ? formatCurrency(currentStep.amount, {
-        locale: settings.number_locale,
-        currency: settings.currency
-      }).formatted : "",
-      totalUnits: formatNumber(Number(pension.total_units || 0), {
-        locale: settings.number_locale,
-        decimals: 3
-      }).formatted,
-      currentValue: formatCurrency(pension.current_value, {
-        locale: settings.number_locale,
-        currency: settings.currency
-      }).formatted
-    })
-  }, [pension, currentStep, settings])
-
   return (
     <>
       <div>
@@ -117,17 +76,17 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
         <div>
           <dt className="text-muted-foreground">Current Contribution</dt>
           <dd>
-            {formattedValues.contribution} {formatFrequency(currentStep.frequency)}
+            <FormattedCurrency value={currentStep.amount} /> <FormattedFrequency value={currentStep.frequency} />
           </dd>
         </div>
       )}
       <div>
         <dt className="text-muted-foreground">Total Units</dt>
-        <dd>{formattedValues.totalUnits}</dd>
+        <dd><FormattedNumber value={Number(pension.total_units || 0)} decimals={3} /></dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{formattedValues.currentValue}</dd>
+        <dd><FormattedCurrency value={pension.current_value} /></dd>
       </div>
 
       {pension.status !== 'PAUSED' && (
@@ -161,43 +120,9 @@ interface PensionWithCurrentValue extends InsurancePension {
  * Displays insurance pension specific information
  */
 function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
-  const { settings } = useSettings()
+  // Use a default value of 0 for current_value since it might not exist on the type
+  const currentValue = (pension as PensionWithCurrentValue).current_value ?? 0
   
-  // State for formatted values to avoid hydration mismatches
-  const [formattedValues, setFormattedValues] = useState({
-    guaranteedInterest: "",
-    expectedReturn: "",
-    currentValue: ""
-  })
-  
-  // Format values client-side only after hydration
-  useEffect(() => {
-    // Get values safely
-    const safeGuaranteedInterest = safeNumberValue(pension.guaranteed_interest)
-    const safeExpectedReturn = safeNumberValue(pension.expected_return)
-    // Use a default value of 0 for current_value since it might not exist on the type
-    const currentValue = (pension as PensionWithCurrentValue).current_value ?? 0
-    
-    setFormattedValues({
-      guaranteedInterest: safeGuaranteedInterest !== undefined
-        ? formatPercent(safeGuaranteedInterest, {
-            locale: settings.number_locale,
-            decimals: 1
-          }).formatted
-        : "N/A",
-      expectedReturn: safeExpectedReturn !== undefined
-        ? formatPercent(safeExpectedReturn, {
-            locale: settings.number_locale,
-            decimals: 1
-          }).formatted
-        : "N/A",
-      currentValue: formatCurrency(currentValue, {
-        locale: settings.number_locale,
-        currency: settings.currency
-      }).formatted
-    })
-  }, [pension, settings])
-
   return (
     <>
       <div>
@@ -210,15 +135,27 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
       </div>
       <div>
         <dt className="text-muted-foreground">Guaranteed Interest</dt>
-        <dd>{formattedValues.guaranteedInterest}</dd>
+        <dd>
+          {pension.guaranteed_interest !== undefined ? (
+            <FormattedPercent value={pension.guaranteed_interest} decimals={1} />
+          ) : (
+            "N/A"
+          )}
+        </dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Expected Return</dt>
-        <dd>{formattedValues.expectedReturn}</dd>
+        <dd>
+          {pension.expected_return !== undefined ? (
+            <FormattedPercent value={pension.expected_return} decimals={1} />
+          ) : (
+            "N/A"
+          )}
+        </dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd>{formattedValues.currentValue}</dd>
+        <dd><FormattedCurrency value={currentValue} /></dd>
       </div>
     </>
   )
@@ -228,19 +165,9 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
  * Displays company pension specific information
  */
 function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
-  const { settings } = useSettings()
   const { members } = useHousehold()
   const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
   const [showYearlyInvestment, setShowYearlyInvestment] = useState(false)
-  const [formattedStatementDate, setFormattedStatementDate] = useState("")
-  
-  // State for formatted values to avoid hydration mismatches
-  const [formattedValues, setFormattedValues] = useState({
-    regularContribution: "",
-    currentContribution: "",
-    projectedPayout: "",
-    currentValue: ""
-  })
   
   // Find the household member associated with this pension
   const member = members.find(m => m.id === pension.member_id)
@@ -256,40 +183,6 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       latestStatement.retirement_projections[0]
     : undefined
 
-  // Format values client-side only after hydration
-  useEffect(() => {
-    // Format the statement date
-    if (latestStatement) {
-      setFormattedStatementDate(formatDisplayDate(latestStatement.statement_date, settings.ui_locale));
-    }
-    
-    // Format currency and number values
-    setFormattedValues({
-      regularContribution: pension.contribution_amount && pension.contribution_frequency 
-        ? formatCurrency(pension.contribution_amount, {
-            locale: settings.number_locale,
-            currency: settings.currency
-          }).formatted
-        : "",
-      currentContribution: currentStep
-        ? formatCurrency(currentStep.amount, {
-            locale: settings.number_locale,
-            currency: settings.currency
-          }).formatted
-        : "",
-      projectedPayout: latestProjection
-        ? formatCurrency(latestProjection.monthly_payout, {
-            locale: settings.number_locale,
-            currency: settings.currency
-          }).formatted
-        : "",
-      currentValue: formatCurrency(pension.current_value, {
-        locale: settings.number_locale,
-        currency: settings.currency
-      }).formatted
-    });
-  }, [pension, currentStep, latestStatement, latestProjection, settings]);
-
   return (
     <>
       <div>
@@ -300,7 +193,9 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       {pension.contribution_amount && pension.contribution_frequency && (
         <div>
           <dt className="text-muted-foreground">Regular Contribution</dt>
-          <dd>{formattedValues.regularContribution} {formatFrequency(pension.contribution_frequency)}</dd>
+          <dd>
+            <FormattedCurrency value={pension.contribution_amount} /> <FormattedFrequency value={pension.contribution_frequency} />
+          </dd>
         </div>
       )}
       
@@ -308,7 +203,7 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         <div>
           <dt className="text-muted-foreground">Current Own Contribution</dt>
           <dd>
-            {formattedValues.currentContribution} {formatFrequency(currentStep.frequency)}
+            <FormattedCurrency value={currentStep.amount} /> <FormattedFrequency value={currentStep.frequency} />
           </dd>
         </div>
       )}
@@ -316,14 +211,18 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
       {latestProjection && (
         <div>
           <dt className="text-muted-foreground">Projected Monthly Payout</dt>
-          <dd>{formattedValues.projectedPayout} at age {latestProjection.retirement_age}</dd>
+          <dd>
+            <FormattedCurrency value={latestProjection.monthly_payout} /> at age {latestProjection.retirement_age}
+          </dd>
         </div>
       )}
       
       {latestStatement && (
         <div>
           <dt className="text-muted-foreground">Latest Statement</dt>
-          <dd>{formattedStatementDate}</dd>
+          <dd>
+            <FormattedDate value={latestStatement.statement_date} />
+          </dd>
         </div>
       )}
 

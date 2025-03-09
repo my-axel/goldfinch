@@ -4,11 +4,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/fron
 import { UseFormReturn } from "react-hook-form"
 import { PensionType } from "@/frontend/types/pension"
 import { Input } from "@/frontend/components/ui/input"
-import { useState, useEffect } from "react"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, formatNumberInput } from "@/frontend/lib/transforms"
 import { EnumSelect, EnumOption } from "@/frontend/components/ui/enum-select"
 import { DateInput } from '@/frontend/components/ui/date-input'
+import { PercentInput } from '@/frontend/components/shared/inputs/PercentInput'
+import { NumberInput } from '@/frontend/components/shared/inputs/NumberInput'
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 
 interface BasicInformationCardProps {
@@ -26,40 +25,6 @@ const pensionTypeOptions: EnumOption<PensionType>[] = Object.entries(PensionType
  * Handles name, provider, type, dates, and interest rates.
  */
 export function BasicInformationCard({ form }: BasicInformationCardProps) {
-  const { settings } = useSettings()
-  const [guaranteedInterestInput, setGuaranteedInterestInput] = useState("")
-  const [expectedReturnInput, setExpectedReturnInput] = useState("")
-
-  // Initialize input states when form data changes
-  useEffect(() => {
-    const guaranteedInterest = form.getValues("guaranteed_interest")
-    const expectedReturn = form.getValues("expected_return")
-
-    setGuaranteedInterestInput(formatNumberInput(guaranteedInterest, settings.number_locale))
-    setExpectedReturnInput(formatNumberInput(expectedReturn, settings.number_locale))
-  }, [form, settings.number_locale])
-
-  // Handle number input changes with proper locale formatting
-  const handleNumberInput = (value: string, field: "guaranteed_interest" | "expected_return") => {
-    const newValue = value.trim()
-    if (field === "guaranteed_interest") {
-      setGuaranteedInterestInput(newValue)
-    } else {
-      setExpectedReturnInput(newValue)
-    }
-
-    // Only update form if value is valid
-    if (newValue === "") {
-      form.setValue(field, 0)
-      return
-    }
-
-    const parsedValue = parseNumber(newValue, settings.number_locale)
-    if (parsedValue >= 0) {
-      form.setValue(field, parsedValue)
-    }
-  }
-
   return (
     <div className="space-y-6">
       {/* Name and Provider */}
@@ -150,26 +115,18 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
         <FormField
           control={form.control}
           name="guaranteed_interest"
-          render={() => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Guaranteed Interest Rate (%) (Optional)</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={guaranteedInterestInput}
-                  onChange={(e) => handleNumberInput(e.target.value, "guaranteed_interest")}
-                  onBlur={() => {
-                    const value = parseNumber(guaranteedInterestInput, settings.number_locale)
-                    if (!isNaN(value)) {
-                      setGuaranteedInterestInput(formatNumberInput(value, settings.number_locale))
-                      form.setValue("guaranteed_interest", value)
-                    } else {
-                      setGuaranteedInterestInput("")
-                      form.setValue("guaranteed_interest", 0)
-                    }
-                  }}
+                <PercentInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
                   placeholder="e.g., 1.5"
+                  min={0}
+                  max={100}
+                  decimals={1}
                 />
               </FormControl>
               <FormMessage />
@@ -179,26 +136,18 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
         <FormField
           control={form.control}
           name="expected_return"
-          render={() => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Expected Return Rate (%) (Optional)</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={expectedReturnInput}
-                  onChange={(e) => handleNumberInput(e.target.value, "expected_return")}
-                  onBlur={() => {
-                    const value = parseNumber(expectedReturnInput, settings.number_locale)
-                    if (!isNaN(value)) {
-                      setExpectedReturnInput(formatNumberInput(value, settings.number_locale))
-                      form.setValue("expected_return", value)
-                    } else {
-                      setExpectedReturnInput("")
-                      form.setValue("expected_return", 0)
-                    }
-                  }}
+                <NumberInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
                   placeholder="e.g., 3.5"
+                  min={0}
+                  max={100}
+                  decimals={1}
                 />
               </FormControl>
               <FormMessage />

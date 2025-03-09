@@ -9,29 +9,116 @@ import { ControllerRenderProps, FieldValues, Path } from 'react-hook-form'
 import { cn } from '@/frontend/lib/utils'
 import { ChevronDown } from 'lucide-react'
 import { useDateFormat } from '@/frontend/hooks/useDateFormat'
+import { useHousehold } from '@/frontend/context/HouseholdContext'
 
+/**
+ * DateEndPicker component props
+ * 
+ * This component provides a date picker specifically designed for selecting end dates,
+ * with features like duration selection and retirement date integration.
+ * 
+ * @template TFieldValues - The form values type from react-hook-form
+ * @template TName - The field name type from react-hook-form
+ */
 export interface DateEndPickerProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends Path<TFieldValues> = Path<TFieldValues>
 > extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name' | 'defaultValue'> {
+  /**
+   * The field object from react-hook-form's Controller
+   */
   field: ControllerRenderProps<TFieldValues, TName>
+  
+  /**
+   * The start date to use as reference for duration calculations
+   * Required for duration buttons to work
+   */
   startDate?: Date | null
+  
+  /**
+   * Optional explicit retirement date
+   * If provided, this takes precedence over any retirement date calculated from memberId
+   */
   retirementDate?: Date
+  
+  /**
+   * Optional member ID to automatically fetch retirement date
+   * If provided and retirementDate is not set, the component will:
+   * 1. Look up the member in the HouseholdContext
+   * 2. Extract their retirement_date_planned
+   * 3. Use it for the "Until Retirement" option
+   */
+  memberId?: string | number
+  
+  /**
+   * Optional array of duration options to display
+   * Each duration has a years value and display label
+   */
   durations?: Array<{
     years: number
     label: string
   }>
+  
+  /**
+   * Optional CSS class name
+   */
   className?: string
+  
+  /**
+   * Whether the component is disabled
+   */
   disabled?: boolean
 }
 
+/**
+ * DateEndPicker Component
+ * 
+ * A specialized date picker for selecting end dates with features like:
+ * - Duration selection buttons (e.g., +1 Year, +5 Years)
+ * - "Until Retirement" option based on member's retirement date
+ * - Manual date input
+ * 
+ * The component can get the retirement date in two ways:
+ * 1. Directly via the retirementDate prop (takes precedence)
+ * 2. By looking up the member's retirement date using the memberId prop
+ * 
+ * @example
+ * // Basic usage with react-hook-form
+ * <FormField
+ *   control={form.control}
+ *   name="end_date"
+ *   render={({ field }) => (
+ *     <DateEndPicker
+ *       field={field}
+ *       startDate={form.watch('start_date')}
+ *     />
+ *   )}
+ * />
+ * 
+ * @example
+ * // With explicit retirement date
+ * <DateEndPicker
+ *   field={field}
+ *   startDate={startDate}
+ *   retirementDate={new Date('2050-01-01')}
+ * />
+ * 
+ * @example
+ * // With member ID for automatic retirement date lookup
+ * <DateEndPicker
+ *   field={field}
+ *   startDate={startDate}
+ *   memberId={form.watch('member_id')}
+ * />
+ */
 export function DateEndPicker<
   TFieldValues extends FieldValues = FieldValues,
   TName extends Path<TFieldValues> = Path<TFieldValues>
 >({
   field,
   startDate,
-  retirementDate,
+  retirementDate: propRetirementDate,
+  memberId,
   durations = [
     { years: 1, label: '+1 Year' },
     { years: 2, label: '+2 Years' },
@@ -44,8 +131,76 @@ export function DateEndPicker<
 }: DateEndPickerProps<TFieldValues, TName>) {
   const [open, setOpen] = React.useState(false)
   const { formatDate, toISOString, toDateObject } = useDateFormat()
+  const { members, fetchMembers } = useHousehold()
+  
+  // State to store calculated retirement date from member ID
+  const [calculatedRetirementDate, setCalculatedRetirementDate] = React.useState<Date | undefined>(undefined)
+  
+  // Use either provided retirement date or calculated one
+  const retirementDate = propRetirementDate || calculatedRetirementDate
+  
+  /**
+   * Effect to calculate retirement date from member ID
+   * 
+   * This runs when:
+   * - memberId changes
+   * - members array changes
+   * - propRetirementDate changes
+   * 
+   * It skips calculation if propRetirementDate is provided (explicit date takes precedence)
+   */
+  React.useEffect(() => {
+    // Skip if no member ID or if retirement date is already provided via props
+    if (!memberId || propRetirementDate) return
+    
+    const memberIdAsNumber = parseInt(String(memberId), 10)
+    
+    // Try to find the member in the current members array
+    if (members.length > 0) {
+      const member = members.find(m => m.id === memberIdAsNumber)
+      if (member?.retirement_date_planned) {
+        setCalculatedRetirementDate(new Date(member.retirement_date_planned))
+        return
+      }
+    }
+    
+    // If members array is empty or member not found, fetch members
+    const loadMembers = async () => {
+      try {
+        await fetchMembers()
+      } catch {
+        // Silent error handling
+      }
+    }
+    
+    // Only fetch if members array is empty (likely on page refresh)
+    if (members.length === 0) {
+      loadMembers()
+    }
+  }, [memberId, members, fetchMembers, propRetirementDate])
+  
+  /**
+   * Effect to update retirement date when members array changes
+   * 
+   * This ensures the retirement date is updated after members are fetched
+   */
+  React.useEffect(() => {
+    // Skip if no member ID or if retirement date is already provided via props
+    if (!memberId || propRetirementDate || members.length === 0) return
+    
+    const memberIdAsNumber = parseInt(String(memberId), 10)
+    const member = members.find(m => m.id === memberIdAsNumber)
+    
+    if (member?.retirement_date_planned) {
+      setCalculatedRetirementDate(new Date(member.retirement_date_planned))
+    } else {
+      setCalculatedRetirementDate(undefined)
+    }
+  }, [memberId, members, propRetirementDate])
 
-  // Calculate if a duration is currently active
+  /**
+   * Check if a duration is currently active
+   */
   const isActiveDuration = React.useCallback((years: number) => {
     if (!startDate || !field.value) return false
     
@@ -58,7 +213,10 @@ export function DateEndPicker<
     return endDate.getTime() === calculatedEnd.getTime()
   }, [field.value, startDate, toDateObject])
 
-  // Handle duration selection
+  /**
+   * Handle duration button click
+   * Calculates a new end date by adding years to the start date
+   */
   const handleDuration = React.useCallback((years: number) => {
     if (!startDate) return
 
@@ -68,7 +226,10 @@ export function DateEndPicker<
     setOpen(false)
   }, [field, startDate])
 
-  // Handle until retirement selection
+  /**
+   * Handle "Until Retirement" button click
+   * Sets the end date to the retirement date
+   */
   const handleUntilRetirement = React.useCallback(() => {
     if (!startDate || !retirementDate) return
     const date = toDateObject(retirementDate)
@@ -80,7 +241,10 @@ export function DateEndPicker<
   // Convert retirement date to Date object for display
   const retirementDateObj = toDateObject(retirementDate)
 
-  // Handle custom date input
+  /**
+   * Handle custom date input
+   * Parses the date string and updates the field value
+   */
   const handleCustomDate = React.useCallback((dateString: string) => {
     if (!dateString) {
       field.onChange(null)
@@ -116,7 +280,6 @@ export function DateEndPicker<
           </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-[280px] p-3 space-y-3" align="start">
-          {/* Debug retirement date and start date */}
           {startDate && (
             <>
               <div className="grid grid-cols-2 gap-2">

@@ -51,13 +51,19 @@ This plan focuses on verifying and finalizing the Insurance Pension forms as the
   - [ ] Use insurance-specific transformer
   - [ ] Remove any manual initialization logic
 
-- [ ] **Verify Formatting Implementation**
-  - [ ] Replace direct use of `parseNumber`, `formatNumberInput`, `getDecimalSeparator` in BasicInformationCard.tsx
-  - [ ] Replace custom `handleNumberInput` function with standardized `NumberInput` component
-  - [ ] Replace direct JSX formatting in StatementsCard.tsx with client-side useState/useEffect pattern
-  - [ ] Replace complex state management for multiple formatted inputs with standardized components
-  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
-  - [ ] Document as reference implementation
+- [x] **Verify Formatting Implementation**
+  - [x] Replace direct use of `parseNumber`, `formatNumberInput`, `getDecimalSeparator` in BasicInformationCard.tsx
+  - [x] Replace custom `handleNumberInput` function with standardized `NumberInput` component
+  - [x] Replace direct JSX formatting in StatementsCard.tsx with client-side useState/useEffect pattern
+  - [x] Replace complex state management for multiple formatted inputs with standardized components
+  - [x] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
+  - [x] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
+  - [x] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
+  - [x] Ensure proper date format handling based on user locale settings
+  - [x] Ensure all formatted values use client-side rendering to prevent hydration mismatches
+  - [x] Verify proper handling of initial empty states during hydration
+  - [x] Document as reference implementation
+  - [x] Implement formatting standardization for ContributionDetailsCard.tsx
 
 ### Edit Form
 
@@ -71,10 +77,14 @@ This plan focuses on verifying and finalizing the Insurance Pension forms as the
   - [ ] Verify removal of manual reset logic
   - [ ] Document as reference implementation
 
-- [ ] **Verify Formatting Implementation**
-  - [ ] Confirm use of centralized formatting utilities
-  - [ ] Verify proper hydration mismatch prevention
-  - [ ] Document as reference implementation
+- [x] **Verify Formatting Implementation**
+  - [x] Confirm use of centralized formatting utilities in StatementsCard.tsx
+  - [x] Verify proper hydration mismatch prevention in StatementsCard.tsx
+  - [x] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
+  - [x] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
+  - [x] Ensure proper date format handling based on user locale settings
+  - [x] Implement formatting standardization for ContributionDetailsCard.tsx
+  - [x] Document as reference implementation
 
 ### Error Handling and Loading States
 
@@ -89,6 +99,57 @@ This plan focuses on verifying and finalizing the Insurance Pension forms as the
   - [x] Document as reference implementation
 
 ## 🔍 Implementation Details
+
+### StatementsCard Implementation
+
+The StatementsCard has been successfully updated to use standardized formatting components:
+
+1. **Removed Custom Formatting Logic**:
+   - Removed direct usage of `parseNumber`, `formatNumberInput`, `getDecimalSeparator`
+   - Removed custom state management for formatted inputs
+   - Removed custom input handlers and validation functions
+
+2. **Replaced with Standardized Components**:
+   - Used `CurrencyInput` for all currency fields (value, total_contributions, total_benefits, costs_amount, value_at_retirement, monthly_payout)
+   - Used `PercentInput` for percentage fields (costs_percentage, return_rate)
+   - Used `FormattedDate` for displaying dates
+
+3. **Simplified the Code**:
+   - Removed the complex `renderInput` function
+   - Removed multiple state variables for tracking input values
+   - Removed manual input validation and formatting
+   - Simplified the form field rendering
+
+4. **Improved User Experience**:
+   - Standardized input behavior across all forms
+   - Ensured proper hydration mismatch prevention
+   - Maintained consistent formatting based on user locale settings
+
+### ContributionDetailsCard Implementation
+
+The ContributionDetailsCard has been successfully updated to use standardized formatting components:
+
+1. **Removed Custom Formatting Logic**:
+   - Removed direct usage of `parseNumber`, `formatNumberInput`, `getDecimalSeparator`
+   - Removed custom state management for contribution inputs
+   - Removed custom input validation function (`isValidNumberFormat`)
+   - Eliminated the need for manual input state initialization
+
+2. **Replaced with Standardized Components**:
+   - Used `CurrencyInput` for amount fields
+   - Continued using existing `DateInput` and `DateEndPicker` components which already follow best practices
+   - Continued using `EnumSelect` for frequency selection which already follows best practices
+
+3. **Simplified the Code**:
+   - Removed complex state management for tracking input values
+   - Eliminated manual input validation and formatting
+   - Removed the need for useEffect to initialize input states
+   - Simplified the form field rendering
+
+4. **Improved User Experience**:
+   - Standardized input behavior across all forms
+   - Ensured proper hydration mismatch prevention
+   - Maintained consistent formatting based on user locale settings
 
 ### Form Reset Implementation
 

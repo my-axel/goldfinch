@@ -7,57 +7,41 @@ interface PercentInputProps extends Omit<React.ComponentProps<typeof NumberInput
 }
 
 /**
- * PercentInput component for handling locale-specific percentage input.
+ * PercentInput component for handling percentage input.
  * Extends NumberInput component with percentage-specific features.
- * Automatically uses user settings from SettingsContext.
+ * Values are stored as decimals (0.05 for 5%) but displayed as percentages (5%).
  * 
  * @component
  * @example
- * // Basic usage (input 5 for 5%)
+ * // Basic usage (displays 5% for value 0.05)
  * <PercentInput 
- *   value={value} 
+ *   value={0.05} 
  *   onChange={setValue} 
- * />
- * 
- * @example
- * // With min/max constraints
- * <PercentInput 
- *   value={value} 
- *   onChange={setValue} 
- *   min={0} 
- *   max={100} 
  * />
  */
 export function PercentInput({ 
   value, 
-  onChange, 
+  onChange,
   showSymbol = true,
-  decimals = 2,
+  decimals = 1,
+  min,
+  max,
   className = '',
   ...props
 }: PercentInputProps) {
-  // Convert decimal value (0.05) to percentage (5) for display
-  const displayValue = value !== null && value !== undefined 
-    ? value * 100 
-    : value
-  
-  // Convert percentage input (5) back to decimal (0.05) for storage
-  const handleChange = (newValue: number | null) => {
-    if (newValue !== null) {
-      onChange(newValue / 100)
-    } else {
-      onChange(null)
-    }
-  }
-  
   return (
     <div className="relative">
       <NumberInput
-        value={displayValue}
-        onChange={handleChange}
-        decimals={decimals}
-        className={`${className} ${showSymbol ? 'pr-7' : ''}`}
         {...props}
+        // Display value as percentage
+        value={value !== null && value !== undefined ? value * 100 : null}
+        // Store value as decimal
+        onChange={newValue => onChange(newValue !== null ? newValue / 100 : null)}
+        decimals={decimals}
+        // Convert min/max to percentage for display
+        min={min !== undefined ? min * 100 : undefined}
+        max={max !== undefined ? max * 100 : undefined}
+        className={`${className} ${showSymbol ? 'pr-7' : ''}`}
       />
       
       {showSymbol && (

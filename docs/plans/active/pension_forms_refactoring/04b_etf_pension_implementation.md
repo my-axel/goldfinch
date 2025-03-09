@@ -55,6 +55,12 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
   - [ ] Replace direct date formatting with `toISOString().split('T')[0]` with `DateInput` component
   - [ ] Replace manual decimal separator handling with standardized input components
   - [ ] Implement client-side formatting pattern for all displayed values
+  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
+  - [ ] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
+  - [ ] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
+  - [ ] Ensure proper date format handling based on user locale settings
+  - [ ] Ensure all formatted values use client-side rendering to prevent hydration mismatches
+  - [ ] Verify proper handling of initial empty states during hydration
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Add `useFormReset` hook
@@ -75,6 +81,12 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
   - [ ] Replace direct date formatting with `toISOString().split('T')[0]` with `DateInput` component
   - [ ] Replace manual decimal separator handling with standardized input components
   - [ ] Implement client-side formatting pattern for all displayed values
+  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
+  - [ ] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
+  - [ ] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
+  - [ ] Ensure proper date format handling based on user locale settings
+  - [ ] Ensure all formatted values use client-side rendering to prevent hydration mismatches
+  - [ ] Verify proper handling of initial empty states during hydration
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Replace manual reset logic with `useFormReset` hook

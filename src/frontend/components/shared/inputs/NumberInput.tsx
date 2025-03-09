@@ -1,13 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useSettings } from '@/frontend/context/SettingsContext'
 import { Input } from '@/frontend/components/ui/input'
-import { 
-  formatNumberInput, 
-  parseNumber, 
-  getDecimalSeparator 
-} from '@/frontend/lib/transforms'
+import { formatNumberInput } from '@/frontend/lib/transforms'
 
 interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: number | null | undefined
@@ -51,60 +47,153 @@ export function NumberInput({
   ...props
 }: NumberInputProps) {
   const { settings } = useSettings()
-  const [localValue, setLocalValue] = useState('')
-  const decimalSeparator = getDecimalSeparator(settings.number_locale)
-
-  // Initialize input state when value changes
+  const inputRef = useRef<HTMLInputElement>(null)
+  const focusTimeoutRef = useRef<number | null>(null)
+  
+  // Track if we're currently editing
+  const [isEditing, setIsEditing] = useState(false)
+  
+  // Store the raw input value while editing
+  const [rawValue, setRawValue] = useState(() => {
+    if (value !== null && value !== undefined) {
+      return formatNumberInput(value, settings.number_locale, decimals)
+    }
+    return ''
+  })
+  
+  // Track if truncation occurred
+  const [wasTruncated, setWasTruncated] = useState(false)
+  
+  // Update raw value when external value changes and not editing
   useEffect(() => {
-    setLocalValue(formatNumberInput(value, settings.number_locale, decimals))
-  }, [value, settings.number_locale, decimals])
+    if (!isEditing && value !== undefined && value !== null) {
+      setRawValue(formatNumberInput(value, settings.number_locale, decimals))
+    }
+  }, [value, settings.number_locale, decimals, isEditing])
 
-  // Validate input format based on locale
-  const isValidNumberFormat = (input: string): boolean => {
-    if (!input) return true
-    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
-    return regex.test(input)
-  }
-
-  // Handle input change
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value
-    if (isValidNumberFormat(newValue)) {
-      setLocalValue(newValue)
-      const parsedValue = parseNumber(newValue, settings.number_locale)
+  // Reset truncation highlight after a delay
+  useEffect(() => {
+    if (wasTruncated) {
+      const timer = setTimeout(() => {
+        setWasTruncated(false)
+      }, 1000)
       
-      // Apply min/max constraints if provided
-      if (parsedValue !== null) {
-        if (min !== undefined && parsedValue < min) return
-        if (max !== undefined && parsedValue > max) return
+      return () => clearTimeout(timer)
+    }
+  }, [wasTruncated])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (focusTimeoutRef.current !== null) {
+        window.clearTimeout(focusTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Handle focus
+  const handleFocus = () => {
+    setIsEditing(true)
+    
+    // Select all text on focus
+    if (inputRef.current) {
+      // Clear any existing timeout
+      if (focusTimeoutRef.current !== null) {
+        window.clearTimeout(focusTimeoutRef.current)
       }
       
-      onChange(parsedValue)
+      // Set new timeout and store reference
+      focusTimeoutRef.current = window.setTimeout(() => {
+        inputRef.current?.select()
+        focusTimeoutRef.current = null
+      }, 0)
     }
   }
 
-  // Handle input blur
-  const handleBlur = () => {
-    const parsedValue = parseNumber(localValue, settings.number_locale)
-    if (parsedValue !== null) {
-      setLocalValue(formatNumberInput(parsedValue, settings.number_locale, decimals))
-      onChange(parsedValue)
-    } else {
-      setLocalValue('')
-      onChange(null)
+  // Handle input change - just validate basic format
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value
+    
+    // Allow empty input, digits, one decimal separator, and minus at start
+    if (/^-?\d*[.,]?\d*$/.test(newValue)) {
+      setRawValue(newValue)
     }
-    if (onBlur) onBlur()
   }
+
+  // Handle blur - parse and format
+  const handleBlur = () => {
+    setIsEditing(false)
+    
+    // Handle empty input
+    if (!rawValue.trim()) {
+      onChange(null)
+      onBlur?.()
+      return
+    }
+    
+    // Parse the value using locale settings
+    const normalizedValue = rawValue.replace(',', '.')
+    let parsedValue = parseFloat(normalizedValue)
+    
+    // Check if valid number
+    if (isNaN(parsedValue)) {
+      setRawValue('')
+      onChange(null)
+      onBlur?.()
+      return
+    }
+    
+    // Apply constraints
+    if (min !== undefined && parsedValue < min) {
+      parsedValue = min
+    }
+    
+    if (max !== undefined && parsedValue > max) {
+      parsedValue = max
+    }
+    
+    // Format for display and notify parent
+    const formattedValue = formatNumberInput(parsedValue, settings.number_locale, decimals)
+    
+    // Check if truncation occurred by comparing decimal places
+    const rawDecimalParts = normalizedValue.split('.')
+    const hasMoreDecimals = rawDecimalParts.length > 1 && 
+      rawDecimalParts[1].length > decimals
+    
+    if (hasMoreDecimals) {
+      setWasTruncated(true)
+    }
+    
+    setRawValue(formattedValue)
+    onChange(parsedValue)
+    onBlur?.()
+  }
+
+  // Get display value based on editing state
+  const displayValue = isEditing ? rawValue : (
+    value !== null && value !== undefined
+      ? formatNumberInput(value, settings.number_locale, decimals)
+      : rawValue
+  )
+
+  // Determine CSS classes based on state
+  const inputClasses = `
+    ${className}
+    ${wasTruncated ? 'transition-colors duration-1000 bg-amber-100 dark:bg-amber-900/20' : ''}
+  `.trim()
 
   return (
     <Input
-      type="text"
-      value={localValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      className={className}
-      inputMode="decimal"
       {...props}
+      ref={inputRef}
+      type="text"
+      inputMode="decimal"
+      value={displayValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={inputClasses}
+      title={wasTruncated ? `Value rounded to ${decimals} decimal places` : undefined}
     />
   )
 } 
