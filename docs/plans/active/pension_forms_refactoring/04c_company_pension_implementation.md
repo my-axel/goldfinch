@@ -48,18 +48,19 @@ This plan focuses on implementing the standardized patterns for Company Pension 
   - [x] Create dedicated explanation components
   - [x] Use `FormLayout` and `FormSection` components
 
-- [ ] **Apply Formatting Standardization**
-  - [ ] Replace direct JSX formatting with `formatCurrency` in ContributionHistoryCard.tsx
-  - [ ] Replace direct date formatting with `toLocaleDateString` in ContributionHistoryCard.tsx
-  - [ ] Replace complex state management for formatted inputs in PensionStatementsCard.tsx
-  - [ ] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
-  - [ ] Implement client-side useState/useEffect pattern for all displayed values
-  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
-  - [ ] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
-  - [ ] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
-  - [ ] Ensure proper date format handling based on user locale settings
-  - [ ] Ensure all formatted values use client-side rendering to prevent hydration mismatches
-  - [ ] Verify proper handling of initial empty states during hydration
+- [x] **Apply Formatting Standardization**
+  - [x] Replace direct JSX formatting with `formatCurrency` in ContributionHistoryCard.tsx
+  - [x] Replace direct date formatting with `toLocaleDateString` in ContributionHistoryCard.tsx
+  - [x] Replace complex state management for formatted inputs in PensionStatementsCard.tsx
+  - [x] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
+  - [x] Implement client-side useState/useEffect pattern for all displayed values
+  - [x] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
+  - [x] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
+  - [x] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
+  - [x] Ensure proper date format handling based on user locale settings
+  - [x] Ensure all formatted values use client-side rendering to prevent hydration mismatches
+  - [x] Verify proper handling of initial empty states during hydration
+  - [x] Update DateEndPicker to use memberId approach like Insurance Pension
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Add `useFormReset` hook
@@ -73,18 +74,19 @@ This plan focuses on implementing the standardized patterns for Company Pension 
   - [x] Create dedicated explanation components
   - [x] Use `FormLayout` and `FormSection` components
 
-- [ ] **Apply Formatting Standardization**
-  - [ ] Replace direct JSX formatting with `formatCurrency` in ContributionHistoryCard.tsx
-  - [ ] Replace direct date formatting with `toLocaleDateString` in ContributionHistoryCard.tsx
-  - [ ] Replace complex state management for formatted inputs in PensionStatementsCard.tsx
-  - [ ] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
-  - [ ] Implement client-side useState/useEffect pattern for all displayed values
-  - [ ] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
-  - [ ] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
-  - [ ] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
-  - [ ] Ensure proper date format handling based on user locale settings
-  - [ ] Ensure all formatted values use client-side rendering to prevent hydration mismatches
-  - [ ] Verify proper handling of initial empty states during hydration
+- [x] **Apply Formatting Standardization**
+  - [x] Replace direct JSX formatting with `formatCurrency` in ContributionHistoryCard.tsx
+  - [x] Replace direct date formatting with `toLocaleDateString` in ContributionHistoryCard.tsx
+  - [x] Replace complex state management for formatted inputs in PensionStatementsCard.tsx
+  - [x] Replace direct use of `parseNumber`, `getDecimalSeparator`, and `getCurrencySymbol` with components
+  - [x] Implement client-side useState/useEffect pattern for all displayed values
+  - [x] Use `FormattedCurrency`, `FormattedNumber`, and `FormattedDate` components for display values
+  - [x] Replace direct ContributionFrequency formatting with `FormattedFrequency` component
+  - [x] Verify consistent usage of `DateInput` and `DateEndPicker` components for all date fields
+  - [x] Ensure proper date format handling based on user locale settings
+  - [x] Ensure all formatted values use client-side rendering to prevent hydration mismatches
+  - [x] Verify proper handling of initial empty states during hydration
+  - [x] Update DateEndPicker to use memberId approach like Insurance Pension
 
 - [ ] **Implement Form Reset Hook**
   - [ ] Replace manual reset logic with `useFormReset` hook

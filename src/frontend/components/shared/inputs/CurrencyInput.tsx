@@ -3,6 +3,7 @@
 import { useSettings } from '@/frontend/context/SettingsContext'
 import { NumberInput } from './NumberInput'
 import { getCurrencySymbol, getDefaultCurrencyPosition } from '@/frontend/lib/transforms'
+import { useState, useEffect } from 'react'
 
 interface CurrencyInputProps extends Omit<React.ComponentProps<typeof NumberInput>, 'prefix' | 'suffix'> {
   showSymbol?: boolean
@@ -24,13 +25,23 @@ export function CurrencyInput({
   showSymbol = true,
   decimals = 2,
   className = '',
+  value,
   ...props
 }: CurrencyInputProps) {
   const { settings } = useSettings()
-  const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
-  const currencyPosition = getDefaultCurrencyPosition(settings.number_locale)
+  const [shouldShowSymbol, setShouldShowSymbol] = useState(false)
+  const [currencySymbol, setCurrencySymbol] = useState('')
+  const [currencyPosition, setCurrencyPosition] = useState<'prefix' | 'suffix'>('prefix')
   
-  const symbolClassName = showSymbol 
+  // Initialize currency symbol and position after hydration
+  useEffect(() => {
+    setCurrencySymbol(getCurrencySymbol(settings.number_locale, settings.currency))
+    setCurrencyPosition(getDefaultCurrencyPosition(settings.number_locale))
+    // Only show symbol if there's a value and showSymbol is true
+    setShouldShowSymbol(showSymbol && value !== undefined && value !== null)
+  }, [settings, showSymbol, value])
+  
+  const symbolClassName = shouldShowSymbol 
     ? currencyPosition === 'prefix' 
       ? 'pl-7' 
       : 'pr-7'
@@ -38,7 +49,7 @@ export function CurrencyInput({
   
   return (
     <div className="relative">
-      {showSymbol && currencyPosition === 'prefix' && (
+      {shouldShowSymbol && currencyPosition === 'prefix' && (
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
           {currencySymbol}
         </span>
@@ -46,11 +57,12 @@ export function CurrencyInput({
       
       <NumberInput
         {...props}
+        value={value}
         decimals={decimals}
         className={`${className} ${symbolClassName}`}
       />
       
-      {showSymbol && currencyPosition === 'suffix' && (
+      {shouldShowSymbol && currencyPosition === 'suffix' && (
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
           {currencySymbol}
         </span>

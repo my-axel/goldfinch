@@ -5,11 +5,9 @@ import { UseFormReturn } from "react-hook-form"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { ContributionFrequency } from "@/frontend/types/pension"
 import { Input } from "@/frontend/components/ui/input"
-import { useState, useEffect } from "react"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, getDecimalSeparator, getCurrencySymbol } from "@/frontend/lib/transforms"
 import { EnumSelect } from "@/frontend/components/ui/enum-select"
 import { DateInput } from '@/frontend/components/ui/date-input'
+import { CurrencyInput } from "@/frontend/components/shared/inputs/CurrencyInput"
 
 interface BasicInformationCardProps {
   form: UseFormReturn<CompanyPensionFormData>
@@ -20,26 +18,6 @@ interface BasicInformationCardProps {
  * Handles name, employer, dates, and contribution details.
  */
 export function BasicInformationCard({ form }: BasicInformationCardProps) {
-  const { settings } = useSettings()
-  const [contributionAmountInput, setContributionAmountInput] = useState("")
-  const decimalSeparator = getDecimalSeparator(settings.number_locale)
-  const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
-  
-  // Initialize input states when form data changes
-  useEffect(() => {
-    const contributionAmount = form.getValues("contribution_amount")
-    if (contributionAmount !== undefined) {
-      setContributionAmountInput(contributionAmount.toString().replace('.', decimalSeparator))
-    }
-  }, [form, decimalSeparator])
-
-  // Validate if the input is a valid number format
-  const isValidNumberFormat = (value: string): boolean => {
-    if (!value) return true
-    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
-    return regex.test(value)
-  }
-
   return (
     <div className="grid grid-cols-1 gap-8">
       <div className="grid grid-cols-2 gap-4">
@@ -89,37 +67,15 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
           name="contribution_amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Regular Contribution {currencySymbol && `(${currencySymbol})`}</FormLabel>
+              <FormLabel>Regular Contribution</FormLabel>
               <FormControl>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={contributionAmountInput}
-                    onChange={(e) => {
-                      const newValue = e.target.value
-                      if (isValidNumberFormat(newValue)) {
-                        setContributionAmountInput(newValue)
-                        const parsedValue = parseNumber(newValue, settings.number_locale)
-                        if (parsedValue >= 0) {
-                          field.onChange(parsedValue)
-                        }
-                      }
-                    }}
-                    onBlur={() => {
-                      const value = parseNumber(contributionAmountInput, settings.number_locale)
-                      if (value >= 0) {
-                        setContributionAmountInput(value.toString().replace('.', decimalSeparator))
-                        field.onChange(value)
-                      } else {
-                        setContributionAmountInput("")
-                        field.onChange(undefined)
-                      }
-                      field.onBlur()
-                    }}
-                    placeholder={`0${decimalSeparator}00`}
-                  />
-                </div>
+                <CurrencyInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  decimals={2}
+                  min={0}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

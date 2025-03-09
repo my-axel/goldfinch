@@ -6,6 +6,7 @@ import { useDateFormat } from '@/frontend/hooks/useDateFormat'
 interface FormattedDateProps {
   value: Date | string | null | undefined
   className?: string
+  format?: Intl.DateTimeFormatOptions
 }
 
 /**
@@ -21,10 +22,15 @@ interface FormattedDateProps {
  * @example
  * // With string date
  * <FormattedDate value="2023-05-15" />
+ * 
+ * @example
+ * // With custom format
+ * <FormattedDate value={new Date()} format={{ day: 'numeric', month: 'short' }} />
  */
 export function FormattedDate({ 
   value, 
-  className = '' 
+  className = '',
+  format
 }: FormattedDateProps) {
   const [formatted, setFormatted] = useState('')
   const { formatDate } = useDateFormat()
@@ -35,8 +41,8 @@ export function FormattedDate({
       return
     }
     
-    setFormatted(formatDate(value))
-  }, [value, formatDate])
+    setFormatted(formatDate(value, format))
+  }, [value, formatDate, format])
 
   return <span className={className}>{formatted}</span>
 } 

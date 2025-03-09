@@ -14,8 +14,11 @@ export function useDateFormat() {
   return useMemo(() => ({
     /**
      * Format a date for display using the user's locale settings
+     * @param value - Any value that might represent a date
+     * @param options - Optional Intl.DateTimeFormatOptions for custom formatting
      */
-    formatDate: (value: unknown) => formatDisplayDate(value, settings.number_locale),
+    formatDate: (value: unknown, options?: Intl.DateTimeFormatOptions) => 
+      formatDisplayDate(value, settings.number_locale, options),
     
     /**
      * Convert a date to ISO string format (YYYY-MM-DD)

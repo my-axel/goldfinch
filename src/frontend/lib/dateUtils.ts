@@ -51,17 +51,24 @@ export function toISODateString(value: unknown): string {
  * 
  * @param value - Any value that might represent a date
  * @param locale - Locale string (e.g., 'en-US', 'de-DE')
+ * @param options - Optional Intl.DateTimeFormatOptions for custom formatting
  * @returns Formatted date string according to locale or empty string if invalid
  */
-export function formatDisplayDate(value: unknown, locale: string = 'en-US'): string {
+export function formatDisplayDate(
+  value: unknown, 
+  locale: string = 'en-US', 
+  options?: Intl.DateTimeFormatOptions
+): string {
   const date = toDateObject(value);
   if (!date) return '';
   
-  return new Intl.DateTimeFormat(locale, {
+  const defaultOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
-  }).format(date);
+  };
+  
+  return new Intl.DateTimeFormat(locale, options || defaultOptions).format(date);
 }
 
 /**

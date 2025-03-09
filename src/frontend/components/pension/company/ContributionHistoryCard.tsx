@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { YearlyInvestmentModal } from "./YearlyInvestmentModal"
 import { CompanyPension, ExtraContribution } from "@/frontend/types/pension"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatCurrency } from "@/frontend/lib/transforms"
+import { FormattedCurrency } from "@/frontend/components/shared/formatting/FormattedCurrency"
+import { FormattedDate } from "@/frontend/components/shared/formatting/FormattedDate"
 
 interface ContributionHistoryCardProps {
   pension: CompanyPension
@@ -18,7 +18,6 @@ type GroupedContributions = {
 
 export function ContributionHistoryCard({ pension }: ContributionHistoryCardProps) {
   const [showAddContribution, setShowAddContribution] = useState(false)
-  const { settings } = useSettings()
   const [, setRefreshKey] = useState(0)
 
   // Group contributions by year and month
@@ -70,17 +69,14 @@ export function ContributionHistoryCard({ pension }: ContributionHistoryCardProp
                         {contributions.map((contribution, index) => (
                           <div key={`${year}-${month}-${index}`} className="flex justify-between items-center py-1 border-b border-border last:border-0">
                             <div className="text-sm">
-                              {new Date(contribution.date).toLocaleDateString(settings.ui_locale, {
-                                day: 'numeric',
-                                month: 'short'
-                              })}
+                              <FormattedDate 
+                                value={contribution.date} 
+                                format={{ day: 'numeric', month: 'short' }}
+                              />
                             </div>
                             <div className="flex flex-col items-end">
                               <span className="font-medium">
-                                {formatCurrency(contribution.amount, {
-                                  locale: settings.number_locale,
-                                  currency: settings.currency
-                                }).formatted}
+                                <FormattedCurrency value={contribution.amount} />
                               </span>
                               {contribution.note && (
                                 <span className="text-muted-foreground truncate">{contribution.note}</span>

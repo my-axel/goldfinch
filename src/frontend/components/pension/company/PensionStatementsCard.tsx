@@ -7,8 +7,6 @@ import { Button } from "@/frontend/components/ui/button"
 import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { Input } from "@/frontend/components/ui/input"
 import { useState, useEffect } from "react"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, getDecimalSeparator, getCurrencySymbol } from "@/frontend/lib/transforms"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { useDateFormat } from "@/frontend/hooks/useDateFormat"
@@ -23,6 +21,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/frontend/components/ui/alert-dialog"
+// Import standardized formatting components
+import { FormattedDate } from "@/frontend/components/shared/formatting/FormattedDate"
+// Import standardized input components
+import { CurrencyInput } from "@/frontend/components/shared/inputs/CurrencyInput"
+import { NumberInput } from "@/frontend/components/shared/inputs/NumberInput"
 
 interface PensionStatementsCardProps {
   form: UseFormReturn<CompanyPensionFormData>
@@ -39,7 +42,6 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     name: "statements"
   })
   
-  const { settings } = useSettings()
   const { deleteCompanyPensionStatement } = usePension()
   const { formatDate } = useDateFormat()
   const [statementValueInputs, setStatementValueInputs] = useState<string[]>([])
@@ -47,10 +49,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
   const [statementsWithProjections, setStatementsWithProjections] = useState<{[key: number]: RetirementProjection[]}>({})
   const [projectionCounter, setProjectionCounter] = useState(0)
   const [expandedStatements, setExpandedStatements] = useState<{[key: number]: boolean}>({})
-  const [formattedDates, setFormattedDates] = useState<{[key: number]: string}>({})
   const [statementToDelete, setStatementToDelete] = useState<{ index: number, date: string } | null>(null)
-  const decimalSeparator = getDecimalSeparator(settings.number_locale)
-  const currencySymbol = getCurrencySymbol(settings.number_locale, settings.currency)
 
   // Initialize input states when form data changes
   useEffect(() => {
@@ -59,7 +58,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     // Initialize statement value inputs and projections
     if (statements && statements.length > 0) {
       const newStatementValueInputs = statements.map(statement => 
-        statement.value ? statement.value.toString().replace('.', decimalSeparator) : ""
+        statement.value ? statement.value.toString() : ""
       );
       setStatementValueInputs(newStatementValueInputs);
       
@@ -77,10 +76,10 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
         } else {
           statement.retirement_projections.forEach((projection, projectionIndex) => {
             newProjectionInputs[`${statementIndex}.${projectionIndex}.monthly_payout`] = projection.monthly_payout 
-              ? projection.monthly_payout.toString().replace('.', decimalSeparator) 
+              ? projection.monthly_payout.toString() 
               : "";
             newProjectionInputs[`${statementIndex}.${projectionIndex}.total_capital`] = projection.total_capital 
-              ? projection.total_capital.toString().replace('.', decimalSeparator) 
+              ? projection.total_capital.toString() 
               : "";
           });
           newStatementsWithProjections[statementIndex] = [...statement.retirement_projections];
@@ -90,28 +89,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
       setProjectionInputs(newProjectionInputs);
       setStatementsWithProjections(newStatementsWithProjections);
     }
-  }, [form, decimalSeparator]);
-
-  // Format dates when form data changes
-  useEffect(() => {
-    const statements = form.getValues("statements");
-    if (statements) {
-      const newFormattedDates: {[key: number]: string} = {};
-      statements.forEach((statement, index) => {
-        if (statement.statement_date) {
-          newFormattedDates[index] = formatDate(statement.statement_date);
-        }
-      });
-      setFormattedDates(newFormattedDates);
-    }
-  }, [form, formatDate]);
-
-  // Validate if the input is a valid number format
-  const isValidNumberFormat = (value: string): boolean => {
-    if (!value) return true
-    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
-    return regex.test(value)
-  }
+  }, [form]);
 
   const handleAddStatement = () => {
     const statementDate = new Date();
@@ -130,12 +108,6 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     setStatementsWithProjections(prev => ({
       ...prev,
       [newStatementIndex]: []
-    }));
-
-    // Format and set the date for the new statement
-    setFormattedDates(prev => ({
-      ...prev,
-      [newStatementIndex]: formatDate(statementDate)
     }));
   }
 
@@ -159,9 +131,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     const updatedProjections = [...currentProjections, newProjection];
     
     form.setValue(`statements.${statementIndex}.retirement_projections`, updatedProjections, {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true
+      shouldDirty: true
     });
     
     const projectionIndex = updatedProjections.length - 1;
@@ -178,10 +148,6 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
       ...prev,
       [statementIndex]: updatedProjections
     }));
-    
-    setTimeout(() => {
-      form.trigger();
-    }, 0);
   }
 
   const handleRemoveProjection = (statementIndex: number, projectionIndex: number) => {
@@ -201,11 +167,8 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     
     currentProjections.splice(projectionIndex, 1);
     
-    form.setValue(`statements.${statementIndex}.retirement_projections`, currentProjections, {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true
-    });
+    // Remove validation triggers to match Insurance StatementsCard implementation
+    form.setValue(`statements.${statementIndex}.retirement_projections`, currentProjections);
     
     const newProjectionInputs = { ...projectionInputs };
     delete newProjectionInputs[`${statementIndex}.${projectionIndex}.monthly_payout`];
@@ -230,10 +193,6 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
       ...prev,
       [statementIndex]: currentProjections
     }));
-    
-    setTimeout(() => {
-      form.trigger();
-    }, 0);
   }
 
   const toggleStatement = (index: number) => {
@@ -268,7 +227,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     // Reset all state based on current form data
     setStatementValueInputs(
       updatedStatements.map(statement => 
-        statement.value ? statement.value.toString().replace('.', decimalSeparator) : ""
+        statement.value ? statement.value.toString() : ""
       )
     )
     
@@ -280,9 +239,9 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
       if (statement.retirement_projections) {
         statement.retirement_projections.forEach((projection, projIdx) => {
           newProjectionInputs[`${idx}.${projIdx}.monthly_payout`] = 
-            projection.monthly_payout ? projection.monthly_payout.toString().replace('.', decimalSeparator) : ""
+            projection.monthly_payout ? projection.monthly_payout.toString() : ""
           newProjectionInputs[`${idx}.${projIdx}.total_capital`] = 
-            projection.total_capital ? projection.total_capital.toString().replace('.', decimalSeparator) : ""
+            projection.total_capital ? projection.total_capital.toString() : ""
         })
         newStatementsWithProjections[idx] = [...statement.retirement_projections]
       } else {
@@ -292,15 +251,6 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     
     setProjectionInputs(newProjectionInputs)
     setStatementsWithProjections(newStatementsWithProjections)
-    
-    // Reset formatted dates
-    const newFormattedDates: {[key: number]: string} = {}
-    updatedStatements.forEach((statement, idx) => {
-      if (statement.statement_date) {
-        newFormattedDates[idx] = formatDate(statement.statement_date)
-      }
-    })
-    setFormattedDates(newFormattedDates)
     
     // Explicitly set the statements array in the form to ensure the change is tracked
     form.setValue('statements', updatedStatements, {
@@ -321,7 +271,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     if (statement) {
       setStatementToDelete({
         index,
-        date: formatDate(statement.statement_date)
+        date: statement.statement_date ? formatDate(statement.statement_date) : 'Unknown date'
       })
     }
   }
@@ -364,44 +314,13 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
             name={`statements.${latestIndex}.value`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Value ({currencySymbol})</FormLabel>
+                <FormLabel>Value</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      value={statementValueInputs[latestIndex] || ""}
-                      onChange={(e) => {
-                        const newValue = e.target.value
-                        if (isValidNumberFormat(newValue)) {
-                          const newInputs = [...statementValueInputs]
-                          newInputs[latestIndex] = newValue
-                          setStatementValueInputs(newInputs)
-                          
-                          const parsedValue = parseNumber(newValue, settings.number_locale)
-                          if (parsedValue >= 0) {
-                            field.onChange(parsedValue)
-                          }
-                        }
-                      }}
-                      onBlur={() => {
-                        const value = parseNumber(statementValueInputs[latestIndex] || "", settings.number_locale)
-                        if (value >= 0) {
-                          const newInputs = [...statementValueInputs]
-                          newInputs[latestIndex] = value.toString().replace('.', decimalSeparator)
-                          setStatementValueInputs(newInputs)
-                          field.onChange(value)
-                        } else {
-                          const newInputs = [...statementValueInputs]
-                          newInputs[latestIndex] = ""
-                          setStatementValueInputs(newInputs)
-                          field.onChange(0)
-                        }
-                        field.onBlur()
-                      }}
-                      placeholder={`0${decimalSeparator}00`}
-                    />
-                  </div>
+                  <CurrencyInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -460,12 +379,13 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                       render={({ field }) => (
                         <FormItem className="space-y-0">
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              min="50" 
-                              max="100" 
-                              {...field} 
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 67)}
+                            <NumberInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              min={50}
+                              max={100}
+                              decimals={0}
                             />
                           </FormControl>
                           <FormMessage />
@@ -479,45 +399,11 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                       render={({ field }) => (
                         <FormItem className="space-y-0">
                           <FormControl>
-                            <div className="relative">
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                value={projectionInputs[`${latestIndex}.${projectionIndex}.monthly_payout`] || ""}
-                                onChange={(e) => {
-                                  const newValue = e.target.value
-                                  if (isValidNumberFormat(newValue)) {
-                                    setProjectionInputs({
-                                      ...projectionInputs,
-                                      [`${latestIndex}.${projectionIndex}.monthly_payout`]: newValue
-                                    })
-                                    
-                                    const parsedValue = parseNumber(newValue, settings.number_locale)
-                                    if (parsedValue >= 0) {
-                                      field.onChange(parsedValue)
-                                    }
-                                  }
-                                }}
-                                onBlur={() => {
-                                  const value = parseNumber(projectionInputs[`${latestIndex}.${projectionIndex}.monthly_payout`] || "", settings.number_locale)
-                                  if (value >= 0) {
-                                    setProjectionInputs({
-                                      ...projectionInputs,
-                                      [`${latestIndex}.${projectionIndex}.monthly_payout`]: value.toString().replace('.', decimalSeparator)
-                                    })
-                                    field.onChange(value)
-                                  } else {
-                                    setProjectionInputs({
-                                      ...projectionInputs,
-                                      [`${latestIndex}.${projectionIndex}.monthly_payout`]: ""
-                                    })
-                                    field.onChange(0)
-                                  }
-                                  field.onBlur()
-                                }}
-                                placeholder={`0${decimalSeparator}00`}
-                              />
-                            </div>
+                            <CurrencyInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -530,45 +416,11 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                       render={({ field }) => (
                         <FormItem className="space-y-0">
                           <FormControl>
-                            <div className="relative">
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                value={projectionInputs[`${latestIndex}.${projectionIndex}.total_capital`] || ""}
-                                onChange={(e) => {
-                                  const newValue = e.target.value
-                                  if (isValidNumberFormat(newValue)) {
-                                    setProjectionInputs({
-                                      ...projectionInputs,
-                                      [`${latestIndex}.${projectionIndex}.total_capital`]: newValue
-                                    })
-                                    
-                                    const parsedValue = parseNumber(newValue, settings.number_locale)
-                                    if (parsedValue >= 0) {
-                                      field.onChange(parsedValue)
-                                    }
-                                  }
-                                }}
-                                onBlur={() => {
-                                  const value = parseNumber(projectionInputs[`${latestIndex}.${projectionIndex}.total_capital`] || "", settings.number_locale)
-                                  if (value >= 0) {
-                                    setProjectionInputs({
-                                      ...projectionInputs,
-                                      [`${latestIndex}.${projectionIndex}.total_capital`]: value.toString().replace('.', decimalSeparator)
-                                    })
-                                    field.onChange(value)
-                                  } else {
-                                    setProjectionInputs({
-                                      ...projectionInputs,
-                                      [`${latestIndex}.${projectionIndex}.total_capital`]: ""
-                                    })
-                                    field.onChange(0)
-                                  }
-                                  field.onBlur()
-                                }}
-                                placeholder={`0${decimalSeparator}00`}
-                              />
-                            </div>
+                            <CurrencyInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -648,7 +500,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                       <ChevronRight className="h-4 w-4" />
                     )}
                     <h4 className="font-medium">
-                      Statement from {formattedDates[index] || 'Unknown date'}
+                      Statement from <FormattedDate value={statement.statement_date} />
                     </h4>
                   </Button>
                 </CollapsibleTrigger>
@@ -681,38 +533,13 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                       name={`statements.${index}.value`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Value ({currencySymbol})</FormLabel>
+                          <FormLabel>Value</FormLabel>
                           <FormControl>
-                            <div className="relative">
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                value={statementValueInputs[index] || ""}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (isValidNumberFormat(value)) {
-                                    const newInputs = [...statementValueInputs];
-                                    newInputs[index] = value;
-                                    setStatementValueInputs(newInputs);
-                                    
-                                    const parsedValue = parseNumber(value, settings.number_locale);
-                                    field.onChange(parsedValue);
-                                  }
-                                }}
-                                onBlur={(e) => {
-                                  const value = e.target.value;
-                                  const parsedValue = parseNumber(value, settings.number_locale);
-                                  const formattedValue = parsedValue.toString().replace('.', decimalSeparator);
-                                  
-                                  const newInputs = [...statementValueInputs];
-                                  newInputs[index] = formattedValue;
-                                  setStatementValueInputs(newInputs);
-                                  
-                                  field.onChange(parsedValue);
-                                }}
-                                placeholder={`0${decimalSeparator}00`}
-                              />
-                            </div>
+                            <CurrencyInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -767,12 +594,13 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                               render={({ field }) => (
                                 <FormItem className="space-y-0">
                                   <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min="50" 
-                                      max="100" 
-                                      {...field} 
-                                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 67)}
+                                    <NumberInput
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      onBlur={field.onBlur}
+                                      min={50}
+                                      max={100}
+                                      decimals={0}
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -786,38 +614,11 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                               render={({ field }) => (
                                 <FormItem className="space-y-0">
                                   <FormControl>
-                                    <div className="relative">
-                                      <Input
-                                        type="text"
-                                        inputMode="decimal"
-                                        value={projectionInputs[`${index}.${projIndex}.monthly_payout`] || ""}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          if (isValidNumberFormat(value)) {
-                                            setProjectionInputs(prev => ({
-                                              ...prev,
-                                              [`${index}.${projIndex}.monthly_payout`]: value
-                                            }));
-                                            
-                                            const parsedValue = parseNumber(value, settings.number_locale);
-                                            field.onChange(parsedValue);
-                                          }
-                                        }}
-                                        onBlur={(e) => {
-                                          const value = e.target.value;
-                                          const parsedValue = parseNumber(value, settings.number_locale);
-                                          const formattedValue = parsedValue.toString().replace('.', decimalSeparator);
-                                          
-                                          setProjectionInputs(prev => ({
-                                            ...prev,
-                                            [`${index}.${projIndex}.monthly_payout`]: formattedValue
-                                          }));
-                                          
-                                          field.onChange(parsedValue);
-                                        }}
-                                        placeholder={`0${decimalSeparator}00`}
-                                      />
-                                    </div>
+                                    <CurrencyInput
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      onBlur={field.onBlur}
+                                    />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -830,38 +631,11 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                               render={({ field }) => (
                                 <FormItem className="space-y-0">
                                   <FormControl>
-                                    <div className="relative">
-                                      <Input
-                                        type="text"
-                                        inputMode="decimal"
-                                        value={projectionInputs[`${index}.${projIndex}.total_capital`] || ""}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          if (isValidNumberFormat(value)) {
-                                            setProjectionInputs(prev => ({
-                                              ...prev,
-                                              [`${index}.${projIndex}.total_capital`]: value
-                                            }));
-                                            
-                                            const parsedValue = parseNumber(value, settings.number_locale);
-                                            field.onChange(parsedValue);
-                                          }
-                                        }}
-                                        onBlur={(e) => {
-                                          const value = e.target.value;
-                                          const parsedValue = parseNumber(value, settings.number_locale);
-                                          const formattedValue = parsedValue.toString().replace('.', decimalSeparator);
-                                          
-                                          setProjectionInputs(prev => ({
-                                            ...prev,
-                                            [`${index}.${projIndex}.total_capital`]: formattedValue
-                                          }));
-                                          
-                                          field.onChange(parsedValue);
-                                        }}
-                                        placeholder={`0${decimalSeparator}00`}
-                                      />
-                                    </div>
+                                    <CurrencyInput
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      onBlur={field.onBlur}
+                                    />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
