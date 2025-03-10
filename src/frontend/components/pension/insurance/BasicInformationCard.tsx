@@ -2,27 +2,19 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/frontend/components/ui/form"
 import { UseFormReturn } from "react-hook-form"
-import { PensionType } from "@/frontend/types/pension"
 import { Input } from "@/frontend/components/ui/input"
-import { EnumSelect, EnumOption } from "@/frontend/components/ui/enum-select"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { PercentInput } from '@/frontend/components/shared/inputs/PercentInput'
 import { NumberInput } from '@/frontend/components/shared/inputs/NumberInput'
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
-
+import { Textarea } from "@/frontend/components/ui/textarea"
 interface BasicInformationCardProps {
   form: UseFormReturn<InsurancePensionFormData>
 }
 
-// Convert PensionType enum to options array
-const pensionTypeOptions: EnumOption<PensionType>[] = Object.entries(PensionType).map(([key, value]) => ({
-  value,
-  label: key.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-}))
-
 /**
  * Component for editing basic insurance pension information.
- * Handles name, provider, type, dates, and interest rates.
+ * Handles name, provider, dates, and interest rates.
  */
 export function BasicInformationCard({ form }: BasicInformationCardProps) {
   return (
@@ -57,27 +49,8 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
         />
       </div>
 
-      {/* Type and Contract Number */}
+      {/* Contract Number and Start Date */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="type"
-          render={() => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <FormControl>
-                <EnumSelect<PensionType, InsurancePensionFormData>
-                  name="type"
-                  control={form.control}
-                  options={pensionTypeOptions}
-                  defaultValue={PensionType.INSURANCE}
-                  placeholder="Select pension type"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="contract_number"
@@ -91,10 +64,6 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
             </FormItem>
           )}
         />
-      </div>
-
-      {/* Start Date */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="start_date"
@@ -165,7 +134,11 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
             <FormItem>
               <FormLabel>Notes (Optional)</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Additional information" />
+              <Textarea 
+                {...field} 
+                placeholder="Add any notes about this pension plan"
+                className="resize-none h-24"
+              />
               </FormControl>
               <FormMessage />
             </FormItem>

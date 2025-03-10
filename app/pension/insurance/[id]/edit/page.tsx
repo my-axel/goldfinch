@@ -39,7 +39,6 @@ interface EditInsurancePensionPageProps {
 }
 
 const defaultValues: InsurancePensionFormData = {
-  type: PensionType.INSURANCE,
   name: "",
   member_id: "",
   notes: "",
@@ -80,8 +79,10 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
       // Format pension data
       const pensionData = {
         ...data,
+        type: PensionType.INSURANCE,
         member_id: typeof data.member_id === 'string' ? parseInt(data.member_id) : data.member_id,
-        start_date: toISODateString(data.start_date)
+        start_date: toISODateString(data.start_date),
+        notes: data.notes || ""
       }
 
       // Extract and format statements

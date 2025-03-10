@@ -19,18 +19,15 @@ import { Label } from "@/frontend/components/ui/label"
 import { PlusCircle, History, BarChart3 } from "lucide-react"
 import { ETFSearchCombobox } from "@/frontend/components/etf/ETFSearchCombobox"
 import { Input } from "@/frontend/components/ui/input"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { parseNumber, getDecimalSeparator } from "@/frontend/lib/transforms"
 import { ContributionPlanCard } from "@/frontend/components/pension/etf/ContributionPlanCard"
+import { NumberInput } from "@/frontend/components/shared/inputs/NumberInput"
+import { DateInput } from "@/frontend/components/ui/date-input"
 
 export default function NewETFPensionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { createEtfPension } = usePension()
-  const { settings } = useSettings()
   const [initializationMethod, setInitializationMethod] = useState<"new" | "existing" | "historical" | null>(null)
-  const [unitsInput, setUnitsInput] = useState("")
-  const decimalSeparator = getDecimalSeparator(settings.number_locale)
 
   const form = useForm<ETFPensionFormData>({
     resolver: zodResolver(etfPensionSchema),
@@ -52,16 +49,6 @@ export default function NewETFPensionPage() {
     form.setValue('initialization_method', value)
     form.setValue('is_existing_investment', value === 'existing')
     form.setValue('realize_historical_contributions', value === 'historical')
-  }
-
-  // Validate if the input is a valid number format
-  const isValidNumberFormat = (value: string): boolean => {
-    // Allow empty input
-    if (!value) return true
-    
-    // Allow only digits, one decimal separator, and one minus sign at the start
-    const regex = new RegExp(`^-?\\d*\\${decimalSeparator}?\\d*$`)
-    return regex.test(value)
   }
 
   const handleSubmit = async (data: ETFPensionFormData) => {
@@ -244,33 +231,12 @@ export default function NewETFPensionPage() {
                               render={({ field }) => (
                                 <div className="space-y-2">
                                   <Label htmlFor="existing_units">Current Units</Label>
-                                  <Input 
-                                    id="existing_units"
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={unitsInput}
-                                    onChange={(e) => {
-                                      const newValue = e.target.value
-                                      if (isValidNumberFormat(newValue)) {
-                                        setUnitsInput(newValue)
-                                        const parsedValue = parseNumber(newValue, settings.number_locale)
-                                        if (parsedValue >= 0) {
-                                          field.onChange(parsedValue)
-                                        }
-                                      }
-                                    }}
-                                    onBlur={() => {
-                                      const value = parseNumber(unitsInput, settings.number_locale)
-                                      if (value >= 0) {
-                                        setUnitsInput(value.toString().replace('.', decimalSeparator))
-                                        field.onChange(value)
-                                      } else {
-                                        setUnitsInput("")
-                                        field.onChange(0)
-                                      }
-                                      field.onBlur()
-                                    }}
-                                    placeholder={`0${decimalSeparator}000000`}
+                                  <NumberInput
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                    placeholder="0.000000"
+                                    min={0}
                                   />
                                 </div>
                               )}
@@ -283,16 +249,7 @@ export default function NewETFPensionPage() {
                               render={({ field }) => (
                                 <div className="space-y-2">
                                   <Label htmlFor="reference_date">Reference Date</Label>
-                                  <Input
-                                    id="reference_date"
-                                    type="date"
-                                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                                    onChange={(e) => {
-                                      const date = new Date(e.target.value)
-                                      date.setUTCHours(0, 0, 0, 0)
-                                      field.onChange(date)
-                                    }}
-                                  />
+                                  <DateInput field={field} />
                                 </div>
                               )}
                             />
@@ -307,7 +264,7 @@ export default function NewETFPensionPage() {
                     title="Contribution Plan"
                     description="Set up your contribution schedule"
                   >
-                    <ContributionPlanCard form={form} />
+                    <ContributionPlanCard form={form} memberId={form.watch('member_id')} />
                   </FormSection>
                 </>
               )}

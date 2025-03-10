@@ -82,7 +82,6 @@ export interface InsurancePensionStatementFormData {
  * except member_id is string for form input handling
  */
 export type InsurancePensionFormData = {
-  type: PensionType.INSURANCE
   name: string
   member_id: string         // String for form input, converted to number on submit
   start_date: Date

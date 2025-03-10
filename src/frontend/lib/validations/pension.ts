@@ -28,7 +28,6 @@ export const etfPensionSchema = basePensionSchema.extend({
 })
 
 export const insurancePensionSchema = basePensionSchema.extend({
-  type: z.literal(PensionType.INSURANCE),
   provider: z.string().min(1),
   contract_number: z.string().optional(),
   start_date: z.date(),

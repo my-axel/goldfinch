@@ -31,6 +31,7 @@ import { ValueProjectionExplanation } from "@/frontend/components/pension/etf/ex
 import { HistoricalPerformanceExplanation } from "@/frontend/components/pension/etf/explanations/HistoricalPerformanceExplanation"
 import { ContributionPlanExplanation } from "@/frontend/components/pension/etf/explanations/ContributionPlanExplanation"
 import { TrendingUp } from "lucide-react"
+import { toISODateString } from "@/frontend/lib/dateUtils"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -43,7 +44,7 @@ const transformPensionToFormData = (pension: ETFPension): ETFPensionFormData => 
   type: PensionType.ETF_PLAN,
   name: pension.name,
   member_id: pension.member_id.toString(),
-  notes: pension.notes,
+  notes: pension.notes || "",
   etf_id: pension.etf_id,
   is_existing_investment: pension.is_existing_investment,
   existing_units: pension.existing_units || 0,
@@ -231,7 +232,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     try {
       await updatePensionStatus(pensionId, {
         status: 'PAUSED',
-        paused_at: pauseDate.toISOString().split('T')[0]
+        paused_at: toISODateString(pauseDate)
       })
       setShowPauseDialog(false)
     } catch (error) {
@@ -248,7 +249,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     try {
       await updatePensionStatus(pensionId, {
         status: 'ACTIVE',
-        resume_at: resumeDate.toISOString().split('T')[0]
+        resume_at: toISODateString(resumeDate)
       })
       setShowResumeDialog(false)
     } catch (error) {
@@ -327,7 +328,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                     </div>
                   }
                 >
-                  <ContributionPlanCard form={form} />
+                  <ContributionPlanCard form={form} memberId={form.watch('member_id')} />
                 </FormSection>
 
                 {/* Historical Performance Section */}

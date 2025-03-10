@@ -1,10 +1,9 @@
 "use client"
 
 import { useWatch, type UseFormReturn } from "react-hook-form"
-import { useSettings } from "@/frontend/context/SettingsContext"
-import { formatCurrency } from "@/frontend/lib/transforms"
 import { type ETFPensionFormData } from "@/frontend/types/pension-form"
 import { type ContributionStep } from "@/frontend/types/pension"
+import { FormattedCurrency } from "@/frontend/components/shared/formatting/FormattedCurrency"
 
 function analyzeContributionStep(
   step: ContributionStep,
@@ -87,7 +86,6 @@ interface ContributionPlanExplanationProps {
 }
 
 export function ContributionPlanExplanation({ form, retirementDate }: ContributionPlanExplanationProps) {
-  const { settings } = useSettings()
   const contributions = useWatch({
     control: form.control,
     name: "contribution_plan_steps"
@@ -129,10 +127,7 @@ export function ContributionPlanExplanation({ form, retirementDate }: Contributi
         <div>
             Increasing your {currentStep.frequency.toLowerCase()} contribution to{' '}
             <span className="font-medium text-foreground">
-              {formatCurrency(analysis.suggestedAmount, {
-                locale: settings.number_locale,
-                currency: settings.currency
-              }).formatted}
+              <FormattedCurrency value={analysis.suggestedAmount} />
             </span>
             {analysis.isUntilRetirement ? (
               ' until retirement'
@@ -141,10 +136,7 @@ export function ContributionPlanExplanation({ form, retirementDate }: Contributi
             )}
             {' '}could add{' '}
             <span className="font-medium text-green-600">
-              {formatCurrency(analysis.additionalAtRetirement, {
-                locale: settings.number_locale,
-                currency: settings.currency
-              }).formatted}
+              <FormattedCurrency value={analysis.additionalAtRetirement} />
             </span>
             {' '}to your retirement savings.
         </div>
