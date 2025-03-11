@@ -39,6 +39,7 @@ interface EditInsurancePensionPageProps {
 }
 
 const defaultValues: InsurancePensionFormData = {
+  type: PensionType.INSURANCE,
   name: "",
   member_id: "",
   notes: "",

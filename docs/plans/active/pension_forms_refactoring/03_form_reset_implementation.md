@@ -59,39 +59,39 @@ This plan addresses the inconsistent form reset logic across pension forms by im
   - [ ] Handle date transformations
   - [ ] Add proper type definitions
 
-- [ ] **Company Pension Transformers**
-  - [ ] Create `src/frontend/lib/transformers/companyPensionTransformers.ts`
-  - [ ] Implement `companyPensionToForm` transformer
-  - [ ] Handle nested contribution steps and statements
-  - [ ] Handle date transformations
-  - [ ] Add proper type definitions
+- [x] **Company Pension Transformers**
+  - [x] Create `src/frontend/lib/transformers/companyPensionTransformers.ts`
+  - [x] Implement `companyPensionToForm` transformer
+  - [x] Handle nested contribution steps and statements
+  - [x] Handle date transformations
+  - [x] Add proper type definitions
 
-- [ ] **Insurance Pension Transformers**
-  - [ ] Create `src/frontend/lib/transformers/insurancePensionTransformers.ts`
-  - [ ] Implement `insurancePensionToForm` transformer
-  - [ ] Handle nested contribution steps and statements
-  - [ ] Handle date transformations
-  - [ ] Add proper type definitions
+- [x] **Insurance Pension Transformers**
+  - [x] Create `src/frontend/lib/transformers/insurancePensionTransformers.ts`
+  - [x] Implement `insurancePensionToForm` transformer
+  - [x] Handle nested contribution steps and statements
+  - [x] Handle date transformations
+  - [x] Add proper type definitions
 
 ### 2. Implement Form Reset Hook
 
-- [ ] **Verify Hook Implementation**
-  - [ ] Ensure `useFormReset` hook is implemented according to the plan
-  - [ ] Test with basic examples
-  - [ ] Verify handling of complex nested structures
+- [x] **Verify Hook Implementation**
+  - [x] Ensure `useFormReset` hook is implemented according to the plan
+  - [x] Test with basic examples
+  - [x] Verify handling of complex nested structures
 
-- [ ] **Create Usage Examples**
-  - [ ] Document usage pattern for each pension type
-  - [ ] Create example implementations
-  - [ ] Add comprehensive TypeScript types
+- [x] **Create Usage Examples**
+  - [x] Document usage pattern for each pension type
+  - [x] Create example implementations
+  - [x] Add comprehensive TypeScript types
 
 ### 3. Update Reference Form
 
-- [ ] **Update Insurance Pension Edit Form**
-  - [ ] Implement `useFormReset` hook
-  - [ ] Remove manual reset logic
-  - [ ] Test with various data scenarios
-  - [ ] Document as reference implementation
+- [x] **Update Insurance Pension Edit Form**
+  - [x] Implement `useFormReset` hook
+  - [x] Remove manual reset logic
+  - [x] Test with various data scenarios
+  - [x] Document as reference implementation
 
 ## 🔍 Implementation Details
 

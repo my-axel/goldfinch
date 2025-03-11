@@ -22,6 +22,7 @@ import { toISODateString } from "@/frontend/lib/dateUtils"
 import { FormLayout, FormSection } from "@/frontend/components/shared"
 
 const defaultValues: InsurancePensionFormData = {
+  type: PensionType.INSURANCE,
   name: "",
   member_id: "",
   notes: "",

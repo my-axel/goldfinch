@@ -20,6 +20,20 @@ import { FormLayout, FormSection } from "@/frontend/components/shared"
 import { BasicInformationExplanation } from "@/frontend/components/pension/company/explanations/BasicInformationExplanation"
 import { ContributionPlanExplanation } from "@/frontend/components/pension/company/explanations/ContributionPlanExplanation"
 import { StatementsExplanation } from "@/frontend/components/pension/company/explanations/StatementsExplanation"
+import { useEffect } from "react"
+
+const defaultValues: CompanyPensionFormData = {
+  type: PensionType.COMPANY,
+  name: "",
+  member_id: "",
+  employer: "",
+  start_date: new Date(),
+  contribution_amount: undefined,
+  contribution_frequency: ContributionFrequency.MONTHLY,
+  notes: "",
+  contribution_plan_steps: [],
+  statements: []
+}
 
 export default function NewCompanyPensionPage() {
   const router = useRouter()
@@ -31,18 +45,16 @@ export default function NewCompanyPensionPage() {
   const form = useForm<CompanyPensionFormData>({
     resolver: zodResolver(companyPensionSchema),
     defaultValues: {
-      type: PensionType.COMPANY,
-      name: "",
-      member_id: memberId,
-      employer: "",
-      start_date: new Date(),
-      contribution_amount: undefined,
-      contribution_frequency: ContributionFrequency.MONTHLY,
-      notes: "",
-      contribution_plan_steps: [],
-      statements: []
+      ...defaultValues,
+      member_id: memberId
     }
   })
+
+  // Use the form reset hook to handle initial form setup
+  // This ensures consistency with the edit form pattern
+  useEffect(() => {
+    form.reset(defaultValues)
+  }, [memberId, form])
 
   const handleSubmit = async (data: CompanyPensionFormData) => {
     try {

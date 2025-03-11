@@ -111,17 +111,23 @@
 
 ### Active Development
 - 🔥 **Form Reset Hook Implementation**
-  - Create reusable hook to standardize form reset logic
-  - Centralize data transformation between API and form formats
-  - Handle complex nested data structures consistently
+  - ✅ Create reusable hook to standardize form reset logic
+  - ✅ Centralize data transformation between API and form formats
+  - ✅ Handle complex nested data structures consistently
+  - ✅ Implement Company Pension transformer
+  - ⚠️ Implement ETF Pension transformer
+  - ⚠️ Implement Insurance Pension transformer
   > **Implementation Details**: [Form Reset Hook Plan](docs/plans/active/form_reset_hook.md)
 
 - 🔥 **Pension Forms Standardization** (1-2 weeks)
-  - Implement consistent layout across all pension forms
-  - Standardize formatting patterns for numbers, currencies, and dates
-  - Implement form reset hook for consistent data handling
-  - Add proper error handling and loading states
-  - Refactor ETF, Company, and Insurance pension forms
+  - ✅ Implement consistent layout across all pension forms
+  - ✅ Standardize formatting patterns for numbers, currencies, and dates
+  - 🟡 Implement form reset hook for consistent data handling
+    - ✅ Company Pension forms
+    - ⚠️ ETF Pension forms
+    - ⚠️ Insurance Pension forms
+  - ✅ Add proper error handling and loading states
+  - 🟡 Refactor ETF, Company, and Insurance pension forms
   > **Implementation Details**: [Pension Forms Standardization Plan](docs/plans/active/pension_forms_refactoring/README.md)
 
 ### Ready to Implement

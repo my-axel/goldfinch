@@ -6,7 +6,7 @@ import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { Button } from "@/frontend/components/ui/button"
 import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { Input } from "@/frontend/components/ui/input"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { getCurrencySymbol, safeNumberValue } from "@/frontend/lib/transforms"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
@@ -53,6 +53,14 @@ type FormPath =
   | `statements.${number}.projections.${number}.scenario_type`
   | `statements.${number}.projections`
 
+// Define a type for the projection to avoid repetition
+type Projection = {
+  scenario_type: 'with_contributions' | 'without_contributions';
+  return_rate: number;
+  value_at_retirement: number;
+  monthly_payout: number;
+};
+
 export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   const { fields: statementFields, append: appendStatement, remove: removeStatement } = useFieldArray({
     control: form.control,
@@ -66,26 +74,17 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   const [expandedStatements, setExpandedStatements] = useState<{[key: number]: boolean}>({})
   const [formattedDates, setFormattedDates] = useState<{[key: number]: string}>({})
   const [statementToDelete, setStatementToDelete] = useState<{ index: number, date: string } | null>(null)
+  // Add state to track projections and force re-renders
+  const [statementsWithProjections, setStatementsWithProjections] = useState<{[key: number]: Projection[]}>({})
+  const [projectionCounter, setProjectionCounter] = useState(0)
   
   const currencySymbol = getCurrencySymbol(settings.ui_locale, settings.currency)
 
-  // Get the latest statement by sorting the statements array
-  const sortedStatements = useMemo(() => {
-    const statements = form.getValues("statements") || []
-    return [...statements].sort((a, b) => {
-      const dateA = new Date(a.statement_date).getTime()
-      const dateB = new Date(b.statement_date).getTime()
-      return dateB - dateA // Sort in descending order (latest first)
-    })
-  }, [form.getValues("statements")])
-
-  const latestStatementIndex = useMemo(() => {
-    if (!sortedStatements.length) return -1
-    const latestDate = new Date(sortedStatements[0].statement_date).getTime()
-    return statementFields.findIndex(
-      field => new Date(field.statement_date).getTime() === latestDate
-    )
-  }, [sortedStatements, statementFields])
+  // Use a simpler approach - latest statement is the last one added
+  const getLatestStatementIndex = () => {
+    if (statementFields.length === 0) return -1
+    return statementFields.length - 1
+  }
 
   // Initialize dates when form data changes
   useEffect(() => {
@@ -93,15 +92,17 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     if (statements) {
       // Initialize dates
       const newFormattedDates: {[key: number]: string} = {}
+      const newStatementsWithProjections: {[key: number]: Projection[]} = {}
+      
       statements.forEach((statement, index) => {
         if (statement.statement_date) {
           newFormattedDates[index] = formatDate(statement.statement_date)
         }
-      })
-      setFormattedDates(newFormattedDates)
+        
+        // Initialize projections state
+        newStatementsWithProjections[index] = statement.projections || []
 
-      // Ensure all form values are properly set with numbers
-      statements.forEach((statement, index) => {
+        // Ensure all form values are properly set with numbers
         form.setValue(`statements.${index}.value` as Path<InsurancePensionFormData>, safeNumberValue(statement.value) ?? 0)
         form.setValue(`statements.${index}.total_contributions` as Path<InsurancePensionFormData>, safeNumberValue(statement.total_contributions) ?? 0)
         form.setValue(`statements.${index}.total_benefits` as Path<InsurancePensionFormData>, safeNumberValue(statement.total_benefits) ?? 0)
@@ -114,6 +115,9 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
           form.setValue(`statements.${index}.projections.${projIndex}.monthly_payout` as Path<InsurancePensionFormData>, safeNumberValue(projection.monthly_payout) ?? 0)
         })
       })
+      
+      setFormattedDates(newFormattedDates)
+      setStatementsWithProjections(newStatementsWithProjections)
     }
   }, [form, formatDate])
 
@@ -137,6 +141,12 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       ...prev,
       [newStatementIndex]: formatDate(statementDate)
     }))
+    
+    // Initialize projections for the new statement
+    setStatementsWithProjections(prev => ({
+      ...prev,
+      [newStatementIndex]: []
+    }))
   }
 
   const handleAddProjection = (statementIndex: number) => {
@@ -151,7 +161,17 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       monthly_payout: 0
     }
 
+    // Update form value
     form.setValue(`statements.${statementIndex}.projections` as Path<InsurancePensionFormData>, [...currentProjections, newProjection])
+    
+    // Update React state to trigger re-render
+    setStatementsWithProjections(prev => ({
+      ...prev,
+      [statementIndex]: [...currentProjections, newProjection]
+    }))
+    
+    // Force a re-render by incrementing counter
+    setProjectionCounter(prev => prev + 1)
   }
 
   const handleRemoveProjection = (statementIndex: number, projectionIndex: number) => {
@@ -161,7 +181,17 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     const currentProjections = [...statements[statementIndex].projections]
     currentProjections.splice(projectionIndex, 1)
 
+    // Update form value
     form.setValue(`statements.${statementIndex}.projections` as Path<InsurancePensionFormData>, currentProjections)
+    
+    // Update React state to trigger re-render
+    setStatementsWithProjections(prev => ({
+      ...prev,
+      [statementIndex]: currentProjections
+    }))
+    
+    // Force a re-render by incrementing counter
+    setProjectionCounter(prev => prev + 1)
   }
 
   const toggleStatement = (index: number) => {
@@ -185,6 +215,24 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     }
 
     removeStatement(index)
+    
+    // Update projections state when removing a statement
+    setStatementsWithProjections(prev => {
+      const newState = { ...prev }
+      delete newState[index]
+      
+      // Adjust indices for statements after the deleted one
+      Object.keys(newState).forEach(key => {
+        const keyNum = parseInt(key)
+        if (keyNum > index) {
+          newState[keyNum - 1] = newState[keyNum]
+          delete newState[keyNum]
+        }
+      })
+      
+      return newState
+    })
+    
     setStatementToDelete(null)
   }
 
@@ -327,7 +375,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
         </div>
 
         <div className="space-y-4">
-          {form.getValues(`statements.${index}.projections`)?.length > 0 && (
+          {statementsWithProjections[index]?.length > 0 && (
             <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr_auto] gap-4 px-4">
               <div className="text-sm font-medium text-muted-foreground">Scenario Type</div>
               <div className="text-sm font-medium text-muted-foreground">Return Rate</div>
@@ -337,8 +385,8 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
             </div>
           )}
 
-          {form.getValues(`statements.${index}.projections`)?.map((projection, projectionIndex) => (
-            <div key={projectionIndex} className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr_auto] gap-4 items-end p-4 rounded-lg bg-muted">
+          {statementsWithProjections[index]?.map((projection, projectionIndex) => (
+            <div key={`${projectionIndex}-${projectionCounter}`} className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr_auto] gap-4 items-end p-4 rounded-lg bg-muted">
               <FormField
                 control={form.control}
                 name={`statements.${index}.projections.${projectionIndex}.scenario_type` as FormPath}
@@ -434,7 +482,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
             onClick={() => handleAddProjection(index)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            {form.getValues(`statements.${index}.projections`)?.length === 0
+            {statementsWithProjections[index]?.length === 0
               ? "No projections yet. Click to add your first projection."
               : "Add Projection"}
           </Button>
@@ -442,6 +490,86 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
       </div>
     </div>
   )
+
+  // Render previous statements as collapsible items
+  const renderPreviousStatements = () => {
+    if (statementFields.length <= 1) return null;
+    
+    // Get all statements except the latest one
+    const previousStatements = statementFields.slice(0, -1);
+    
+    // Sort previous statements by date (latest on top)
+    const sortedPreviousStatements = [...previousStatements].sort((a, b) => {
+      const dateA = new Date(form.getValues(`statements.${previousStatements.indexOf(a)}.statement_date`)).getTime();
+      const dateB = new Date(form.getValues(`statements.${previousStatements.indexOf(b)}.statement_date`)).getTime();
+      return dateB - dateA; // Sort in descending order (latest first)
+    });
+    
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Previous Statements</h3>
+        {sortedPreviousStatements.map((field) => {
+          // Get the original index to access the correct data
+          const originalIndex = previousStatements.indexOf(field);
+          
+          return (
+            <Collapsible
+              key={field.id}
+              open={expandedStatements[originalIndex]}
+              onOpenChange={() => toggleStatement(originalIndex)}
+              className="border rounded-md overflow-hidden"
+            >
+              <div className="p-4 flex justify-between items-center bg-muted/30">
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    type="button"
+                    variant="ghost" 
+                    className="p-0 h-auto flex items-center gap-2 hover:bg-transparent"
+                  >
+                    {expandedStatements[originalIndex] ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    <h4 className="font-medium">
+                      Statement from <FormattedDate value={form.getValues(`statements.${originalIndex}.statement_date`)} />
+                    </h4>
+                  </Button>
+                </CollapsibleTrigger>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => confirmDeleteStatement(originalIndex)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <CollapsibleContent className="p-4">
+                {renderStatementForm(originalIndex)}
+              </CollapsibleContent>
+            </Collapsible>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Render the latest statement form (the one with the highest index)
+  const renderLatestStatementForm = () => {
+    if (statementFields.length === 0) return null;
+    
+    const latestIndex = getLatestStatementIndex();
+    
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-medium">Latest Statement</h3>
+        <div className="p-4 border rounded-md">
+          {renderStatementForm(latestIndex)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -458,68 +586,11 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
         </Button>
       )}
 
-      {/* Latest Statement */}
-      {latestStatementIndex >= 0 && (
-        <div className="space-y-6">
-          <h3 className="text-lg font-medium">Latest Statement</h3>
-          <div className="p-4 border rounded-md">
-            {renderStatementForm(latestStatementIndex)}
-          </div>
-        </div>
-      )}
+      {/* Latest Statement Form */}
+      {renderLatestStatementForm()}
 
       {/* Previous Statements */}
-      {statementFields.length > 1 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Previous Statements</h3>
-          {statementFields
-            .map((field, index) => ({ field, index }))
-            .filter(({ index }) => index !== latestStatementIndex)
-            .sort((a, b) => {
-              const dateA = new Date(form.getValues(`statements.${a.index}.statement_date`)).getTime()
-              const dateB = new Date(form.getValues(`statements.${b.index}.statement_date`)).getTime()
-              return dateB - dateA // Sort in descending order
-            })
-            .map(({ field, index }) => (
-              <Collapsible
-                key={field.id}
-                open={expandedStatements[index]}
-                onOpenChange={() => toggleStatement(index)}
-                className="border rounded-md overflow-hidden"
-              >
-                <div className="p-4 flex justify-between items-center bg-muted/30">
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      type="button"
-                      variant="ghost" 
-                      className="p-0 h-auto flex items-center gap-2 hover:bg-transparent"
-                    >
-                      {expandedStatements[index] ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                      <h4 className="font-medium">
-                        Statement from <FormattedDate value={form.getValues(`statements.${index}.statement_date`)} />
-                      </h4>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => confirmDeleteStatement(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <CollapsibleContent className="p-4">
-                  {renderStatementForm(index)}
-                </CollapsibleContent>
-              </Collapsible>
-            ))}
-        </div>
-      )}
+      {renderPreviousStatements()}
 
       {/* Empty State */}
       {statementFields.length === 0 && (

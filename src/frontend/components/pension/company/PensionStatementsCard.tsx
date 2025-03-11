@@ -472,19 +472,29 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     // Get all statements except the latest one
     const previousStatements = statementFields.slice(0, -1);
     
+    // Sort previous statements by date (latest on top)
+    const sortedPreviousStatements = [...previousStatements].sort((a, b) => {
+      const dateA = new Date(form.getValues(`statements.${previousStatements.indexOf(a)}.statement_date`)).getTime();
+      const dateB = new Date(form.getValues(`statements.${previousStatements.indexOf(b)}.statement_date`)).getTime();
+      return dateB - dateA; // Sort in descending order (latest first)
+    });
+    
     return (
       <div className="mt-8 space-y-4">
         <h4 className="font-medium text-sm text-muted-foreground">Previous Statements</h4>
-        {previousStatements.map((statementField, index) => {
+        {sortedPreviousStatements.map((statementField) => {
+          // Get the original index to access the correct data
+          const originalIndex = previousStatements.indexOf(statementField);
+          
           // Get the actual form data for this statement
-          const statement = form.getValues().statements?.[index];
+          const statement = form.getValues().statements?.[originalIndex];
           if (!statement) return null;
           
           return (
             <Collapsible
               key={statementField.id}
-              open={expandedStatements[index]}
-              onOpenChange={() => toggleStatement(index)}
+              open={expandedStatements[originalIndex]}
+              onOpenChange={() => toggleStatement(originalIndex)}
               className="border rounded-md overflow-hidden"
             >
               <div className="p-4 flex justify-between items-center bg-muted/30">
@@ -494,7 +504,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                     variant="ghost" 
                     className="p-0 h-auto flex items-center gap-2 hover:bg-transparent"
                   >
-                    {expandedStatements[index] ? (
+                    {expandedStatements[originalIndex] ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
                       <ChevronRight className="h-4 w-4" />
@@ -508,18 +518,17 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={() => confirmDeleteStatement(index)}
+                  onClick={() => confirmDeleteStatement(originalIndex)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-              
-              <CollapsibleContent>
+              <CollapsibleContent className="p-4">
                 <div className="space-y-4 p-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name={`statements.${index}.statement_date`}
+                      name={`statements.${originalIndex}.statement_date`}
                       render={({ field }) => (
                         <DateInput
                           field={field}
@@ -530,7 +539,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
 
                     <FormField
                       control={form.control}
-                      name={`statements.${index}.value`}
+                      name={`statements.${originalIndex}.value`}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Value</FormLabel>
@@ -548,7 +557,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
 
                     <FormField
                       control={form.control}
-                      name={`statements.${index}.note`}
+                      name={`statements.${originalIndex}.note`}
                       render={({ field }) => (
                         <FormItem className="col-span-2">
                           <FormLabel>Note</FormLabel>
@@ -568,8 +577,8 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                     
                     <div className="relative">
                       {(() => {
-                        const projections = statementsWithProjections[index] || 
-                          form.getValues()?.statements?.[index]?.retirement_projections || [];
+                        const projections = statementsWithProjections[originalIndex] || 
+                          form.getValues()?.statements?.[originalIndex]?.retirement_projections || [];
                         
                         if (projections.length > 0) {
                           return (
@@ -586,11 +595,11 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                       })()}
                       
                       <div className="space-y-2">
-                        {statementsWithProjections[index]?.map((projection, projIndex) => (
-                          <div key={`${index}-${projIndex}-${projectionCounter}`} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end p-2 pt-1 rounded-lg bg-muted">
+                        {statementsWithProjections[originalIndex]?.map((projection, projIndex) => (
+                          <div key={`${originalIndex}-${projIndex}-${projectionCounter}`} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end p-2 pt-1 rounded-lg bg-muted">
                             <FormField
                               control={form.control}
-                              name={`statements.${index}.retirement_projections.${projIndex}.retirement_age`}
+                              name={`statements.${originalIndex}.retirement_projections.${projIndex}.retirement_age`}
                               render={({ field }) => (
                                 <FormItem className="space-y-0">
                                   <FormControl>
@@ -610,7 +619,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
 
                             <FormField
                               control={form.control}
-                              name={`statements.${index}.retirement_projections.${projIndex}.monthly_payout`}
+                              name={`statements.${originalIndex}.retirement_projections.${projIndex}.monthly_payout`}
                               render={({ field }) => (
                                 <FormItem className="space-y-0">
                                   <FormControl>
@@ -627,7 +636,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
 
                             <FormField
                               control={form.control}
-                              name={`statements.${index}.retirement_projections.${projIndex}.total_capital`}
+                              name={`statements.${originalIndex}.retirement_projections.${projIndex}.total_capital`}
                               render={({ field }) => (
                                 <FormItem className="space-y-0">
                                   <FormControl>
@@ -646,7 +655,7 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                               type="button"
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleRemoveProjection(index, projIndex)}
+                              onClick={() => handleRemoveProjection(originalIndex, projIndex)}
                               className="h-9 w-9 self-end"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -658,12 +667,12 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
                           type="button"
                           variant="outline"
                           className="w-full border-dashed text-center py-6 text-sm text-muted-foreground border-2 rounded-lg"
-                          onClick={() => handleAddProjectionToStatement(index)}
+                          onClick={() => handleAddProjectionToStatement(originalIndex)}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           {(() => {
-                            const projections = statementsWithProjections[index] || 
-                              form.getValues()?.statements?.[index]?.retirement_projections || [];
+                            const projections = statementsWithProjections[originalIndex] || 
+                              form.getValues()?.statements?.[originalIndex]?.retirement_projections || [];
                             
                             return projections.length === 0 ? (
                               <span>No retirement projections yet. Click to add your first projection.</span>

@@ -62,10 +62,10 @@ This plan focuses on implementing the standardized patterns for Company Pension 
   - [x] Verify proper handling of initial empty states during hydration
   - [x] Update DateEndPicker to use memberId approach like Insurance Pension
 
-- [ ] **Implement Form Reset Hook**
-  - [ ] Add `useFormReset` hook
-  - [ ] Use Company-specific transformer
-  - [ ] Remove manual initialization logic
+- [x] **Implement Form Reset Hook**
+  - [x] Add `useFormReset` hook
+  - [x] Use Company-specific transformer
+  - [x] Remove manual initialization logic
 
 ### Edit Form
 
@@ -88,9 +88,9 @@ This plan focuses on implementing the standardized patterns for Company Pension 
   - [x] Verify proper handling of initial empty states during hydration
   - [x] Update DateEndPicker to use memberId approach like Insurance Pension
 
-- [ ] **Implement Form Reset Hook**
-  - [ ] Replace manual reset logic with `useFormReset` hook
-  - [ ] Use Company-specific transformer
+- [x] **Implement Form Reset Hook**
+  - [x] Replace manual reset logic with `useFormReset` hook
+  - [x] Use Company-specific transformer
 
 ### Error Handling and Loading States
 

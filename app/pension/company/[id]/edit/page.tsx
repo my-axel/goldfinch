@@ -9,7 +9,7 @@ import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/t
 import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { use } from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
 import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
@@ -28,6 +28,9 @@ import { ContributionHistoryExplanation } from "@/frontend/components/pension/co
 import { PensionStatusActions } from "@/frontend/components/pension/shared/PensionStatusActions"
 import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/dialogs/PauseConfirmationDialog"
 import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
+import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
+import { companyPensionToForm } from "@/frontend/lib/transformers/companyPensionTransformers"
+import { useSettings } from "@/frontend/context/SettingsContext"
 
 interface EditCompanyPensionPageProps {
   params: Promise<{
@@ -43,75 +46,33 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
   const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
+  const { settings } = useSettings()
+
+  const defaultValues: CompanyPensionFormData = {
+    type: PensionType.COMPANY,
+    name: "",
+    member_id: "",
+    employer: "",
+    start_date: new Date(),
+    contribution_amount: undefined,
+    contribution_frequency: ContributionFrequency.MONTHLY,
+    notes: "",
+    contribution_plan_steps: [],
+    statements: []
+  }
 
   const form = useForm<CompanyPensionFormData>({
-    defaultValues: {
-      type: PensionType.COMPANY,
-      name: "",
-      member_id: "",
-      employer: "",
-      start_date: new Date(),
-      contribution_amount: undefined,
-      contribution_frequency: ContributionFrequency.MONTHLY,
-      notes: "",
-      contribution_plan_steps: [],
-      statements: []
-    }
+    defaultValues
   })
 
-  // Reset form when pension data is available
-  useEffect(() => {
-    if (!pension || isLoading) {
-      return
-    }
-
-    const statementsCopy = pension.statements ? 
-      pension.statements.map(statement => ({
-        id: statement.id,
-        statement_date: new Date(statement.statement_date),
-        value: statement.value,
-        note: statement.note || "",
-        retirement_projections: statement.retirement_projections ? 
-          statement.retirement_projections.map(projection => ({
-            id: projection.id,
-            retirement_age: projection.retirement_age,
-            monthly_payout: projection.monthly_payout,
-            total_capital: projection.total_capital
-          })) : []
-      })) : []
-
-    const contributionStepsCopy = pension.contribution_plan_steps.map(step => ({
-      amount: step.amount,
-      frequency: step.frequency,
-      start_date: new Date(step.start_date),
-      end_date: step.end_date ? new Date(step.end_date) : undefined,
-      note: step.note
-    }))
-
-    // Ensure contribution_frequency is a valid enum value or default to MONTHLY
-    let contributionFrequency = ContributionFrequency.MONTHLY;
-    
-    if (pension.contribution_frequency && 
-        Object.values(ContributionFrequency).includes(pension.contribution_frequency as ContributionFrequency)) {
-      contributionFrequency = pension.contribution_frequency as ContributionFrequency;
-    }
-    
-    // Reset the form with all fields including contribution_frequency
-    form.reset({
-      type: PensionType.COMPANY,
-      name: pension.name,
-      member_id: pension.member_id.toString(),
-      employer: pension.employer,
-      start_date: new Date(pension.start_date),
-      contribution_amount: pension.contribution_amount,
-      contribution_frequency: contributionFrequency,
-      notes: pension.notes || "",
-      contribution_plan_steps: contributionStepsCopy,
-      statements: statementsCopy
-    }, {
-      keepDefaultValues: false
-    });
-  }, [pension, isLoading, form])
+  // Replace manual reset logic with useFormReset hook
+  useFormReset({
+    data: pension,
+    form,
+    apiToForm: (data) => companyPensionToForm(data),
+    defaultValues,
+    dependencies: [settings.number_locale]
+  })
 
   const handleSubmit = async (data: CompanyPensionFormData) => {
     try {
