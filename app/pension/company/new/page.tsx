@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
-import { PensionType, CompanyPension } from "@/frontend/types/pension"
+import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { getPensionListRoute } from "@/frontend/lib/routes"
@@ -13,14 +13,13 @@ import { BasicInformationCard } from "@/frontend/components/pension/company/Basi
 import { PensionStatementsCard } from "@/frontend/components/pension/company/PensionStatementsCard"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { companyPensionSchema } from "@/frontend/lib/validations/pension"
-import { ContributionFrequency } from "@/frontend/types/pension"
 import { toISODateString } from "@/frontend/lib/dateUtils"
 import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
 import { FormLayout, FormSection } from "@/frontend/components/shared"
 import { BasicInformationExplanation } from "@/frontend/components/pension/company/explanations/BasicInformationExplanation"
 import { ContributionPlanExplanation } from "@/frontend/components/pension/company/explanations/ContributionPlanExplanation"
 import { StatementsExplanation } from "@/frontend/components/pension/company/explanations/StatementsExplanation"
-import { useEffect } from "react"
+import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
 
 const defaultValues: CompanyPensionFormData = {
   type: PensionType.COMPANY,
@@ -51,10 +50,18 @@ export default function NewCompanyPensionPage() {
   })
 
   // Use the form reset hook to handle initial form setup
-  // This ensures consistency with the edit form pattern
-  useEffect(() => {
-    form.reset(defaultValues)
-  }, [memberId, form])
+  useFormReset({
+    data: null, // No initial data for new form
+    form,
+    apiToForm: () => ({
+      ...defaultValues,
+      member_id: memberId
+    }),
+    defaultValues: {
+      ...defaultValues,
+      member_id: memberId
+    }
+  })
 
   const handleSubmit = async (data: CompanyPensionFormData) => {
     try {

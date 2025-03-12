@@ -95,40 +95,64 @@ This plan addresses the inconsistent form reset logic across pension forms by im
 
 ## 🔍 Implementation Details
 
+### Utility Functions
+
+For consistent data handling, use the following utility functions from the appropriate files:
+
+```typescript
+// From src/frontend/lib/utils/formUtils.ts
+import { 
+  ensureArray,    // Ensures a value is an array, returning empty array if null/undefined
+  withDefault,    // Returns a default value if the provided value is null/undefined
+  toDateObject,   // Re-exported from dateUtils.ts - Converts string dates to Date objects
+  safeNumberValue // Re-exported from transforms.ts - Safely handles null/undefined number values
+} from '@/frontend/lib/utils/formUtils';
+```
+
+These utility functions provide consistent handling of:
+- Array values (ensuring they're never null/undefined)
+- Default values (for null/undefined fields)
+- Date conversions (from API string format to Date objects)
+- Number values (handling null/undefined values safely)
+
 ### ETF Pension Transformer
 
 File: `src/frontend/lib/transformers/etfPensionTransformers.ts`
 
 ```tsx
-import { ETFPension, ETFPensionFormData } from '@/frontend/types/pension';
+import { ETFPension } from "@/frontend/types/pension"
+import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { 
-  dateToString, 
-  stringToDate, 
-  apiNumberToFormString,
-  formStringToApiNumber,
-  ensureArray,
-  withDefault
-} from '@/frontend/lib/utils/formTransformers';
+  ensureArray, 
+  withDefault,
+  toDateObject,
+  safeNumberValue 
+} from '@/frontend/lib/utils/formUtils'
 
-export const etfPensionToForm = (
-  pension: ETFPension,
-  locale: string
-): ETFPensionFormData => {
+/**
+ * Transforms an ETFPension API object to ETFPensionFormData for form usage
+ * Handles date conversions, null/undefined values, and nested objects
+ * 
+ * @param pension - The ETF pension data from the API
+ * @returns The transformed form data ready for use in forms
+ */
+export const etfPensionToForm = (pension: ETFPension): ETFPensionFormData => {
   return {
     type: pension.type,
-    name: withDefault(pension.name, ''),
+    name: withDefault(pension.name, ""),
     member_id: pension.member_id.toString(),
-    etf_id: withDefault(pension.etf_id, ''),
-    notes: pension.notes || '',
+    etf_id: withDefault(pension.etf_id, ""),
+    notes: withDefault(pension.notes, ""),
     is_existing_investment: pension.is_existing_investment || false,
-    existing_units: pension.existing_units || 0,
-    reference_date: pension.reference_date ? new Date(pension.reference_date) : new Date(),
+    existing_units: safeNumberValue(pension.existing_units) ?? 0,
+    reference_date: toDateObject(pension.reference_date) || new Date(),
     initialization_method: pension.realize_historical_contributions ? "historical" : "none",
     contribution_plan_steps: ensureArray(pension.contribution_plan_steps).map(step => ({
-      amount: step.amount,
+      amount: safeNumberValue(step.amount) ?? 0,
       frequency: step.frequency,
-      start_date: stringToDate(step.start_date),
-      end_date: step.end_date ? stringToDate(step.end_date) : undefined,
+      start_date: toDateObject(step.start_date) || new Date(),
+      end_date: step.end_date ? (toDateObject(step.end_date) || undefined) : undefined,
+      note: withDefault(step.note, "")
     }))
   };
 };
@@ -139,43 +163,49 @@ export const etfPensionToForm = (
 File: `src/frontend/lib/transformers/companyPensionTransformers.ts`
 
 ```tsx
-import { CompanyPension, CompanyPensionFormData } from '@/frontend/types/pension';
+import { CompanyPension } from "@/frontend/types/pension";
+import { CompanyPensionFormData } from "@/frontend/types/pension-form";
 import { 
-  dateToString, 
-  stringToDate, 
-  apiNumberToFormString,
-  formStringToApiNumber,
-  ensureArray,
-  withDefault
-} from '@/frontend/lib/utils/formTransformers';
+  ensureArray, 
+  withDefault,
+  toDateObject,
+  safeNumberValue 
+} from '@/frontend/lib/utils/formUtils';
 
-export const companyPensionToForm = (
-  pension: CompanyPension,
-  locale: string
-): CompanyPensionFormData => {
+/**
+ * Transforms a CompanyPension API object to CompanyPensionFormData for form usage
+ * Handles date conversions, null/undefined values, and nested objects
+ * 
+ * @param pension - The company pension data from the API
+ * @returns The transformed form data ready for use in forms
+ */
+export const companyPensionToForm = (pension: CompanyPension): CompanyPensionFormData => {
   return {
     type: pension.type,
-    name: withDefault(pension.name, ''),
+    name: withDefault(pension.name, ""),
     member_id: pension.member_id.toString(),
-    employer: withDefault(pension.employer, ''),
-    notes: pension.notes || '',
-    start_date: stringToDate(pension.start_date),
-    end_date: stringToDate(pension.end_date),
-    contribution_frequency: withDefault(pension.contribution_frequency, null),
-    status: withDefault(pension.status, 'active'),
+    employer: withDefault(pension.employer, ""),
+    notes: withDefault(pension.notes, ""),
+    start_date: toDateObject(pension.start_date) || new Date(),
+    contribution_amount: safeNumberValue(pension.contribution_amount),
+    contribution_frequency: pension.contribution_frequency,
     contribution_plan_steps: ensureArray(pension.contribution_plan_steps).map(step => ({
-      ...step,
-      start_date: stringToDate(step.start_date),
-      amount: step.amount
+      amount: safeNumberValue(step.amount) ?? 0,
+      frequency: step.frequency,
+      start_date: toDateObject(step.start_date) || new Date(),
+      end_date: step.end_date ? (toDateObject(step.end_date) || undefined) : undefined,
+      note: withDefault(step.note, "")
     })),
     statements: ensureArray(pension.statements).map(statement => ({
-      ...statement,
-      date: stringToDate(statement.date),
-      value: statement.value,
-      projections: ensureArray(statement.projections).map(projection => ({
-        ...projection,
-        duration_years: projection.duration_years,
-        projected_value: projection.projected_value
+      id: statement.id,
+      statement_date: toDateObject(statement.statement_date) || new Date(),
+      value: safeNumberValue(statement.value) ?? 0,
+      note: withDefault(statement.note, ""),
+      retirement_projections: ensureArray(statement.retirement_projections).map(projection => ({
+        id: projection.id,
+        retirement_age: safeNumberValue(projection.retirement_age) ?? 0,
+        monthly_payout: safeNumberValue(projection.monthly_payout) ?? 0,
+        total_capital: safeNumberValue(projection.total_capital) ?? 0
       }))
     }))
   };
@@ -187,48 +217,61 @@ export const companyPensionToForm = (
 File: `src/frontend/lib/transformers/insurancePensionTransformers.ts`
 
 ```tsx
-import { InsurancePension, InsurancePensionFormData } from '@/frontend/types/pension';
+import { InsurancePension } from "@/frontend/types/pension"
+import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { 
-  dateToString, 
-  stringToDate, 
-  apiNumberToFormString,
-  formStringToApiNumber,
-  ensureArray,
-  withDefault
-} from '@/frontend/lib/utils/formTransformers';
+  ensureArray, 
+  withDefault,
+  toDateObject,
+  safeNumberValue 
+} from '@/frontend/lib/utils/formUtils'
 
-export const insurancePensionToForm = (
-  pension: InsurancePension,
-  locale: string
-): InsurancePensionFormData => {
+/**
+ * Transforms an InsurancePension API object to InsurancePensionFormData for form usage
+ * Handles date conversions, null/undefined values, and nested objects
+ * 
+ * @param pension - The insurance pension data from the API
+ * @returns The transformed form data ready for use in forms
+ */
+export const insurancePensionToForm = (pension: InsurancePension): InsurancePensionFormData => {
   return {
     type: pension.type,
-    name: withDefault(pension.name, ''),
+    name: withDefault(pension.name, ""),
     member_id: pension.member_id.toString(),
-    notes: pension.notes || '',
-    provider: withDefault(pension.provider, ''),
-    contract_number: withDefault(pension.contract_number, ''),
-    start_date: stringToDate(pension.start_date),
-    guaranteed_interest: pension.guaranteed_interest,
-    expected_return: pension.expected_return,
+    notes: withDefault(pension.notes, ""),
+    provider: pension.provider,
+    contract_number: withDefault(pension.contract_number, ""),
+    start_date: toDateObject(pension.start_date) || new Date(),
+    guaranteed_interest: safeNumberValue(pension.guaranteed_interest) ?? 0,
+    expected_return: safeNumberValue(pension.expected_return) ?? 0,
     contribution_plan_steps: ensureArray(pension.contribution_plan_steps).map(step => ({
-      ...step,
-      start_date: stringToDate(step.start_date),
-      end_date: step.end_date ? stringToDate(step.end_date) : undefined,
-      amount: step.amount
+      amount: safeNumberValue(step.amount) ?? 0,
+      frequency: step.frequency,
+      start_date: toDateObject(step.start_date) || new Date(),
+      end_date: step.end_date ? (toDateObject(step.end_date) || undefined) : undefined,
+      note: withDefault(step.note, "")
     })),
     statements: ensureArray(pension.statements).map(statement => ({
-      ...statement,
-      date: stringToDate(statement.date),
-      value: statement.value,
+      id: statement.id,
+      pension_id: statement.pension_id,
+      statement_date: toDateObject(statement.statement_date) || new Date(),
+      value: safeNumberValue(statement.value) ?? 0,
+      total_contributions: safeNumberValue(statement.total_contributions) ?? 0,
+      total_benefits: safeNumberValue(statement.total_benefits) ?? 0,
+      costs_amount: safeNumberValue(statement.costs_amount) ?? 0,
+      costs_percentage: safeNumberValue(statement.costs_percentage) ?? 0,
+      note: withDefault(statement.note, ""),
       projections: ensureArray(statement.projections).map(projection => ({
-        ...projection,
-        duration_years: projection.duration_years,
-        projected_value: projection.projected_value
+        id: projection.id,
+        statement_id: statement.id,
+        scenario_type: projection.scenario_type,
+        return_rate: safeNumberValue(projection.return_rate) ?? 0,
+        value_at_retirement: safeNumberValue(projection.value_at_retirement) ?? 0,
+        monthly_payout: safeNumberValue(projection.monthly_payout) ?? 0
       }))
     }))
-  };
-};
+  }
+}
 ```
 
 ### Form Reset Hook Usage
@@ -236,20 +279,17 @@ export const insurancePensionToForm = (
 ```tsx
 import { useFormReset } from '@/frontend/lib/hooks/useFormReset';
 import { etfPensionToForm } from '@/frontend/lib/transformers/etfPensionTransformers';
-import { useSettings } from '@/frontend/context/SettingsContext';
 
 // Inside component
 const { data: pension, isLoading, error } = usePensionData<ETFPension>(pensionId, PensionType.ETF_PLAN);
-const { settings } = useSettings();
 const form = useForm<ETFPensionFormData>({ defaultValues });
 
 // Replace complex useEffect with this:
 const { resetWithData } = useFormReset({
   data: pension,
   form,
-  apiToForm: (data) => etfPensionToForm(data, settings.number_locale),
-  defaultValues,
-  dependencies: [settings.number_locale]
+  apiToForm: etfPensionToForm,
+  defaultValues
 });
 
 // Remove all the manual reset logic in useEffect
@@ -282,8 +322,7 @@ Replace with:
 const { resetWithData } = useFormReset({
   data: pension,
   form,
-  apiToForm: (data) => pensionTypeToForm(data, settings.number_locale),
-  defaultValues,
-  dependencies: [settings.number_locale]
+  apiToForm: pensionTypeToForm,
+  defaultValues
 });
 ``` 

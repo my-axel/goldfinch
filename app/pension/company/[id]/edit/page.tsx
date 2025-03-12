@@ -30,7 +30,6 @@ import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/di
 import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
 import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
 import { companyPensionToForm } from "@/frontend/lib/transformers/companyPensionTransformers"
-import { useSettings } from "@/frontend/context/SettingsContext"
 
 interface EditCompanyPensionPageProps {
   params: Promise<{
@@ -46,7 +45,6 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
   const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
-  const { settings } = useSettings()
 
   const defaultValues: CompanyPensionFormData = {
     type: PensionType.COMPANY,
@@ -69,9 +67,8 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
   useFormReset({
     data: pension,
     form,
-    apiToForm: (data) => companyPensionToForm(data),
-    defaultValues,
-    dependencies: [settings.number_locale]
+    apiToForm: companyPensionToForm,
+    defaultValues
   })
 
   const handleSubmit = async (data: CompanyPensionFormData) => {

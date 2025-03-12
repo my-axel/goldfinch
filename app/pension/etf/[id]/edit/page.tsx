@@ -32,6 +32,7 @@ import { HistoricalPerformanceExplanation } from "@/frontend/components/pension/
 import { ContributionPlanExplanation } from "@/frontend/components/pension/etf/explanations/ContributionPlanExplanation"
 import { TrendingUp } from "lucide-react"
 import { toISODateString } from "@/frontend/lib/dateUtils"
+import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -86,8 +87,6 @@ const transformFormDataToPension = (data: ETFPensionFormData, currentPension: ET
 export default function EditETFPensionPage({ params }: EditETFPensionPageProps) {
   const router = useRouter()
   const { 
-    selectedPension: pension, 
-    fetchPension, 
     updateEtfPension, 
     pensionStatistics,
     isLoadingStatistics,
@@ -95,9 +94,9 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     updatePensionStatus
   } = usePension()
   const { members, fetchMembers } = useHousehold()
-  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
+  const { data: pension, isLoading, error } = usePensionData<ETFPension>(pensionId, PensionType.ETF_PLAN)
   const statistics = pensionStatistics[pensionId]
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
@@ -143,9 +142,9 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
 
   // Unified loading state
   const loadingState = {
-    isPageLoading: isInitialLoading,
+    isPageLoading: isLoading,
     isStatisticsLoading: isLoadingStatistics[pensionId] || false,
-    isAnyLoading: isInitialLoading || isLoadingStatistics[pensionId] || false
+    isAnyLoading: isLoading || isLoadingStatistics[pensionId] || false
   }
 
   // Unified error handler
@@ -154,30 +153,12 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     toast.error("Error", { 
       description: `Failed to ${action}. Please try again.`
     })
-    setIsInitialLoading(false) // Ensure we exit loading state on error
   }
 
-  // Combined data fetching effect
+  // Fetch members on mount
   useEffect(() => {
-    if (!pensionId) return
-
-    const loadData = async () => {
-      try {
-        setIsInitialLoading(true)
-        // First fetch the pension and members
-        await Promise.all([
-          fetchPension(pensionId, PensionType.ETF_PLAN),
-          fetchMembers()
-        ])
-      } catch (error) {
-        handleError(error, "load pension data")
-      } finally {
-        setIsInitialLoading(false)
-      }
-    }
-
-    loadData()
-  }, [pensionId, fetchPension, fetchMembers]) // Only depend on pensionId to prevent unnecessary refetches
+    fetchMembers()
+  }, [fetchMembers])
 
   // Separate effect for fetching statistics after pension is loaded
   useEffect(() => {
@@ -287,6 +268,11 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
 
         {loadingState.isPageLoading ? (
           <LoadingState message="Loading pension details..." />
+        ) : error ? (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
         ) : !pension ? (
           <Alert variant="destructive">
             <AlertTitle>Error</AlertTitle>

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { UseFormReturn, FieldValues, DefaultValues } from 'react-hook-form';
-import { useSettings } from '@/frontend/context/SettingsContext';
 
 export interface FormResetOptions<ApiType, FormType extends FieldValues> {
   // Data to reset form with
@@ -10,7 +9,7 @@ export interface FormResetOptions<ApiType, FormType extends FieldValues> {
   form: UseFormReturn<FormType>;
   
   // Transform API data to form data
-  apiToForm: (data: ApiType, locale: string) => FormType;
+  apiToForm: (data: ApiType) => FormType;
   
   // Default values when data is null/undefined
   defaultValues?: DefaultValues<FormType>;
@@ -37,9 +36,9 @@ export interface FormResetOptions<ApiType, FormType extends FieldValues> {
  * const { resetWithData } = useFormReset({
  *   data: pension,
  *   form,
- *   apiToForm: (data) => insurancePensionToForm(data, settings.number_locale),
+ *   apiToForm: insurancePensionToForm,
  *   defaultValues: defaultInsurancePensionValues,
- *   dependencies: [settings.number_locale]
+ *   dependencies: []
  * });
  * ```
  */
@@ -51,12 +50,10 @@ export function useFormReset<ApiType, FormType extends FieldValues>({
   dependencies = [],
   onReset
 }: FormResetOptions<ApiType, FormType>) {
-  const { settings } = useSettings();
-  
   useEffect(() => {
     if (data) {
-      // Transform API data to form data using the user's locale settings
-      const formData = apiToForm(data, settings.number_locale);
+      // Transform API data to form data
+      const formData = apiToForm(data);
       
       // Reset form with transformed data
       form.reset(formData);
@@ -69,12 +66,12 @@ export function useFormReset<ApiType, FormType extends FieldValues>({
       // Reset with default values if data is null/undefined
       form.reset(defaultValues);
     }
-  }, [data, form, settings.number_locale, ...dependencies]);
+  }, [data, form, defaultValues, apiToForm, onReset, ...dependencies]);
   
   return {
     // Utility function to manually reset the form with new data
     resetWithData: (newData: ApiType) => {
-      const formData = apiToForm(newData, settings.number_locale);
+      const formData = apiToForm(newData);
       form.reset(formData);
       if (onReset) {
         onReset(formData);
