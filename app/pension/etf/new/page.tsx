@@ -28,20 +28,25 @@ export default function NewETFPensionPage() {
   const searchParams = useSearchParams()
   const { createEtfPension } = usePension()
   const [initializationMethod, setInitializationMethod] = useState<"new" | "existing" | "historical" | null>(null)
+  
+  // Define default values
+  const defaultValues: ETFPensionFormData = {
+    type: PensionType.ETF_PLAN,
+    name: "",
+    member_id: searchParams.get('member_id') || "",
+    etf_id: "",
+    contribution_plan_steps: [],
+    is_existing_investment: false,
+    existing_units: 0,
+    reference_date: new Date(),
+    initialization_method: "none",
+    notes: "",
+    realize_historical_contributions: false
+  }
 
   const form = useForm<ETFPensionFormData>({
     resolver: zodResolver(etfPensionSchema),
-    defaultValues: {
-      type: PensionType.ETF_PLAN,
-      name: "",
-      member_id: searchParams.get('member_id') || "",
-      etf_id: "",
-      contribution_plan_steps: [],
-      is_existing_investment: false,
-      existing_units: 0,
-      reference_date: new Date(),
-      initialization_method: "none"
-    }
+    defaultValues
   })
 
   const handleInitializationMethodChange = (value: "new" | "existing" | "historical") => {

@@ -89,7 +89,7 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
               <FormLabel>Guaranteed Interest Rate (%) (Optional)</FormLabel>
               <FormControl>
                 <PercentInput
-                  value={field.value}
+                  value={field.value ?? null}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   placeholder="e.g., 1.5"
@@ -110,7 +110,7 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
               <FormLabel>Expected Return Rate (%) (Optional)</FormLabel>
               <FormControl>
                 <NumberInput
-                  value={field.value}
+                  value={field.value ?? null}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   placeholder="e.g., 3.5"

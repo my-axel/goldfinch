@@ -19,7 +19,6 @@ import { FormLayout, FormSection } from "@/frontend/components/shared"
 import { BasicInformationExplanation } from "@/frontend/components/pension/company/explanations/BasicInformationExplanation"
 import { ContributionPlanExplanation } from "@/frontend/components/pension/company/explanations/ContributionPlanExplanation"
 import { StatementsExplanation } from "@/frontend/components/pension/company/explanations/StatementsExplanation"
-import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
 
 const defaultValues: CompanyPensionFormData = {
   type: PensionType.COMPANY,
@@ -43,20 +42,6 @@ export default function NewCompanyPensionPage() {
 
   const form = useForm<CompanyPensionFormData>({
     resolver: zodResolver(companyPensionSchema),
-    defaultValues: {
-      ...defaultValues,
-      member_id: memberId
-    }
-  })
-
-  // Use the form reset hook to handle initial form setup
-  useFormReset({
-    data: null, // No initial data for new form
-    form,
-    apiToForm: () => ({
-      ...defaultValues,
-      member_id: memberId
-    }),
     defaultValues: {
       ...defaultValues,
       member_id: memberId

@@ -10,7 +10,7 @@ import { usePension } from "@/frontend/context/pension"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { toast } from "sonner"
 import { use } from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
 import {
@@ -33,6 +33,8 @@ import { ContributionPlanExplanation } from "@/frontend/components/pension/etf/e
 import { TrendingUp } from "lucide-react"
 import { toISODateString } from "@/frontend/lib/dateUtils"
 import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
+import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
+import { etfPensionToForm } from "@/frontend/lib/transformers/etfPensionTransformers"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -40,27 +42,7 @@ interface EditETFPensionPageProps {
   }>
 }
 
-// Form transformation utilities
-const transformPensionToFormData = (pension: ETFPension): ETFPensionFormData => ({
-  type: PensionType.ETF_PLAN,
-  name: pension.name,
-  member_id: pension.member_id.toString(),
-  notes: pension.notes || "",
-  etf_id: pension.etf_id,
-  is_existing_investment: pension.is_existing_investment,
-  existing_units: pension.existing_units || 0,
-  reference_date: pension.reference_date || new Date(),
-  realize_historical_contributions: pension.realize_historical_contributions || false,
-  initialization_method: pension.realize_historical_contributions ? "historical" : "none",
-  contribution_plan_steps: pension.contribution_plan_steps.map(step => ({
-    amount: step.amount,
-    frequency: step.frequency,
-    start_date: new Date(step.start_date),
-    end_date: step.end_date ? new Date(step.end_date) : undefined,
-    note: step.note
-  }))
-})
-
+// Form transformation for submission - keep this as it's for form to API transformation
 const transformFormDataToPension = (data: ETFPensionFormData, currentPension: ETFPension): Omit<ETFPension, "id" | "current_value"> => ({
   type: PensionType.ETF_PLAN,
   name: data.name,
@@ -105,20 +87,32 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
   const member = pension ? members.find(m => m.id === pension.member_id) : null
   const retirementDate = member ? new Date(member.retirement_date_planned) : undefined
 
+  // Extract defaultValues to a stable reference using useMemo
+  const stableDefaultValues = useMemo(() => ({
+    type: PensionType.ETF_PLAN,
+    name: "",
+    member_id: "",
+    notes: "",
+    etf_id: "",
+    is_existing_investment: false,
+    existing_units: 0,
+    reference_date: new Date(),
+    realize_historical_contributions: false,
+    initialization_method: "none",
+    contribution_plan_steps: []
+  }) as ETFPensionFormData, []); // Empty dependency array for stable reference
+
+  // Use this stable reference in both the form and hook
   const form = useForm<ETFPensionFormData>({
-    defaultValues: {
-      type: PensionType.ETF_PLAN,
-      name: "",
-      member_id: "",
-      notes: "",
-      etf_id: "",
-      is_existing_investment: false,
-      existing_units: 0,
-      reference_date: new Date(),
-      realize_historical_contributions: false,
-      initialization_method: "none",
-      contribution_plan_steps: []
-    }
+    defaultValues: stableDefaultValues
+  });
+
+  // Use the form reset hook instead of manual reset
+  useFormReset<ETFPension, ETFPensionFormData>({
+    data: pension,
+    form,
+    apiToForm: etfPensionToForm,
+    defaultValues: stableDefaultValues
   })
 
   // Use useWatch to get stable value for contribution_plan_steps
@@ -175,13 +169,6 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     
     loadStatistics();
   }, [pension, pensionId, fetchPensionStatistics]);
-
-  // Update form when pension data changes
-  useEffect(() => {
-    if (pension && pension.type === PensionType.ETF_PLAN) {
-      form.reset(transformPensionToFormData(pension))
-    }
-  }, [pension, form])
 
   const handleSubmit = async (data: ETFPensionFormData) => {
     try {

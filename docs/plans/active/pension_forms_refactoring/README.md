@@ -50,26 +50,26 @@ This set of documents outlines a comprehensive plan for standardizing the pensio
 
 The standardization has been divided into four focused implementation plans:
 
-1. [**Layout Standardization**](01_layout_standardization.md)
+1. [**Layout Standardization**](01_layout_standardization.md) [x]
    - Implement flexible two-column grid layout
    - Create reusable layout components
    - Ensure consistent spacing and responsive behavior
 
-2. [**Formatting Standardization**](02_formatting_standardization.md)
+2. [**Formatting Standardization**](02_formatting_standardization.md) [x]
    - Standardize number and currency formatting
    - Implement consistent date handling
    - Ensure proper hydration mismatch prevention
 
-3. [**Form Reset Implementation**](03_form_reset_implementation.md)
+3. [**Form Reset Implementation**](03_form_reset_implementation.md) [x]
    - Implement the `useFormReset` hook
    - Create type-safe transformers for each pension type
    - Eliminate manual reset logic in useEffect hooks
 
-4. **Per-Pension Type Implementation**
+4. **Per-Pension Type Implementation** [~]
    - [**Overview**](04_pension_type_implementation.md) - Implementation approach and order
-   - [**Insurance Pension**](04a_insurance_pension_implementation.md) - Reference implementation
-   - [**ETF Pension**](04b_etf_pension_implementation.md) - Highest priority
-   - [**Company Pension**](04c_company_pension_implementation.md) - Medium priority
+   - [**Insurance Pension**](04a_insurance_pension_implementation.md) - Reference implementation [x]
+   - [**ETF Pension**](04b_etf_pension_implementation.md) - Highest priority [~]
+   - [**Company Pension**](04c_company_pension_implementation.md) - Medium priority [x]
 
 ## 📋 Implementation Order
 
@@ -97,9 +97,9 @@ The plans should be implemented in the order listed above, as each plan builds o
 
 The Insurance Pension forms are closest to the target implementation and should serve as the reference for the other pension types. The implementation should proceed in this order:
 
-1. Verify and finalize Insurance Pension forms as reference implementation
-2. Apply standardization to ETF Pension forms (highest priority)
-3. Apply standardization to Company Pension forms (medium priority)
+1. Verify and finalize Insurance Pension forms as reference implementation [x]
+2. Apply standardization to ETF Pension forms (highest priority) [~]
+3. Apply standardization to Company Pension forms (medium priority) [x]
 
 ## 📚 Reference Documents
 

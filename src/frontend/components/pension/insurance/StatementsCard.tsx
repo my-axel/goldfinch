@@ -342,8 +342,8 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
               <FormLabel>Costs Percentage (%)</FormLabel>
               <FormControl>
                 <PercentInput
-                  value={field.value / 100} // Convert from percentage to decimal
-                  onChange={(value) => field.onChange(value !== null ? value * 100 : 0)} // Convert back to percentage
+                  value={field.value !== undefined ? field.value / 100 : null} // Convert from percentage to decimal
+                  onChange={(value) => field.onChange(value !== null ? value * 100 : null)} // Convert back to percentage
                   onBlur={field.onBlur}
                   min={0}
                   max={1} // 100%
@@ -418,8 +418,8 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                   <FormItem className="space-y-0">
                     <FormControl>
                       <PercentInput
-                        value={field.value / 100} // Convert from percentage to decimal
-                        onChange={(value) => field.onChange(value !== null ? value * 100 : 0)} // Convert back to percentage
+                        value={field.value !== undefined ? field.value / 100 : null} // Convert from percentage to decimal
+                        onChange={(value) => field.onChange(value !== null ? value * 100 : null)} // Convert back to percentage
                         onBlur={field.onBlur}
                         min={0}
                       />

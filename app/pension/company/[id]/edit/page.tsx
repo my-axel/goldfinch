@@ -9,7 +9,7 @@ import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/t
 import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { use } from "react"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
 import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
@@ -59,16 +59,19 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
     statements: []
   }
 
+  // Extract defaultValues to a stable reference using useMemo
+  const stableDefaultValues = useMemo(() => defaultValues, [])
+
   const form = useForm<CompanyPensionFormData>({
-    defaultValues
+    defaultValues: stableDefaultValues
   })
 
-  // Replace manual reset logic with useFormReset hook
+  // Use the form reset hook with stable defaultValues
   useFormReset({
     data: pension,
     form,
     apiToForm: companyPensionToForm,
-    defaultValues
+    defaultValues: stableDefaultValues
   })
 
   const handleSubmit = async (data: CompanyPensionFormData) => {

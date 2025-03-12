@@ -52,12 +52,12 @@ This plan addresses the inconsistent form reset logic across pension forms by im
 
 ### 1. Create Type-Safe Transformers
 
-- [ ] **ETF Pension Transformers**
-  - [ ] Create `src/frontend/lib/transformers/etfPensionTransformers.ts`
-  - [ ] Implement `etfPensionToForm` transformer
-  - [ ] Handle nested contribution steps
-  - [ ] Handle date transformations
-  - [ ] Add proper type definitions
+- [x] **ETF Pension Transformers**
+  - [x] Create `src/frontend/lib/transformers/etfPensionTransformers.ts`
+  - [x] Implement `etfPensionToForm` transformer
+  - [x] Handle nested contribution steps
+  - [x] Handle date transformations
+  - [x] Add proper type definitions
 
 - [x] **Company Pension Transformers**
   - [x] Create `src/frontend/lib/transformers/companyPensionTransformers.ts`

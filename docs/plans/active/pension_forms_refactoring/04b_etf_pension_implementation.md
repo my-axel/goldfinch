@@ -88,9 +88,9 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
   - [x] Ensure all formatted values use client-side rendering to prevent hydration mismatches
   - [x] Verify proper handling of initial empty states during hydration
 
-- [ ] **Implement Form Reset Hook**
-  - [ ] Replace manual reset logic with `useFormReset` hook
-  - [ ] Use ETF-specific transformer
+- [x] **Implement Form Reset Hook**
+  - [x] Replace manual reset logic with `useFormReset` hook
+  - [x] Use ETF-specific transformer
 
 ### Error Handling and Data Loading
 
@@ -104,9 +104,10 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
   - [x] Implement skeleton loaders for form sections during data loading
   - [x] Ensure consistent loading indicators for async operations
 
-- [ ] **Refactor Data Loading Pattern**
-  - [ ] Replace direct context usage with usePensionData hook
-  - [ ] Implement useFormReset for form initialization
+- [~] **Refactor Data Loading Pattern**
+  - [x] Replace direct context usage with usePensionData hook for Edit form
+  - [x] Implement useFormReset for form initialization in Edit form
+  - [ ] Implement useFormReset for form initialization in Add form
   - [ ] Remove manual loading state management
   - [ ] Simplify useEffect dependencies
 

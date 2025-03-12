@@ -52,17 +52,17 @@ This plan provides an overview of the implementation approach for each pension t
 
 ## 📊 Implementation Order
 
-1. **Insurance Pension Forms** (Reference Implementation)
+1. **Insurance Pension Forms** (Reference Implementation) [x]
    - Verify and finalize as reference implementation
    - Document patterns for other forms to follow
    - [Implementation Plan](04a_insurance_pension_implementation.md)
 
-2. **ETF Pension Forms** (Highest Priority)
+2. **ETF Pension Forms** (Highest Priority) [~]
    - Apply standardization to Add Form
    - Apply standardization to Edit Form
    - [Implementation Plan](04b_etf_pension_implementation.md)
 
-3. **Company Pension Forms** (Medium Priority)
+3. **Company Pension Forms** (Medium Priority) [x]
    - Apply standardization to Add Form
    - Apply standardization to Edit Form
    - [Implementation Plan](04c_company_pension_implementation.md)
