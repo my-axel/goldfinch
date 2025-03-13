@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { etfPensionSchema } from "@/frontend/lib/validations/pension"
 import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
 import { FormLayout, FormSection } from "@/frontend/components/shared"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { RadioGroup, RadioGroupItem } from "@/frontend/components/ui/radio-group"
 import { Label } from "@/frontend/components/ui/label"
 import { PlusCircle, History, BarChart3 } from "lucide-react"
@@ -29,8 +29,8 @@ export default function NewETFPensionPage() {
   const { createEtfPension } = usePension()
   const [initializationMethod, setInitializationMethod] = useState<"new" | "existing" | "historical" | null>(null)
   
-  // Define default values
-  const defaultValues: ETFPensionFormData = {
+  // Define default values as a stable reference using useMemo
+  const defaultValues = useMemo<ETFPensionFormData>(() => ({
     type: PensionType.ETF_PLAN,
     name: "",
     member_id: searchParams.get('member_id') || "",
@@ -42,7 +42,7 @@ export default function NewETFPensionPage() {
     initialization_method: "none",
     notes: "",
     realize_historical_contributions: false
-  }
+  }), [searchParams]);
 
   const form = useForm<ETFPensionFormData>({
     resolver: zodResolver(etfPensionSchema),
