@@ -269,4 +269,17 @@ def list_insurance_benefits(
     pension = pension_insurance.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Insurance Pension not found")
-    return pension.benefits 
+    return pension.benefits
+
+@router.get("/list", response_model=List[schemas.pension_insurance.PensionInsuranceListResponse])
+def get_insurance_pension_list(
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_user),
+    member_id: Optional[int] = None,
+):
+    """Get a lightweight list of insurance pensions without detailed data"""
+    filters = {"owner_id": current_user.id}
+    if member_id is not None:
+        filters["member_id"] = member_id
+        
+    return pension_insurance.get_list_by_owner(db=db, owner_id=current_user.id) 

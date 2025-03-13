@@ -58,4 +58,33 @@ def realize_historical_contributions(
             end_date=end_date
         )
         
-    raise HTTPException(status_code=404, detail="Pension not found") 
+    raise HTTPException(status_code=404, detail="Pension not found")
+
+@router.get("/list", response_model=List[Union[
+    schemas.pension_etf.PensionETFListResponse,
+    schemas.pension_insurance.PensionInsuranceListResponse,
+    schemas.pension_company.PensionCompanyListResponse
+]])
+def get_all_pension_lists(
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_user),
+    member_id: Optional[int] = None,
+):
+    """Get a combined lightweight list of all pension types"""
+    from app.crud.pension_etf import pension_etf
+    from app.crud.pension_insurance import pension_insurance
+    from app.crud.pension_company import pension_company
+    
+    # Get all pension types
+    etf_pensions = pension_etf.get_list_by_owner(db=db, owner_id=current_user.id)
+    insurance_pensions = pension_insurance.get_list_by_owner(db=db, owner_id=current_user.id)
+    company_pensions = pension_company.get_list_by_owner(db=db, owner_id=current_user.id)
+    
+    # Filter by member_id if provided
+    if member_id is not None:
+        etf_pensions = [p for p in etf_pensions if p["member_id"] == member_id]
+        insurance_pensions = [p for p in insurance_pensions if p["member_id"] == member_id]
+        company_pensions = [p for p in company_pensions if p["member_id"] == member_id]
+    
+    # Combine all pension types
+    return etf_pensions + insurance_pensions + company_pensions 

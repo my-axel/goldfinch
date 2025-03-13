@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 from app.models.enums import ContributionFrequency, PensionStatus
 import logging
@@ -205,4 +205,29 @@ class PensionCompanyUpdate(BaseModel):
 class PensionStatusUpdate(BaseModel):
     status: PensionStatus
     paused_at: Optional[date] = None
-    resume_at: Optional[date] = None 
+    resume_at: Optional[date] = None
+
+class PensionCompanyListResponse(BaseModel):
+    """Lightweight schema for company pensions in list view"""
+    id: int
+    name: str
+    type: Literal["company"] = "company"
+    member_id: Optional[int] = None
+    currency: str
+    start_date: date
+    end_date: Optional[date] = None
+    employer: str
+    contribution_amount: Optional[float] = None
+    contribution_frequency: Optional[ContributionFrequency] = None
+    latest_value: Optional[float] = None
+    current_contribution_amount: Optional[float] = None
+    current_contribution_frequency: Optional[str] = None
+    latest_statement_date: Optional[date] = None
+    projected_monthly_payout: Optional[float] = None
+    projected_retirement_age: Optional[int] = None
+    status: PensionStatus
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
+
+    class Config:
+        orm_mode = True 

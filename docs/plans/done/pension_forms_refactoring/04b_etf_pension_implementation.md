@@ -107,9 +107,9 @@ This plan focuses on implementing the standardized patterns for ETF Pension form
 - [~] **Refactor Data Loading Pattern**
   - [x] Replace direct context usage with usePensionData hook for Edit form
   - [x] Implement useFormReset for form initialization in Edit form
-  - [ ] Implement useFormReset for form initialization in Add form
-  - [ ] Remove manual loading state management
-  - [ ] Simplify useEffect dependencies
+  - [x] Implement useFormReset for form initialization in Add form
+  - [x] Remove manual loading state management
+  - [x] Simplify useEffect dependencies
 
 ## 🔍 Implementation Details
 

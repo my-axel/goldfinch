@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 from app.schemas.etf_update import ETFUpdateResponse, ETFErrorResponse
 from app.models.enums import PensionStatus
@@ -110,4 +110,26 @@ class PensionStatistics(BaseModel):
     value_history: List[dict] = Field(
         description="List of historical values with dates",
         example=[{"date": "2024-01-01", "value": "1000.00"}]
-    ) 
+    )
+
+class PensionETFListResponse(BaseModel):
+    """Lightweight schema for ETF pensions in list view"""
+    id: int
+    name: str
+    type: Literal["etf"] = "etf"
+    member_id: Optional[int] = None
+    currency: str
+    start_date: date
+    end_date: Optional[date] = None
+    etf_symbol: str
+    latest_value: Optional[float] = None
+    total_invested: Optional[float] = None
+    total_units: Optional[float] = None
+    current_contribution_amount: Optional[float] = None
+    current_contribution_frequency: Optional[str] = None
+    status: PensionStatus
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
+
+    class Config:
+        orm_mode = True 
