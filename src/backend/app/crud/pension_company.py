@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, Union, List, Optional
 from sqlalchemy.orm import Session, selectinload, noload
-from sqlalchemy import desc, select, func
+from sqlalchemy import desc
 from app.crud.base import CRUDBase
 from app.models.pension_company import (
     PensionCompany,
@@ -446,94 +446,5 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
             db.rollback()
             logger.error(f"CRUD: Failed to delete statement: {str(e)}", exc_info=True)
             raise
-
-    def get_list_by_owner(
-        self,
-        db: Session,
-        owner_id: int
-    ) -> List[Dict]:
-        """Get lightweight company pension list data by owner"""
-        from sqlalchemy import select, func, desc
-        from app.models.pension_company import PensionCompanyContributionPlanStep
-        from app.models.pension_company import PensionCompanyStatement
-        from app.models.pension_company import PensionCompanyRetirementProjection
-        from datetime import date
-        
-        today = date.today()
-        
-        # Get basic pension data
-        query = select(
-            PensionCompany.id,
-            PensionCompany.name,
-            PensionCompany.member_id,
-            PensionCompany.currency,
-            PensionCompany.start_date,
-            PensionCompany.end_date,
-            PensionCompany.employer,
-            PensionCompany.contribution_amount,
-            PensionCompany.contribution_frequency,
-            PensionCompany.current_value,
-            PensionCompany.status,
-            PensionCompany.paused_at,
-            PensionCompany.resume_at
-        ).where(PensionCompany.owner_id == owner_id)
-        
-        result = db.execute(query)
-        pensions = [dict(row) for row in result]
-        
-        # Add calculated fields
-        for pension in pensions:
-            pension["type"] = "company"
-            pension["latest_value"] = pension.pop("current_value", None)
-            
-            # Get current contribution step
-            current_step = db.execute(
-                select(PensionCompanyContributionPlanStep)
-                .where(
-                    PensionCompanyContributionPlanStep.pension_company_id == pension["id"],
-                    PensionCompanyContributionPlanStep.start_date <= today,
-                    (PensionCompanyContributionPlanStep.end_date >= today) | (PensionCompanyContributionPlanStep.end_date.is_(None))
-                )
-                .order_by(PensionCompanyContributionPlanStep.start_date.desc())
-                .limit(1)
-            ).scalar_one_or_none()
-            
-            if current_step:
-                pension["current_contribution_amount"] = float(current_step.amount)
-                pension["current_contribution_frequency"] = current_step.frequency
-            else:
-                pension["current_contribution_amount"] = None
-                pension["current_contribution_frequency"] = None
-            
-            # Get latest statement
-            latest_statement = db.execute(
-                select(PensionCompanyStatement)
-                .where(PensionCompanyStatement.pension_id == pension["id"])
-                .order_by(PensionCompanyStatement.statement_date.desc())
-                .limit(1)
-            ).scalar_one_or_none()
-            
-            if latest_statement:
-                pension["latest_statement_date"] = latest_statement.statement_date
-                
-                # Get projection from latest statement
-                projection = db.execute(
-                    select(PensionCompanyRetirementProjection)
-                    .where(PensionCompanyRetirementProjection.statement_id == latest_statement.id)
-                    .limit(1)
-                ).scalar_one_or_none()
-                
-                if projection:
-                    pension["projected_monthly_payout"] = float(projection.monthly_payout) if projection.monthly_payout else None
-                    pension["projected_retirement_age"] = projection.retirement_age
-                else:
-                    pension["projected_monthly_payout"] = None
-                    pension["projected_retirement_age"] = None
-            else:
-                pension["latest_statement_date"] = None
-                pension["projected_monthly_payout"] = None
-                pension["projected_retirement_age"] = None
-        
-        return pensions
 
 pension_company = CRUDPensionCompany(PensionCompany) 

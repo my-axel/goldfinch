@@ -305,25 +305,4 @@ class PensionInsuranceUpdate(BaseModel):
 class PensionStatusUpdate(BaseModel):
     status: PensionStatus
     paused_at: Optional[date] = None
-    resume_at: Optional[date] = None
-
-class PensionInsuranceListResponse(BaseModel):
-    """Lightweight schema for insurance pensions in list view"""
-    id: int
-    name: str
-    type: Literal["insurance"] = "insurance"
-    member_id: Optional[int] = None
-    currency: str
-    start_date: date
-    end_date: Optional[date] = None
-    provider: str
-    contract_number: Optional[str] = None
-    guaranteed_interest: Optional[float] = None
-    expected_return: Optional[float] = None
-    current_value: Optional[float] = None
-    status: PensionStatus
-    paused_at: Optional[date] = None
-    resume_at: Optional[date] = None
-
-    class Config:
-        orm_mode = True 
+    resume_at: Optional[date] = None 

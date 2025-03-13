@@ -23,7 +23,6 @@ from decimal import Decimal
 import logging
 from fastapi import HTTPException
 from app.models.enums import PensionStatus
-from sqlalchemy import select, desc
 
 logger = logging.getLogger(__name__)
 
@@ -554,60 +553,5 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
             db.rollback()
             logger.error(f"Failed to update pension status: {str(e)}")
             raise
-
-    def get_list_by_owner(
-        self,
-        db: Session,
-        owner_id: int
-    ) -> List[Dict]:
-        """Get lightweight insurance pension list data by owner"""
-        from sqlalchemy import select, desc
-        from app.models.pension_insurance import PensionInsuranceStatement
-        
-        # Get basic pension data
-        query = select(
-            PensionInsurance.id,
-            PensionInsurance.name,
-            PensionInsurance.member_id,
-            PensionInsurance.currency,
-            PensionInsurance.start_date,
-            PensionInsurance.end_date,
-            PensionInsurance.provider,
-            PensionInsurance.contract_number,
-            PensionInsurance.guaranteed_interest,
-            PensionInsurance.expected_return,
-            PensionInsurance.status,
-            PensionInsurance.paused_at,
-            PensionInsurance.resume_at
-        ).where(PensionInsurance.owner_id == owner_id)
-        
-        result = db.execute(query)
-        pensions = [dict(row) for row in result]
-        
-        # Add calculated fields
-        for pension in pensions:
-            pension["type"] = "insurance"
-            
-            # Convert Decimal fields to float for JSON serialization
-            if pension.get("guaranteed_interest") is not None:
-                pension["guaranteed_interest"] = float(pension["guaranteed_interest"])
-            
-            if pension.get("expected_return") is not None:
-                pension["expected_return"] = float(pension["expected_return"])
-            
-            # Get the latest statement value if available
-            latest_statement = db.execute(
-                select(PensionInsuranceStatement)
-                .where(PensionInsuranceStatement.pension_insurance_id == pension["id"])
-                .order_by(desc(PensionInsuranceStatement.statement_date))
-                .limit(1)
-            ).scalar_one_or_none()
-            
-            if latest_statement:
-                pension["current_value"] = float(latest_statement.value)
-            else:
-                pension["current_value"] = None
-        
-        return pensions
 
 pension_insurance = CRUDPensionInsurance(PensionInsurance) 

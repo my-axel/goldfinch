@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import schemas
@@ -327,17 +327,4 @@ def delete_company_pension_statement(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete statement: {str(e)}"
-        )
-
-@router.get("/list", response_model=List[schemas.pension_company.PensionCompanyListResponse])
-def get_company_pension_list(
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_user),
-    member_id: Optional[int] = None,
-):
-    """Get a lightweight list of company pensions without detailed data"""
-    filters = {"owner_id": current_user.id}
-    if member_id is not None:
-        filters["member_id"] = member_id
-        
-    return pension_company.get_list_by_owner(db=db, owner_id=current_user.id) 
+        ) 

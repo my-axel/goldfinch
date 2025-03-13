@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from app.api.v1 import deps
 from app.crud.pension_etf import pension_etf
 from app.crud.etf import etf_crud
@@ -202,17 +202,4 @@ def get_etf_pension_statistics(
     db: Session = Depends(deps.get_db),
 ) -> schemas.pension_etf.PensionStatistics:
     """Get statistics for an ETF pension."""
-    return pension_etf.get_statistics(db=db, pension_id=pension_id)
-
-@router.get("/list", response_model=List[schemas.pension_etf.PensionETFListResponse])
-def get_etf_pension_list(
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_user),
-    member_id: Optional[int] = None,
-):
-    """Get a lightweight list of ETF pensions without detailed data"""
-    filters = {"owner_id": current_user.id}
-    if member_id is not None:
-        filters["member_id"] = member_id
-        
-    return pension_etf.get_list_by_owner(db=db, owner_id=current_user.id) 
+    return pension_etf.get_statistics(db=db, pension_id=pension_id) 

@@ -20,7 +20,6 @@ from app.crud.etf import etf_crud
 from app.models.enums import PensionStatus
 from fastapi import HTTPException
 from sqlalchemy import func
-from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
@@ -411,76 +410,5 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
         except Exception as e:
             logger.error(f"Failed to calculate pension statistics: {str(e)}")
             raise
-
-    def get_list_by_owner(
-        self,
-        db: Session,
-        owner_id: int
-    ) -> List[Dict]:
-        """Get lightweight ETF pension list data by owner"""
-        from sqlalchemy import select, func
-        from app.models.pension_etf import PensionETFContributionHistory
-        from app.models.pension_etf import PensionETFContributionPlanStep
-        from datetime import date
-        
-        today = date.today()
-        
-        # Get basic pension data
-        query = select(
-            PensionETF.id,
-            PensionETF.name,
-            PensionETF.member_id,
-            PensionETF.currency,
-            PensionETF.start_date,
-            PensionETF.end_date,
-            PensionETF.etf_id,
-            PensionETF.current_value,
-            PensionETF.total_units,
-            PensionETF.status,
-            PensionETF.paused_at,
-            PensionETF.resume_at
-        ).where(PensionETF.owner_id == owner_id)
-        
-        result = db.execute(query)
-        pensions = [dict(row) for row in result]
-        
-        # Add calculated fields but avoid fetching full history
-        for pension in pensions:
-            pension["type"] = "etf"
-            pension["latest_value"] = pension.pop("current_value", None)
-            pension["total_units"] = float(pension.get("total_units", 0))
-            
-            # Get ETF symbol
-            etf = db.execute(select(etf_crud.model).where(etf_crud.model.id == pension.pop("etf_id")))
-            etf = etf.scalar_one_or_none()
-            pension["etf_symbol"] = etf.symbol if etf else "Unknown"
-            
-            # Get total invested amount
-            total_invested = db.execute(
-                select(func.sum(PensionETFContributionHistory.amount))
-                .where(PensionETFContributionHistory.pension_etf_id == pension["id"])
-            )
-            pension["total_invested"] = total_invested.scalar_one_or_none() or 0
-            
-            # Get current contribution step
-            current_step = db.execute(
-                select(PensionETFContributionPlanStep)
-                .where(
-                    PensionETFContributionPlanStep.pension_etf_id == pension["id"],
-                    PensionETFContributionPlanStep.start_date <= today,
-                    (PensionETFContributionPlanStep.end_date >= today) | (PensionETFContributionPlanStep.end_date.is_(None))
-                )
-                .order_by(PensionETFContributionPlanStep.start_date.desc())
-                .limit(1)
-            ).scalar_one_or_none()
-            
-            if current_step:
-                pension["current_contribution_amount"] = float(current_step.amount)
-                pension["current_contribution_frequency"] = current_step.frequency
-            else:
-                pension["current_contribution_amount"] = None
-                pension["current_contribution_frequency"] = None
-        
-        return pensions
 
 pension_etf = CRUDPensionETF(PensionETF) 
