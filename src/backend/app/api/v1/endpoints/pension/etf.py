@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.api.v1 import deps
 from app.crud.pension_etf import pension_etf
 from app.crud.etf import etf_crud
@@ -20,20 +20,6 @@ router = APIRouter(
     tags=["etf-pensions"],
     responses={404: {"description": "Not found"}},
 )
-
-@router.get("/list", response_model=List[ETFPensionListSchema])
-def list_etf_pensions_lightweight(
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    member_id: int | None = None,
-) -> List[ETFPensionListSchema]:
-    """
-    List all ETF pensions with minimal data for list view.
-    This endpoint is optimized for performance by avoiding loading full ETF details.
-    """
-    pension_list = pension_etf.get_list(db=db, skip=skip, limit=limit, member_id=member_id)
-    return pension_list
 
 @router.post(
     "",

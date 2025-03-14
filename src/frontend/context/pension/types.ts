@@ -52,6 +52,7 @@ error: string | null
 pensions: Pension[]
 selectedPension: Pension | null
 fetchPensions: (memberId?: number) => Promise<void>
+fetchListPensions: (memberId?: number) => Promise<void>
 fetchPension: (id: number, pensionType?: PensionType) => Promise<void>
 createEtfPension: (pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
 createInsurancePension: (pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<InsurancePension>

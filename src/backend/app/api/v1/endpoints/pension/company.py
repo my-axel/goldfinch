@@ -12,20 +12,6 @@ logger = logging.getLogger("app.api.v1.endpoints.pension.company")
 
 router = APIRouter()
 
-@router.get("/list", response_model=List[CompanyPensionListSchema])
-def list_company_pensions_lightweight(
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    member_id: int | None = None,
-) -> List[CompanyPensionListSchema]:
-    """
-    List all company pensions with minimal data for list view.
-    This endpoint is optimized for performance by avoiding loading statements and contribution data.
-    """
-    pension_list = pension_company.get_list(db=db, skip=skip, limit=limit, member_id=member_id)
-    return pension_list
-
 @router.post(
     "",
     response_model=schemas.pension_company.PensionCompanyResponse,

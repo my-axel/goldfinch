@@ -97,7 +97,8 @@ import {
   deletePensionOperation,
   realizeHistoricalContributionsOperation,
   fetchPensionStatisticsOperation,
-  updatePensionStatusOperation
+  updatePensionStatusOperation,
+  fetchListPensionsOperation
 } from './core'
 
 // Import context and types
@@ -134,6 +135,20 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     try {
       const allPensions = await fetchPensionsOperation(get)(memberId)
       setPensions(allPensions)
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to fetch pensions'
+      })
+      throw err
+    }
+  }, [get])
+
+  // New optimized function for fetching lightweight pension data
+  const fetchListPensions = useCallback(async (memberId?: number) => {
+    try {
+      const allPensions = await fetchListPensionsOperation(get)(memberId)
+      // Cast to Pension[] since our lightweight objects have all the required properties for display
+      setPensions(allPensions as unknown as Pension[])
     } catch (err) {
       toast.error('Error', {
         description: 'Failed to fetch pensions'
@@ -427,44 +442,48 @@ export function PensionProvider({ children }: { children: React.ReactNode }) {
     [post, fetchPension, pensions]
   )
 
+  // Context value
+  const value = {
+    isLoading,
+    error,
+    pensions,
+    selectedPension,
+    pensionStatistics,
+    isLoadingStatistics,
+    fetchPensions,
+    fetchListPensions,
+    fetchPension,
+    deletePension,
+    createEtfPension,
+    updateEtfPension,
+    createInsurancePension,
+    updateInsurancePension,
+    createInsurancePensionStatement,
+    updateInsurancePensionStatement,
+    createInsurancePensionWithStatement,
+    updateInsurancePensionWithStatement,
+    deleteInsurancePensionStatement,
+    createCompanyPension,
+    updateCompanyPension,
+    createCompanyPensionWithStatement,
+    updateCompanyPensionWithStatement,
+    addOneTimeInvestment,
+    createContributionHistory,
+    createCompanyPensionStatement,
+    getCompanyPensionStatements,
+    getLatestCompanyPensionStatement,
+    getCompanyPensionStatement,
+    updateCompanyPensionStatement,
+    deleteCompanyPensionStatement,
+    realizeHistoricalContributions,
+    fetchPensionStatistics,
+    updatePensionStatus,
+    getPensionStatistics
+  }
+
   return (
     <PensionContext.Provider
-      value={{
-        isLoading,
-        error,
-        pensions,
-        selectedPension,
-        fetchPensions,
-        fetchPension,
-        createEtfPension,
-        createInsurancePension,
-        createInsurancePensionStatement,
-        createInsurancePensionWithStatement,
-        createCompanyPension,
-        createCompanyPensionWithStatement,
-        updateEtfPension,
-        updateInsurancePension,
-        updateCompanyPension,
-        updateCompanyPensionWithStatement,
-        deletePension,
-        addOneTimeInvestment,
-        createContributionHistory,
-        realizeHistoricalContributions,
-        getPensionStatistics,
-        updatePensionStatus,
-        pensionStatistics,
-        isLoadingStatistics,
-        fetchPensionStatistics,
-        getCompanyPensionStatements,
-        getLatestCompanyPensionStatement,
-        getCompanyPensionStatement,
-        updateCompanyPensionStatement,
-        createCompanyPensionStatement,
-        deleteCompanyPensionStatement,
-        deleteInsurancePensionStatement,
-        updateInsurancePensionWithStatement,
-        updateInsurancePensionStatement,
-      }}
+      value={value}
     >
       {children}
     </PensionContext.Provider>

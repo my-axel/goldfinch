@@ -8,7 +8,13 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
-import { Pension, PensionType, ETFPension, InsurancePension, CompanyPension } from "@/frontend/types/pension"
+import { 
+  PensionType, 
+  ETFPensionList, 
+  InsurancePensionList, 
+  CompanyPensionList,
+  PensionList as PensionListType
+} from "@/frontend/types/pension"
 import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle } from "lucide-react"
 import { Button } from "@/frontend/components/ui/button"
 import {
@@ -24,7 +30,6 @@ import {
 import { useState } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
-import { getCurrentContributionStep } from '@/frontend/types/pension-helpers'
 import { OneTimeInvestmentModal } from "../etf/components/OneTimeInvestmentModal"
 import { YearlyInvestmentModal } from "../company/YearlyInvestmentModal"
 import { Badge } from "@/frontend/components/ui/badge"
@@ -49,7 +54,7 @@ import {
  * @property onDelete - Callback when a pension is deleted
  */
 interface PensionListProps {
-  pensions: Pension[]
+  pensions: PensionListType[]
   members?: HouseholdMember[]
   onDelete: (id: number) => void
 }
@@ -57,26 +62,22 @@ interface PensionListProps {
 /**
  * Displays ETF pension specific information
  */
-function ETFPensionContent({ pension }: { pension: ETFPension }) {
+function ETFPensionContent({ pension }: { pension: ETFPensionList & { type: PensionType.ETF_PLAN } }) {
   const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
-  const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
   
   return (
     <>
       <div>
         <dt className="text-muted-foreground">ETF</dt>
         <dd className="flex items-center">
-          {pension.etf?.name || pension.etf_id}
-          {!pension.etf && (
-            <span className="ml-2 text-xs text-muted-foreground">(Loading ETF details...)</span>
-          )}
+          {pension.etf_name || pension.etf_id}
         </dd>
       </div>
-      {currentStep && (
+      {pension.current_step_amount && pension.current_step_frequency && (
         <div>
           <dt className="text-muted-foreground">Current Contribution</dt>
           <dd>
-            <FormattedCurrency value={currentStep.amount} /> <FormattedFrequency value={currentStep.frequency} />
+            <FormattedCurrency value={pension.current_step_amount} /> <FormattedFrequency value={pension.current_step_frequency} />
           </dd>
         </div>
       )}
@@ -111,51 +112,37 @@ function ETFPensionContent({ pension }: { pension: ETFPension }) {
   )
 }
 
-// Define an interface for pension with current_value
-interface PensionWithCurrentValue extends InsurancePension {
-  current_value?: number;
-}
-
 /**
  * Displays insurance pension specific information
  */
-function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
-  // Use a default value of 0 for current_value since it might not exist on the type
-  const currentValue = (pension as PensionWithCurrentValue).current_value ?? 0
-  
+function InsurancePensionContent({ pension }: { pension: InsurancePensionList & { type: PensionType.INSURANCE } }) {
   return (
     <>
       <div>
         <dt className="text-muted-foreground">Provider</dt>
         <dd>{pension.provider}</dd>
       </div>
-      <div>
-        <dt className="text-muted-foreground">Contract Number</dt>
-        <dd>{pension.contract_number}</dd>
+      {pension.contract_number && (
+        <div>
+          <dt className="text-muted-foreground">Contract Number</dt>
+          <dd>{pension.contract_number}</dd>
+        </div>
+      )}
+      {pension.guaranteed_interest && (
+        <div>
+          <dt className="text-muted-foreground">Guaranteed Interest</dt>
+          <dd><FormattedPercent value={pension.guaranteed_interest} decimals={1} /></dd>
       </div>
-      <div>
-        <dt className="text-muted-foreground">Guaranteed Interest</dt>
-        <dd>
-          {pension.guaranteed_interest !== undefined ? (
-            <FormattedPercent value={pension.guaranteed_interest} decimals={1} />
-          ) : (
-            "N/A"
-          )}
-        </dd>
-      </div>
-      <div>
-        <dt className="text-muted-foreground">Expected Return</dt>
-        <dd>
-          {pension.expected_return !== undefined ? (
-            <FormattedPercent value={pension.expected_return} decimals={1} />
-          ) : (
-            "N/A"
-          )}
-        </dd>
-      </div>
+      )}
+      {pension.expected_return && (
+        <div>
+          <dt className="text-muted-foreground">Expected Return</dt>
+          <dd><FormattedPercent value={pension.expected_return} decimals={1} /></dd>
+        </div>
+      )}
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd><FormattedCurrency value={currentValue} /></dd>
+        <dd><FormattedCurrency value={pension.current_value} /></dd>
       </div>
     </>
   )
@@ -164,23 +151,20 @@ function InsurancePensionContent({ pension }: { pension: InsurancePension }) {
 /**
  * Displays company pension specific information
  */
-function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
+function CompanyPensionContent({ pension }: { pension: CompanyPensionList & { type: PensionType.COMPANY } }) {
   const { members } = useHousehold()
-  const currentStep = getCurrentContributionStep(pension.contribution_plan_steps)
   const [showYearlyInvestment, setShowYearlyInvestment] = useState(false)
   
   // Find the household member associated with this pension
   const member = members.find(m => m.id === pension.member_id)
   
-  // Get the latest statement and its projections if available
-  const latestStatement = pension.statements && pension.statements.length > 0 
-    ? pension.statements.sort((a, b) => new Date(b.statement_date).getTime() - new Date(a.statement_date).getTime())[0] 
-    : undefined
+  // Get the latest projections if available
+  const latestProjections = pension.latest_projections || []
   
   // Get the projection that matches the member's planned retirement age, or fall back to the first one
-  const latestProjection = latestStatement?.retirement_projections && latestStatement.retirement_projections.length > 0
-    ? (member && latestStatement.retirement_projections.find(p => p.retirement_age === member.retirement_age_planned)) || 
-      latestStatement.retirement_projections[0]
+  const latestProjection = latestProjections.length > 0
+    ? (member && latestProjections.find(p => p.retirement_age === member.retirement_age_planned)) || 
+      latestProjections[0]
     : undefined
 
   return (
@@ -199,11 +183,11 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         </div>
       )}
       
-      {currentStep && (
+      {pension.current_step_amount && pension.current_step_frequency && (
         <div>
           <dt className="text-muted-foreground">Current Own Contribution</dt>
           <dd>
-            <FormattedCurrency value={currentStep.amount} /> <FormattedFrequency value={currentStep.frequency} />
+            <FormattedCurrency value={pension.current_step_amount} /> <FormattedFrequency value={pension.current_step_frequency} />
           </dd>
         </div>
       )}
@@ -217,11 +201,11 @@ function CompanyPensionContent({ pension }: { pension: CompanyPension }) {
         </div>
       )}
       
-      {latestStatement && (
+      {pension.latest_statement_date && (
         <div>
           <dt className="text-muted-foreground">Latest Statement</dt>
           <dd>
-            <FormattedDate value={latestStatement.statement_date} />
+            <FormattedDate value={pension.latest_statement_date} />
           </dd>
         </div>
       )}
@@ -256,8 +240,8 @@ function PensionCard({
   onEdit, 
   onDelete 
 }: { 
-  pension: Pension
-  onEdit: (pension: Pension) => void
+  pension: PensionListType
+  onEdit: (pension: PensionListType) => void
   onDelete: (id: number) => void
 }) {
   const isInactive = pension.status === 'PAUSED';
@@ -356,7 +340,7 @@ function AddPensionCard({ onClick }: { onClick: () => void }) {
 /**
  * Sorts pensions by type and name
  */
-function sortPensions(a: Pension, b: Pension): number {
+function sortPensions(a: PensionListType, b: PensionListType): number {
   // First sort by type
   const typeOrder = {
     [PensionType.ETF_PLAN]: 1,
@@ -381,8 +365,8 @@ function MemberPensionGroup({
   onDelete
 }: {
   member: HouseholdMember
-  pensions: Pension[]
-  onEdit: (pension: Pension) => void
+  pensions: PensionListType[]
+  onEdit: (pension: PensionListType) => void
   onDelete: (id: number) => void
 }) {
   const [typeSelectionOpen, setTypeSelectionOpen] = useState(false)
@@ -420,7 +404,7 @@ export function PensionList({ pensions, members = [], onDelete }: PensionListPro
   const router = useRouter()
   const [pensionToDelete, setPensionToDelete] = useState<number | null>(null)
 
-  const handleEdit = (pension: Pension) => {
+  const handleEdit = (pension: PensionListType) => {
     router.push(getPensionEditRoute(pension.type, pension.id))
   }
 

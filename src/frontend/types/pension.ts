@@ -221,3 +221,75 @@ export interface ContributionHistoryResponse {
   is_manual: boolean
   note?: string
 }
+
+/**
+ * Lightweight ETF pension schema for list views
+ * This is used by the optimized list endpoint
+ */
+export interface ETFPensionList {
+  id: number
+  name: string
+  member_id: number
+  current_value: number
+  total_units: number
+  etf_id: string
+  etf_name: string
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
+  current_step_amount?: number
+  current_step_frequency?: ContributionFrequency
+}
+
+/**
+ * Lightweight Company pension schema for list views
+ * This is used by the optimized list endpoint
+ */
+export interface CompanyPensionList {
+  id: number
+  name: string
+  member_id: number
+  current_value: number
+  employer: string
+  start_date: string
+  contribution_amount?: number
+  contribution_frequency?: ContributionFrequency
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
+  current_step_amount?: number
+  current_step_frequency?: ContributionFrequency
+  latest_statement_date?: string
+  latest_projections?: Array<{
+    retirement_age: number
+    monthly_payout: number
+  }>
+}
+
+/**
+ * Lightweight Insurance pension schema for list views
+ * This is used by the optimized list endpoint
+ */
+export interface InsurancePensionList {
+  id: number
+  name: string
+  member_id: number
+  current_value: number
+  provider: string
+  start_date: string
+  contract_number?: string   // Optional contract number
+  guaranteed_interest?: number
+  expected_return?: number
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
+  latest_statement_date?: string
+}
+
+/**
+ * Union type of all lightweight pension list types
+ */
+export type PensionList = 
+  | (ETFPensionList & { type: PensionType.ETF_PLAN })
+  | (CompanyPensionList & { type: PensionType.COMPANY })
+  | (InsurancePensionList & { type: PensionType.INSURANCE })

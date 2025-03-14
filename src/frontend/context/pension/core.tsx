@@ -35,7 +35,11 @@ import {
   PensionType,
   ETFPension,
   InsurancePension,
-  CompanyPension
+  CompanyPension,
+  ETFPensionList,
+  InsurancePensionList,
+  CompanyPensionList,
+  PensionList
 } from '@/frontend/types/pension'
 import { PensionStatistics, PensionStatusUpdate } from '@/frontend/types/pension-statistics'
 import { ETF } from '@/frontend/types/etf'
@@ -137,6 +141,67 @@ export function fetchPensionsOperation(get: <T>(url: string) => Promise<T>) {
         })
         throw err
       }
+  }
+}
+
+/**
+ * Fetches all pensions using the lightweight list endpoints
+ * This is an optimized version that avoids loading full pension details
+ * 
+ * @param get - The API get function
+ * @returns A function that fetches all pensions in a lightweight format
+ */
+export function fetchListPensionsOperation(get: <T>(url: string) => Promise<T>) {
+  return async (memberId?: number) => {
+    try {
+      const [etfResponse, insuranceResponse, companyResponse] = await Promise.all([
+        get<ETFPensionList[]>(`/api/v1/pension-summaries/etf${memberId ? `?member_id=${memberId}` : ''}`),
+        get<InsurancePensionList[]>(`/api/v1/pension-summaries/insurance${memberId ? `?member_id=${memberId}` : ''}`),
+        get<CompanyPensionList[]>(`/api/v1/pension-summaries/company${memberId ? `?member_id=${memberId}` : ''}`)
+      ])
+
+      // Process ETF pensions
+      const etfPensions = etfResponse.map(p => ({
+        ...p,
+        type: PensionType.ETF_PLAN as const,
+        // Convert dates if needed
+        paused_at: p.paused_at ? new Date(p.paused_at) : undefined,
+        resume_at: p.resume_at ? new Date(p.resume_at) : undefined
+      }))
+
+      // Process Insurance pensions
+      const insurancePensions = insuranceResponse.map(p => ({
+        ...p,
+        type: PensionType.INSURANCE as const,
+        start_date: new Date(p.start_date),
+        paused_at: p.paused_at ? new Date(p.paused_at) : undefined,
+        resume_at: p.resume_at ? new Date(p.resume_at) : undefined
+      }))
+
+      // Process Company pensions
+      const companyPensions = companyResponse.map(p => ({
+        ...p,
+        type: PensionType.COMPANY as const,
+        start_date: new Date(p.start_date),
+        paused_at: p.paused_at ? new Date(p.paused_at) : undefined,
+        resume_at: p.resume_at ? new Date(p.resume_at) : undefined,
+        latest_statement_date: p.latest_statement_date ? new Date(p.latest_statement_date) : undefined
+      }))
+
+      // Combine all pensions
+      const allPensions = [
+        ...etfPensions,
+        ...insurancePensions,
+        ...companyPensions
+      ] as PensionList[]
+
+      return allPensions
+    } catch (err) {
+      toast.error('Error', {
+        description: 'Failed to fetch pensions'
+      })
+      throw err
+    }
   }
 }
 
