@@ -4,75 +4,68 @@
 > <summary><strong>🤖 AI Assistant Guide</strong></summary>
 >
 > ## Purpose
-> This template guides the planning and implementation of new features. It ensures consistent implementation approach and documentation across the project.
+> This template guides the planning and implementation of new features with a clear separation of backend and frontend concerns.
 >
 > ## When to Use
-> - When starting implementation of a new feature
+> - When implementing a new feature
 > - When making significant changes to existing features
-> - When the implementation requires multiple steps or sessions
+> - When implementation requires multiple steps or sessions
 >
-> ## How to Use This Template
+> ## Implementation Process
 >
-> ### 1. Initial Planning
-> - Fill out Overview and Description first
+> ### 1. Planning Phase
+> - Fill out Overview and Description sections
 > - Check PROGRESS.md to align with project status
-> - Review and list all relevant rules and guidelines
+> - Create separate plans for backend and frontend when needed
+> - Reference companion plans (link backend plan in frontend plan)
+> - List all relevant rules and guidelines that must be followed
+> - For backend plans, draft curl commands for testing each endpoint in the Testing section
 >
-> ### 2. Requirements Gathering
-> Ask the following questions to gather comprehensive requirements:
+> ### 2. Requirements Analysis
+> - **Data Model**: Fields, types, relationships, validation rules, constraints
+> - **API Endpoints**: Paths, methods, request/response schemas, authentication
+> - **UI/UX**: Layout, components, interactions, states (loading, error, success)
+> - **Integration**: External dependencies, performance requirements
 >
-> #### Data Model Questions
-> - What information needs to be stored?
-> - What are the relationships to other models?
-> - Are there specific validation rules?
-> - What are the required vs optional fields?
-> - Are there any unique constraints?
-> - What data types are needed for each field?
+> ### 3. Implementation Execution
+> - Break down into clear, achievable steps with checkboxes (`- [ ] Step X`)
+> - Complete backend implementation before starting frontend when possible
+> - Check off steps (`- [x] Step X`) as they are completed
+> - Update the Status field in Overview section as implementation progresses (from 📝 to 🟡 to ⚠️ to ✅)
+> - Test backend endpoints using the curl commands after implementation
 >
-> #### UI/UX Questions
-> - What is the primary user flow?
-> - Which forms are needed?
-> - What validation feedback is required?
-> - Are there specific loading states?
-> - What error scenarios need handling?
-> - Are there any complex interactions?
-> - Which existing components can be reused?
+> ## Critical Guidelines
+> 1. **Strict Plan Adherence**: Modify ONLY components explicitly mentioned in the plan. Get user approval for anything else.
 >
-> #### Integration Questions
-> - What APIs need to be created/modified?
-> - Are there external service dependencies?
-> - What existing patterns can be reused?
-> - Are there performance requirements?
+> 2. **Code Examples Are References**: All code snippets in the plan are starting points only. Thoroughly examine the existing codebase before implementing.
 >
-> #### Best Practice Questions
-> - Which formatting rules apply?
-> - What accessibility requirements exist?
-> - Are there specific security considerations?
-> - Which testing patterns should be followed?
+> 3. **Incremental Implementation**: Implement in small, testable units. Complete and verify one step before moving to the next.
 >
-> ### 3. Implementation Planning
-> - Break down into clear, achievable steps
-> - Reference existing code where similar patterns exist
-> - Note any technical decisions or limitations
+> 4. **Progress Tracking**: Check off completed steps and regularly update the user on progress, challenges, and blockers.
 >
-> ### 4. Maintenance
-> - Update status as implementation progresses
-> - Document any deviations from original plan
-> - Update technical notes with learnings
+> 5. **Dependency Management**: Discuss with user before adding new dependencies. Document them in Technical Notes.
 >
-> ## Best Practices
-> 1. Keep it concise - this is a working document
-> 2. Link to existing documentation rather than duplicating
-> 3. Update status and notes regularly
-> 4. Reference existing code patterns when available
+> 6. **Error Handling**: Implement proper error handling following existing patterns. Don't assume happy paths.
+>
+> 7. **Seek Clarification**: When requirements are ambiguous or multiple approaches exist, ask the user rather than making assumptions.
+>
+> 8. **Documentation**: Keep the plan updated with status changes, deviations, and technical learnings.
+>
+> 9. **Separation of Concerns**: Keep backend and frontend implementations separate and focused.
+>
+> 10. **Scope Changes**: Document changes, assess impact, get user approval before implementing, and update the plan accordingly.
+>
+> 11. **Communication**: Provide status updates at session start/end and after completing significant steps. Clearly describe blockers with possible solutions.
 >
 > </details>
 
 ## Overview
 **Feature**: [Name of the Feature]
+**Type**: [Backend | Frontend | Full-Stack]
 **Duration**: [Estimated time in hours/sessions]
 **Status**: [📝 Not Started | 🟡 Planning | ⚠️ In Progress | ✅ Complete]
 **Priority**: [High/Medium/Low]
+**Related Plan**: [Link to companion backend/frontend plan if applicable]
 
 ## Description
 [2-3 sentences describing what this feature is and why it's needed]
@@ -88,18 +81,26 @@ Reference docs:
 - [Link to pattern documentation]
 
 ## Requirements
-### Data Model
+<!-- For Backend Plans -->
+### Data Model (Backend)
 - Required fields and types
 - Validation rules
 - Relationships
 
-### UI/UX
+### API Endpoints (Backend)
+- Endpoint paths and methods
+- Request/response schemas
+- Authentication requirements
+
+<!-- For Frontend Plans -->
+### UI/UX (Frontend)
 - Page layout
 - Components needed
 - User interactions
 - States (loading, error, success)
 
 ## Implementation Steps
+<!-- Each step should have a checkbox that will be checked when completed -->
 - [ ] Step 1
   - Details
   - Reference existing code (if applicable)
@@ -117,6 +118,16 @@ Reference docs:
 - Reusable components/patterns
 - Known limitations
 
-## Testing Scope
+## Testing
+<!-- For Backend Plans -->
+### API Testing (Backend)
+```bash
+# Example curl commands to test endpoints
+curl -X GET http://localhost:8000/api/resource
+curl -X POST http://localhost:8000/api/resource -H "Content-Type: application/json" -d '{"key": "value"}'
+```
+
+<!-- For All Plans -->
+### Test Cases
 - Critical test cases
 - Edge cases to verify
