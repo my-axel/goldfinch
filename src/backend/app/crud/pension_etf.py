@@ -6,6 +6,7 @@ from app.models.pension_etf import (
     PensionETFContributionPlanStep,
     PensionETFContributionHistory
 )
+from app.models.etf import ETF
 from app.schemas.pension_etf import (
     PensionETFCreate,
     PensionETFUpdate,
@@ -410,5 +411,84 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
         except Exception as e:
             logger.error(f"Failed to calculate pension statistics: {str(e)}")
             raise
+
+    def get_list(
+        self,
+        db: Session,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        member_id: int = None
+    ) -> List[dict]:
+        """
+        Get a lightweight list of ETF pensions with ETF names.
+        This optimized query avoids loading full ETF details and contribution data.
+        """
+        from datetime import date
+        today = date.today()
+        
+        # First, get the basic pension information with ETF names
+        query = db.query(
+            PensionETF.id,
+            PensionETF.name,
+            PensionETF.member_id,
+            PensionETF.current_value,
+            PensionETF.total_units,
+            PensionETF.etf_id,
+            ETF.name.label("etf_name"),
+            PensionETF.status,
+            PensionETF.paused_at,
+            PensionETF.resume_at
+        ).join(ETF, PensionETF.etf_id == ETF.id)
+        
+        if member_id is not None:
+            query = query.filter(PensionETF.member_id == member_id)
+        
+        result = query.offset(skip).limit(limit).all()
+        
+        # Get all pension IDs from the result
+        pension_ids = [row.id for row in result]
+        
+        # If no pensions found, return empty list
+        if not pension_ids:
+            return []
+        
+        # Get current contribution steps for all pensions in one query
+        current_steps_query = db.query(
+            PensionETFContributionPlanStep.pension_etf_id,
+            PensionETFContributionPlanStep.amount,
+            PensionETFContributionPlanStep.frequency
+        ).filter(
+            PensionETFContributionPlanStep.pension_etf_id.in_(pension_ids),
+            PensionETFContributionPlanStep.start_date <= today,
+            (PensionETFContributionPlanStep.end_date >= today) | (PensionETFContributionPlanStep.end_date.is_(None))
+        )
+        
+        # Create a dictionary mapping pension_id to current step
+        current_steps = {}
+        for step in current_steps_query:
+            current_steps[step.pension_etf_id] = {
+                "amount": step.amount,
+                "frequency": step.frequency
+            }
+        
+        # Convert SQLAlchemy Row objects to dictionaries with current step information
+        return [
+            {
+                "id": row.id,
+                "name": row.name,
+                "member_id": row.member_id,
+                "current_value": row.current_value,
+                "total_units": row.total_units,
+                "etf_id": row.etf_id,
+                "etf_name": row.etf_name,
+                "status": row.status,
+                "paused_at": row.paused_at,
+                "resume_at": row.resume_at,
+                "current_step_amount": current_steps.get(row.id, {}).get("amount"),
+                "current_step_frequency": current_steps.get(row.id, {}).get("frequency")
+            }
+            for row in result
+        ]
 
 pension_etf = CRUDPensionETF(PensionETF) 

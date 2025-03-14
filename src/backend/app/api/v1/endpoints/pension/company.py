@@ -1,15 +1,30 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import schemas
 from app.api.v1 import deps
-from app.crud import pension_company
+from app.crud.pension_company import pension_company
+from app.schemas.pension_company import CompanyPensionListSchema
 import logging
 
 # Use the app.api namespace to ensure logs go to the right place
 logger = logging.getLogger("app.api.v1.endpoints.pension.company")
 
 router = APIRouter()
+
+@router.get("/list", response_model=List[CompanyPensionListSchema])
+def list_company_pensions_lightweight(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    member_id: int | None = None,
+) -> List[CompanyPensionListSchema]:
+    """
+    List all company pensions with minimal data for list view.
+    This endpoint is optimized for performance by avoiding loading statements and contribution data.
+    """
+    pension_list = pension_company.get_list(db=db, skip=skip, limit=limit, member_id=member_id)
+    return pension_list
 
 @router.post(
     "",

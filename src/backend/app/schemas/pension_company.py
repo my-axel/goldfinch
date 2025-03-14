@@ -205,4 +205,24 @@ class PensionCompanyUpdate(BaseModel):
 class PensionStatusUpdate(BaseModel):
     status: PensionStatus
     paused_at: Optional[date] = None
-    resume_at: Optional[date] = None 
+    resume_at: Optional[date] = None
+
+class CompanyPensionListSchema(BaseModel):
+    """Lightweight schema for company pensions in list view"""
+    id: int
+    name: str
+    member_id: int
+    current_value: Decimal
+    employer: str
+    start_date: date
+    contribution_amount: Optional[Decimal] = None
+    contribution_frequency: Optional[ContributionFrequency] = None
+    status: PensionStatus
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
+    current_step_amount: Optional[Decimal] = None
+    current_step_frequency: Optional[ContributionFrequency] = None
+    latest_statement_date: Optional[date] = None
+    latest_projections: List[dict] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True) 

@@ -3,9 +3,24 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import schemas
 from app.api.v1 import deps
-from app.crud import pension_insurance
+from app.crud.pension_insurance import pension_insurance
+from app.schemas.pension_insurance import InsurancePensionListSchema
 
 router = APIRouter()
+
+@router.get("/list", response_model=List[InsurancePensionListSchema])
+def list_insurance_pensions_lightweight(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    member_id: int | None = None,
+) -> List[InsurancePensionListSchema]:
+    """
+    List all insurance pensions with minimal data for list view.
+    This endpoint is optimized for performance by avoiding loading statements, benefits, and contribution data.
+    """
+    pension_list = pension_insurance.get_list(db=db, skip=skip, limit=limit, member_id=member_id)
+    return pension_list
 
 @router.post(
     "",

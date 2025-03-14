@@ -554,4 +554,53 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
             logger.error(f"Failed to update pension status: {str(e)}")
             raise
 
+    def get_list(
+        self,
+        db: Session,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        member_id: int = None
+    ) -> List[dict]:
+        """
+        Get a lightweight list of insurance pensions.
+        This optimized query avoids loading contribution data, benefits, and statements.
+        """
+        query = db.query(
+            PensionInsurance.id,
+            PensionInsurance.name,
+            PensionInsurance.member_id,
+            PensionInsurance.current_value,
+            PensionInsurance.provider,
+            PensionInsurance.contract_number,
+            PensionInsurance.start_date,
+            PensionInsurance.guaranteed_interest,
+            PensionInsurance.expected_return,
+            PensionInsurance.status
+        )
+        
+        if member_id is not None:
+            query = query.filter(PensionInsurance.member_id == member_id)
+        
+        result = query.offset(skip).limit(limit).all()
+        
+        # Convert SQLAlchemy Row objects to dictionaries
+        return [
+            {
+                "id": row.id,
+                "name": row.name,
+                "member_id": row.member_id,
+                "current_value": row.current_value,
+                "provider": row.provider,
+                "contract_number": row.contract_number,
+                "start_date": row.start_date,
+                "guaranteed_interest": row.guaranteed_interest,
+                "expected_return": row.expected_return,
+                "status": row.status,
+                "paused_at": None,  # Add as None since it's in the schema but not in the model
+                "resume_at": None   # Add as None since it's in the schema but not in the model
+            }
+            for row in result
+        ]
+
 pension_insurance = CRUDPensionInsurance(PensionInsurance) 

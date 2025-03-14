@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, Union, List, Optional
 from sqlalchemy.orm import Session, selectinload, noload
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from app.crud.base import CRUDBase
 from app.models.pension_company import (
     PensionCompany,
@@ -446,5 +446,141 @@ class CRUDPensionCompany(CRUDBase[PensionCompany, PensionCompanyCreate, PensionC
             db.rollback()
             logger.error(f"CRUD: Failed to delete statement: {str(e)}", exc_info=True)
             raise
+
+    def get_list(
+        self,
+        db: Session,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        member_id: int = None
+    ) -> List[dict]:
+        """
+        Get a lightweight list of company pensions.
+        This optimized query avoids loading full contribution data and statements.
+        """
+        from datetime import date
+        from sqlalchemy import desc, func
+        today = date.today()
+        
+        # First, get the basic pension information
+        query = db.query(
+            PensionCompany.id,
+            PensionCompany.name,
+            PensionCompany.member_id,
+            PensionCompany.current_value,
+            PensionCompany.employer,
+            PensionCompany.start_date,
+            PensionCompany.contribution_amount,
+            PensionCompany.contribution_frequency,
+            PensionCompany.status,
+            PensionCompany.paused_at,
+            PensionCompany.resume_at
+        )
+        
+        if member_id is not None:
+            query = query.filter(PensionCompany.member_id == member_id)
+        
+        result = query.offset(skip).limit(limit).all()
+        
+        # Get all pension IDs from the result
+        pension_ids = [row.id for row in result]
+        
+        # If no pensions found, return empty list
+        if not pension_ids:
+            return []
+        
+        # Get current contribution steps for all pensions in one query
+        current_steps_query = db.query(
+            PensionCompanyContributionPlanStep.pension_company_id,
+            PensionCompanyContributionPlanStep.amount,
+            PensionCompanyContributionPlanStep.frequency
+        ).filter(
+            PensionCompanyContributionPlanStep.pension_company_id.in_(pension_ids),
+            PensionCompanyContributionPlanStep.start_date <= today,
+            (PensionCompanyContributionPlanStep.end_date >= today) | (PensionCompanyContributionPlanStep.end_date.is_(None))
+        )
+        
+        # Create a dictionary mapping pension_id to current step
+        current_steps = {}
+        for step in current_steps_query:
+            current_steps[step.pension_company_id] = {
+                "amount": step.amount,
+                "frequency": step.frequency
+            }
+        
+        # Get latest statements for all pensions in one query
+        latest_statements_subquery = db.query(
+            PensionCompanyStatement.pension_id,
+            func.max(PensionCompanyStatement.statement_date).label("max_date")
+        ).filter(
+            PensionCompanyStatement.pension_id.in_(pension_ids)
+        ).group_by(
+            PensionCompanyStatement.pension_id
+        ).subquery()
+        
+        latest_statements_query = db.query(
+            PensionCompanyStatement.pension_id,
+            PensionCompanyStatement.id.label("statement_id"),
+            PensionCompanyStatement.statement_date
+        ).join(
+            latest_statements_subquery,
+            (PensionCompanyStatement.pension_id == latest_statements_subquery.c.pension_id) &
+            (PensionCompanyStatement.statement_date == latest_statements_subquery.c.max_date)
+        )
+        
+        # Create a dictionary mapping pension_id to latest statement
+        latest_statements = {}
+        for stmt in latest_statements_query:
+            latest_statements[stmt.pension_id] = {
+                "statement_id": stmt.statement_id,
+                "statement_date": stmt.statement_date
+            }
+        
+        # Get latest projections for the latest statements
+        statement_ids = [stmt["statement_id"] for stmt in latest_statements.values() if stmt["statement_id"]]
+        
+        latest_projections = {}
+        if statement_ids:
+            projections_query = db.query(
+                PensionCompanyRetirementProjection.statement_id,
+                PensionCompanyRetirementProjection.retirement_age,
+                PensionCompanyRetirementProjection.monthly_payout
+            ).filter(
+                PensionCompanyRetirementProjection.statement_id.in_(statement_ids)
+            )
+            
+            # Group projections by statement_id
+            for proj in projections_query:
+                if proj.statement_id not in latest_projections:
+                    latest_projections[proj.statement_id] = []
+                latest_projections[proj.statement_id].append({
+                    "retirement_age": proj.retirement_age,
+                    "monthly_payout": proj.monthly_payout
+                })
+        
+        # Convert SQLAlchemy Row objects to dictionaries with additional information
+        return [
+            {
+                "id": row.id,
+                "name": row.name,
+                "member_id": row.member_id,
+                "current_value": row.current_value,
+                "employer": row.employer,
+                "start_date": row.start_date,
+                "contribution_amount": row.contribution_amount,
+                "contribution_frequency": row.contribution_frequency,
+                "status": row.status,
+                "paused_at": row.paused_at,
+                "resume_at": row.resume_at,
+                "current_step_amount": current_steps.get(row.id, {}).get("amount"),
+                "current_step_frequency": current_steps.get(row.id, {}).get("frequency"),
+                "latest_statement_date": latest_statements.get(row.id, {}).get("statement_date"),
+                "latest_projections": latest_projections.get(
+                    latest_statements.get(row.id, {}).get("statement_id"), []
+                )
+            }
+            for row in result
+        ]
 
 pension_company = CRUDPensionCompany(PensionCompany) 

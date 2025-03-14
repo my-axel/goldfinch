@@ -5,6 +5,7 @@ from app.api.v1 import deps
 from app.crud.pension_etf import pension_etf
 from app.crud.etf import etf_crud
 from app import schemas
+from app.schemas.pension_etf import ETFPensionListSchema
 from app.schemas.task import TaskStatusResponse
 from app.tasks.etf_pension import process_new_etf_pension
 from app.models.task import TaskStatus
@@ -19,6 +20,20 @@ router = APIRouter(
     tags=["etf-pensions"],
     responses={404: {"description": "Not found"}},
 )
+
+@router.get("/list", response_model=List[ETFPensionListSchema])
+def list_etf_pensions_lightweight(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    member_id: int | None = None,
+) -> List[ETFPensionListSchema]:
+    """
+    List all ETF pensions with minimal data for list view.
+    This endpoint is optimized for performance by avoiding loading full ETF details.
+    """
+    pension_list = pension_etf.get_list(db=db, skip=skip, limit=limit, member_id=member_id)
+    return pension_list
 
 @router.post(
     "",

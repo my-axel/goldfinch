@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from typing import List, Optional, Union, Literal
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, validator, root_validator, ConfigDict
 from app.models.enums import ContributionFrequency, PensionStatus
 
 class ContributionPlanStepBase(BaseModel):
@@ -305,4 +305,21 @@ class PensionInsuranceUpdate(BaseModel):
 class PensionStatusUpdate(BaseModel):
     status: PensionStatus
     paused_at: Optional[date] = None
-    resume_at: Optional[date] = None 
+    resume_at: Optional[date] = None
+
+class InsurancePensionListSchema(BaseModel):
+    """Lightweight schema for insurance pensions in list view"""
+    id: int
+    name: str
+    member_id: int
+    current_value: Decimal
+    provider: str
+    contract_number: Optional[str] = None
+    start_date: date
+    guaranteed_interest: Optional[Decimal] = None
+    expected_return: Optional[Decimal] = None
+    status: PensionStatus
+    paused_at: Optional[date] = None  # Optional with default None since it doesn't exist in the model
+    resume_at: Optional[date] = None  # Optional with default None since it doesn't exist in the model
+
+    model_config = ConfigDict(from_attributes=True) 
