@@ -5,7 +5,6 @@ import { UseFormReturn } from "react-hook-form"
 import { Input } from "@/frontend/components/ui/input"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { PercentInput } from '@/frontend/components/shared/inputs/PercentInput'
-import { NumberInput } from '@/frontend/components/shared/inputs/NumberInput'
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { Textarea } from "@/frontend/components/ui/textarea"
 interface BasicInformationCardProps {
@@ -109,7 +108,7 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
             <FormItem>
               <FormLabel>Expected Return Rate (%) (Optional)</FormLabel>
               <FormControl>
-                <NumberInput
+                <PercentInput
                   value={field.value ?? null}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
