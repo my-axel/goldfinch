@@ -80,6 +80,7 @@ export function BasicInformationCard({
                       onBlur={field.onBlur}
                       placeholder="0.000000"
                       min={0}
+                      decimals={6}
                     />
                   </FormControl>
                   <FormMessage />

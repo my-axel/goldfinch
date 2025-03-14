@@ -327,6 +327,29 @@ export function CombinedProjectionChart({
                             </span>
                           </div>
                         )}
+                        {(payload[0].payload as ChartDataPoint).optimistic !== null && (
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{
+                                backgroundColor: chartColors.optimistic
+                              }}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              Optimistic Projection:
+                            </span>
+                            <span className="text-sm font-medium">
+                              {formatCurrency(
+                                (payload[0].payload as ChartDataPoint).optimistic as number,
+                                {
+                                  locale: settings.number_locale,
+                                  currency: settings.currency,
+                                  decimals: 0
+                                }
+                              ).formatted}
+                            </span>
+                          </div>
+                        )}
                         {(payload[0].payload as ChartDataPoint).realistic !== null && (
                           <div className="flex items-center gap-2">
                             <div className="h-3 w-3 rounded-full"
@@ -360,29 +383,6 @@ export function CombinedProjectionChart({
                             <span className="text-sm font-medium">
                               {formatCurrency(
                                 (payload[0].payload as ChartDataPoint).pessimistic as number,
-                                {
-                                  locale: settings.number_locale,
-                                  currency: settings.currency,
-                                  decimals: 0
-                                }
-                              ).formatted}
-                            </span>
-                          </div>
-                        )}
-                        {(payload[0].payload as ChartDataPoint).optimistic !== null && (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-3 w-3 rounded-full"
-                              style={{
-                                backgroundColor: chartColors.optimistic
-                              }}
-                            />
-                            <span className="text-sm text-muted-foreground">
-                              Optimistic Projection:
-                            </span>
-                            <span className="text-sm font-medium">
-                              {formatCurrency(
-                                (payload[0].payload as ChartDataPoint).optimistic as number,
                                 {
                                   locale: settings.number_locale,
                                   currency: settings.currency,

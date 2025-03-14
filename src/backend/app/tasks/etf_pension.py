@@ -1,11 +1,92 @@
 from app.core.celery_app import celery_app
 from app.db.session import SessionLocal
-from app.crud.pension_etf import pension_etf
+from app.crud.pension_etf import pension_etf, needs_value_calculation
 from app.crud.etf import etf_crud
 from app.models.task import TaskStatus
+from app.models.pension_etf import PensionETF
 import logging
 
 logger = logging.getLogger(__name__)
+
+@celery_app.task(bind=True, max_retries=20)
+def calculate_etf_pension_value(self, pension_id: int):
+    """
+    Calculate the current value of an ETF pension based on existing units and reference date.
+    Will retry if price data is not available yet.
+    """
+    logger.info(f"Calculating value for ETF pension {pension_id}")
+    db = SessionLocal()
+    
+    try:
+        # Get the pension record
+        pension = db.query(PensionETF).filter(PensionETF.id == pension_id).first()
+        
+        if not pension:
+            logger.error(f"ETF pension {pension_id} not found")
+            return
+            
+        # Skip if calculation not needed
+        if not needs_value_calculation(pension):
+            logger.info(f"ETF pension {pension_id} does not need value calculation")
+            return
+            
+        # Attempt to fetch price data and calculate value
+        price = etf_crud.get_price_for_date(db=db, etf_id=pension.etf_id, date=pension.reference_date)
+        
+        if not price:
+            retry_count = self.request.retries
+            
+            # Determine retry delay based on retry count
+            if retry_count < 5:
+                delay = 20  # 20 seconds
+            elif retry_count < 15:
+                delay = 60  # 1 minute
+            else:
+                delay = 300  # 5 minutes
+                
+            logger.info(f"No price data available for ETF {pension.etf_id} on {pension.reference_date}. "
+                        f"Retry {retry_count+1}/20 scheduled in {delay} seconds")
+            
+            # Schedule retry
+            raise self.retry(exc=ValueError(f"No price data available for ETF {pension.etf_id}"), countdown=delay)
+        
+        # Calculate current value
+        current_value = pension.existing_units * price.price
+        
+        # Update pension record
+        pension.current_value = current_value
+        db.commit()
+        
+        logger.info(f"Successfully calculated value for ETF pension {pension_id}: {current_value}")
+        
+    except Exception as e:
+        logger.error(f"Error calculating ETF pension value: {str(e)}")
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+@celery_app.task
+def retry_pending_calculations():
+    """Retry calculations for ETF pensions with pending values"""
+    logger.info("Checking for ETF pensions with pending value calculations")
+    db = SessionLocal()
+    
+    try:
+        # Find all ETF pensions
+        pending_pensions = db.query(PensionETF).all()
+        pending_pensions = [p for p in pending_pensions if needs_value_calculation(p)]
+        
+        logger.info(f"Found {len(pending_pensions)} ETF pensions with pending calculations")
+        
+        for pension in pending_pensions:
+            # Schedule calculation task
+            calculate_etf_pension_value.delay(pension.id)
+            
+    except Exception as e:
+        logger.error(f"Error retrying pending ETF pension calculations: {str(e)}")
+    finally:
+        db.close()
 
 @celery_app.task(bind=True, max_retries=3)
 def process_new_etf_pension(self, pension_id: int) -> None:

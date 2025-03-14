@@ -37,7 +37,7 @@ export default function NewETFPensionPage() {
     etf_id: "",
     contribution_plan_steps: [],
     is_existing_investment: false,
-    existing_units: 0,
+    existing_units: 0.000000,
     reference_date: new Date(),
     initialization_method: "none",
     notes: "",
@@ -79,12 +79,31 @@ export default function NewETFPensionPage() {
         notes: data.notes
       })
 
-      toast.success("Success", { description: "ETF pension created successfully" })
+      // Show appropriate toast based on whether there are existing units
+      if (data.existing_units > 0) {
+        toast.info("Processing", { 
+          description: "Your pension has been created. The current value will be calculated shortly." 
+        })
+      } else {
+        toast.success("Success", { 
+          description: "ETF pension created successfully" 
+        })
+      }
+      
       router.push(getPensionListRoute())
       router.refresh()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to create pension:', error)
-      // Error is handled by the context
+      
+      // Check if the error is related to missing price data
+      if (error instanceof Error && error.message.includes("No price data available for ETF")) {
+        toast.info("Processing", { 
+          description: "Your pension is being created. The current value will be calculated shortly." 
+        })
+        router.push(getPensionListRoute())
+      } else {
+        // Error is handled by the context
+      }
     }
   }
 
@@ -242,6 +261,7 @@ export default function NewETFPensionPage() {
                                     onBlur={field.onBlur}
                                     placeholder="0.000000"
                                     min={0}
+                                    decimals={6}
                                   />
                                 </div>
                               )}

@@ -37,6 +37,8 @@ import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
 import { getPensionEditRoute } from "@/frontend/lib/routes"
 import { useHousehold } from "@/frontend/context/HouseholdContext"
+import { needsValueCalculation } from "@/frontend/lib/pensionUtils"
+import { Loader2 } from "lucide-react"
 
 // Import the formatting components
 import { 
@@ -87,7 +89,16 @@ function ETFPensionContent({ pension }: { pension: ETFPensionList & { type: Pens
       </div>
       <div>
         <dt className="text-muted-foreground">Current Value</dt>
-        <dd><FormattedCurrency value={pension.current_value} /></dd>
+        <dd>
+          {needsValueCalculation(pension) ? (
+            <div className="flex items-center">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <span>Currently calculating...</span>
+            </div>
+          ) : (
+            <FormattedCurrency value={pension.current_value} />
+          )}
+        </dd>
       </div>
 
       {pension.status !== 'PAUSED' && (

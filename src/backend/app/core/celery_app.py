@@ -64,5 +64,9 @@ celery_app.conf.beat_schedule = {
     'cleanup-old-etf-updates': {
         'task': 'app.tasks.etf.cleanup_old_updates',
         'schedule': crontab(hour=1, minute=0),  # Daily at 1 AM UTC
+    },
+    'retry-pending-etf-pension-calculations': {
+        'task': 'app.tasks.etf_pension.retry_pending_calculations',
+        'schedule': crontab(hour=2, minute=0),  # Daily at 2 AM UTC
     }
 }

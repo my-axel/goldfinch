@@ -46,7 +46,6 @@ export function createEtfPensionOperation(
         member_id: memberId,
         notes: pension.notes,
         etf_id: pension.etf_id,
-        is_existing_investment: pension.is_existing_investment,
         existing_units: pension.existing_units,
         reference_date: pension.reference_date ? toISODateString(pension.reference_date) : undefined,
         realize_historical_contributions: pension.realize_historical_contributions,

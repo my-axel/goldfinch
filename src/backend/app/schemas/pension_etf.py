@@ -123,6 +123,8 @@ class ETFPensionListSchema(BaseModel):
     etf_id: str
     etf_name: str  # Include ETF name for display in the list
     status: PensionStatus
+    is_existing_investment: bool
+    existing_units: Optional[float] = None
     paused_at: Optional[date] = None
     resume_at: Optional[date] = None
     current_step_amount: Optional[Decimal] = None

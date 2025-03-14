@@ -313,7 +313,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 >
                   {loadingState.isStatisticsLoading ? (
                     <Skeleton className="h-[400px] w-full" />
-                  ) : statistics?.value_history ? (
+                  ) : statistics?.value_history && statistics.value_history.length > 0 ? (
                     <HistoricalPerformanceChart
                       contributionData={statistics.contribution_history}
                       valueData={statistics.value_history.map(point => ({
@@ -348,17 +348,19 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
                 >
                   {loadingState.isStatisticsLoading ? (
                     <Skeleton className="h-[400px] w-full" />
-                  ) : statistics?.value_history ? (
+                  ) : contributionPlanSteps.length > 0 ? (
                     <CombinedProjectionChart
-                      data={statistics.value_history.map(point => ({
+                      data={(statistics?.value_history || []).map(point => ({
                         date: new Date(point.date),
                         value: parseFloat(point.value.toString()),
                         isProjection: false
                       }))}
-                      contributionData={statistics.contribution_history}
+                      contributionData={statistics?.contribution_history || []}
                       contributionSteps={contributionPlanSteps}
                       timeRange={{
-                        start: new Date(statistics.value_history[0].date),
+                        start: statistics?.value_history && statistics.value_history.length > 0 
+                          ? new Date(statistics.value_history[0].date) 
+                          : new Date(),
                         end: retirementDate || new Date()
                       }}
                       height={600}

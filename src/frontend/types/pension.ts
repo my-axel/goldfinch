@@ -235,6 +235,8 @@ export interface ETFPensionList {
   etf_id: string
   etf_name: string
   status: 'ACTIVE' | 'PAUSED'
+  is_existing_investment: boolean
+  existing_units?: number
   paused_at?: string
   resume_at?: string
   current_step_amount?: number

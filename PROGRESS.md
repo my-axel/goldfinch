@@ -17,6 +17,7 @@
 >   - Brief description of what's being done
 >   - Link to detailed implementation plan if available
 >   - Current subtasks or progress
+> - Tasks that are fully completed (all subtasks marked with ✅) should be removed from this section
 >
 > #### Ready to Implement
 > Organized in three categories by dependency status:
@@ -69,6 +70,7 @@
 >    - Project Milestones
 > 2. Recalculate overall progress if needed
 > 3. Move completed tasks to appropriate sections
+> 4. Remove fully completed tasks (all subtasks marked with ✅) from Active Development
 >
 > ### When Adding New Tasks
 > 1. Add detailed implementation plan in `docs/plans/`
@@ -91,6 +93,7 @@
 > - Upcoming plans: `docs/plans/upcoming/`
 > - Technical docs: `docs/tech/`
 > - Implementation details linked from this file
+> - Completed plans should be moved to `docs/plans/done/`
 >
 > ## Status Indicators
 > - ✅ Complete: Fully implemented, tested, production-ready
@@ -105,47 +108,41 @@
 > 4. Use consistent status indicators
 > 5. Update all affected sections when making changes
 > 6. Never modify completed (✅) modules without explicit instruction
+> 7. Remove fully completed tasks from Active Development section
 > </details>
 
 ## 📋 Current Status & Next Steps
 
 ### Active Development
-- 🔥 **Form Reset Hook Implementation**
-  - ✅ Create reusable hook to standardize form reset logic
-  - ✅ Centralize data transformation between API and form formats
-  - ✅ Handle complex nested data structures consistently
-  - ✅ Implement Company Pension transformer
-  - ⚠️ Implement ETF Pension transformer
-  - ⚠️ Implement Insurance Pension transformer
-  > **Implementation Details**: [Form Reset Hook Plan](docs/plans/active/form_reset_hook.md)
-
-- 🔥 **Pension Forms Standardization** (1-2 weeks)
-  - ✅ Implement consistent layout across all pension forms
-  - ✅ Standardize formatting patterns for numbers, currencies, and dates
-  - 🟡 Implement form reset hook for consistent data handling
-    - ✅ Company Pension forms
-    - ⚠️ ETF Pension forms
-    - ⚠️ Insurance Pension forms
-  - ✅ Add proper error handling and loading states
-  - 🟡 Refactor ETF, Company, and Insurance pension forms
-  > **Implementation Details**: [Pension Forms Standardization Plan](docs/plans/active/pension_forms_refactoring/README.md)
+*No active tasks - ready for new implementation*
 
 ### Ready to Implement
 Listed by priority and dependency readiness:
 
-1. **Core Features** (Dependencies ready)
-   - State Pension Implementation (Blocked by: Pension Forms Standardization)
-   - Savings Pension Implementation (Blocked by: Pension Forms Standardization, State Pension)
+1. **Technical Improvements** (No external dependencies)
+   - Statement Custom Hooks Implementation (1-2 weeks)
+     > Standardize statement management across pension types with reusable hooks
+     > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
+   - React Query Implementation (2-3 weeks)
+     > Migrate from Context-based state management to React Query for data fetching
+     > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
+
+2. **Core Features** (Dependencies ready)
+   - State Pension Implementation (2-3 weeks)
+   - Savings Pension Implementation (2-3 weeks)
    > **Details**: [Pension Plans Implementation](docs/plans/active/pension_plans.md)
 
-2. **Cross-Cutting Features** (Partial dependencies)
+3. **Cross-Cutting Features** (Partial dependencies)
    - Currency System Frontend Integration (1-2 weeks)
    - Internationalization Implementation (4-5 weeks)
    > **Details**: [Currency System Plan](docs/plans/active/currency_system.md) | [i18n Plan](docs/plans/active/internationalization.md)
 
 ### Blocked Items
-- State Pension Implementation (Blocked by: Pension Forms Standardization)
-- Savings Pension Implementation (Blocked by: Pension Forms Standardization, State Pension)
+- Contribution Management System (3-4 weeks) (Blocked by: State Pension, Savings Pension)
+  > Implement automatic realization of planned contributions across pension types
+  > **Details**: [Contribution Management Plan](docs/plans/active/contribution_management.md)
+- Dashboard Implementation (4-6 weeks) (Blocked by: State Pension, Savings Pension)
+  > **Details**: [Dashboard Implementation Plan](docs/plans/drafts/core_dashboard.md)
 - Compass Module (Blocked by: Dashboard)
 - Payout Strategy (Blocked by: Dashboard)
 - Full Settings Implementation (Blocked by: i18n)
@@ -187,13 +184,30 @@ graph TD
     H -.-> SP
     H -.-> SVP
     
+    %% Technical Improvements
+    SCH[Statement Custom Hooks 📝<br/>Weight: 5%] -.-> ETF
+    SCH -.-> CP
+    SCH -.-> IP
+    RQ[React Query 📝<br/>Weight: 10%] -.-> D
+    RQ -.-> C
+    RQ -.-> PS
+    CM[Contribution Management 📝<br/>Weight: 10%] -.-> ETF
+    CM -.-> CP
+    CM -.-> IP
+    CM -.-> SP
+    CM -.-> SVP
+    
+    %% Dependencies for Contribution Management
+    SP --> CM
+    SVP --> CM
+    
     %% Styling
     classDef complete fill:#90EE90,stroke:#000
     classDef partial fill:#FFE5B4,stroke:#000
     classDef notStarted fill:#FFB6C6,stroke:#000
     class ETF,H,CP,IP complete
     class S partial
-    class SP,SVP,CS,I18n,D,C,PS notStarted
+    class SP,SVP,CS,I18n,D,C,PS,SCH,RQ,CM notStarted
 ```
 <details>
 <summary><strong>📊 Graph Legend</strong></summary>
@@ -233,13 +247,13 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~30%]`
+## 📊 Implementation Status `[Overall Progress: ~35%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
 | ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts |
 | Company Pension | ✅ Complete | 100% | None | Contribution tracking |
-| Insurance Pension | ✅ Complete | 100% | None | Premium logic (needs standardization) |
+| Insurance Pension | ✅ Complete | 100% | None | Premium logic |
 | State Pension | 📝 Not Started | 0% | None | Payout tracking |
 | Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
 | Household | ✅ Complete | 100% | None | Basic CRUD |
@@ -250,6 +264,9 @@ graph LR
 | Currency System Backend | ✅ Complete | 100% | None | Exchange rates + API |
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
+| Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
+| React Query | 📝 Not Started | 0% | None | Modern data fetching |
+| Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
 
 ## 🎯 Project Milestones
 
@@ -274,7 +291,18 @@ graph LR
 4. Savings Pension Implementation
 5. ✅ ETF Pension Enhancements
 
-### Milestone 3: Compass Implementation (4-5 weeks)
+### Milestone 3: Technical Improvements (2-3 months)
+> **Status**: 🟡 Planning Phase
+
+#### Key Deliverables:
+1. Statement Custom Hooks Implementation
+   > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
+2. React Query Implementation
+   > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
+3. Contribution Management System
+   > **Details**: [Contribution Management Plan](docs/plans/active/contribution_management.md)
+
+### Milestone 4: Compass Implementation (4-5 weeks)
 > **Status**: 🟡 Planning Phase
 > **Details**: [Compass Implementation Plan](docs/plans/drafts/compass.md)
 
@@ -283,7 +311,7 @@ graph LR
 2. Risk Assessment
 3. Planning Tools
 
-### Milestone 4: Payout Strategy Implementation (4-5 weeks)
+### Milestone 5: Payout Strategy Implementation (4-5 weeks)
 > **Status**: 🟡 Planning Phase
 > **Details**: [Payout Strategy Plan](docs/plans/drafts/payout_strategy.md)
 

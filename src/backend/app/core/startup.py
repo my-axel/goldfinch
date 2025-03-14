@@ -3,9 +3,12 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.exchange_rate import ExchangeRate
 from app.models.etf import ETF, ETFPrice
+from app.models.pension_etf import PensionETF
 from app.tasks.exchange_rates import update_exchange_rates
 from app.tasks.etf import update_etf_latest_prices
+from app.tasks.etf_pension import retry_pending_calculations
 from app.crud import update_tracking
+from app.crud.pension_etf import needs_value_calculation
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,6 +28,9 @@ def check_and_trigger_updates():
         # Check ETF prices
         check_etf_prices(db)
         
+        # Check pending ETF pension calculations
+        check_pending_etf_pension_calculations(db)
+        
         # Cleanup old tracking records
         update_tracking.cleanup_old_tracking(db)
         
@@ -32,6 +38,26 @@ def check_and_trigger_updates():
         logger.error(f"Error during startup checks: {str(e)}")
     finally:
         db.close()
+
+def check_pending_etf_pension_calculations(db: Session):
+    """
+    Check for ETF pensions with pending value calculations and trigger the retry task.
+    """
+    logger.info("Checking for ETF pensions with pending value calculations...")
+    
+    try:
+        # Find all ETF pensions
+        pensions = db.query(PensionETF).all()
+        pending_pensions = [p for p in pensions if needs_value_calculation(p)]
+        
+        if pending_pensions:
+            logger.info(f"Found {len(pending_pensions)} ETF pensions with pending calculations. Triggering retry task...")
+            retry_pending_calculations.delay()
+        else:
+            logger.info("No ETF pensions with pending calculations found.")
+            
+    except Exception as e:
+        logger.error(f"Error checking pending ETF pension calculations: {str(e)}")
 
 def check_exchange_rates(db: Session):
     """

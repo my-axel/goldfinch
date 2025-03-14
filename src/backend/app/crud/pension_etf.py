@@ -24,6 +24,23 @@ from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
+def needs_value_calculation(pension: PensionETF) -> bool:
+    """
+    Check if an ETF pension needs its value calculated.
+    
+    Returns True if:
+    - It's an existing investment (implied by having existing_units)
+    - Has existing units
+    - Has a reference date
+    - Current value is 0 (indicating pending calculation)
+    """
+    return (
+        pension.existing_units is not None and
+        pension.existing_units > 0 and
+        pension.reference_date is not None and
+        pension.current_value == 0
+    )
+
 class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
     def create(
         self, db: Session, *, obj_in: PensionETFCreate
@@ -72,12 +89,12 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                 db.add(contribution)
 
             # Create contribution plan steps
-            for step in obj_in.contribution_plan_steps:
-                db_step = PensionETFContributionPlanStep(
-                    **step.dict(),
-                    pension_etf_id=db_obj.id
+            for step_data in obj_in.contribution_plan_steps:
+                step = PensionETFContributionPlanStep(
+                    pension_etf_id=db_obj.id,
+                    **step_data.dict()
                 )
-                db.add(db_step)
+                db.add(step)
 
             # Commit all changes
             db.commit()
@@ -438,7 +455,9 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             ETF.name.label("etf_name"),
             PensionETF.status,
             PensionETF.paused_at,
-            PensionETF.resume_at
+            PensionETF.resume_at,
+            PensionETF.existing_units,
+            PensionETF.reference_date
         ).join(ETF, PensionETF.etf_id == ETF.id)
         
         if member_id is not None:
@@ -485,10 +504,50 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                 "status": row.status,
                 "paused_at": row.paused_at,
                 "resume_at": row.resume_at,
+                "is_existing_investment": row.existing_units is not None and row.existing_units > 0 and row.reference_date is not None,
+                "existing_units": row.existing_units,
                 "current_step_amount": current_steps.get(row.id, {}).get("amount"),
                 "current_step_frequency": current_steps.get(row.id, {}).get("frequency")
             }
             for row in result
         ]
+
+    def create_with_zero_value(self, db: Session, *, obj_in: PensionETFCreate) -> PensionETF:
+        """
+        Create an ETF pension with zero current value for async calculation.
+        This is used when price data is not immediately available.
+        """
+        try:
+            # Start by creating the pension object
+            obj_in_data = obj_in.dict(exclude={"contribution_plan_steps", "realize_historical_contributions"})
+            db_obj = PensionETF(**obj_in_data)
+            
+            # Set initial values for async calculation
+            if db_obj.existing_units and db_obj.reference_date:
+                # Set initial total units
+                db_obj.total_units = Decimal(str(db_obj.existing_units))
+                # Set current value to 0 for pending calculation
+                db_obj.current_value = 0
+            
+            # Add and flush the pension object to get its ID
+            db.add(db_obj)
+            db.flush()
+            
+            # Create contribution plan steps
+            for step_data in obj_in.contribution_plan_steps:
+                step = PensionETFContributionPlanStep(
+                    pension_etf_id=db_obj.id,
+                    **step_data.dict()
+                )
+                db.add(step)
+            
+            db.commit()
+            db.refresh(db_obj)
+            logger.info(f"Created ETF pension with ID {db_obj.id} with zero value for async calculation")
+            return db_obj
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error creating ETF pension with zero value: {str(e)}")
+            raise
 
 pension_etf = CRUDPensionETF(PensionETF) 
