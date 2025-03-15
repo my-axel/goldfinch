@@ -1,6 +1,6 @@
 ---
 description: Working on the backend in python with FastAPI
-globs: *.py
+globs: src/backend/**/*.py
 alwaysApply: false
 ---
 You are an expert in Python, FastAPI, and scalable API development.

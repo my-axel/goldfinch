@@ -1,6 +1,6 @@
 ---
 description: Formatting a number, currency or date to the users locale setting
-globs: *.tsx
+globs: src/frontend/**/*.tsx
 alwaysApply: false
 ---
 # Formatting & Date Handling Best Practices
