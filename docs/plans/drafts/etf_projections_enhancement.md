@@ -1,29 +1,14 @@
 # ETF Projections Enhancement Draft
 
 ## Overview
-Add support for settings-based increase rates in ETF pension projections, similar to the state pension implementation.
+Move ETF projection calculations from frontend to backend for improved performance and consistency.
 
 ## Current State
-- ETF pensions currently use hardcoded increase rates for projections
-- No connection to user settings
-- Less flexibility for scenario planning
+- ETF projections are currently calculated in the frontend
+- Frontend uses settings-based rates for calculations
+- Moving calculations to backend could improve performance
 
 ## Proposed Changes
-
-### Settings Enhancement
-```python
-class PensionProjectionSettings(BaseModel):
-    # Existing ETF settings
-    etf_pessimistic_return: float
-    etf_realistic_return: float
-    etf_optimistic_return: float
-    
-    # New state pension settings
-    state_pessimistic_increase: float
-    state_realistic_increase: float
-    state_optimistic_increase: float
-
-```
 
 ### New Projection Endpoint
 ```python
@@ -44,19 +29,19 @@ async def get_etf_projections(
 ```
 
 ### Benefits
-1. Consistent projection handling across pension types
-2. User-configurable rates
-3. More flexible scenario planning
-4. Easier comparison between pension types
+1. Improved performance by moving calculations to backend
+2. Consistent projection handling across pension types
+3. Reduced frontend complexity
+4. Easier maintenance of projection logic in one place
 
 ### Technical Considerations
-1. Keep existing projection logic for backward compatibility
-2. Add new endpoint for settings-based calculations
-3. Consider caching for performance
-4. Add migration path for existing implementations
+1. Ensure projection results match current frontend calculations
+2. Consider caching for performance optimization
+3. Plan frontend migration to use new endpoint
+4. Add proper error handling and validation
 
 ## Next Steps
-1. Review current ETF projection implementation
+1. Review current frontend projection implementation
 2. Design detailed technical specification
-3. Plan migration strategy
+3. Plan frontend migration strategy
 4. Create full implementation plan 
