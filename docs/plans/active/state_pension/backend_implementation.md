@@ -64,6 +64,12 @@ Implement the backend components for managing state pensions, focusing on a gene
 - Add proper currency validation in Pydantic schemas
 - Document all monetary fields with "EUR" comment for clarity
 
+### Validation Rules
+- Statement dates must be sequential
+- All monetary amounts must be positive
+- Statement date cannot be in the future
+- Current monthly amount must be less than or equal to projected monthly amount
+
 ## Requirements
 
 ### Data Model (Backend)
@@ -174,11 +180,8 @@ async def get_state_pension_summaries(
    - Delete statement
 
 #### Projection Endpoints
-1. `GET /api/v1/pensions/state/{pension_id}/projections`
-   - Calculate projections based on:
-     - Latest statement values
-     - User's retirement age
-     - Configured increase rates (pessimistic, realistic, optimistic)
+1. `GET /api/v1/pensions/state/{pension_id}/scenarios`
+   - Calculate scenarios based on latest statement values, household members retirement ageand configured rates.
 
 ## Implementation Steps
 
@@ -189,26 +192,11 @@ async def get_state_pension_summaries(
 - [ ] Add state_pensions relationship to HouseholdMember model
 
 ### 2. Settings Service Enhancement
-- [ ] Add state pension projection rates to existing settings model:
-  ```python
-  # In app/models/settings.py
-  class Settings(Base):
-      # ... existing fields ...
-      
-      # State Pension projection rates (as percentages)
-      # TODO: In future refactoring, move all pension-type-specific rates to a separate model
-      state_pension_pessimistic_rate = Column(Numeric(10, 4), nullable=False, default=1.0)
-      state_pension_realistic_rate = Column(Numeric(10, 4), nullable=False, default=1.5)
-      state_pension_optimistic_rate = Column(Numeric(10, 4), nullable=False, default=2.0)
-  ```
-- [ ] Create alembic migration to add new columns
-- [ ] Update settings service to handle state pension rates
-- [ ] Add settings validation for new rates (should be between 0 and 10)
+- [ ] Implement settings changes as specified in [Settings Enhancement Plan](settings_enhancement.md)
+- [ ] Ensure proper integration with state pension projections
+- [ ] Add validation for state pension rate usage in projection calculations
 
-Note: This is a temporary solution. In a future refactoring, we should:
-1. Create a separate model for pension-type-specific projection rates
-2. Move all pension-specific settings to this new model
-3. Create proper relationships between settings and pension types
+Note: All settings-related implementation details (model updates, schema changes, migrations) are documented in the Settings Enhancement Plan.
 
 ### 3. Models and Schemas
 - [ ] Implement PensionState model
@@ -273,7 +261,7 @@ Note: This is a temporary solution. In a future refactoring, we should:
 # Basic pension endpoints
 curl -X GET http://localhost:8000/api/v1/pensions/state
 curl -X POST http://localhost:8000/api/v1/pensions/state -H "Content-Type: application/json" -d '{"name": "My State Pension", "member_id": 1, "start_date": "2020-01-01"}'
-curl -X GET http://localhost:8000/api/v1/pensions/state/1/projections
+curl -X GET http://localhost:8000/api/v1/pensions/state/1/scenarios
 
 # Statement endpoints
 curl -X POST http://localhost:8000/api/v1/pensions/state/1/statements -H "Content-Type: application/json" -d '{"statement_date": "2024-01-01", "current_monthly_amount": 500, "projected_monthly_amount": 2000}'
@@ -283,5 +271,5 @@ curl -X GET http://localhost:8000/api/v1/pensions/state/1/statements
 curl -X GET http://localhost:8000/api/v1/pension-summaries/state?member_id=1
 
 # Projection scenarios
-curl -X GET http://localhost:8000/api/v1/pensions/state/1/projections  # Uses settings-based rates
+curl -X GET http://localhost:8000/api/v1/pensions/state/1/scenarios  # Uses settings-based rates
 ``` 
