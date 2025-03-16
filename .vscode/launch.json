@@ -23,7 +23,6 @@
         }
     ],
     "configurations": [
-        
         {
             "name": "Backend",
             "type": "debugpy",
