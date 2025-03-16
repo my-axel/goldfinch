@@ -4,6 +4,8 @@ import { Label } from "@/frontend/components/ui/label"
 import { Minus, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
+import { useSettings } from "@/frontend/context/SettingsContext"
+import { formatNumberInput, parseNumber } from "@/frontend/lib/transforms"
 
 export interface RateInputProps {
   label: string
@@ -14,6 +16,7 @@ export interface RateInputProps {
   step?: number
   disabled?: boolean
   error?: string
+  hideLabel?: boolean
 }
 
 export function RateInput({
@@ -24,14 +27,16 @@ export function RateInput({
   max = 15,
   step = 0.1,
   disabled = false,
-  error
+  error,
+  hideLabel = false
 }: RateInputProps) {
   const [localValue, setLocalValue] = useState("")
+  const { settings } = useSettings()
 
   useEffect(() => {
     const numericValue = Number(value)
-    setLocalValue(isNaN(numericValue) ? "0.0" : numericValue.toFixed(1))
-  }, [value])
+    setLocalValue(isNaN(numericValue) ? "0,0" : formatNumberInput(numericValue, settings.number_locale, 1))
+  }, [value, settings.number_locale])
 
   const handleIncrement = () => {
     const currentValue = Number(value)
@@ -53,7 +58,7 @@ export function RateInput({
     const inputValue = e.target.value
     setLocalValue(inputValue)
 
-    const numericValue = parseFloat(inputValue)
+    const numericValue = parseNumber(inputValue, settings.number_locale)
     if (!isNaN(numericValue)) {
       const clampedValue = Math.min(Math.max(numericValue, min), max)
       const currentValue = Number(value)
@@ -64,14 +69,14 @@ export function RateInput({
   }
 
   const handleBlur = () => {
-    const numericValue = parseFloat(localValue)
+    const numericValue = parseNumber(localValue, settings.number_locale)
     const currentValue = Number(value)
     
     if (isNaN(numericValue)) {
-      setLocalValue(isNaN(currentValue) ? "0.0" : currentValue.toFixed(1))
+      setLocalValue(isNaN(currentValue) ? formatNumberInput(0, settings.number_locale, 1) : formatNumberInput(currentValue, settings.number_locale, 1))
     } else {
       const clampedValue = Math.min(Math.max(numericValue, min), max)
-      setLocalValue(clampedValue.toFixed(1))
+      setLocalValue(formatNumberInput(clampedValue, settings.number_locale, 1))
       if (!isNaN(currentValue) && clampedValue !== currentValue) {
         onChange(clampedValue)
       }
@@ -80,8 +85,8 @@ export function RateInput({
 
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
-      <div className="flex items-center space-x-2 mt-2">
+      {!hideLabel && <Label>{label}</Label>}
+      <div className="flex items-center justify-center space-x-2">
         <Button
           variant="outline"
           size="sm"
@@ -99,7 +104,7 @@ export function RateInput({
             onChange={handleInputChange}
             onBlur={handleBlur}
             disabled={disabled}
-            style={{ width: '60px' }}
+            style={{ width: '60px', textAlign: 'center' }}
             className={cn(
               "h-8 text-sm pr-5",
               error && "border-destructive focus-visible:ring-destructive"

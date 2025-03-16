@@ -6,11 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Currency, CURRENCY_LABELS, NumberLocale, NUMBER_LOCALE_LABELS, UILocale, UI_LOCALE_LABELS } from "@/frontend/types/enums"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { useEffect, useState } from "react"
-import { RateInput } from "@/frontend/components/ui/rate-input"
 import { useTheme } from "next-themes"
 import { Moon, Sun, Laptop } from "lucide-react"
 import { NumberFormatPreview } from "@/frontend/components/settings/number-format-preview"
 import { ProjectionPreview } from "@/frontend/components/settings/projection-preview"
+import { ScenarioRatesGrid } from "@/frontend/components/settings/ScenarioRatesGrid"
+import { FrontendSettings } from "@/frontend/types/settings"
 
 export default function SettingsPage() {
   const { settings, updateSettings, isLoading, error } = useSettings()
@@ -36,87 +37,88 @@ export default function SettingsPage() {
   }
 
   const validateRateRelationships = (
-    type: 'pessimistic' | 'realistic' | 'optimistic',
+    type: 'projection' | 'state_pension',
+    scenario: 'pessimistic' | 'realistic' | 'optimistic',
     newValue: number
   ): boolean => {
-    // Create a temporary object with the new value
+    const prefix = type;
     const updatedValues = {
-      pessimistic: type === 'pessimistic' ? newValue : settings.projection_pessimistic_rate,
-      realistic: type === 'realistic' ? newValue : settings.projection_realistic_rate,
-      optimistic: type === 'optimistic' ? newValue : settings.projection_optimistic_rate
-    }
+      pessimistic: scenario === 'pessimistic' ? newValue : settings[`${prefix}_pessimistic_rate` as keyof FrontendSettings],
+      realistic: scenario === 'realistic' ? newValue : settings[`${prefix}_realistic_rate` as keyof FrontendSettings],
+      optimistic: scenario === 'optimistic' ? newValue : settings[`${prefix}_optimistic_rate` as keyof FrontendSettings]
+    };
 
-    if (type === 'pessimistic' && updatedValues.pessimistic > updatedValues.realistic) {
+    const errorKey = `${prefix}_${scenario}_rate`;
+
+    if (scenario === 'pessimistic' && updatedValues.pessimistic > updatedValues.realistic) {
       setRateErrors({
         ...rateErrors,
-        pessimistic: 'Pessimistic rate cannot be higher than realistic rate'
-      })
-      return false
+        [errorKey]: `${type === 'projection' ? 'ETF' : 'State pension'} pessimistic rate cannot be higher than realistic rate`
+      });
+      return false;
     }
 
-    if (type === 'realistic') {
+    if (scenario === 'realistic') {
       if (updatedValues.realistic < updatedValues.pessimistic) {
         setRateErrors({
           ...rateErrors,
-          realistic: 'Realistic rate cannot be lower than pessimistic rate'
-        })
-        return false
+          [errorKey]: `${type === 'projection' ? 'ETF' : 'State pension'} realistic rate cannot be lower than pessimistic rate`
+        });
+        return false;
       }
       if (updatedValues.realistic > updatedValues.optimistic) {
         setRateErrors({
           ...rateErrors,
-          realistic: 'Realistic rate cannot be higher than optimistic rate'
-        })
-        return false
+          [errorKey]: `${type === 'projection' ? 'ETF' : 'State pension'} realistic rate cannot be higher than optimistic rate`
+        });
+        return false;
       }
     }
 
-    if (type === 'optimistic' && updatedValues.optimistic < updatedValues.realistic) {
+    if (scenario === 'optimistic' && updatedValues.optimistic < updatedValues.realistic) {
       setRateErrors({
         ...rateErrors,
-        optimistic: 'Optimistic rate cannot be lower than realistic rate'
-      })
-      return false
+        [errorKey]: `${type === 'projection' ? 'ETF' : 'State pension'} optimistic rate cannot be lower than realistic rate`
+      });
+      return false;
     }
 
     // Clear errors for the current type if validation passes
-    if (rateErrors[type]) {
+    if (rateErrors[errorKey]) {
       setRateErrors({
         ...rateErrors,
-        [type]: ''
-      })
+        [errorKey]: ''
+      });
     }
 
-    return true
-  }
+    return true;
+  };
 
-  const handleProjectionRateChange = (type: 'pessimistic' | 'realistic' | 'optimistic' | 'inflation', value: number) => {
-    if (type === 'inflation') {
-      updateSettings({ inflation_rate: value })
-      return
+  const handleRateChange = (key: keyof FrontendSettings, value: number) => {
+    // Extract type and scenario from the key
+    const [type, scenario] = key.split('_') as ['projection' | 'state_pension', 'pessimistic' | 'realistic' | 'optimistic'];
+    
+    if (key === 'inflation_rate' || validateRateRelationships(type, scenario, value)) {
+      updateSettings({ [key]: value });
     }
+  };
 
-    // Validate rate relationships before updating
-    if (validateRateRelationships(type, value)) {
-      const rateKey = `projection_${type}_rate` as const
-      updateSettings({ [rateKey]: value })
-    }
-  }
+
 
   // Replace renderPreview with NumberFormatPreview component
   const renderPreview = () => {
-    if (!mounted) return null
+    if (!mounted) return null;
     return (
       <NumberFormatPreview
         locale={settings.number_locale}
         currency={settings.currency}
       />
-    )
-  }
+    );
+  };
 
   // Replace renderProjectionPreview with ProjectionPreview component
   const renderProjectionPreview = () => {
-    if (!mounted) return null
+    if (!mounted) return null;
     return (
       <ProjectionPreview
         locale={settings.number_locale}
@@ -126,66 +128,7 @@ export default function SettingsPage() {
     )
   }
 
-  // Only render rate inputs after client-side hydration
-  const renderRateInputs = () => {
-    if (!mounted) return null
 
-    return (
-      <div>
-        <div>
-          <RateInput
-            label="Inflation Rate"
-            value={settings.inflation_rate}
-            onChange={(value) => handleProjectionRateChange('inflation', value)}
-            min={0}
-            max={10}
-            step={0.1}
-            disabled={isLoading}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          <div>
-            <RateInput
-              label="Pessimistic Scenario Return Rate"
-              value={settings.projection_pessimistic_rate}
-              onChange={(value) => handleProjectionRateChange('pessimistic', value)}
-              min={0}
-              max={15}
-              step={0.1}
-              disabled={isLoading}
-              error={rateErrors.pessimistic}
-            />
-          </div>
-
-          <div>
-            <RateInput
-              label="Realistic Scenario Return Rate"
-              value={settings.projection_realistic_rate}
-              onChange={(value) => handleProjectionRateChange('realistic', value)}
-              min={0}
-              max={15}
-              step={0.1}
-              disabled={isLoading}
-              error={rateErrors.realistic}
-            />
-          </div>
-
-          <div>
-            <RateInput
-              label="Optimistic Scenario Return Rate"
-              value={settings.projection_optimistic_rate}
-              onChange={(value) => handleProjectionRateChange('optimistic', value)}
-              min={0}
-              max={15}
-              step={0.1}
-              disabled={isLoading}
-              error={rateErrors.optimistic}
-            />
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   // Render theme preview
   const renderThemePreview = () => {
@@ -351,18 +294,15 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Investment Settings */}
+      {/* Scenario Rates */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
         <div className="lg:col-span-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Investment Projections</CardTitle>
-              <CardDescription>Configure return rate scenarios and inflation for investment projections</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {renderRateInputs()}
-            </CardContent>
-          </Card>
+          <ScenarioRatesGrid
+            settings={settings}
+            onUpdate={handleRateChange}
+            isLoading={isLoading}
+            rateErrors={rateErrors}
+          />
         </div>
         <div className="lg:col-span-4">
           {renderProjectionPreview()}

@@ -12,6 +12,9 @@ const defaultSettings: FrontendSettings = {
   projection_pessimistic_rate: 4.0,
   projection_realistic_rate: 6.0,
   projection_optimistic_rate: 8.0,
+  state_pension_pessimistic_rate: 1.0,
+  state_pension_realistic_rate: 1.5,
+  state_pension_optimistic_rate: 2.0,
   inflation_rate: 2.0,
 }
 
@@ -57,6 +60,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         projection_pessimistic_rate: response.projection_pessimistic_rate,
         projection_realistic_rate: response.projection_realistic_rate,
         projection_optimistic_rate: response.projection_optimistic_rate,
+        state_pension_pessimistic_rate: response.state_pension_pessimistic_rate,
+        state_pension_realistic_rate: response.state_pension_realistic_rate,
+        state_pension_optimistic_rate: response.state_pension_optimistic_rate,
         inflation_rate: response.inflation_rate,
       }
       setState({ data: settings, isLoading: false, error: null })
@@ -91,6 +97,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         projection_pessimistic_rate: updatedSettings.projection_pessimistic_rate,
         projection_realistic_rate: updatedSettings.projection_realistic_rate,
         projection_optimistic_rate: updatedSettings.projection_optimistic_rate,
+        state_pension_pessimistic_rate: updatedSettings.state_pension_pessimistic_rate,
+        state_pension_realistic_rate: updatedSettings.state_pension_realistic_rate,
+        state_pension_optimistic_rate: updatedSettings.state_pension_optimistic_rate,
         inflation_rate: updatedSettings.inflation_rate,
       }
       

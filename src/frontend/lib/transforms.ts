@@ -96,8 +96,13 @@ export function formatNumberInput(value: number | null | undefined, locale: stri
   
   // If decimals is specified, format with fixed decimal places
   if (decimals !== undefined) {
-    const formatted = safeValue.toFixed(decimals);
-    return formatted.replace('.', decimalSeparator);
+    // Use Intl.NumberFormat to ensure consistent decimal places
+    const formatter = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+      useGrouping: false // Don't use thousand separators for input fields
+    });
+    return formatter.format(safeValue);
   }
   
   // Otherwise, just replace the decimal separator

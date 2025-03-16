@@ -47,6 +47,24 @@ class SettingsBase(BaseModel):
         ge=MIN_PROJECTION_RATE,
         le=MAX_PROJECTION_RATE
     )
+    state_pension_pessimistic_rate: Decimal = Field(
+        default=Decimal("1.0"),
+        description="Annual increase rate for pessimistic state pension scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    state_pension_realistic_rate: Decimal = Field(
+        default=Decimal("1.5"),
+        description="Annual increase rate for realistic state pension scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    state_pension_optimistic_rate: Decimal = Field(
+        default=Decimal("2.0"),
+        description="Annual increase rate for optimistic state pension scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
     inflation_rate: Decimal = Field(
         default=Decimal("2.0"),
         description="Annual inflation rate (in %)",
@@ -82,6 +100,22 @@ class SettingsBase(BaseModel):
         realistic = values.data.get("projection_realistic_rate")
         if realistic is not None and v < realistic:
             raise ValueError("Optimistic rate must be greater than or equal to realistic rate")
+        return v
+
+    @field_validator("state_pension_realistic_rate")
+    @classmethod
+    def validate_state_pension_realistic_rate(cls, v: Decimal, values: dict) -> Decimal:
+        pessimistic = values.data.get("state_pension_pessimistic_rate")
+        if pessimistic is not None and v < pessimistic:
+            raise ValueError("State pension realistic rate must be greater than or equal to pessimistic rate")
+        return v
+
+    @field_validator("state_pension_optimistic_rate")
+    @classmethod
+    def validate_state_pension_optimistic_rate(cls, v: Decimal, values: dict) -> Decimal:
+        realistic = values.data.get("state_pension_realistic_rate")
+        if realistic is not None and v < realistic:
+            raise ValueError("State pension optimistic rate must be greater than or equal to realistic rate")
         return v
 
 class SettingsCreate(SettingsBase):
@@ -124,6 +158,24 @@ class SettingsUpdate(BaseModel):
         ge=MIN_PROJECTION_RATE,
         le=MAX_PROJECTION_RATE
     )
+    state_pension_pessimistic_rate: Optional[Decimal] = Field(
+        None,
+        description="Annual increase rate for pessimistic state pension scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    state_pension_realistic_rate: Optional[Decimal] = Field(
+        None,
+        description="Annual increase rate for realistic state pension scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
+    state_pension_optimistic_rate: Optional[Decimal] = Field(
+        None,
+        description="Annual increase rate for optimistic state pension scenario (in %)",
+        ge=MIN_PROJECTION_RATE,
+        le=MAX_PROJECTION_RATE
+    )
     inflation_rate: Optional[Decimal] = Field(
         None,
         description="Annual inflation rate (in %)",
@@ -163,6 +215,26 @@ class SettingsUpdate(BaseModel):
         realistic = values.data.get("projection_realistic_rate")
         if realistic is not None and v < realistic:
             raise ValueError("Optimistic rate must be greater than or equal to realistic rate")
+        return v
+
+    @field_validator("state_pension_realistic_rate")
+    @classmethod
+    def validate_state_pension_realistic_rate(cls, v: Optional[Decimal], values: dict) -> Optional[Decimal]:
+        if v is None:
+            return v
+        pessimistic = values.data.get("state_pension_pessimistic_rate")
+        if pessimistic is not None and v < pessimistic:
+            raise ValueError("State pension realistic rate must be greater than or equal to pessimistic rate")
+        return v
+
+    @field_validator("state_pension_optimistic_rate")
+    @classmethod
+    def validate_state_pension_optimistic_rate(cls, v: Optional[Decimal], values: dict) -> Optional[Decimal]:
+        if v is None:
+            return v
+        realistic = values.data.get("state_pension_realistic_rate")
+        if realistic is not None and v < realistic:
+            raise ValueError("State pension optimistic rate must be greater than or equal to realistic rate")
         return v
 
 class Settings(SettingsBase):

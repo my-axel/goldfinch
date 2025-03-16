@@ -247,7 +247,7 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~35%]`
+## 📊 Implementation Status `[Overall Progress: ~40%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
@@ -257,7 +257,7 @@ graph LR
 | State Pension | 📝 Not Started | 0% | None | Payout tracking |
 | Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
 | Household | ✅ Complete | 100% | None | Basic CRUD |
-| Settings | ⚠️ Partial | 50% | i18n | Config + validation |
+| Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented |
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
 | Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms |
 | Payout Strategy | ⚠️ UI Only | 10% | Dashboard | Financial modeling |
