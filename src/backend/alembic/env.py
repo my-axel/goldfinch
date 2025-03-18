@@ -57,6 +57,11 @@ target_metadata = Base.metadata
 
 
 def get_url():
+    # First check if a URL was passed in the config
+    url = config.get_main_option("sqlalchemy.url", None)
+    if url:
+        return url
+    # Fall back to settings if no URL was provided
     return settings.DATABASE_URL
 
 

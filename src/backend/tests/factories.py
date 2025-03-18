@@ -8,12 +8,18 @@ from app.models.enums import PensionStatus
 
 def create_test_member(db_session, **kwargs) -> HouseholdMember:
     """Factory function to create a test household member."""
+    birthday = date(1990, 1, 1)
+    retirement_age_planned = 67
+    retirement_age_possible = 63
+    
     defaults = {
         "first_name": "Test",
         "last_name": "User",
-        "birthday": date(1990, 1, 1),
-        "retirement_age_planned": 67,
-        "retirement_age_possible": 63
+        "birthday": birthday,
+        "retirement_age_planned": retirement_age_planned,
+        "retirement_age_possible": retirement_age_possible,
+        "retirement_date_planned": date(birthday.year + retirement_age_planned, birthday.month, birthday.day),
+        "retirement_date_possible": date(birthday.year + retirement_age_possible, birthday.month, birthday.day)
     }
     defaults.update(kwargs)
     
