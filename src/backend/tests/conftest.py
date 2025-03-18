@@ -39,41 +39,50 @@ def db_session(engine) -> Generator:
     Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     session = Session()
 
-    # Create a test household member that can be used by all tests
-    birthday = date(1990, 1, 1)
-    retirement_age_planned = 67
-    retirement_age_possible = 63
-    member = HouseholdMember(
-        first_name="Test",
-        last_name="User",
-        birthday=birthday,
-        retirement_age_planned=retirement_age_planned,
-        retirement_age_possible=retirement_age_possible,
-        retirement_date_planned=date(
+    try:
+        # Create a test household member that can be used by all tests
+        birthday = date(1990, 1, 1)
+        retirement_age_planned = 67
+        retirement_age_possible = 63
+        retirement_date_planned = date(
             birthday.year + retirement_age_planned,
             birthday.month,
             birthday.day
-        ),
-        retirement_date_possible=date(
+        )
+        retirement_date_possible = date(
             birthday.year + retirement_age_possible,
             birthday.month,
             birthday.day
         )
-    )
-    session.add(member)
-    session.commit()
+        
+        member = HouseholdMember(
+            first_name="Test",
+            last_name="User",
+            birthday=birthday,
+            retirement_age_planned=retirement_age_planned,
+            retirement_age_possible=retirement_age_possible,
+            retirement_date_planned=retirement_date_planned,
+            retirement_date_possible=retirement_date_possible
+        )
+        session.add(member)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise Exception(f"Failed to create test member: {str(e)}")
     
     yield session
     
-    # Clean up after each test
-    session.rollback()  # Rollback any failed transaction
-    
-    # Delete all data except the test member
-    for table in reversed(Base.metadata.sorted_tables):
-        if table.name != 'household_members':  # Keep the test member
-            session.execute(table.delete())
-    session.commit()
-    session.close()
+    try:
+        # Clean up after each test
+        session.rollback()  # Rollback any failed transaction
+        
+        # Delete all data except the test member
+        for table in reversed(Base.metadata.sorted_tables):
+            if table.name != 'household_members':  # Keep the test member
+                session.execute(table.delete())
+        session.commit()
+    finally:
+        session.close()
 
 @pytest.fixture(scope="module")
 def client() -> Generator:
