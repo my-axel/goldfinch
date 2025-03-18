@@ -21,6 +21,10 @@ from app.models.pension_company import (
     PensionCompanyContributionPlanStep,
     PensionCompanyContributionHistory
 )
+from app.models.pension_state import (
+    PensionState,
+    PensionStateStatement
+)
 from app.models.household import HouseholdMember
 from app.models.etf import ETF
 from app.models.etf import ETFUpdate

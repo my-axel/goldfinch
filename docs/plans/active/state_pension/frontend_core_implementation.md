@@ -71,7 +71,6 @@ interface StatePension {
   id: number;
   name: string;
   member_id: number;
-  current_value: number;  // Current monthly pension amount
   start_date: string;
   latest_statement_date?: string;
   latest_monthly_amount?: number;
@@ -82,6 +81,7 @@ interface StatePensionStatement {
   id: number;
   pension_id: number;
   statement_date: string;
+  current_value: number;  // Current monthly pension amount
   current_monthly_amount: number;
   projected_monthly_amount: number;
   note?: string;

@@ -185,54 +185,52 @@ async def get_state_pension_summaries(
 
 ## Implementation Steps
 
-### 1. Database Setup
-- [ ] Add PensionType.STATE to enums
-- [ ] Create pension_state table migration
-- [ ] Create pension_state_statements table migration
-- [ ] Add state_pensions relationship to HouseholdMember model
+### 1. Database Setup ✅
+- [x] Add PensionType.STATE to enums (already existed as GOVERNMENT)
+- [x] Create pension_state table migration (completed with bde99be20c45_add_state_pension_tables.py)
+- [x] Create pension_state_statements table migration (completed in same migration)
+- [x] Add state_pensions relationship to HouseholdMember model (completed)
 
-### 2. Settings Service Enhancement
-- [ ] Implement settings changes as specified in [Settings Enhancement Plan](settings_enhancement.md)
-- [ ] Ensure proper integration with state pension projections
-- [ ] Add validation for state pension rate usage in projection calculations
+### 2. Settings Service Enhancement ✅
+- [x] Implement settings changes as specified in [Settings Enhancement Plan](settings_enhancement.md)
+- [x] Ensure proper integration with state pension projections
+- [x] Add validation for state pension rate usage in projection calculations
 
-Note: All settings-related implementation details (model updates, schema changes, migrations) are documented in the Settings Enhancement Plan.
+### 3. Models and Schemas ✅
+- [x] Implement PensionState model
+- [x] Implement PensionStateStatement model
+- [x] Create Pydantic schemas:
+  - [x] PensionStateBase
+  - [x] PensionStateCreate
+  - [x] PensionStateUpdate
+  - [x] PensionStateResponse
+  - [x] StatementBase
+  - [x] StatementCreate
+  - [x] StatementUpdate
+  - [x] StatementResponse
+  - [x] StatePensionListSchema
 
-### 3. Models and Schemas
-- [ ] Implement PensionState model
-- [ ] Implement PensionStateStatement model
-- [ ] Create Pydantic schemas:
-  - [ ] PensionStateBase
-  - [ ] PensionStateCreate
-  - [ ] PensionStateUpdate
-  - [ ] PensionStateResponse
-  - [ ] StatementBase
-  - [ ] StatementCreate
-  - [ ] StatementUpdate
-  - [ ] StatementResponse
-  - [ ] ProjectionResponse
+### 4. CRUD Operations ✅
+- [x] Implement StatePensionCRUD class:
+  - [x] Basic CRUD operations
+  - [x] Statement management
+  - [x] Latest statement retrieval
+  - [x] Value calculations
+- [x] Add dependency injection setup
 
-### 4. CRUD Operations
-- [ ] Implement StatePensionCRUD class:
-  - [ ] Basic CRUD operations
-  - [ ] Statement management
-  - [ ] Latest statement retrieval
-  - [ ] Value calculations
-- [ ] Add dependency injection setup
+### 5. API Routes ✅
+- [x] Implement pension routes
+- [x] Implement statement routes
+- [x] Implement projection calculation endpoint
+- [x] Implement pension-summaries endpoint
+  - [x] Add route to pension_summaries.py
+  - [x] Implement optimized list query in CRUD
+  - [x] Add proper response model
+- [x] Add route documentation
+- [x] Add request/response examples
 
-### 5. API Routes
-- [ ] Implement pension routes
-- [ ] Implement statement routes
-- [ ] Implement projection calculation endpoint
-- [ ] Implement pension-summaries endpoint
-  - [ ] Add route to pension_summaries.py
-  - [ ] Implement optimized list query in CRUD
-  - [ ] Add proper response model
-- [ ] Add route documentation
-- [ ] Add request/response examples
-
-### 6. Testing
-- [ ] Unit tests for models
+### 6. Testing ⏳
+- [x] Unit tests for models
 - [ ] Unit tests for CRUD operations
 - [ ] Integration tests for API endpoints
 - [ ] Test projection calculations

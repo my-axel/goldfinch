@@ -6,9 +6,11 @@ from app.api.v1 import deps
 from app.crud.pension_etf import pension_etf
 from app.crud.pension_company import pension_company
 from app.crud.pension_insurance import pension_insurance
+from app.crud.pension_state import pension_state
 from app.schemas.pension_etf import ETFPensionListSchema
 from app.schemas.pension_company import CompanyPensionListSchema
 from app.schemas.pension_insurance import InsurancePensionListSchema
+from app.schemas.pension_state import StatePensionListSchema
 import logging
 
 # Use the app.api namespace to ensure logs go to the right place
@@ -68,6 +70,24 @@ async def get_insurance_pension_summaries(
     This endpoint is optimized for list views and returns only essential data.
     """
     return pension_insurance.get_list(
+        db=db, 
+        skip=skip, 
+        limit=limit, 
+        member_id=member_id
+    )
+
+@router.get("/state", response_model=List[StatePensionListSchema])
+async def get_state_pension_summaries(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    member_id: Optional[int] = None,
+) -> List[StatePensionListSchema]:
+    """
+    Get a lightweight list of state pensions with summary information.
+    This endpoint is optimized for list views and returns only essential data.
+    """
+    return pension_state.get_list(
         db=db, 
         skip=skip, 
         limit=limit, 
