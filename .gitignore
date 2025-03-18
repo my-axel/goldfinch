@@ -76,3 +76,6 @@ htmlcov/
 
 # TypeScript
 *.tsbuildinfo
+
+# Cursor
+SCRATCHPAD.md
