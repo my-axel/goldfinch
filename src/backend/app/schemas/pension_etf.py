@@ -1,10 +1,9 @@
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, ConfigDict
 from app.schemas.etf_update import ETFUpdateResponse, ETFErrorResponse
 from app.models.enums import PensionStatus
-from pydantic import ConfigDict
 
 class ETFResponse(BaseModel):
     id: str
@@ -27,8 +26,7 @@ class ETFResponse(BaseModel):
     updates: Optional[List[ETFUpdateResponse]] = None
     errors: Optional[List[ETFErrorResponse]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ContributionPlanStepBase(BaseModel):
     amount: Decimal = Field(gt=0)
@@ -44,8 +42,7 @@ class ContributionPlanStepResponse(ContributionPlanStepBase):
     id: int
     pension_etf_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ContributionHistoryBase(BaseModel):
     date: date
@@ -60,8 +57,7 @@ class ContributionHistoryResponse(ContributionHistoryBase):
     id: int
     pension_etf_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PensionETFBase(BaseModel):
     name: str
@@ -86,8 +82,7 @@ class PensionETFResponse(PensionETFBase):
     contribution_plan_steps: List[ContributionPlanStepResponse]
     contribution_history: List[ContributionHistoryResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PensionETFUpdate(BaseModel):
     name: Optional[str] = None

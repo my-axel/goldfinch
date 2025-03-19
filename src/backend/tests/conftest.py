@@ -135,7 +135,12 @@ def setup_database():
                     logger.warning("Will try to use existing database")
             
             # Try to create database if it doesn't exist
-            if not db_exists or (db_exists and "Could not drop database" not in logger.handlers[0].formatter.format(logger.handlers[0].buffer[-1])):
+            if not db_exists or (db_exists and (
+                len(logger.handlers) == 0 or 
+                not hasattr(logger.handlers[0], 'buffer') or 
+                len(logger.handlers[0].buffer) == 0 or 
+                "Could not drop database" not in logger.handlers[0].formatter.format(logger.handlers[0].buffer[-1])
+            )):
                 try:
                     conn.execute(text("CREATE DATABASE goldfinch_test"))
                     logger.info("Created goldfinch_test database")

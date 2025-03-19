@@ -18,8 +18,7 @@ class Settings(BaseSettings):
     LOG_FILE_MAX_BYTES: int = 10_000_000  # 10MB
     LOG_FILE_BACKUP_COUNT: int = 5
 
-    class Config:
-        env_file = ".env"
+    model_config = {"env_file": ".env"}
 
 settings = Settings()
 

@@ -8,10 +8,10 @@ from app.models.enums import PensionStatus
 pytestmark = pytest.mark.models  # Mark all tests in this file as model tests
 
 @pytest.mark.unit
-def test_pension_state_create(db_session):
+def test_pension_state_create(db_session, test_member):
     """Test creating a basic state pension."""
     pension = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1),
         status=PensionStatus.ACTIVE
@@ -26,10 +26,10 @@ def test_pension_state_create(db_session):
     assert pension.notes is None
 
 @pytest.mark.unit
-def test_pension_state_cascade_delete(db_session):
+def test_pension_state_cascade_delete(db_session, test_member):
     """Test that deleting a pension cascades to its statements."""
     pension = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1)
     )
@@ -53,10 +53,10 @@ def test_pension_state_cascade_delete(db_session):
     assert db_session.query(PensionStateStatement).filter_by(id=statement.id).first() is None
 
 @pytest.mark.unit
-def test_pension_state_unique_member_name(db_session):
+def test_pension_state_unique_member_name(db_session, test_member):
     """Test that member_id and name combination must be unique."""
     pension1 = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1)
     )
@@ -65,7 +65,7 @@ def test_pension_state_unique_member_name(db_session):
     
     # Try to create another pension with same member_id and name
     pension2 = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1)
     )
@@ -75,10 +75,10 @@ def test_pension_state_unique_member_name(db_session):
         db_session.commit()
 
 @pytest.mark.unit
-def test_statement_create(db_session):
+def test_statement_create(db_session, test_member):
     """Test creating a pension statement."""
     pension = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1)
     )
@@ -102,10 +102,10 @@ def test_statement_create(db_session):
     assert statement.note == "Test statement"
 
 @pytest.mark.unit
-def test_statement_ordering(db_session):
+def test_statement_ordering(db_session, test_member):
     """Test that statements are ordered by date descending."""
     pension = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1)
     )
@@ -133,10 +133,10 @@ def test_statement_ordering(db_session):
     assert statements[2].statement_date == date(2023, 1, 1)
 
 @pytest.mark.unit
-def test_statement_nullable_fields(db_session):
+def test_statement_nullable_fields(db_session, test_member):
     """Test that certain statement fields can be null."""
     pension = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1)
     )
@@ -159,10 +159,10 @@ def test_statement_nullable_fields(db_session):
     assert statement.note is None
 
 @pytest.mark.unit
-def test_pension_state_relationships(db_session):
+def test_pension_state_relationships(db_session, test_member):
     """Test relationships between PensionState and related models."""
     pension = PensionState(
-        member_id=1,
+        member_id=test_member.id,
         name="Test State Pension",
         start_date=date(2020, 1, 1)
     )
@@ -170,7 +170,7 @@ def test_pension_state_relationships(db_session):
     db_session.commit()
     
     # Test member relationship (requires member fixture)
-    assert pension.member_id == 1
+    assert pension.member_id == test_member.id
     
     # Test statements relationship
     statement1 = PensionStateStatement(

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
 
 class ETFBase(BaseModel):
     id: str
@@ -44,8 +44,7 @@ class ETFUpdate(BaseModel):
     sharpe_ratio: Optional[Decimal] = None
 
 class ETFResponse(ETFBase):
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ETFPriceBase(BaseModel):
     date: date
@@ -67,5 +66,4 @@ class ETFPriceResponse(ETFPriceBase):
     currency: str
     original_currency: Optional[str] = None
 
-    class Config:
-        from_attributes = True 
+    model_config = ConfigDict(from_attributes=True) 

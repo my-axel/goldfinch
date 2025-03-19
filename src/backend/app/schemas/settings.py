@@ -2,6 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from decimal import Decimal
+from pydantic import ConfigDict
 
 # List of supported locales and currencies
 SUPPORTED_LOCALES = ["en-US", "en-GB", "de-DE"]
@@ -243,5 +244,4 @@ class Settings(SettingsBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True 
+    model_config = ConfigDict(from_attributes=True) 
