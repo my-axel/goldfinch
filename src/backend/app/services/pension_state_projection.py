@@ -91,20 +91,34 @@ class PensionStateProjectionService:
             (retirement_date.month - reference_date.month) / 12
         )
         
+        # Convert to Decimal for calculations
+        years_to_retirement_decimal = Decimal(str(years_to_retirement))
+        
         scenarios = {}
+        
+        # Default growth rates in case settings is None
+        default_rates = {
+            "pessimistic": Decimal("1.0"),
+            "realistic": Decimal("1.5"),
+            "optimistic": Decimal("2.0")
+        }
         
         # Calculate for each scenario type
         for scenario in ['pessimistic', 'realistic', 'optimistic']:
-            rate = getattr(settings, f'state_pension_{scenario}_rate')
+            # Get rate from settings or use default
+            if settings is not None and hasattr(settings, f'state_pension_{scenario}_rate'):
+                rate = getattr(settings, f'state_pension_{scenario}_rate')
+            else:
+                rate = default_rates[scenario]
             
             # Calculate projected monthly amount with compound interest
             projected_amount = statement.projected_monthly_amount * (
-                (1 + rate / 100) ** years_to_retirement
+                (Decimal("1") + rate / Decimal("100")) ** years_to_retirement_decimal
             )
             
             scenarios[scenario] = StatePensionScenario(
                 monthly_amount=projected_amount.quantize(Decimal('0.01')),
-                annual_amount=(projected_amount * 12).quantize(Decimal('0.01')),
+                annual_amount=(projected_amount * Decimal("12")).quantize(Decimal('0.01')),
                 retirement_age=retirement_age,
                 years_to_retirement=int(years_to_retirement),
                 growth_rate=rate

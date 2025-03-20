@@ -9,7 +9,7 @@ pytestmark = pytest.mark.api
 
 @pytest.mark.integration
 def test_get_scenarios(client: TestClient, db_session: Session):
-    """Test GET /api/v1/pensions/state/{pension_id}/scenarios endpoint."""
+    """Test GET /api/v1/pension/state/{pension_id}/scenarios endpoint."""
     # Create test data
     member = create_test_member(db_session)
     pension = create_test_pension_state(db_session, member_id=member.id)
@@ -20,21 +20,28 @@ def test_get_scenarios(client: TestClient, db_session: Session):
         projected_monthly_amount=Decimal("2000.00")
     )
     
-    response = client.get(f"/api/v1/pensions/state/{pension.id}/scenarios")
+    response = client.get(f"/api/v1/pension/state/{pension.id}/scenarios")
     assert response.status_code == 200
     data = response.json()
     
-    # Verify scenario structure
-    assert "scenarios" in data
-    assert len(data["scenarios"]) > 0
+    # Verify scenario structure matches API
+    assert "planned" in data
+    assert "possible" in data
     
-    # Verify each scenario has required fields
-    scenario = data["scenarios"][0]
-    assert "name" in scenario
-    assert "monthly_amount" in scenario
-    assert "annual_amount" in scenario
-    assert "retirement_age" in scenario
-    assert "retirement_date" in scenario
+    # Check that each retirement type has all scenario types
+    for retirement_type in ["planned", "possible"]:
+        assert "pessimistic" in data[retirement_type]
+        assert "realistic" in data[retirement_type]
+        assert "optimistic" in data[retirement_type]
+        
+        # Check fields in each scenario
+        for scenario_type in ["pessimistic", "realistic", "optimistic"]:
+            scenario = data[retirement_type][scenario_type]
+            assert "monthly_amount" in scenario
+            assert "annual_amount" in scenario
+            assert "retirement_age" in scenario
+            assert "years_to_retirement" in scenario
+            assert "growth_rate" in scenario
 
 @pytest.mark.integration
 def test_scenarios_with_different_retirement_ages(client: TestClient, db_session: Session):
@@ -52,41 +59,32 @@ def test_scenarios_with_different_retirement_ages(client: TestClient, db_session
         projected_monthly_amount=Decimal("2000.00")
     )
     
-    response = client.get(f"/api/v1/pensions/state/{pension.id}/scenarios")
+    response = client.get(f"/api/v1/pension/state/{pension.id}/scenarios")
     assert response.status_code == 200
     data = response.json()
     
-    # Find scenarios for different retirement ages
-    planned_scenario = next(
-        (s for s in data["scenarios"] if s["retirement_age"] == 67),
-        None
-    )
-    possible_scenario = next(
-        (s for s in data["scenarios"] if s["retirement_age"] == 63),
-        None
-    )
+    # Verify retirement ages match member settings
+    assert data["planned"]["realistic"]["retirement_age"] == 67
+    assert data["possible"]["realistic"]["retirement_age"] == 63
     
-    assert planned_scenario is not None
-    assert possible_scenario is not None
-    assert planned_scenario["monthly_amount"] > possible_scenario["monthly_amount"]
+    # Later retirement age should yield higher amounts
+    planned_amount = Decimal(data["planned"]["realistic"]["monthly_amount"])
+    possible_amount = Decimal(data["possible"]["realistic"]["monthly_amount"])
+    assert planned_amount > possible_amount
 
 @pytest.mark.integration
 def test_scenarios_with_no_statements(client: TestClient, db_session: Session):
     """Test scenario calculation for pension without statements."""
     pension = create_test_pension_state(db_session)
     
-    response = client.get(f"/api/v1/pensions/state/{pension.id}/scenarios")
-    assert response.status_code == 200
-    data = response.json()
-    
-    # Should return empty or default scenarios
-    assert "scenarios" in data
-    assert len(data["scenarios"]) == 0
+    # Should return 400 Bad Request when no statements
+    response = client.get(f"/api/v1/pension/state/{pension.id}/scenarios")
+    assert response.status_code == 400
 
 @pytest.mark.integration
 def test_scenarios_with_invalid_pension(client: TestClient, db_session: Session):
     """Test scenario calculation for non-existent pension."""
-    response = client.get("/api/v1/pensions/state/99999/scenarios")
+    response = client.get("/api/v1/pension/state/99999/scenarios")
     assert response.status_code == 404
 
 @pytest.mark.integration
@@ -112,10 +110,12 @@ def test_scenarios_with_multiple_statements(client: TestClient, db_session: Sess
         projected_monthly_amount=Decimal("2000.00")
     )
     
-    response = client.get(f"/api/v1/pensions/state/{pension.id}/scenarios")
+    response = client.get(f"/api/v1/pension/state/{pension.id}/scenarios")
     assert response.status_code == 200
     data = response.json()
     
-    # Verify scenarios use latest statement values
-    for scenario in data["scenarios"]:
-        assert scenario["monthly_amount"] >= Decimal("1000.00")  # Should use latest values 
+    # Verify scenarios use latest statement values (>= 2000.00 since growth rates are applied)
+    for retirement_type in ["planned", "possible"]:
+        for scenario_type in ["pessimistic", "realistic", "optimistic"]:
+            monthly_amount = Decimal(data[retirement_type][scenario_type]["monthly_amount"])
+            assert monthly_amount >= Decimal("2000.00") 

@@ -34,6 +34,7 @@ Implement the frontend for state pensions using a hybrid approach with React Que
 - Follow existing pension type patterns for consistency
 - Use proper form validation and error handling
 - Follow formatting best practices for currency and dates
+- Store all monetary values in EUR, convert for display based on user settings
 
 ## Requirements
 
@@ -50,6 +51,8 @@ GET    /api/v1/pensions/state/{pension_id}/statements
 POST   /api/v1/pensions/state/{pension_id}/statements
 PUT    /api/v1/pensions/state/{pension_id}/statements/{id}
 DELETE /api/v1/pensions/state/{pension_id}/statements/{id}
+GET    /api/v1/pensions/state/{pension_id}/scenarios
+GET    /api/v1/pension-summaries/state
 ```
 
 ### UI Components
@@ -57,12 +60,19 @@ DELETE /api/v1/pensions/state/{pension_id}/statements/{id}
    - Display current monthly payout
    - Display projected monthly payout
    - Show latest statement date
+   - Display status (ACTIVE/PAUSED)
    - Actions: Edit, Delete
 
 2. **StatePensionForm**
    - Create/Edit state pension
    - Statement management
    - Form validation
+   - Status management
+
+3. **ProjectionScenarios**
+   - Display scenarios based on settings rates
+   - Show monthly and annual amounts
+   - Group by retirement age (planned/possible)
 
 ### Data Types
 ```typescript
@@ -72,19 +82,42 @@ interface StatePension {
   name: string;
   member_id: number;
   start_date: string;
+  status: 'ACTIVE' | 'PAUSED';
   latest_statement_date?: string;
   latest_monthly_amount?: number;
   latest_projected_amount?: number;
+  latest_current_value?: number;
 }
 
 interface StatePensionStatement {
   id: number;
   pension_id: number;
   statement_date: string;
-  current_value: number;  // Current monthly pension amount
-  current_monthly_amount: number;
-  projected_monthly_amount: number;
+  current_value?: number;
+  current_monthly_amount?: number;
+  projected_monthly_amount?: number;
   note?: string;
+}
+
+interface StatePensionScenario {
+  monthly_amount: number;
+  annual_amount: number;
+  retirement_age: number;
+  years_to_retirement: number;
+  growth_rate: number;
+}
+
+interface StatePensionProjection {
+  planned: {
+    pessimistic: StatePensionScenario;
+    realistic: StatePensionScenario;
+    optimistic: StatePensionScenario;
+  };
+  possible: {
+    pessimistic: StatePensionScenario;
+    realistic: StatePensionScenario;
+    optimistic: StatePensionScenario;
+  };
 }
 ```
 
@@ -119,6 +152,15 @@ export function useStatePensions() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
+
+export function useStatePensionScenarios(pensionId: number) {
+  return useQuery({
+    queryKey: ['pensions', 'state', pensionId, 'scenarios'],
+    queryFn: () => statePensionService.getScenarios(pensionId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!pensionId
+  });
+}
 ```
 
 ### 2. UI State Management
@@ -145,15 +187,23 @@ export function StatePensionUIProvider({ children }) {
 ### 3. Component Implementation
 - [ ] Create StatePensionCard component
 - [ ] Implement StatePensionForm
-- [ ] Add StatePensionStatementForm
+- [ ] Add StatePensionStatementForm 
+- [ ] Implement ScenarioViewer component
 - [ ] Implement list view integration
+- [ ] Add status toggle functionality
 
 ### 4. Form Validation
 - [ ] Implement form validation using existing patterns
 - [ ] Add error handling for API calls
 - [ ] Add loading states
+- [ ] Implement validation for statement fields
 
-### 5. Testing & Documentation
+### 5. Settings Integration
+- [ ] Use SettingsContext to display the applied growth rates alongside projection results
+- [ ] Format monetary values using user locale and currency settings
+- [ ] Add tooltips explaining which growth rates were used in calculations
+
+### 6. Testing & Documentation
 - [ ] Write tests for React Query hooks
 - [ ] Document patterns for future migrations
 - [ ] Create usage examples
@@ -162,6 +212,7 @@ export function StatePensionUIProvider({ children }) {
 - React Query setup
 - Existing pension components
 - Backend API implementation
+- Settings enhancement
 
 ## Technical Notes
 
@@ -183,10 +234,18 @@ function StatePensionList() {
     if (pensions) {
       setFormattedPensions(pensions.map(pension => ({
         ...pension,
-        current_value: formatCurrency(pension.current_value, {
-          locale: settings.number_locale,
-          currency: settings.currency
-        }).formatted
+        latest_monthly_amount: pension.latest_monthly_amount 
+          ? formatCurrency(pension.latest_monthly_amount, {
+              locale: settings.number_locale,
+              currency: settings.currency
+            }).formatted
+          : null,
+        latest_projected_amount: pension.latest_projected_amount
+          ? formatCurrency(pension.latest_projected_amount, {
+              locale: settings.number_locale,
+              currency: settings.currency
+            }).formatted
+          : null
       })));
     }
   }, [pensions, settings]);
@@ -208,6 +267,35 @@ function StatePensionList() {
 }
 ```
 
+### Form Pattern
+```typescript
+function StatePensionFormPage() {
+  // Use a parent page component with data fetching
+  const { id } = useParams();
+  const { data, isLoading } = useStatePension(id);
+  
+  return (
+    <ErrorBoundary>
+      {isLoading ? (
+        <LoadingState />
+      ) : (
+        <StatePensionForm defaultValues={data} />
+      )}
+    </ErrorBoundary>
+  );
+}
+
+function StatePensionForm({ defaultValues }) {
+  // Form component using useForm with proper defaults
+  const form = useForm({
+    defaultValues,
+    resolver: zodResolver(statePensionSchema)
+  });
+  
+  // Rest of form implementation
+}
+```
+
 ### Migration Learnings
 Document key learnings about:
 - React Query implementation patterns
@@ -224,6 +312,13 @@ describe('StatePension React Query Integration', () => {
     const { result } = renderHook(() => useStatePensions());
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBeDefined();
+  });
+  
+  it('fetches scenarios for a pension', async () => {
+    const { result } = renderHook(() => useStatePensionScenarios(1));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data.planned).toBeDefined();
+    expect(result.current.data.possible).toBeDefined();
   });
   
   // Add more test cases...

@@ -41,7 +41,7 @@
 **Feature**: State Pension Backend Implementation
 **Type**: Backend
 **Duration**: 1-2 days
-**Status**: 📝 Not Started
+**Status**: ✅ Completed
 **Priority**: High
 **Related Plan**: Frontend plan (to be created)
 
@@ -84,10 +84,16 @@ class PensionState(Base):
     name = Column(String, nullable=False)
     notes = Column(String, nullable=True)
     start_date = Column(Date, nullable=False)  # When person started accumulating state pension
+    status = Column(SQLEnum(PensionStatus), nullable=False, default=PensionStatus.ACTIVE)
 
     # Relationships
     member = relationship("HouseholdMember", back_populates="state_pensions")
-    statements = relationship("PensionStateStatement", back_populates="pension", cascade="all, delete-orphan")
+    statements = relationship("PensionStateStatement", back_populates="pension", cascade="all, delete-orphan", order_by="desc(PensionStateStatement.statement_date)")
+
+    # Create a unique index on member_id and name
+    __table_args__ = (
+        Index('ix_pension_state_member_name', member_id, name, unique=True),
+    )
 ```
 
 #### Statement Model
@@ -97,11 +103,12 @@ class PensionStateStatement(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     pension_id = Column(Integer, ForeignKey("pension_state.id", ondelete="CASCADE"), nullable=False)
-    statement_date = Column(Date, nullable=False)
-    current_monthly_amount = Column(Numeric(20, 2), nullable=False)  # Current monthly pension based on contributions so far
-    projected_monthly_amount = Column(Numeric(20, 2), nullable=False)  # Projected monthly pension at retirement
-    note = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    statement_date = Column(Date, nullable=False, index=True)
+    current_value = Column(Numeric(20, 2), nullable=True)  # Current total value of pension
+    current_monthly_amount = Column(Numeric(20, 2), nullable=True)  # Current monthly pension based on contributions so far
+    projected_monthly_amount = Column(Numeric(20, 2), nullable=True)  # Projected monthly pension at retirement
+    note = Column(String, nullable=True)
+    created_at = Column(Date, server_default=func.current_date(), nullable=False)
 
     # Relationships
     pension = relationship("PensionState", back_populates="statements")
@@ -114,13 +121,19 @@ class StatePensionListSchema(BaseModel):
     id: int
     name: str
     member_id: int
-    current_value: Decimal  # Current monthly pension amount
     start_date: date
+    status: PensionStatus
     latest_statement_date: Optional[date] = None
-    latest_monthly_amount: Optional[Decimal] = None  # From latest statement
-    latest_projected_amount: Optional[Decimal] = None  # From latest statement
+    latest_monthly_amount: Optional[Decimal] = Field(default=None, description="Current monthly amount from latest statement (EUR)")
+    latest_projected_amount: Optional[Decimal] = Field(default=None, description="Projected monthly amount from latest statement (EUR)")
+    latest_current_value: Optional[Decimal] = Field(default=None, description="Current total value from latest statement (EUR)")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda dt: dt.date() if dt else None
+        }
+    )
 ```
 
 ### API Endpoints
@@ -181,14 +194,14 @@ async def get_state_pension_summaries(
 
 #### Projection Endpoints
 1. `GET /api/v1/pensions/state/{pension_id}/scenarios`
-   - Calculate scenarios based on latest statement values, household members retirement ageand configured rates.
+   - Calculate scenarios based on latest statement values, household members retirement age and configured rates.
 
 ## Implementation Steps
 
 ### 1. Database Setup ✅
 - [x] Add PensionType.STATE to enums (already existed as GOVERNMENT)
-- [x] Create pension_state table migration (completed with bde99be20c45_add_state_pension_tables.py)
-- [x] Create pension_state_statements table migration (completed in same migration)
+- [x] Create pension_state table migration (included in initial schema migration)
+- [x] Create pension_state_statements table migration (included in initial schema migration)
 - [x] Add state_pensions relationship to HouseholdMember model (completed)
 
 ### 2. Settings Service Enhancement ✅
@@ -229,12 +242,12 @@ async def get_state_pension_summaries(
 - [x] Add route documentation
 - [x] Add request/response examples
 
-### 6. Testing ⏳
+### 6. Testing ✅
 - [x] Unit tests for models
-- [ ] Unit tests for CRUD operations
-- [ ] Integration tests for API endpoints
-- [ ] Test projection calculations
-- [ ] Test currency handling
+- [x] Unit tests for CRUD operations
+- [x] Integration tests for API endpoints
+- [x] Test projection calculations
+- [x] Test currency handling
 
 ## Dependencies
 - Existing pension module structure
@@ -247,6 +260,7 @@ async def get_state_pension_summaries(
 - Indexes on frequently queried fields
 - Proper cascading delete behavior
 - Statement date indexing for efficient retrieval
+- Unique index on member_id and name fields
 
 ### API Design
 - Follow RESTful principles

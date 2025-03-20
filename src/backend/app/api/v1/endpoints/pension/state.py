@@ -331,7 +331,7 @@ async def calculate_pension_scenarios(
     ```
     """
     # Get pension with statements
-    pension = pension_state.get_with_statements(db, id=pension_id)
+    pension = pension_state.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="State pension not found")
         
