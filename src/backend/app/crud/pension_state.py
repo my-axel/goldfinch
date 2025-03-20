@@ -63,7 +63,7 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             Created PensionState object with all relationships loaded
         """
         try:
-            db_obj = PensionState(**obj_in.dict())
+            db_obj = PensionState(**obj_in.model_dump())
             db.add(db_obj)
             db.commit()
             return self.get(db=db, id=db_obj.id)
@@ -94,7 +94,7 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             if isinstance(obj_in, dict):
                 update_data = obj_in
             else:
-                update_data = obj_in.dict(exclude_unset=True)
+                update_data = obj_in.model_dump(exclude_unset=True)
 
             # Update fields directly in the database with a query
             update_values = {}
@@ -137,13 +137,13 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             ValueError: If pension not found
         """
         # Get the pension
-        pension = db.query(PensionState).get(pension_id)
+        pension = db.get(PensionState, pension_id)
         if not pension:
             raise ValueError("Pension not found")
 
         # Create the statement
         db_obj = PensionStateStatement(
-            **obj_in.dict(),
+            **obj_in.model_dump(),
             pension_id=pension_id
         )
         db.add(db_obj)
@@ -170,14 +170,14 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             Updated PensionStateStatement object
         """
         try:
-            statement = db.query(PensionStateStatement).get(statement_id)
+            statement = db.get(PensionStateStatement, statement_id)
             if not statement:
                 raise HTTPException(status_code=404, detail="Statement not found")
 
             if isinstance(obj_in, dict):
                 update_data = obj_in
             else:
-                update_data = obj_in.dict(exclude_unset=True)
+                update_data = obj_in.model_dump(exclude_unset=True)
 
             # Update statement fields
             for field, value in update_data.items():

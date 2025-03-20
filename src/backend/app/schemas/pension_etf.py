@@ -105,7 +105,9 @@ class PensionStatistics(BaseModel):
     contribution_history: List[ContributionHistoryResponse]
     value_history: List[dict] = Field(
         description="List of historical values with dates",
-        example=[{"date": "2024-01-01", "value": "1000.00"}]
+        json_schema_extra={
+            "example": [{"date": "2024-01-01", "value": "1000.00"}]
+        }
     )
 
 class ETFPensionListSchema(BaseModel):

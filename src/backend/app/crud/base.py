@@ -112,7 +112,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def remove(self, db: Session, *, id: int) -> ModelType:
         """Remove a record."""
         logger.debug(f"BASE: Removing {self.model.__name__} with ID: {id}")
-        obj = db.query(self.model).get(id)
+        obj = db.get(self.model, id)
         db.delete(obj)
         db.commit()
         logger.debug(f"BASE: Successfully removed {self.model.__name__} with ID: {id}")

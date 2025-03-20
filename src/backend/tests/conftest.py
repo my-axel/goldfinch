@@ -261,10 +261,25 @@ def db_session(db_engine) -> Generator[Session, None, None]:
         raise
 
 @pytest.fixture(scope="function")
-def client() -> Generator:
-    """Create a test client for API tests."""
+def client(db_session: Session) -> Generator:
+    """Create a test client for API tests with the test database session."""
+    from app.api.v1.deps import get_db
+    
+    # Override the dependency to use our test session
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+    
+    # Apply the override
+    app.dependency_overrides[get_db] = override_get_db
+    
     with TestClient(app) as test_client:
         yield test_client
+    
+    # Remove the override after the test
+    app.dependency_overrides.clear()
 
 # Import factories for test data creation
 from tests import factories

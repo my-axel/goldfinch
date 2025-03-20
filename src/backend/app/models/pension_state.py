@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, ForeignKey, Index, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Numeric, Date, ForeignKey, Index, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from app.db.base_class import Base
 from app.models.enums import PensionStatus
 
@@ -34,6 +35,7 @@ class PensionStateStatement(Base):
     current_monthly_amount = Column(Numeric(20, 2), nullable=True)  # Current monthly pension based on contributions so far
     projected_monthly_amount = Column(Numeric(20, 2), nullable=True)  # Projected monthly pension at retirement
     note = Column(String, nullable=True)
+    created_at = Column(Date, server_default=func.current_date(), nullable=False)
     
     # Relationships
     pension = relationship("PensionState", back_populates="statements") 

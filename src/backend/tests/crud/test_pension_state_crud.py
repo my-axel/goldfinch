@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.crud.pension_state import pension_state
 from app.models.enums import PensionStatus
 from tests.factories import create_test_pension_state, create_test_pension_statement, create_test_member
+from app.schemas.pension_state import PensionStateCreate
+from app.models.pension_state import PensionStateStatement
 
 pytestmark = pytest.mark.crud
 
@@ -26,7 +28,7 @@ def test_get_list(db_session: Session):
     # Test member_id filter
     results = pension_state.get_list(db=db_session, member_id=pension1.member_id)
     assert len(results) == 1
-    assert results[0].id == pension1.id
+    assert results[0]["id"] == pension1.id
 
 @pytest.mark.unit
 def test_get_by_id(db_session: Session):
@@ -41,19 +43,19 @@ def test_get_by_id(db_session: Session):
 def test_create(db_session: Session):
     """Test creating a new state pension."""
     member = create_test_member(db_session)
-    pension_data = {
-        "member_id": member.id,
-        "name": "New Test Pension",
-        "start_date": date(2020, 1, 1),
-        "status": PensionStatus.ACTIVE,
-        "notes": "Test notes"
-    }
+    pension_data = PensionStateCreate(
+        member_id=member.id,
+        name="New Test Pension",
+        start_date=date(2020, 1, 1),
+        status=PensionStatus.ACTIVE,
+        notes="Test notes"
+    )
     
     pension = pension_state.create(db=db_session, obj_in=pension_data)
     assert pension.id is not None
-    assert pension.name == pension_data["name"]
-    assert pension.member_id == pension_data["member_id"]
-    assert pension.start_date == pension_data["start_date"]
+    assert pension.name == pension_data.name
+    assert pension.member_id == pension_data.member_id
+    assert pension.start_date == pension_data.start_date
 
 @pytest.mark.unit
 def test_update(db_session: Session):
@@ -85,7 +87,7 @@ def test_delete(db_session: Session):
     assert result is None
     
     # Verify statements are cascade deleted
-    stmt_result = db_session.query(pension_state.model_statement).filter_by(id=statement.id).first()
+    stmt_result = db_session.query(PensionStateStatement).filter_by(id=statement.id).first()
     assert stmt_result is None
 
 @pytest.mark.unit

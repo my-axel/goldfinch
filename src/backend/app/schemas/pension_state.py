@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict
@@ -30,7 +30,12 @@ class PensionStateStatementResponse(PensionStateStatementBase):
     pension_id: int
     created_at: date
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda dt: dt.date() if dt else None
+        }
+    )
 
 # Base schema for state pensions
 class PensionStateBase(BaseModel):
@@ -56,7 +61,12 @@ class PensionStateResponse(PensionStateBase):
     id: int
     statements: List[PensionStateStatementResponse] = []
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda dt: dt.date() if dt else None
+        }
+    )
 
 # Schema for state pension list view
 class StatePensionListSchema(BaseModel):
@@ -71,4 +81,9 @@ class StatePensionListSchema(BaseModel):
     latest_projected_amount: Optional[Decimal] = Field(default=None, description="Projected monthly amount from latest statement (EUR)")
     latest_current_value: Optional[Decimal] = Field(default=None, description="Current total value from latest statement (EUR)")
 
-    model_config = ConfigDict(from_attributes=True) 
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda dt: dt.date() if dt else None
+        }
+    ) 
