@@ -33,6 +33,11 @@ class MonitoringSettings(BaseSettings):
     SIGNOZ_SERVICE_NAME: str = "goldfinch-backend"
     SIGNOZ_ENVIRONMENT: str = "development"
     SIGNOZ_INSECURE: bool = True  # Set to False for HTTPS
+    
+    # Log settings
+    ENABLE_SIGNOZ_LOGS: bool = False
+    SIGNOZ_LOG_LEVEL: str = "INFO"  # Default log level for SigNoz logs
+    SIGNOZ_LOG_BATCH_SIZE: int = 10  # Number of logs to batch before sending
 
     model_config = {
         "env_prefix": "GOLDFINCH_",
