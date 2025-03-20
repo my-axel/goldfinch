@@ -34,14 +34,15 @@ class MonitoringSettings(BaseSettings):
     SIGNOZ_ENVIRONMENT: str = "development"
     SIGNOZ_INSECURE: bool = True  # Set to False for HTTPS
 
-    class Config:
-        env_prefix = "GOLDFINCH_"
-        case_sensitive = True
+    model_config = {
+        "env_prefix": "GOLDFINCH_",
+        "case_sensitive": True,
         # Try to find the .env.signoz file in the project
-        env_file = str(find_project_root() / ".env.signoz")
-        env_file_encoding = "utf-8"
+        "env_file": str(find_project_root() / ".env.signoz"),
+        "env_file_encoding": "utf-8",
         # Fallback to environment variables if file not found
-        env_ignore_missing = True
+        "env_ignore_missing": True
+    }
 
 @lru_cache()
 def get_monitoring_settings() -> MonitoringSettings:

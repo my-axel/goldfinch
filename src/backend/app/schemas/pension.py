@@ -22,7 +22,7 @@ class ContributionStepResponse(ContributionStepBase):
 class OneTimeInvestmentCreate(BaseModel):
     amount: Decimal = Field(gt=0, description="Amount to invest in EUR")
     investment_date: date = Field(description="When the investment was/will be made")
-    note: Optional[str] = Field(None, description="Optional note explaining the investment (e.g., 'Year-end bonus 2024')")
+    note: Optional[str] = Field(default=None, description="Optional note explaining the investment (e.g., 'Year-end bonus 2024')")
 
     @field_validator('amount', mode='before')
     @classmethod

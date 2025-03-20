@@ -8,8 +8,8 @@ class ContributionPlanStepBase(BaseModel):
     amount: Decimal = Field(gt=0, description="Contribution amount (must be positive)")
     frequency: str = Field(description="Usually MONTHLY")  # Usually MONTHLY
     start_date: date = Field(description="Start date of the contribution step")
-    end_date: Optional[date] = Field(None, description="End date of the contribution step (optional)")
-    note: Optional[str] = Field(None, description="Additional notes")
+    end_date: Optional[date] = Field(default=None, description="End date of the contribution step (optional)")
+    note: Optional[str] = Field(default=None, description="Additional notes")
     
     @field_validator('end_date')
     @classmethod
@@ -30,8 +30,8 @@ class ContributionPlanStepResponse(ContributionPlanStepBase):
 class ContributionHistoryBase(BaseModel):
     contribution_date: date = Field(description="Date of the contribution")
     amount: Decimal = Field(ge=0, description="Contribution amount (must be non-negative)")
-    is_manual: bool = Field(False, description="Whether the contribution was manually entered")
-    note: Optional[str] = Field(None, description="Additional notes")
+    is_manual: bool = Field(default=False, description="Whether the contribution was manually entered")
+    note: Optional[str] = Field(default=None, description="Additional notes")
     
     @field_validator('contribution_date')
     @classmethod
@@ -66,10 +66,10 @@ class BenefitBase(BaseModel):
     source: str = Field(description="Source of the benefit (e.g., 'Government', 'Employer')")
     amount: Decimal = Field(gt=0, description="Benefit amount (must be positive)")
     frequency: str = Field(description="MONTHLY, QUARTERLY, YEARLY, ONE_TIME")  # MONTHLY, QUARTERLY, YEARLY, ONE_TIME
-    description: Optional[str] = Field(None, description="Description of the benefit")
+    description: Optional[str] = Field(default=None, description="Description of the benefit")
     valid_from: date = Field(description="Start date of the benefit")
-    valid_until: Optional[date] = Field(None, description="End date of the benefit (optional)")
-    status: str = Field("ACTIVE", description="ACTIVE, PAUSED, ENDED")  # ACTIVE, PAUSED, ENDED
+    valid_until: Optional[date] = Field(default=None, description="End date of the benefit (optional)")
+    status: str = Field(default="ACTIVE", description="ACTIVE, PAUSED, ENDED")  # ACTIVE, PAUSED, ENDED
     
     @field_validator('valid_until')
     @classmethod
@@ -144,9 +144,9 @@ class StatementBase(BaseModel):
     value: Decimal = Field(gt=0, description="Current value (must be positive)")
     total_contributions: Decimal = Field(ge=0, description="Total contributions to date (must be non-negative)")
     total_benefits: Decimal = Field(ge=0, description="Total benefits received (must be non-negative)")
-    costs_amount: Optional[Decimal] = Field(None, description="Yearly costs amount")
-    costs_percentage: Optional[Decimal] = Field(None, description="Yearly costs percentage")
-    note: Optional[str] = Field(None, description="Additional notes")
+    costs_amount: Optional[Decimal] = Field(default=None, description="Yearly costs amount")
+    costs_percentage: Optional[Decimal] = Field(default=None, description="Yearly costs percentage")
+    note: Optional[str] = Field(default=None, description="Additional notes")
     
     @field_validator('statement_date')
     @classmethod
@@ -177,8 +177,8 @@ class StatementUpdate(BaseModel):
     value: Optional[Decimal] = None
     total_contributions: Optional[Decimal] = None
     total_benefits: Optional[Decimal] = None
-    costs_amount: Optional[Decimal] = Field(None, gt=0, description="Costs amount must be positive")
-    costs_percentage: Optional[Decimal] = Field(None, ge=0, le=100, description="Costs percentage must be between 0 and 100")
+    costs_amount: Optional[Decimal] = Field(default=None, gt=0, description="Costs amount must be positive")
+    costs_percentage: Optional[Decimal] = Field(default=None, ge=0, le=100, description="Costs percentage must be between 0 and 100")
     note: Optional[str] = None
     projections: Optional[List[ProjectionCreate]] = None
 
@@ -208,16 +208,16 @@ class StatementResponse(StatementBase):
 class PensionInsuranceBase(BaseModel):
     name: str = Field(description="Name of the insurance pension")
     member_id: int = Field(description="ID of the household member")
-    notes: Optional[str] = Field(None, description="Additional notes")
+    notes: Optional[str] = Field(default=None, description="Additional notes")
     provider: str = Field(description="Insurance company name")
-    contract_number: Optional[str] = Field(None, description="Policy or contract identification number")
+    contract_number: Optional[str] = Field(default=None, description="Policy or contract identification number")
     start_date: date = Field(description="Policy start date")
-    guaranteed_interest: Optional[Decimal] = Field(None, ge=0, description="Minimum guaranteed return rate (must be non-negative)")
-    expected_return: Optional[Decimal] = Field(None, ge=0, description="Expected total return rate (must be non-negative)")
-    status: str = Field("ACTIVE", description="ACTIVE, PAUSED")
-    policy_duration_years: Optional[int] = Field(None, description="Fixed term in years, if applicable")
-    policy_end_date: Optional[date] = Field(None, description="Specific end date, if applicable")
-    is_lifetime_policy: Optional[bool] = Field(None, description="Whether it's a lifetime policy")
+    guaranteed_interest: Optional[Decimal] = Field(default=None, ge=0, description="Minimum guaranteed return rate (must be non-negative)")
+    expected_return: Optional[Decimal] = Field(default=None, ge=0, description="Expected total return rate (must be non-negative)")
+    status: str = Field(default="ACTIVE", description="ACTIVE, PAUSED")
+    policy_duration_years: Optional[int] = Field(default=None, description="Fixed term in years, if applicable")
+    policy_end_date: Optional[date] = Field(default=None, description="Specific end date, if applicable")
+    is_lifetime_policy: Optional[bool] = Field(default=None, description="Whether it's a lifetime policy")
     
     @field_validator('policy_end_date')
     @classmethod

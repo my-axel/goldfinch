@@ -7,10 +7,10 @@ from app.models.enums import PensionStatus
 # Base schema for statements
 class PensionStateStatementBase(BaseModel):
     statement_date: date = Field(description="Date of the pension statement")
-    current_monthly_amount: Optional[Decimal] = Field(None, description="Current monthly pension amount based on contributions so far (EUR)")
-    projected_monthly_amount: Optional[Decimal] = Field(None, description="Projected monthly pension amount at retirement (EUR)")
-    current_value: Optional[Decimal] = Field(None, description="Current total value of the pension (EUR)")
-    note: Optional[str] = Field(None, description="Additional notes about the statement")
+    current_monthly_amount: Optional[Decimal] = Field(default=None, description="Current monthly pension amount based on contributions so far (EUR)")
+    projected_monthly_amount: Optional[Decimal] = Field(default=None, description="Projected monthly pension amount at retirement (EUR)")
+    current_value: Optional[Decimal] = Field(default=None, description="Current total value of the pension (EUR)")
+    note: Optional[str] = Field(default=None, description="Additional notes about the statement")
 
 # Schema for creating a new statement
 class PensionStateStatementCreate(PensionStateStatementBase):
@@ -36,7 +36,7 @@ class PensionStateStatementResponse(PensionStateStatementBase):
 class PensionStateBase(BaseModel):
     name: str = Field(description="Name of the state pension")
     member_id: int = Field(description="ID of the household member")
-    notes: Optional[str] = Field(None, description="Additional notes")
+    notes: Optional[str] = Field(default=None, description="Additional notes")
     start_date: date = Field(description="When person started accumulating state pension")
     status: PensionStatus = Field(default=PensionStatus.ACTIVE, description="Current status of the pension")
 
@@ -67,8 +67,8 @@ class StatePensionListSchema(BaseModel):
     start_date: date
     status: PensionStatus
     latest_statement_date: Optional[date] = None
-    latest_monthly_amount: Optional[Decimal] = Field(None, description="Current monthly amount from latest statement (EUR)")
-    latest_projected_amount: Optional[Decimal] = Field(None, description="Projected monthly amount from latest statement (EUR)")
-    latest_current_value: Optional[Decimal] = Field(None, description="Current total value from latest statement (EUR)")
+    latest_monthly_amount: Optional[Decimal] = Field(default=None, description="Current monthly amount from latest statement (EUR)")
+    latest_projected_amount: Optional[Decimal] = Field(default=None, description="Projected monthly amount from latest statement (EUR)")
+    latest_current_value: Optional[Decimal] = Field(default=None, description="Current total value from latest statement (EUR)")
 
     model_config = ConfigDict(from_attributes=True) 

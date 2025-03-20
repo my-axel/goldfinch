@@ -54,7 +54,7 @@ class PensionCompanyRetirementProjectionResponse(PensionCompanyRetirementProject
 
     model_config = ConfigDict(
         from_attributes=True,
-        json_encoders={
+        model_dump_handlers={
             Decimal: lambda v: float(v)
         },
         exclude_none=True,
@@ -116,7 +116,7 @@ class PensionCompanyStatementResponse(PensionCompanyStatementBase):
 
     model_config = ConfigDict(
         from_attributes=True,
-        json_encoders={
+        model_dump_handlers={
             datetime: lambda v: v.isoformat(),
             Decimal: lambda v: float(v)
         },
@@ -186,7 +186,7 @@ class PensionCompanyResponse(PensionCompanyBase):
 
     model_config = ConfigDict(
         from_attributes=True,
-        json_encoders={
+        model_dump_handlers={
             Decimal: lambda v: float(v)
         }
     )
