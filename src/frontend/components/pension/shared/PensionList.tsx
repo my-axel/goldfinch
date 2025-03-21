@@ -15,7 +15,7 @@ import {
   CompanyPensionList,
   PensionList as PensionListType
 } from "@/frontend/types/pension"
-import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle } from "lucide-react"
+import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle, Landmark } from "lucide-react"
 import { Button } from "@/frontend/components/ui/button"
 import {
   AlertDialog,
@@ -48,6 +48,8 @@ import {
   FormattedDate,
   FormattedFrequency
 } from "@/frontend/components/shared/formatting"
+
+import { StatePensionListCard } from '@/frontend/components/pension/state/StatePensionListCard'
 
 /**
  * Props for the PensionList component
@@ -265,6 +267,8 @@ function PensionCard({
         return <Shield className="h-4 w-4" />;
       case PensionType.COMPANY:
         return <Building className="h-4 w-4" />;
+      case PensionType.STATE:
+        return <Landmark className="h-4 w-4" />;
       default:
         return null;
     }
@@ -289,6 +293,8 @@ function PensionCard({
           return <CompanyPensionContent pension={pension} />
         }
         return null;
+      case PensionType.STATE:
+        return <StatePensionListCard pension={pension} />
       default:
         return null;
     }
@@ -354,9 +360,10 @@ function AddPensionCard({ onClick }: { onClick: () => void }) {
 function sortPensions(a: PensionListType, b: PensionListType): number {
   // First sort by type
   const typeOrder = {
-    [PensionType.ETF_PLAN]: 1,
+    [PensionType.STATE]: 1,
     [PensionType.COMPANY]: 2,
-    [PensionType.INSURANCE]: 3
+    [PensionType.INSURANCE]: 3,
+    [PensionType.ETF_PLAN]: 4,
   }
   
   const typeComparison = typeOrder[a.type] - typeOrder[b.type]

@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { Button } from './button'
-import { Input } from './input'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import { FormControl, FormItem, FormMessage } from './form'
 import { ControllerRenderProps, FieldValues, Path } from 'react-hook-form'
@@ -10,6 +9,7 @@ import { cn } from '@/frontend/lib/utils'
 import { ChevronDown } from 'lucide-react'
 import { useDateFormat } from '@/frontend/hooks/useDateFormat'
 import { useHousehold } from '@/frontend/context/HouseholdContext'
+import { DatePicker } from './date-picker'
 
 /**
  * DateEndPicker component props
@@ -127,10 +127,9 @@ export function DateEndPicker<
   ],
   className,
   disabled,
-  ...props
 }: DateEndPickerProps<TFieldValues, TName>) {
   const [open, setOpen] = React.useState(false)
-  const { formatDate, toISOString, toDateObject } = useDateFormat()
+  const { formatDate, toDateObject } = useDateFormat()
   const { members, fetchMembers } = useHousehold()
   
   // State to store calculated retirement date from member ID
@@ -242,22 +241,10 @@ export function DateEndPicker<
   const retirementDateObj = toDateObject(retirementDate)
 
   /**
-   * Handle custom date input
-   * Parses the date string and updates the field value
+   * Handle custom date selection from the DatePicker
    */
-  const handleCustomDate = React.useCallback((dateString: string) => {
-    if (!dateString) {
-      field.onChange(null)
-      return
-    }
-
-    try {
-      const date = new Date(dateString)
-      date.setUTCHours(0, 0, 0, 0)
-      field.onChange(date)
-    } catch {
-      field.onChange(null)
-    }
+  const handleDatePickerChange = React.useCallback((date: Date | undefined) => {
+    field.onChange(date || null)
   }, [field])
 
   return (
@@ -279,7 +266,7 @@ export function DateEndPicker<
             </Button>
           </FormControl>
         </PopoverTrigger>
-        <PopoverContent className="w-[280px] p-3 space-y-3" align="start">
+        <PopoverContent className="w-[300px] p-3 space-y-3" align="start">
           {startDate && (
             <>
               <div className="grid grid-cols-2 gap-2">
@@ -322,13 +309,12 @@ export function DateEndPicker<
             </>
           )}
 
-          <Input
-            type="date"
-            value={field.value ? toISOString(field.value) : ''}
-            onChange={(e) => handleCustomDate(e.target.value)}
+          <DatePicker
+            date={toDateObject(field.value)}
+            onDateChange={handleDatePickerChange}
+            placeholder="Select a date"
             disabled={disabled}
             className="w-full"
-            {...props}
           />
         </PopoverContent>
       </Popover>

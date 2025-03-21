@@ -63,8 +63,27 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             Created PensionState object with all relationships loaded
         """
         try:
-            db_obj = PensionState(**obj_in.model_dump())
+            # Extract statements if present
+            statements_data = None
+            obj_dict = obj_in.model_dump()
+            
+            if "statements" in obj_dict:
+                statements_data = obj_dict.pop("statements")
+                
+            # Create the pension without statements
+            db_obj = PensionState(**obj_dict)
             db.add(db_obj)
+            db.flush()  # Flush to get the ID without committing
+            
+            # Add statements if provided
+            if statements_data and isinstance(statements_data, list):
+                for stmt_data in statements_data:
+                    db_stmt = PensionStateStatement(
+                        **stmt_data,
+                        pension_id=db_obj.id
+                    )
+                    db.add(db_stmt)
+            
             db.commit()
             return self.get(db=db, id=db_obj.id)
         except Exception as e:

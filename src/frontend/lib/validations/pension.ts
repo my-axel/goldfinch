@@ -72,6 +72,21 @@ export const companyPensionSchema = basePensionSchema.extend({
   })).optional()
 })
 
+export const statePensionSchema = basePensionSchema.extend({
+  type: z.literal(PensionType.STATE),
+  start_date: z.date(),
+  status: z.enum(['ACTIVE', 'PAUSED']).default('ACTIVE'),
+  statements: z.array(z.object({
+    id: z.number().optional(),
+    statement_date: z.date(),
+    current_monthly_amount: z.number().min(0).optional(),
+    projected_monthly_amount: z.number().min(0).optional(),
+    current_value: z.number().min(0).optional(),
+    note: z.string().optional()
+  })).default([])
+})
+
 export type ETFPensionFormData = z.infer<typeof etfPensionSchema>
 export type InsurancePensionFormData = z.infer<typeof insurancePensionSchema>
-export type CompanyPensionFormData = z.infer<typeof companyPensionSchema> 
+export type CompanyPensionFormData = z.infer<typeof companyPensionSchema>
+export type StatePensionFormData = z.infer<typeof statePensionSchema> 

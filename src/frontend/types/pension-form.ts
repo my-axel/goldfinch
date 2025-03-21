@@ -110,3 +110,29 @@ export type CompanyPensionFormData = {
   contribution_plan_steps: ContributionPlanStep[]
   statements?: PensionCompanyStatementFormData[]
 }
+
+/**
+ * State pension statement data for forms
+ */
+export interface StatePensionStatementFormData {
+  id?: number                // Optional for new statements
+  pension_id?: number        // Optional for new statements
+  statement_date: Date       // Use Date for form state
+  current_monthly_amount?: number
+  projected_monthly_amount?: number
+  current_value?: number
+  note?: string
+}
+
+/**
+ * State Pension form data
+ */
+export type StatePensionFormData = {
+  type: PensionType.STATE
+  name: string
+  member_id: string         // String for form input, converted to number on submit
+  start_date: Date
+  notes?: string
+  status: 'ACTIVE' | 'PAUSED'
+  statements: StatePensionStatementFormData[]
+}

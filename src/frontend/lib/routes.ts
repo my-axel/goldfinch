@@ -6,7 +6,8 @@ import { PensionType } from "@/frontend/types/pension"
 export const PENSION_ROUTE_MAPPING: Record<PensionType, string> = {
   [PensionType.ETF_PLAN]: 'etf',
   [PensionType.INSURANCE]: 'insurance',
-  [PensionType.COMPANY]: 'company'
+  [PensionType.COMPANY]: 'company',
+  [PensionType.STATE]: 'state'
 } as const
 
 /**

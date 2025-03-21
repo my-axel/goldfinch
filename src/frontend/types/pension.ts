@@ -20,7 +20,8 @@ export enum ContributionFrequency {
 export enum PensionType {
   ETF_PLAN = 'ETF_PLAN',      // Self-managed ETF-based pension
   INSURANCE = 'INSURANCE',     // Insurance company managed pension
-  COMPANY = 'COMPANY'         // Employer-sponsored pension plan
+  COMPANY = 'COMPANY',         // Employer-sponsored pension plan
+  STATE = 'STATE'              // Government/state pension
 }
 
 /** 
@@ -210,8 +211,82 @@ export interface CompanyPension {
   resume_at?: string
 }
 
+/** 
+ * State/Government pension plan that provides retirement income
+ * based on employment history and contributions to the system.
+ */
+export interface StatePension {
+  id: number
+  type: PensionType.STATE
+  name: string
+  member_id: number
+  start_date: string
+  notes?: string
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
+  statements?: StatePensionStatement[]
+}
+
+/**
+ * Statement for state pensions tracking current and projected
+ * monthly amounts
+ */
+export interface StatePensionStatement {
+  id: number
+  pension_id: number
+  statement_date: string
+  current_monthly_amount?: number
+  projected_monthly_amount?: number
+  current_value?: number
+  note?: string
+}
+
+/**
+ * State pension projection scenario used to show different
+ * payout scenarios based on retirement age and growth rates
+ */
+export interface StatePensionScenario {
+  monthly_amount: number
+  annual_amount: number
+  retirement_age: number
+  years_to_retirement: number
+  growth_rate: number
+}
+
+/**
+ * State pension projection with different scenarios
+ */
+export interface StatePensionProjection {
+  planned: {
+    pessimistic: StatePensionScenario
+    realistic: StatePensionScenario
+    optimistic: StatePensionScenario
+  }
+  possible: {
+    pessimistic: StatePensionScenario
+    realistic: StatePensionScenario
+    optimistic: StatePensionScenario
+  }
+}
+
+/**
+ * Lightweight state pension summary for list views
+ */
+export interface StatePensionList {
+  id: number
+  name: string
+  member_id: number
+  start_date: string
+  status: 'ACTIVE' | 'PAUSED'
+  latest_statement_date?: string
+  latest_monthly_amount?: number
+  latest_projected_amount?: number
+  latest_current_value?: number
+}
+
 /** Union type of all possible pension types */
-export type Pension = ETFPension | InsurancePension | CompanyPension
+export type Pension = ETFPension | InsurancePension | CompanyPension | StatePension
 
 export interface ContributionHistoryResponse {
   id: number
@@ -295,3 +370,4 @@ export type PensionList =
   | (ETFPensionList & { type: PensionType.ETF_PLAN })
   | (CompanyPensionList & { type: PensionType.COMPANY })
   | (InsurancePensionList & { type: PensionType.INSURANCE })
+  | (StatePensionList & { type: PensionType.STATE })

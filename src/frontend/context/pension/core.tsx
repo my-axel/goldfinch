@@ -39,7 +39,9 @@ import {
   ETFPensionList,
   InsurancePensionList,
   CompanyPensionList,
-  PensionList
+  PensionList,
+  StatePensionList,
+  StatePension
 } from '@/frontend/types/pension'
 import { PensionStatistics, PensionStatusUpdate } from '@/frontend/types/pension-statistics'
 import { ETF } from '@/frontend/types/etf'
@@ -154,10 +156,11 @@ export function fetchPensionsOperation(get: <T>(url: string) => Promise<T>) {
 export function fetchListPensionsOperation(get: <T>(url: string) => Promise<T>) {
   return async (memberId?: number) => {
     try {
-      const [etfResponse, insuranceResponse, companyResponse] = await Promise.all([
+      const [etfResponse, insuranceResponse, companyResponse, stateResponse] = await Promise.all([
         get<ETFPensionList[]>(`/api/v1/pension-summaries/etf${memberId ? `?member_id=${memberId}` : ''}`),
         get<InsurancePensionList[]>(`/api/v1/pension-summaries/insurance${memberId ? `?member_id=${memberId}` : ''}`),
-        get<CompanyPensionList[]>(`/api/v1/pension-summaries/company${memberId ? `?member_id=${memberId}` : ''}`)
+        get<CompanyPensionList[]>(`/api/v1/pension-summaries/company${memberId ? `?member_id=${memberId}` : ''}`),
+        get<StatePensionList[]>(`/api/v1/pension-summaries/state${memberId ? `?member_id=${memberId}` : ''}`)
       ])
 
       // Process ETF pensions
@@ -188,11 +191,20 @@ export function fetchListPensionsOperation(get: <T>(url: string) => Promise<T>) 
         latest_statement_date: p.latest_statement_date ? new Date(p.latest_statement_date) : undefined
       }))
 
+      // Process State pensions
+      const statePensions = stateResponse.map(p => ({
+        ...p,
+        type: PensionType.STATE as const,
+        start_date: new Date(p.start_date),
+        latest_statement_date: p.latest_statement_date ? new Date(p.latest_statement_date) : undefined
+      }))
+
       // Combine all pensions
       const allPensions = [
         ...etfPensions,
         ...insurancePensions,
-        ...companyPensions
+        ...companyPensions,
+        ...statePensions
       ] as PensionList[]
 
       return allPensions
@@ -262,6 +274,16 @@ export function fetchPensionOperation(
               } as CompanyPension;
             return pension;
             }
+            case PensionType.STATE: {
+              const response = await get<StatePension>(apiRoute);
+              const pension = {
+                ...response,
+                type: PensionType.STATE,
+                // Keep start_date as string since StatePension expects a string
+                start_date: response.start_date
+              };
+              return pension as StatePension;
+            }
             default:
               throw new Error('Unknown pension type');
           }
@@ -313,10 +335,23 @@ export function fetchPensionOperation(
                     end_date: step.end_date ? new Date(step.end_date) : undefined
                   })) || []
                 } as CompanyPension
-            return pension
+                return pension
               } catch (err) {
-                console.info(`[PensionContext] Pension ${id} not found in any pension type:`, err)
-                throw new Error('Pension not found')
+                console.info(`[PensionContext] Pension ${id} is not a company pension, trying state pension:`, err)
+                // If not company, try state
+                try {
+                  const response = await get<StatePension>(`${getPensionApiRoute(PensionType.STATE)}/${id}`)
+                  const pension = {
+                    ...response,
+                    type: PensionType.STATE,
+                    // Keep start_date as string since StatePension expects a string
+                    start_date: response.start_date
+                  };
+                  return pension as StatePension
+                } catch (err) {
+                  console.info(`[PensionContext] Pension ${id} not found in any pension type:`, err)
+                  throw new Error('Pension not found')
+                }
               }
             }
           }

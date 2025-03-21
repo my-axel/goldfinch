@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/frontend/components/ui/radio-group
 import { Label } from "@/frontend/components/ui/label"
 import { Button } from "@/frontend/components/ui/button"
 import { useState } from "react"
-import { LineChart, Shield, Building2 } from "lucide-react"
+import { LineChart, Shield, Building2, Landmark } from "lucide-react"
 import { getNewPensionRoute } from "@/frontend/lib/routes"
 
 interface PensionTypeSelectionModalProps {
@@ -100,6 +100,26 @@ export function PensionTypeSelectionModal({ open, onOpenChange, memberId }: Pens
               <p className="text-sm text-muted-foreground pl-9">
                 An employer-sponsored pension plan that may include matching contributions. 
                 Best for tracking workplace pensions and managing employer benefits.
+              </p>
+            </div>
+          </div>
+
+          <div 
+            className="rounded-lg border p-4 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer group transition-colors"
+            onClick={() => handleTypeSelect(PensionType.STATE)}
+          >
+            <div className="space-y-2">
+              <div className="flex items-center space-x-4">
+                <RadioGroupItem value={PensionType.STATE} id="state" />
+                <Landmark className="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" />
+                <Label htmlFor="state" className="font-medium">
+                  State Pension
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground pl-9">
+                Track your government or state pension entitlements. 
+                Ideal for monitoring your public pension benefits and 
+                planning for retirement income from government sources.
               </p>
             </div>
           </div>

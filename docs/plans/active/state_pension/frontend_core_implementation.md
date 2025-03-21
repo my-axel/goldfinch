@@ -124,7 +124,7 @@ interface StatePensionProjection {
 ## Implementation Steps
 
 ### 1. React Query Setup
-- [ ] Create API service functions
+- [x] Create API service functions
 ```typescript
 // src/frontend/services/statePensionService.ts
 export const statePensionService = {
@@ -142,7 +142,7 @@ export const statePensionService = {
 };
 ```
 
-- [ ] Implement query hooks
+- [x] Implement query hooks
 ```typescript
 // src/frontend/hooks/useStatePensions.ts
 export function useStatePensions() {
@@ -164,7 +164,7 @@ export function useStatePensionScenarios(pensionId: number) {
 ```
 
 ### 2. UI State Management
-- [ ] Create UI Context
+- [x] Create UI Context
 ```typescript
 // src/frontend/context/StatePensionUIContext.tsx
 export function StatePensionUIProvider({ children }) {
@@ -185,12 +185,12 @@ export function StatePensionUIProvider({ children }) {
 ```
 
 ### 3. Component Implementation
-- [ ] Create StatePensionCard component
-- [ ] Implement StatePensionForm
-- [ ] Add StatePensionStatementForm 
-- [ ] Implement ScenarioViewer component
-- [ ] Implement list view integration
-- [ ] Add status toggle functionality
+- [x] Create StatePensionCard component
+- [x] Implement StatePensionForm
+- [x] Add StatePensionStatementForm 
+- [x] Implement ScenarioViewer component
+- [x] Implement list view integration
+- [x] Add status toggle functionality
 
 ### 4. Form Validation
 - [ ] Implement form validation using existing patterns
@@ -324,3 +324,56 @@ describe('StatePension React Query Integration', () => {
   // Add more test cases...
 });
 ``` 
+
+## Core Components
+
+1. **Type Definitions**
+   - [x] Define `StatePension` interface
+   - [x] Define `StatePensionStatement` interface
+   - [x] Define `StatePensionScenario` interface
+   - [x] Define `StatePensionList` interface for list views
+   - [x] Update `PensionList` union type
+
+2. **React Query Setup**
+   - [x] Create API service functions
+     - [x] List state pensions
+     - [x] Create/update/delete state pensions
+     - [x] List/create/update/delete statements
+     - [x] Fetch scenarios
+   - [x] Implement query hooks
+     - [x] `useStatePensions` for pension list
+     - [x] `useStatePension` for pension detail
+     - [x] `useStatePensionStatements` for statements
+     - [x] `useStatePensionScenarios` for scenarios
+     - [x] Mutation hooks for CRUD operations
+
+3. **UI State Management**
+   - [x] Create StatePensionUIContext for managing:
+     - Selected pension ID
+     - Active tab
+     - Form open/closed state
+
+4. **Form Components**
+   - [x] `StatePensionForm` (renamed to `BasicInformationCard`) - Basic information form for state pensions
+   - [x] `StatePensionStatementForm` (renamed to `StatementsCard`) - Form for statement management
+   - [ ] `ScenarioViewer` - Component to display projected scenarios
+   - [ ] List view integration
+
+5. **Explanation Components**
+   - [x] `BasicInformationExplanation` - explains basic info fields
+   - [x] `StatementsExplanation` - explains statement fields and purpose
+   - [x] `ScenariosExplanation` - explains scenario projections and assumptions
+
+6. **List View Integration**
+   - [x] Integrate state pensions into the main pension list view
+   - [x] Create state pension summary cards
+   - [x] Implement state pension filtering
+
+7. **Create/Edit Pages**
+   - [x] Create page for new state pensions
+   - [x] Edit page for existing state pensions
+
+## Testing
+   - [ ] Unit tests for the components
+   - [ ] Integration tests for the forms
+   - [ ] End-to-end tests for the pages 

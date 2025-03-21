@@ -47,7 +47,7 @@ class PensionStateBase(BaseModel):
 
 # Schema for creating a new state pension
 class PensionStateCreate(PensionStateBase):
-    pass
+    statements: Optional[List[PensionStateStatementCreate]] = Field(default=None, description="Optional list of statements to create with the pension")
 
 # Schema for updating an existing state pension
 class PensionStateUpdate(BaseModel):

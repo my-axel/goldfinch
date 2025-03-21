@@ -7,7 +7,8 @@ import { BASE_ROUTES } from '../constants'
 export const PENSION_ROUTE_MAPPING: Record<PensionType, string> = {
   [PensionType.ETF_PLAN]: 'etf',
   [PensionType.INSURANCE]: 'insurance',
-  [PensionType.COMPANY]: 'company'
+  [PensionType.COMPANY]: 'company',
+  [PensionType.STATE]: 'state'
 } as const
 
 /**
@@ -48,4 +49,21 @@ export const getPensionStatisticsRoute = (type: PensionType, id: number) => {
 
 export const getPensionStatusRoute = (type: PensionType, id: number) => {
   return `${getPensionApiRouteWithId(type, id)}/status`
+}
+
+// State Pension specific routes
+export const getStatePensionStatementsRoute = (pensionId: number) => {
+  return `${getPensionApiRouteWithId(PensionType.STATE, pensionId)}/statements`
+}
+
+export const getStatePensionStatementRoute = (pensionId: number, statementId: number) => {
+  return `${getStatePensionStatementsRoute(pensionId)}/${statementId}`
+}
+
+export const getStatePensionScenariosRoute = (pensionId: number) => {
+  return `${getPensionApiRouteWithId(PensionType.STATE, pensionId)}/scenarios`
+}
+
+export const getStatePensionSummariesRoute = () => {
+  return `${BASE_ROUTES.API.BASE}/pension-summaries/state`
 } 
