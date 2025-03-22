@@ -356,8 +356,8 @@ describe('StatePension React Query Integration', () => {
 4. **Form Components**
    - [x] `StatePensionForm` (renamed to `BasicInformationCard`) - Basic information form for state pensions
    - [x] `StatePensionStatementForm` (renamed to `StatementsCard`) - Form for statement management
-   - [ ] `ScenarioViewer` - Component to display projected scenarios
-   - [ ] List view integration
+   - [x] `ScenarioViewer` - Component to display projected scenarios
+   - [x] List view integration
 
 5. **Explanation Components**
    - [x] `BasicInformationExplanation` - explains basic info fields
