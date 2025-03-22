@@ -24,10 +24,16 @@
  * - Use descriptive parameter names
  */
 
-import { Pension } from "@/frontend/types/pension"
-import { PensionType, ETFPension, InsurancePension, CompanyPension, PensionCompanyStatement } from "@/frontend/types/pension"
-
-import { PensionStatistics, PensionStatusUpdate } from "@/frontend/types/pension-statistics"
+import { 
+  Pension,
+  PensionType, 
+  ETFPension, 
+  InsurancePension, 
+  CompanyPension, 
+  PensionCompanyStatement,
+  PensionStatusUpdate
+} from "@/frontend/types/pension"
+import { PensionStatistics } from "@/frontend/types/pension-statistics"
 
 /**
  * Represents a contribution to a pension
@@ -94,36 +100,16 @@ createInsurancePensionWithStatement: (
 ) => Promise<void>
 createCompanyPension: (pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<CompanyPension>
 createCompanyPensionWithStatement: (
-    pension: Omit<CompanyPension, 'id' | 'current_value'>,
-    statement: {
-    statement_date: string,
-    value: number,
-    note?: string,
-    retirement_projections?: Array<{
-        retirement_age: number,
-        monthly_payout: number,
-        total_capital: number
-    }>
-    }
+    pension: Omit<CompanyPension, 'id' | 'current_value'>, 
+    statements: Record<string, unknown>[]
 ) => Promise<void>
 updateEtfPension: (id: number, pension: Omit<ETFPension, 'id' | 'current_value'>) => Promise<void>
 updateInsurancePension: (id: number, pension: Omit<InsurancePension, 'id' | 'current_value'>) => Promise<void>
 updateCompanyPension: (id: number, pension: Omit<CompanyPension, 'id' | 'current_value'>) => Promise<void>
 updateCompanyPensionWithStatement: (
     id: number, 
-    pension: Omit<CompanyPension, 'id' | 'current_value'>,
-    statements: Array<{
-    id: number,
-    statement_date: string,
-    value: number,
-    note?: string,
-    retirement_projections?: Array<{
-        id?: number,
-        retirement_age: number,
-        monthly_payout: number,
-        total_capital: number
-    }>
-    }>
+    pension: Omit<CompanyPension, 'id' | 'current_value'>, 
+    statements: Record<string, unknown>[]
 ) => Promise<void>
 deletePension: (id: number) => Promise<void>
 addOneTimeInvestment: (pensionId: number, data: { 
@@ -156,17 +142,7 @@ createCompanyPensionStatement: (pensionId: number, data: {
 getCompanyPensionStatements: (pensionId: number) => Promise<PensionCompanyStatement[]>
 getLatestCompanyPensionStatement: (pensionId: number) => Promise<PensionCompanyStatement | null>
 getCompanyPensionStatement: (pensionId: number, statementId: number) => Promise<PensionCompanyStatement>
-updateCompanyPensionStatement: (pensionId: number, statementId: number, data: {
-    statement_date: string,
-    value: number,
-    note?: string,
-    retirement_projections?: Array<{
-    retirement_age: number,
-    monthly_payout: number,
-    total_capital: number
-    }>
-}) => Promise<void>
-deleteCompanyPensionStatement: (pensionId: number, statementId: number) => Promise<void>
+deleteCompanyPension: (id: number) => Promise<void>
 deleteInsurancePensionStatement: (pensionId: number, statementId: number) => Promise<void>
 updateInsurancePensionWithStatement: (
     id: number,

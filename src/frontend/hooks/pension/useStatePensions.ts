@@ -7,7 +7,7 @@ import {
   UseQueryOptions
 } from '@tanstack/react-query'
 import { statePensionService } from '@/frontend/services/statePensionService'
-import { StatePension, StatePensionStatement } from '@/frontend/types/pension'
+import { StatePension, StatePensionStatement, PensionStatusUpdate } from '@/frontend/types/pension'
 
 // Query key factory for state pensions
 const statePensionKeys = {
@@ -198,6 +198,29 @@ export function useDeleteStatePensionStatement() {
       // Invalidate scenarios as they might have changed
       queryClient.invalidateQueries({ queryKey: ['state-pension-scenarios', pensionId] })
       // Refresh lists that show the latest statement data
+      queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
+      queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+    }
+  })
+}
+
+// Mutation hook to update state pension status
+export function useUpdateStatePensionStatus() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ 
+      pensionId, 
+      statusData 
+    }: { 
+      pensionId: number, 
+      statusData: PensionStatusUpdate 
+    }) => statePensionService.updateStatus(pensionId, statusData),
+    onSuccess: (updatedPension) => {
+      // Update the cache for this specific pension
+      queryClient.setQueryData(['state-pension', updatedPension.id], updatedPension)
+      
+      // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
     }

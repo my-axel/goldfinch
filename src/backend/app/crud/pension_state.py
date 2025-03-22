@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 from app.crud.base import CRUDBase
 from app.models.pension_state import PensionState, PensionStateStatement
+from app.models.enums import PensionStatus
 from app.schemas.pension_state import (
     PensionStateCreate,
     PensionStateUpdate,
     PensionStateStatementCreate,
-    PensionStateStatementUpdate
+    PensionStateStatementUpdate,
+    PensionStatusUpdate
 )
 from datetime import date
 from decimal import Decimal
@@ -334,6 +336,40 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             }
             for row in result
         ]
+
+    def update_status(
+        self,
+        db: Session,
+        *,
+        db_obj: PensionState,
+        obj_in: PensionStatusUpdate
+    ) -> PensionState:
+        """Update the status of a state pension."""
+        try:
+            # Validate status transition
+            if obj_in.status == PensionStatus.PAUSED:
+                if not obj_in.paused_at:
+                    obj_in.paused_at = date.today()
+                if db_obj.status == PensionStatus.PAUSED:
+                    raise HTTPException(status_code=400, detail="Pension is already paused")
+            elif obj_in.status == PensionStatus.ACTIVE:
+                if db_obj.status == PensionStatus.ACTIVE:
+                    raise HTTPException(status_code=400, detail="Pension is already active")
+                if not obj_in.resume_at and not db_obj.resume_at:
+                    obj_in.resume_at = date.today()
+
+            # Update status and related fields
+            for field, value in obj_in.model_dump(exclude_unset=True).items():
+                setattr(db_obj, field, value)
+
+            db.add(db_obj)
+            db.commit()
+            db.refresh(db_obj)
+            return db_obj
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to update pension status: {str(e)}")
+            raise
 
 # Create a singleton instance
 pension_state = CRUDPensionState(PensionState) 

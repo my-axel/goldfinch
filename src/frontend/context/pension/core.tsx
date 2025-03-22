@@ -43,7 +43,7 @@ import {
   StatePensionList,
   StatePension
 } from '@/frontend/types/pension'
-import { PensionStatistics, PensionStatusUpdate } from '@/frontend/types/pension-statistics'
+import { PensionStatistics } from '@/frontend/types/pension-statistics'
 import { ETF } from '@/frontend/types/etf'
 import { toast } from 'sonner'
 import { 
@@ -57,6 +57,7 @@ import { getETFByIdRoute } from '@/frontend/lib/routes/api/etf'
 
 // Import types
 import { PensionContextType } from './types'
+import { PensionStatusUpdate } from '@/frontend/types/pension'
 
 // API function type
 type ApiGet = <T>(url: string) => Promise<T>

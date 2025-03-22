@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { StatePensionFormData } from "@/frontend/types/pension-form"
-import { PensionType } from "@/frontend/types/pension"
+import { PensionType, StatePensionStatement } from "@/frontend/types/pension"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { statePensionSchema } from "@/frontend/lib/validations/pension"
@@ -19,23 +19,25 @@ import { StatementsExplanation } from "@/frontend/components/pension/state/expla
 import { ScenariosExplanation } from "@/frontend/components/pension/state/explanations/ScenariosExplanation"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { toISODateString } from "@/frontend/lib/dateUtils"
-import { useState } from "react"
-import { useStatePension, useUpdateStatePension } from "@/frontend/hooks/pension/useStatePensions"
+import React, { useState } from "react"
+import { useStatePension, useUpdateStatePension, useUpdateStatePensionStatus } from "@/frontend/hooks/pension/useStatePensions"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/frontend/components/ui/alert-dialog"
 import { LoadingState } from "@/frontend/components/shared/LoadingState"
 import { statePensionToForm } from "@/frontend/lib/transformers/statePensionTransformers"
 import { PensionStatusActions } from "@/frontend/components/pension/shared/PensionStatusActions"
+import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/dialogs/PauseConfirmationDialog"
+import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
 
 interface EditStatePensionPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function EditStatePensionPage({ params }: EditStatePensionPageProps) {
   const router = useRouter()
-  const pensionId = parseInt(params.id)
+  const resolvedParams = React.use(params)
+  const pensionId = parseInt(resolvedParams.id)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
@@ -48,6 +50,7 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
   } = useStatePension(pensionId)
   
   const { mutateAsync: updatePension } = useUpdateStatePension()
+  const { mutateAsync: updateStatus } = useUpdateStatePensionStatus()
 
   // Initialize form with the pension data once it's loaded
   const form = useForm<StatePensionFormData>({
@@ -66,24 +69,35 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
         return
       }
 
+      // Process statements to match StatePensionStatement[]
+      const statements: StatePensionStatement[] = data.statements
+        .filter(statement => statement.statement_date) // Only include statements with dates
+        .map(statement => {
+          // Create a valid statement object
+          const processedStatement: StatePensionStatement = {
+            pension_id: pensionId,
+            statement_date: toISODateString(statement.statement_date),
+            current_monthly_amount: statement.current_monthly_amount || undefined,
+            projected_monthly_amount: statement.projected_monthly_amount || undefined,
+            current_value: statement.current_value || undefined,
+            note: statement.note || "",
+            // Only include id if it exists and is a number
+            id: statement.id || 0 // Must have an id as per StatePensionStatement
+          }
+          return processedStatement
+        })
+
       // Create a pension data object that matches what the API expects
       const pensionData = {
-        type: PensionType.STATE as const, // Need the 'as const' to match the exact type
+        type: PensionType.STATE as const,
         name: data.name,
         member_id: memberId,
         start_date: toISODateString(data.start_date),
         notes: data.notes || "",
         status: data.status,
-        statements: data.statements.map(statement => ({
-          id: statement.id,
-          statement_date: toISODateString(statement.statement_date),
-          current_monthly_amount: statement.current_monthly_amount || null,
-          projected_monthly_amount: statement.projected_monthly_amount || null,
-          current_value: statement.current_value || null,
-          note: statement.note || ""
-        }))
+        statements
       }
-
+      
       // Update the pension using React Query mutation
       await updatePension({ 
         id: pensionId, 
@@ -105,13 +119,16 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
   }
 
   // Handle status changes
-  const handlePausePension = async () => {
+  const handlePauseConfirm = async (pauseDate: Date) => {
     try {
-      await updatePension({ 
-        id: pensionId, 
-        data: { status: 'PAUSED' } 
+      await updateStatus({
+        pensionId,
+        statusData: {
+          status: 'PAUSED',
+          paused_at: toISODateString(pauseDate)
+        }
       })
-      toast.success("Success", { description: "State pension paused" })
+      toast.success("Success", { description: "State pension paused successfully" })
       setShowPauseDialog(false)
     } catch (error) {
       console.error("Error pausing state pension:", error)
@@ -123,13 +140,16 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
     }
   }
 
-  const handleResumePension = async () => {
+  const handleResumeConfirm = async (resumeDate: Date) => {
     try {
-      await updatePension({ 
-        id: pensionId, 
-        data: { status: 'ACTIVE' } 
+      await updateStatus({
+        pensionId,
+        statusData: {
+          status: 'ACTIVE',
+          resume_at: toISODateString(resumeDate)
+        }
       })
-      toast.success("Success", { description: "State pension resumed" })
+      toast.success("Success", { description: "State pension resumed successfully" })
       setShowResumeDialog(false)
     } catch (error) {
       console.error("Error resuming state pension:", error)
@@ -183,7 +203,7 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>Pension not found</AlertDescription>
           </Alert>
-        ) : pension.type !== PensionType.STATE ? (
+        ) : pension.type !== undefined && pension.type !== PensionType.STATE ? (
           <Alert variant="destructive">
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>Invalid pension type</AlertDescription>
@@ -234,43 +254,18 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
         )}
       </div>
 
-      {/* Pause Dialog */}
-      <AlertDialog open={showPauseDialog} onOpenChange={setShowPauseDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Pause Pension</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to pause this state pension? 
-              This will mark it as inactive in your portfolio.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePausePension}>
-              Pause Pension
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Resume Dialog */}
-      <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Resume Pension</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to resume this state pension? 
-              This will mark it as active in your portfolio.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResumePension}>
-              Resume Pension
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Replace the AlertDialogs with custom dialog components */}
+      <PauseConfirmationDialog
+        open={showPauseDialog}
+        onOpenChange={setShowPauseDialog}
+        onConfirm={handlePauseConfirm}
+      />
+      
+      <ResumeDateDialog
+        open={showResumeDialog}
+        onOpenChange={setShowResumeDialog}
+        onConfirm={handleResumeConfirm}
+      />
     </ErrorBoundary>
   )
 } 

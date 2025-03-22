@@ -17,7 +17,7 @@ class PensionType(str, Enum):
     ETF_PLAN = "ETF_PLAN"
     INSURANCE = "INSURANCE"
     COMPANY = "COMPANY"
-    GOVERNMENT = "GOVERNMENT"
+    STATE = "STATE"
     OTHER = "OTHER"
 
 class PensionStatus(str, Enum):

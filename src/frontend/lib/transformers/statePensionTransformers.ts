@@ -6,6 +6,7 @@ import {
   toDateObject,
   safeNumberValue 
 } from '@/frontend/lib/utils/formUtils'
+import { PensionType } from "@/frontend/types/pension"
 
 /**
  * Transforms a StatePension API object to StatePensionFormData for form usage
@@ -16,7 +17,7 @@ import {
  */
 export const statePensionToForm = (pension: StatePension): StatePensionFormData => {
   return {
-    type: pension.type,
+    type: PensionType.STATE,
     name: withDefault(pension.name, ""),
     member_id: pension.member_id.toString(),
     notes: withDefault(pension.notes, ""),

@@ -16,6 +16,10 @@ class PensionState(Base):
     start_date = Column(Date, nullable=False)  # When person started accumulating state pension
     status = Column(SQLEnum(PensionStatus), nullable=False, default=PensionStatus.ACTIVE)
 
+    # New fields for status management
+    paused_at = Column(Date, nullable=True)
+    resume_at = Column(Date, nullable=True)
+
     # Relationships
     member = relationship("HouseholdMember", back_populates="state_pensions")
     statements = relationship("PensionStateStatement", back_populates="pension", cascade="all, delete-orphan", order_by="desc(PensionStateStatement.statement_date)")

@@ -1,12 +1,13 @@
 import { api } from '@/frontend/lib/api-client'
-import { StatePension, StatePensionStatement, StatePensionProjection, PensionType } from '@/frontend/types/pension'
+import { StatePension, StatePensionStatement, StatePensionProjection, PensionType, PensionStatusUpdate } from '@/frontend/types/pension'
 import { 
   getPensionApiRoute,
   getPensionApiRouteWithId,
   getStatePensionStatementsRoute,
   getStatePensionStatementRoute,
   getStatePensionScenariosRoute,
-  getStatePensionSummariesRoute
+  getStatePensionSummariesRoute,
+  getPensionStatusRoute
 } from '@/frontend/lib/routes/api/pension'
 
 /**
@@ -142,5 +143,21 @@ export const statePensionService = {
       url.searchParams.append('member_id', memberId.toString())
     }
     return api.get<StatePension[]>(url.toString())
+  },
+
+  /**
+   * Update the status of a state pension
+   * @param pensionId State pension ID
+   * @param statusData Status update data including status and dates
+   * @returns Updated state pension
+   */
+  async updateStatus(
+    pensionId: number,
+    statusData: PensionStatusUpdate
+  ) {
+    return api.put<StatePension>(
+      getPensionStatusRoute(PensionType.STATE, pensionId),
+      {...statusData} as unknown as Record<string, unknown>
+    )
   }
 } 

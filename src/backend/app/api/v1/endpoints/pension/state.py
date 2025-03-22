@@ -13,7 +13,8 @@ from app.schemas.pension_state import (
     PensionStateStatementCreate,
     PensionStateStatementUpdate,
     PensionStateStatementResponse,
-    StatePensionListSchema
+    StatePensionListSchema,
+    PensionStatusUpdate
 )
 from app.services.pension_state_projection import PensionStateProjectionService, StatePensionProjection
 import logging
@@ -359,4 +360,17 @@ async def calculate_pension_scenarios(
         member=member,
         settings=current_settings,
         reference_date=reference_date
-    ) 
+    )
+
+@router.put("/{pension_id}/status", response_model=PensionStateResponse)
+def update_state_pension_status(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    status_in: PensionStatusUpdate,
+) -> PensionStateResponse:
+    """Update the status of a state pension."""
+    pension = pension_state.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="State Pension not found")
+    return pension_state.update_status(db=db, db_obj=pension, obj_in=status_in) 

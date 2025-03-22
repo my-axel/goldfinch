@@ -58,8 +58,8 @@
 
 import { useContext, useState, useCallback, useMemo } from 'react'
 import { useApi } from '@/frontend/hooks/useApi'
-import { Pension, PensionType } from '@/frontend/types/pension'
-import { PensionStatistics, PensionStatusUpdate } from '@/frontend/types/pension-statistics'
+import { Pension, PensionType, PensionStatusUpdate } from '@/frontend/types/pension'
+import { PensionStatistics } from '@/frontend/types/pension-statistics'
 import { toast } from 'sonner'
 
 // Import operations

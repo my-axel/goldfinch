@@ -86,4 +86,10 @@ class StatePensionListSchema(BaseModel):
         json_encoders={
             datetime: lambda dt: dt.date() if dt else None
         }
-    ) 
+    )
+
+# Schema for updating pension status
+class PensionStatusUpdate(BaseModel):
+    status: PensionStatus
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None 

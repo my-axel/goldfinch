@@ -20,9 +20,3 @@ export interface PensionStatistics {
   }
   scenarios?: ProjectionScenario[]
 }
-
-export interface PensionStatusUpdate {
-  status: 'ACTIVE' | 'PAUSED'
-  paused_at?: string
-  resume_at?: string
-}

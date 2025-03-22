@@ -288,6 +288,15 @@ export interface StatePensionList {
 /** Union type of all possible pension types */
 export type Pension = ETFPension | InsurancePension | CompanyPension | StatePension
 
+/**
+ * Interface for updating pension status with optional date fields
+ */
+export interface PensionStatusUpdate {
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
+}
+
 export interface ContributionHistoryResponse {
   id: number
   pension_etf_id: number
