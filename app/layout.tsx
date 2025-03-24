@@ -29,12 +29,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SidebarProvider>
-              <AppSidebar />
-              <main className="ml-[50px] min-h-screen">     
-                <div style={{ width: '1280px' }} className="px-8 py-8">
-                  {children}
+                <div className="flex h-screen">
+                  <div className="flex">
+                    <AppSidebar />
+                  </div>
+                  <main className="flex-1 py-6 px-8">
+                    {children}
+                  </main>
                 </div>
-              </main>
             </SidebarProvider>
           </ThemeProvider>      
         </AppProviders>

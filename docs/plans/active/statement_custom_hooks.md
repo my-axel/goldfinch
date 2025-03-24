@@ -51,177 +51,177 @@
 
 ## 📋 Implementation Overview
 
-This plan outlines the creation of reusable custom hooks and utilities for statement management across different pension types. The goal is to standardize the approach while maintaining flexibility for different data structures.
+Create reusable custom hooks for statement management across pension types, leveraging React Query for data management and caching.
 
 ### Core Principles
-- Extract common logic into reusable hooks
+- Use React Query for data fetching and caching
+- Extract common statement logic into reusable hooks
 - Maintain type safety with TypeScript generics
-- Keep hooks focused on single responsibilities
-- Ensure backward compatibility with existing components
+- Keep hooks focused and composable
+- Ensure backward compatibility
 
 ### Expected Outcomes
+- Standardized statement management across pension types
+- Efficient data caching and synchronization
+- Improved loading and error states
 - Reduced code duplication
-- Consistent behavior across pension types
-- Easier implementation for future pension types
-- Improved maintainability
 
 ## 📝 Implementation Steps
 
-### Phase 1: Create Base Utilities
+### Phase 1: Create Base Statement Hooks
 
-- [ ] 1.1 Create utility functions for statement operations
+- [ ] 1.1 Create `useStatementQuery` hook
   ```typescript
-  // Path: src/frontend/lib/hooks/useStatementUtils.ts
+  // Path: src/frontend/lib/hooks/useStatementQuery.ts
   ```
-  - [ ] Implement `addStatement` utility
-  - [ ] Implement `removeStatement` utility
-  - [ ] Add TypeScript generics for type safety
-  - [ ] Add JSDoc comments for function documentation
+  - [ ] Implement base query hook using React Query
+  - [ ] Add TypeScript generics for pension types
+  - [ ] Handle loading and error states
+  - [ ] Add stale time configuration
 
-- [ ] 1.2 Create utility functions for projection operations
+- [ ] 1.2 Create `useStatementMutations` hook
   ```typescript
-  // Path: src/frontend/lib/hooks/useProjectionUtils.ts
+  // Path: src/frontend/lib/hooks/useStatementMutations.ts
   ```
-  - [ ] Implement `addProjection` utility
-  - [ ] Implement `removeProjection` utility
-  - [ ] Add TypeScript generics for type safety
-  - [ ] Add JSDoc comments for function documentation
+  - [ ] Implement create/update/delete mutations
+  - [ ] Add cache invalidation logic
+  - [ ] Handle optimistic updates
+  - [ ] Add TypeScript generics for pension types
 
-### Phase 2: Create Custom Hooks
+### Phase 2: Create UI Management Hooks
 
 - [ ] 2.1 Create `useExpandableStatements` hook
   ```typescript
   // Path: src/frontend/lib/hooks/useExpandableStatements.ts
   ```
-  - [ ] Implement state management for expanded/collapsed states
-  - [ ] Add toggle functionality
+  - [ ] Implement expand/collapse state management
   - [ ] Add batch operations (expand all, collapse all)
-  - [ ] Add TypeScript generics for type safety
+  - [ ] Persist expansion state
 
-- [ ] 2.2 Create `useStatementManager` hook
+- [ ] 2.2 Create `useStatementForm` hook
   ```typescript
-  // Path: src/frontend/lib/hooks/useStatementManager.ts
+  // Path: src/frontend/lib/hooks/useStatementForm.ts
   ```
-  - [ ] Implement statement addition/removal
-  - [ ] Handle form state updates
-  - [ ] Add TypeScript generics for type safety
-  - [ ] Add optional API integration
-
-- [ ] 2.3 Create `useProjectionManager` hook
-  ```typescript
-  // Path: src/frontend/lib/hooks/useProjectionManager.ts
-  ```
-  - [ ] Implement projection addition/removal
-  - [ ] Handle form state updates for projections
-  - [ ] Manage projection input state
-  - [ ] Add TypeScript generics for type safety
+  - [ ] Integrate with React Hook Form
+  - [ ] Handle form state and validation
+  - [ ] Add default values handling
+  - [ ] Add form reset functionality
 
 ### Phase 3: Refactor Existing Components
 
-- [ ] 3.1 Refactor Insurance StatementsCard
+- [ ] 3.1 Refactor State Pension StatementsCard
+  ```typescript
+  // Path: src/frontend/components/pension/state/StatementsCard.tsx
+  ```
+  - [ ] Replace direct React Query calls with custom hooks
+  - [ ] Implement new form management
+  - [ ] Maintain existing functionality
+  - [ ] Test all CRUD operations
+
+- [ ] 3.2 Refactor Insurance StatementsCard
   ```typescript
   // Path: src/frontend/components/pension/insurance/StatementsCard.tsx
   ```
-  - [ ] Import and use the new custom hooks
-  - [ ] Remove duplicated logic
-  - [ ] Maintain existing functionality
-  - [ ] Ensure no regression in behavior
+  - [ ] Replace existing state management
+  - [ ] Implement new hooks
+  - [ ] Verify functionality
 
-- [ ] 3.2 Refactor Company PensionStatementsCard
+- [ ] 3.3 Refactor Company PensionStatementsCard
   ```typescript
   // Path: src/frontend/components/pension/company/PensionStatementsCard.tsx
   ```
-  - [ ] Import and use the new custom hooks
-  - [ ] Remove duplicated logic
-  - [ ] Maintain existing functionality
-  - [ ] Ensure no regression in behavior
+  - [ ] Replace existing state management
+  - [ ] Implement new hooks
+  - [ ] Verify functionality
 
-### Phase 4: Documentation and Testing
+### Phase 4: Testing and Documentation
 
-- [ ] 4.1 Create usage examples
+- [ ] 4.1 Create hook tests
+  - [ ] Test query hooks
+  - [ ] Test mutation hooks
+  - [ ] Test UI management hooks
+  - [ ] Test form integration
+
+- [ ] 4.2 Update documentation
   ```typescript
-  // Path: docs/frontend/components/statement_hooks_usage.md
+  // Path: docs/frontend/hooks/statement_hooks.md
   ```
-  - [ ] Document basic usage patterns
-  - [ ] Provide examples for different pension types
-  - [ ] Include TypeScript type definitions
-
-- [ ] 4.2 Test implementation
-  - [ ] Verify Insurance StatementsCard functionality
-  - [ ] Verify Company PensionStatementsCard functionality
-  - [ ] Test edge cases (empty statements, max statements)
+  - [ ] Document hook APIs
+  - [ ] Add usage examples
+  - [ ] Include migration guide
 
 ## 🧪 Testing Strategy
 
-### Manual Testing Checklist
-- [ ] Test adding statements in both components
-- [ ] Test removing statements in both components
-- [ ] Test adding projections in both components
-- [ ] Test removing projections in both components
-- [ ] Test expanding/collapsing statements
-- [ ] Verify form validation still works
-- [ ] Verify form submission with API still works
+### Unit Tests
+- [ ] Test query hooks with mock data
+- [ ] Test mutation hooks with mock API
+- [ ] Test UI management hooks
+- [ ] Test form integration
 
-### Edge Cases to Test
-- [ ] Empty statement list
-- [ ] Maximum number of statements
-- [ ] Empty projection list
-- [ ] Maximum number of projections
-- [ ] Form reset behavior
+### Integration Tests
+- [ ] Test State Pension implementation
+- [ ] Test Insurance Pension implementation
+- [ ] Test Company Pension implementation
+- [ ] Test edge cases
 
-## 📚 Implementation Details
-
-### Hook Signatures
+## 📚 Hook Signatures
 
 ```typescript
+// useStatementQuery
+function useStatementQuery<T>({ 
+  pensionId, 
+  pensionType 
+}: { 
+  pensionId: number
+  pensionType: PensionType 
+}) => {
+  data?: T[]
+  isLoading: boolean
+  error?: Error
+}
+
+// useStatementMutations
+function useStatementMutations<T>({ 
+  pensionId, 
+  pensionType 
+}: { 
+  pensionId: number
+  pensionType: PensionType 
+}) => {
+  createStatement: (data: Omit<T, 'id'>) => Promise<T>
+  updateStatement: (id: number, data: Partial<T>) => Promise<T>
+  deleteStatement: (id: number) => Promise<void>
+  isLoading: boolean
+  error?: Error
+}
+
 // useExpandableStatements
-function useExpandableStatements(): {
-  expandedStatements: Record<number, boolean>;
-  toggleStatement: (index: number) => void;
-  isExpanded: (index: number) => boolean;
-  expandAll: () => void;
-  collapseAll: () => void;
+function useExpandableStatements() => {
+  expandedStatements: Record<number, boolean>
+  toggleStatement: (index: number) => void
+  expandAll: () => void
+  collapseAll: () => void
 }
 
-// useStatementManager
-function useStatementManager<T>({
-  form,
-  statementPath,
-  createDefaultStatement,
-  pensionId,
+// useStatementForm
+function useStatementForm<T>({
+  defaultValues,
+  onSubmit
 }: {
-  form: UseFormReturn<any>;
-  statementPath: string;
-  createDefaultStatement: () => T;
-  pensionId?: number;
-}): {
-  addStatement: () => void;
-  removeStatement: (index: number) => void;
-  confirmDeleteStatement: (index: number) => void;
-}
-
-// useProjectionManager
-function useProjectionManager<T>({
-  form,
-  statementPath,
-  projectionPath,
-  createDefaultProjection,
-}: {
-  form: UseFormReturn<any>;
-  statementPath: string;
-  projectionPath: string;
-  createDefaultProjection: () => T;
-}): {
-  projectionInputs: Record<string, string>;
-  addProjection: (statementIndex: number) => void;
-  removeProjection: (statementIndex: number, projectionIndex: number) => void;
+  defaultValues?: T
+  onSubmit: (data: T) => Promise<void>
+}) => {
+  form: UseFormReturn<T>
+  isSubmitting: boolean
+  error?: Error
+  reset: () => void
 }
 ```
 
 ## 🔄 Migration Strategy
 
-1. Implement hooks without changing existing components
-2. Test hooks in isolation
-3. Refactor one component at a time
-4. Verify functionality after each refactor
-5. Document usage patterns for future pension types 
+1. Create and test new hooks without modifying existing components
+2. Migrate State Pension implementation first (already using React Query)
+3. Migrate Insurance and Company Pension implementations
+4. Verify all functionality works as expected
+5. Remove old state management code 

@@ -1,6 +1,5 @@
 "use client"
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/frontend/components/ui/tooltip"
 import Link from "next/link"
 import { Users, PiggyBank, Settings, LayoutDashboard, Compass, Wallet } from "lucide-react"
 import {
@@ -10,6 +9,9 @@ import {
     SidebarHeader,
     SidebarMenu,
     SidebarMenuItem,
+    SidebarTrigger,
+    SidebarMenuButton,
+    SidebarProvider
   } from "@/frontend/components/ui/sidebar"
 import { ModeToggle } from "@/frontend/components/layout/mode-toggle"
 import Image from "next/image"
@@ -23,75 +25,65 @@ const navItems = [
   { name: "Payout Strategy", href: BASE_ROUTES.PAGES.PAYOUT_STRATEGY, icon: Wallet },
 ]
 
-export const AppSidebar = () => {  
+export const AppSidebar = () => {
   return (
-    <Sidebar>
-      <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
-              <Image 
-                  src="/goldfinch-high-resolution-logo-only-transparent.svg" 
-                  alt="Goldfinch Logo" 
-                  className="logo"
-                  width={50}
-                  height={50}
-              />
-              <h2 className="text-3xl ml-1">Goldfinch</h2>
-          </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.name}>
-                  <TooltipProvider>
-                  <Tooltip>
-                      <TooltipTrigger asChild>
-                          <Link
-                          href={item.href}
-                          className="flex items-center rounded-md px-4 py-3.5 text-md hover:bg-sidebar-accent"
-                          >   
-                              <div className="flex items-center">
-                                  <item.icon />
-                                  <span className="group-data-[collapsible=icon]:hidden pl-4">{item.name}</span>
-                              </div>
-                          </Link>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="group-data-[collapsible=icon]:block hidden">
-                              {item.name}
-                          </TooltipContent>
-                      </Tooltip>
-                  </TooltipProvider>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-              <TooltipProvider>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                          <Link
-                          href={BASE_ROUTES.PAGES.SETTINGS}
-                          className="flex items-center justify-between rounded-md px-4 py-2 text-md hover:bg-sidebar-accent"
-                          >
-                              <div className="flex items-center">
-                                  <Settings />
-                                  <span className="group-data-[collapsible=icon]:hidden pl-4">Settings</span>
-                              </div>
-                              <div onClick={(e) => e.preventDefault()}>
-                                  <ModeToggle />
-                              </div>
-                          </Link>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="group-data-[collapsible=icon]:block hidden">
-                              Settings
-                          </TooltipContent>
-                      </Tooltip>
-                  </TooltipProvider>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+    <SidebarProvider>
+      <>
+        <Sidebar collapsible="icon" className="group/sidebar">
+          <SidebarHeader>
+              <div className="flex items-center gap-2 p-2">
+                  <Image 
+                      src="/goldfinch-high-resolution-logo-only-transparent.svg"
+                      alt="Goldfinch Logo" 
+                      className="logo transition-all duration-200 ease-in-out w-[50px] h-[50px] group-data-[collapsible=icon]:w-[24px] group-data-[collapsible=icon]:h-[24px]"
+                      width={50}
+                      height={50}
+                  />
+                  <h2 className="text-3xl ml-1 transition-opacity duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0"
+                  >Goldfinch</h2>
+              </div>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarMenuButton 
+                    asChild
+                    tooltip={item.name}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="min-w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild
+                  tooltip="Settings"
+                >
+                  <Link href={BASE_ROUTES.PAGES.SETTINGS}>
+                    <Settings className="min-w-5" />
+                    <span>Settings</span>
+                    <div onClick={(e) => e.preventDefault()} className="ml-auto">
+                      <ModeToggle />
+                    </div>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+        <div className="w-10 flex flex-col items-center pl-2 pt-6">
+          <SidebarTrigger />
+        </div>
+      </>
+    </SidebarProvider>
   )
 }
   
