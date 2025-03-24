@@ -126,8 +126,9 @@ Listed by priority and dependency readiness:
    - Statement Custom Hooks Implementation (1-2 weeks)
      > Standardize statement management across pension types with reusable hooks
      > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
-   - React Query Implementation (2-3 weeks)
+   - React Query Implementation (2-3 weeks) 🟡 In Progress
      > Migrate from Context-based state management to React Query for data fetching
+     > Household module fully migrated (✅), State Pension migrated (✅), ETF and Settings next in priority
      > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 
 2. **Core Features** (Dependencies ready)
@@ -249,7 +250,7 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~48%]`
+## 📊 Implementation Status `[Overall Progress: ~50%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
@@ -258,7 +259,7 @@ graph LR
 | Insurance Pension | ✅ Complete | 100% | None | Premium logic |
 | State Pension | 🟡 In Progress | 80% | None | Implementation complete, pending testing and refinement |
 | Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
-| Household | ✅ Complete | 100% | None | Basic CRUD |
+| Household | ✅ Complete | 100% | None | Basic CRUD, migrated to React Query |
 | Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented |
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
 | Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms |
@@ -267,7 +268,7 @@ graph LR
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
 | Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
-| React Query | 📝 Not Started | 0% | None | Modern data fetching |
+| React Query | 🟡 In Progress | 15% | None | Modern data fetching, State Pension & Household complete |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
 
 ## 🎯 Project Milestones

@@ -1,6 +1,7 @@
 "use client"
 
-import { HouseholdProvider } from '@/frontend/context/HouseholdContext'
+import { HouseholdUIProvider } from '@/frontend/context/HouseholdUIContext'
+import { StatePensionUIProvider } from '@/frontend/context/StatePensionUIContext'
 import { PensionProvider } from '@/frontend/context/pension'
 import { ETFProvider } from '@/frontend/context/ETFContext'
 import { SettingsProvider } from '@/frontend/context/SettingsContext'
@@ -11,14 +12,16 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
       <SettingsProvider>
-        <HouseholdProvider>
-          <ETFProvider>
-            <PensionProvider>
-              {children}
-              <Toaster richColors closeButton position="top-right" />
-            </PensionProvider>
-          </ETFProvider>
-        </HouseholdProvider>
+        <HouseholdUIProvider>
+          <StatePensionUIProvider>
+            <ETFProvider>
+              <PensionProvider>
+                {children}
+                <Toaster richColors closeButton position="top-right" />
+              </PensionProvider>
+            </ETFProvider>
+          </StatePensionUIProvider>
+        </HouseholdUIProvider>
       </SettingsProvider>
     </QueryProvider>
   )

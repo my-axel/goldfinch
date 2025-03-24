@@ -8,7 +8,7 @@ import { ControllerRenderProps, FieldValues, Path } from 'react-hook-form'
 import { cn } from '@/frontend/lib/utils'
 import { ChevronDown } from 'lucide-react'
 import { useDateFormat } from '@/frontend/hooks/useDateFormat'
-import { useHousehold } from '@/frontend/context/HouseholdContext'
+import { useHouseholdMember } from '@/frontend/hooks/useHouseholdMembers'
 import { DatePicker } from './date-picker'
 
 /**
@@ -130,72 +130,26 @@ export function DateEndPicker<
 }: DateEndPickerProps<TFieldValues, TName>) {
   const [open, setOpen] = React.useState(false)
   const { formatDate, toDateObject } = useDateFormat()
-  const { members, fetchMembers } = useHousehold()
   
-  // State to store calculated retirement date from member ID
-  const [calculatedRetirementDate, setCalculatedRetirementDate] = React.useState<Date | undefined>(undefined)
+  // Use React Query to fetch member data when needed
+  const { data: member } = useHouseholdMember(
+    memberId ? parseInt(String(memberId), 10) : 0,
+    {
+      enabled: !!memberId && !propRetirementDate,
+    }
+  )
   
-  // Use either provided retirement date or calculated one
-  const retirementDate = propRetirementDate || calculatedRetirementDate
-  
-  /**
-   * Effect to calculate retirement date from member ID
-   * 
-   * This runs when:
-   * - memberId changes
-   * - members array changes
-   * - propRetirementDate changes
-   * 
-   * It skips calculation if propRetirementDate is provided (explicit date takes precedence)
-   */
-  React.useEffect(() => {
-    // Skip if no member ID or if retirement date is already provided via props
-    if (!memberId || propRetirementDate) return
-    
-    const memberIdAsNumber = parseInt(String(memberId), 10)
-    
-    // Try to find the member in the current members array
-    if (members.length > 0) {
-      const member = members.find(m => m.id === memberIdAsNumber)
-      if (member?.retirement_date_planned) {
-        setCalculatedRetirementDate(new Date(member.retirement_date_planned))
-        return
-      }
-    }
-    
-    // If members array is empty or member not found, fetch members
-    const loadMembers = async () => {
-      try {
-        await fetchMembers()
-      } catch {
-        // Silent error handling
-      }
-    }
-    
-    // Only fetch if members array is empty (likely on page refresh)
-    if (members.length === 0) {
-      loadMembers()
-    }
-  }, [memberId, members, fetchMembers, propRetirementDate])
-  
-  /**
-   * Effect to update retirement date when members array changes
-   * 
-   * This ensures the retirement date is updated after members are fetched
-   */
-  React.useEffect(() => {
-    // Skip if no member ID or if retirement date is already provided via props
-    if (!memberId || propRetirementDate || members.length === 0) return
-    
-    const memberIdAsNumber = parseInt(String(memberId), 10)
-    const member = members.find(m => m.id === memberIdAsNumber)
-    
-    if (member?.retirement_date_planned) {
-      setCalculatedRetirementDate(new Date(member.retirement_date_planned))
-    } else {
-      setCalculatedRetirementDate(undefined)
-    }
-  }, [memberId, members, propRetirementDate])
+  // Memoize retirement date calculation
+  const retirementDate = React.useMemo(() => 
+    propRetirementDate || (member?.retirement_date_planned ? new Date(member.retirement_date_planned) : undefined),
+    [propRetirementDate, member?.retirement_date_planned]
+  )
+
+  // Convert retirement date to Date object for display - also memoize this
+  const retirementDateObj = React.useMemo(() => 
+    toDateObject(retirementDate),
+    [retirementDate, toDateObject]
+  )
 
   /**
    * Check if a duration is currently active
@@ -230,15 +184,10 @@ export function DateEndPicker<
    * Sets the end date to the retirement date
    */
   const handleUntilRetirement = React.useCallback(() => {
-    if (!startDate || !retirementDate) return
-    const date = toDateObject(retirementDate)
-    if (!date) return
-    field.onChange(date)
+    if (!startDate || !retirementDateObj) return
+    field.onChange(retirementDateObj)
     setOpen(false)
-  }, [field, startDate, retirementDate, toDateObject])
-
-  // Convert retirement date to Date object for display
-  const retirementDateObj = toDateObject(retirementDate)
+  }, [field, startDate, retirementDateObj])
 
   /**
    * Handle custom date selection from the DatePicker

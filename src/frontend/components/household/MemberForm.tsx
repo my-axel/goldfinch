@@ -1,11 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { Button } from "@/frontend/components/ui/button"
 import { Input } from "@/frontend/components/ui/input"
-import { Label } from "@/frontend/components/ui/label"
 import { HouseholdMember, HouseholdMemberFormData } from "@/frontend/types/household"
-import { format, isValid } from "date-fns"
+import { DateInput } from "@/frontend/components/ui/date-input"
+import { Form, FormField, FormItem, FormControl, FormLabel } from "@/frontend/components/ui/form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { toDateObject } from "@/frontend/lib/dateUtils"
 
 interface MemberFormProps {
   member?: HouseholdMember
@@ -13,15 +17,23 @@ interface MemberFormProps {
   onCancel: () => void
 }
 
-const formatDate = (date: Date | string | undefined | null): string => {
-  if (!date) return ""
-  try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return isValid(dateObj) ? format(dateObj, 'yyyy-MM-dd') : ""
-  } catch {
-    return ""
-  }
-}
+// Form validation schema
+const formSchema = z.object({
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  birthday: z.date({
+    required_error: "Birthday is required",
+    invalid_type_error: "Birthday must be a valid date"
+  }),
+  retirement_age_planned: z.coerce.number()
+    .min(40, "Planned retirement age must be at least 40")
+    .max(100, "Planned retirement age cannot exceed 100"),
+  retirement_age_possible: z.coerce.number()
+    .min(40, "Possible retirement age must be at least 40")
+    .max(100, "Possible retirement age cannot exceed 100")
+})
+
+type FormValues = z.infer<typeof formSchema>
 
 /**
  * Shared form component for adding and editing household members
@@ -37,146 +49,130 @@ const formatDate = (date: Date | string | undefined | null): string => {
  */
 
 export function MemberForm({ member, onSubmit, onCancel }: MemberFormProps) {
-  const [formData, setFormData] = useState({
-    first_name: member?.first_name ?? "",
-    last_name: member?.last_name ?? "",
-    birthday: formatDate(member?.birthday),
-    retirement_age_planned: member?.retirement_age_planned?.toString() ?? "",
-    retirement_age_possible: member?.retirement_age_possible?.toString() ?? "",
+  // Initialize the form with default values or existing member data
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      first_name: member?.first_name ?? "",
+      last_name: member?.last_name ?? "",
+      birthday: member?.birthday ? toDateObject(member.birthday) ?? new Date() : new Date(),
+      retirement_age_planned: member?.retirement_age_planned ?? 65,
+      retirement_age_possible: member?.retirement_age_possible ?? 60
+    }
   })
 
+  // Update form when member changes
   useEffect(() => {
-    if (!member) return
-
-    try {
-      setFormData({
-        first_name: member.first_name ?? "",
-        last_name: member.last_name ?? "",
-        birthday: formatDate(member.birthday),
-        retirement_age_planned: member.retirement_age_planned?.toString() ?? "",
-        retirement_age_possible: member.retirement_age_possible?.toString() ?? "",
-      })
-    } catch (error) {
-      console.error("Error updating form data:", error)
-      // Reset to empty form if there's an error
-      setFormData({
-        first_name: "",
-        last_name: "",
-        birthday: "",
-        retirement_age_planned: "",
-        retirement_age_possible: "",
+    if (member) {
+      const birthdayDate = toDateObject(member.birthday)
+      
+      form.reset({
+        first_name: member.first_name,
+        last_name: member.last_name,
+        birthday: birthdayDate ?? new Date(),
+        retirement_age_planned: member.retirement_age_planned,
+        retirement_age_possible: member.retirement_age_possible
       })
     }
-  }, [member])
+  }, [member, form])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validate required fields
-    if (!formData.first_name || !formData.last_name || !formData.birthday || 
-        !formData.retirement_age_planned || !formData.retirement_age_possible) {
-      console.error("All fields are required")
-      return
-    }
-
-    // Validate and parse retirement ages
-    const retirement_age_planned = parseInt(formData.retirement_age_planned)
-    const retirement_age_possible = parseInt(formData.retirement_age_possible)
-
-    if (isNaN(retirement_age_planned) || isNaN(retirement_age_possible)) {
-      console.error("Invalid retirement ages")
-      return
-    }
-
-    // Validate birthday
-    const birthday = new Date(formData.birthday)
-    if (!isValid(birthday)) {
-      console.error("Invalid birthday")
-      return
-    }
-
+  // Handle form submission
+  const handleSubmit = (values: FormValues) => {
     onSubmit({
-      first_name: formData.first_name.trim(),
-      last_name: formData.last_name.trim(),
-      birthday,
-      retirement_age_planned,
-      retirement_age_possible
+      first_name: values.first_name.trim(),
+      last_name: values.last_name.trim(),
+      birthday: values.birthday,
+      retirement_age_planned: values.retirement_age_planned,
+      retirement_age_possible: values.retirement_age_possible
     })
   }
 
-  // TODO: Add form validation matching backend requirements
-  // const validationSchema = z.object({ ... })
-
-  // TODO: Add error handling for failed API calls
-  // const [apiError, setApiError] = useState<string | null>(null)
-
-  // TODO: Add loading state for submit action
-  // const [isSubmitting, setIsSubmitting] = useState(false)
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="first_name">First Name</Label>
-          <Input
-            id="first_name"
-            value={formData.first_name}
-            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-            required
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="last_name">Last Name</Label>
-          <Input
-            id="last_name"
-            value={formData.last_name}
-            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="birthday">Birthday</Label>
-        <Input
-          id="birthday"
-          type="date"
-          value={formData.birthday}
-          onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-          required
+        
+        <FormField
+          control={form.control}
+          name="birthday"
+          render={({ field }) => (
+            <DateInput
+              field={field}
+              label="Birthday"
+            />
+          )}
         />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="retirement_age_planned">Planned Retirement Age</Label>
-          <Input
-            id="retirement_age_planned"
-            type="number"
-            min="40"
-            max="100"
-            value={formData.retirement_age_planned}
-            onChange={(e) => setFormData({ ...formData, retirement_age_planned: e.target.value })}
-            required
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="retirement_age_planned"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Planned Retirement Age</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="40"
+                    max="100"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="retirement_age_possible"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Possible Retirement Age</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="40"
+                    max="100"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="retirement_age_possible">Possible Retirement Age</Label>
-          <Input
-            id="retirement_age_possible"
-            type="number"
-            min="40"
-            max="100"
-            value={formData.retirement_age_possible}
-            onChange={(e) => setFormData({ ...formData, retirement_age_possible: e.target.value })}
-            required
-          />
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">{member ? 'Save Changes' : 'Add Member'}</Button>
         </div>
-      </div>
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">{member ? 'Save Changes' : 'Add Member'}</Button>
-      </div>
-    </form>
+      </form>
+    </Form>
   )
 } 

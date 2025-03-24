@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { PensionList } from '@/frontend/components/pension/shared/PensionList'
 import { usePension } from '@/frontend/context/pension'
-import { useHousehold } from '@/frontend/context/HouseholdContext'
+import { useHouseholdMembers } from '@/frontend/hooks/useHouseholdMembers'
 import { LoadingState } from '@/frontend/components/shared/LoadingState'
 import { toast } from 'sonner'
+import { PensionList as PensionListType } from '@/frontend/types/pension'
 
 /**
  * Pension Page Component
@@ -29,10 +30,9 @@ export default function PensionPage() {
   } = usePension()
   
   const { 
-    members, 
-    fetchMembers, 
+    data: members = [], 
     isLoading: isMembersLoading 
-  } = useHousehold()
+  } = useHouseholdMembers()
   
   const [isInitializing, setIsInitializing] = useState(true)
   
@@ -40,10 +40,7 @@ export default function PensionPage() {
   useEffect(() => {
     const initData = async () => {
       try {
-        await Promise.all([
-          fetchListPensions(), // Use the optimized function instead
-          fetchMembers()
-        ])
+        await fetchListPensions() // Only fetch pensions now, members are handled by React Query
       } catch (error) {
         console.error('Failed to initialize pension page:', error)
       } finally {
@@ -52,7 +49,7 @@ export default function PensionPage() {
     }
     
     initData()
-  }, [fetchListPensions, fetchMembers])
+  }, [fetchListPensions])
   
   // Handle pension deletion
   const handleDelete = useCallback(async (id: number) => {
@@ -85,7 +82,7 @@ export default function PensionPage() {
         <LoadingState message="Loading pension plans..." />
       ) : (
         <PensionList
-          pensions={pensions}
+          pensions={pensions as PensionListType[]}
           members={members}
           onDelete={handleDelete}
         />

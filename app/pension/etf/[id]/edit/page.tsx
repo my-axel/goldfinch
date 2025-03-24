@@ -7,7 +7,7 @@ import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, type ETFPension } from "@/frontend/types/pension"
 import { usePension } from "@/frontend/context/pension"
-import { useHousehold } from "@/frontend/context/HouseholdContext"
+import { useHouseholdMembers } from "@/frontend/hooks/useHouseholdMembers"
 import { toast } from "sonner"
 import { use } from "react"
 import { useEffect, useState, useMemo } from "react"
@@ -75,7 +75,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     fetchPensionStatistics,
     updatePensionStatus
   } = usePension()
-  const { members, fetchMembers } = useHousehold()
+  const { data: members = [] } = useHouseholdMembers()
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
   const { data: pension, isLoading, error } = usePensionData<ETFPension>(pensionId, PensionType.ETF_PLAN)
@@ -148,11 +148,6 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
       description: `Failed to ${action}. Please try again.`
     })
   }
-
-  // Fetch members on mount
-  useEffect(() => {
-    fetchMembers()
-  }, [fetchMembers])
 
   // Separate effect for fetching statistics after pension is loaded
   useEffect(() => {

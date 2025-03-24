@@ -1,11 +1,11 @@
 'use client'
 
 import * as React from 'react'
+import { Input } from './input'
 import { FormControl, FormItem, FormLabel, FormMessage } from './form'
 import { ControllerRenderProps, FieldValues, Path } from 'react-hook-form'
 import { cn } from '@/frontend/lib/utils'
 import { useDateFormat } from '@/frontend/hooks/useDateFormat'
-import { DatePicker } from './date-picker'
 
 export interface DateInputProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -23,29 +23,41 @@ export function DateInput<
   label,
   className,
   disabled,
+  ...props
 }: DateInputProps<TFieldValues, TName>) {
-  const { toDateObject } = useDateFormat()
+  const { toISOString, parseFormDate } = useDateFormat()
   
-  // Convert field value to Date object
-  const dateValue = toDateObject(field.value)
-
-  // Handle date selection from the picker
-  const handleDateChange = (date: Date | undefined) => {
-    field.onChange(date || null)
-    field.onBlur()
-  }
+  // Convert field value to ISO date string for input
+  const dateValue = toISOString(field.value)
 
   return (
     <FormItem className={className}>
       {label && <FormLabel>{label}</FormLabel>}
       <FormControl>
-        <DatePicker
-          date={dateValue}
-          onDateChange={handleDateChange}
-          placeholder="Select date"
+        <Input
+          type="date"
+          {...props}
           disabled={disabled}
+          value={dateValue}
+          onChange={(e) => {
+            try {
+              // Parse the date and set to midnight UTC
+              const value = e.target.value
+              if (!value) {
+                field.onChange(null)
+                return
+              }
+              const date = parseFormDate(value)
+              field.onChange(date)
+            } catch {
+              // If invalid date, set to null
+              field.onChange(null)
+            }
+          }}
+          onBlur={field.onBlur}
+          name={field.name}
           className={cn(
-            !dateValue && 'text-muted-foreground',
+            dateValue === '' && 'text-muted-foreground',
             className
           )}
         />

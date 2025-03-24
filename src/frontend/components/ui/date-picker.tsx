@@ -52,7 +52,7 @@ export function DatePicker({
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-[280px] justify-start text-left font-normal",
             !date && "text-muted-foreground",
             className
           )}
@@ -62,7 +62,7 @@ export function DatePicker({
           {date ? formattedDate : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
           selected={date || undefined}

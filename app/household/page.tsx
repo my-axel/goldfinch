@@ -1,12 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { MemberList } from "@/frontend/components/household/MemberList"
 import { AddMemberDialog } from "@/frontend/components/household/AddMemberDialog"
 import { EditMemberDialog } from "@/frontend/components/household/EditMemberDialog"
 import { HouseholdMember, HouseholdMemberFormData } from "@/frontend/types/household"
-import { useHousehold } from "@/frontend/context/HouseholdContext"
-
+import { 
+  useHouseholdMembers, 
+  useCreateHouseholdMember, 
+  useUpdateHouseholdMember, 
+  useDeleteHouseholdMember 
+} from "@/frontend/hooks/useHouseholdMembers"
+import { toast } from "sonner"
+import { useState } from "react"
 /**
  * Main Household page component
  * 
@@ -23,39 +28,33 @@ import { useHousehold } from "@/frontend/context/HouseholdContext"
  */
 
 export default function HouseholdPage() {
-  const { 
-    members, 
-    fetchMembers, 
-    addMember, 
-    updateMember,
-    deleteMember,
-    isLoading: contextLoading,
-  } = useHousehold()
+  // Replace context with React Query hooks
+  const { data: members = [], isLoading } = useHouseholdMembers()
+  const createMutation = useCreateHouseholdMember()
+  const updateMutation = useUpdateHouseholdMember()
+  const deleteMutation = useDeleteHouseholdMember()
   
   const [editingMember, setEditingMember] = useState<HouseholdMember | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
-  useEffect(() => {
-    fetchMembers()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const handleAddMember = async (newMember: HouseholdMemberFormData) => {
     try {
-      await addMember(newMember)
+      await createMutation.mutateAsync(newMember)
       setIsAddDialogOpen(false)
+      toast.success('Household member added successfully')
     } catch (error) {
       console.error('Failed to add member:', error)
-      // TODO: Add error toast notification
+      toast.error('Failed to add household member')
     }
   }
 
   const handleDeleteMember = async (id: number) => {
     try {
-      await deleteMember(id)
+      await deleteMutation.mutateAsync(id)
+      toast.success('Household member deleted successfully')
     } catch (error) {
       console.error('Failed to delete member:', error)
-      // TODO: Add error toast notification
+      toast.error('Failed to delete household member')
     }
   }
 
@@ -63,11 +62,15 @@ export default function HouseholdPage() {
     if (!editingMember) return
     
     try {
-      await updateMember(editingMember.id, updatedMember)
+      await updateMutation.mutateAsync({ 
+        id: editingMember.id, 
+        data: updatedMember 
+      })
       setEditingMember(null)
+      toast.success('Household member updated successfully')
     } catch (error) {
       console.error('Failed to update member:', error)
-      // TODO: Add error toast notification
+      toast.error('Failed to update household member')
     }
   }
 
@@ -91,7 +94,7 @@ export default function HouseholdPage() {
         onDelete={handleDeleteMember}
         onEdit={setEditingMember}
         onAdd={() => setIsAddDialogOpen(true)}
-        isLoading={contextLoading}
+        isLoading={isLoading}
       />
       {editingMember && (
         <EditMemberDialog

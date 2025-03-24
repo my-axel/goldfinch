@@ -36,7 +36,6 @@ import { Badge } from "@/frontend/components/ui/badge"
 import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
 import { getPensionEditRoute } from "@/frontend/lib/routes"
-import { useHousehold } from "@/frontend/context/HouseholdContext"
 import { needsValueCalculation } from "@/frontend/lib/pensionUtils"
 import { Loader2 } from "lucide-react"
 
@@ -164,12 +163,14 @@ function InsurancePensionContent({ pension }: { pension: InsurancePensionList & 
 /**
  * Displays company pension specific information
  */
-function CompanyPensionContent({ pension }: { pension: CompanyPensionList & { type: PensionType.COMPANY } }) {
-  const { members } = useHousehold()
+function CompanyPensionContent({ 
+  pension,
+  member 
+}: { 
+  pension: CompanyPensionList & { type: PensionType.COMPANY }
+  member?: HouseholdMember
+}) {
   const [showYearlyInvestment, setShowYearlyInvestment] = useState(false)
-  
-  // Find the household member associated with this pension
-  const member = members.find(m => m.id === pension.member_id)
   
   // Get the latest projections if available
   const latestProjections = pension.latest_projections || []
@@ -251,11 +252,13 @@ function CompanyPensionContent({ pension }: { pension: CompanyPensionList & { ty
 function PensionCard({ 
   pension, 
   onEdit, 
-  onDelete 
+  onDelete,
+  member
 }: { 
   pension: PensionListType
   onEdit: (pension: PensionListType) => void
   onDelete: (id: number) => void
+  member?: HouseholdMember
 }) {
   const isInactive = pension.status === 'PAUSED';
   
@@ -275,28 +278,17 @@ function PensionCard({
   };
 
   const renderContent = () => {
-    if (!pension) return null;
-
     switch (pension.type) {
       case PensionType.ETF_PLAN:
-        if ('etf_id' in pension) {
-          return <ETFPensionContent pension={pension} />
-        }
-        return null;
+        return <ETFPensionContent pension={pension} />
       case PensionType.INSURANCE:
-        if ('provider' in pension) {
-          return <InsurancePensionContent pension={pension} />
-        }
-        return null;
+        return <InsurancePensionContent pension={pension} />
       case PensionType.COMPANY:
-        if ('employer' in pension) {
-          return <CompanyPensionContent pension={pension} />
-        }
-        return null;
+        return <CompanyPensionContent pension={pension} member={member} />
       case PensionType.STATE:
         return <StatePensionListCard pension={pension} />
       default:
-        return null;
+        return null
     }
   }
 
@@ -393,15 +385,16 @@ function MemberPensionGroup({
     .sort(sortPensions)
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-4">{formatMemberName(member)}</h2>
+    <div key={member.id} className="space-y-4">
+      <h2 className="text-lg font-semibold">{formatMemberName(member)}</h2>
       <div className="flex flex-wrap gap-4">
         {memberPensions.map((pension) => (
-          <PensionCard
-            key={pension.id}
-            pension={pension}
-            onEdit={onEdit}
+          <PensionCard 
+            key={pension.id} 
+            pension={pension} 
+            onEdit={onEdit} 
             onDelete={onDelete}
+            member={member}
           />
         ))}
         <AddPensionCard onClick={() => setTypeSelectionOpen(true)} />
