@@ -5,15 +5,13 @@ import { useSettings } from "@/frontend/context/SettingsContext"
 import { StatePensionScenario } from "@/frontend/types/pension"
 import { TrendingDown, ArrowRight, TrendingUp } from "lucide-react"
 import { formatCurrency, formatNumber } from "@/frontend/lib/transforms"
-import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card"
 import {
-  ExplanationHeader,
   ExplanationStats,
   ExplanationStat,
-  ExplanationAlert,
-  ExplanationContent,
   ExplanationList,
-  ExplanationListItem
+  ExplanationListItem,
+  ExplanationHeader,
+  ExplanationContent
 } from "@/frontend/components/ui/explanation"
 import { Button } from "@/frontend/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
@@ -74,7 +72,13 @@ export function ScenarioViewer({ pensionId }: ScenarioViewerProps) {
 
   // Format values when data changes
   useEffect(() => {
-    if (!scenariosData) return
+    if (!scenariosData || 
+        !scenariosData.planned || 
+        !scenariosData.possible || 
+        Object.keys(scenariosData.planned).length === 0 || 
+        Object.keys(scenariosData.possible).length === 0) {
+      return;
+    }
 
     // Format planned scenario values
     const formatScenario = (scenario: StatePensionScenario) => ({
@@ -94,142 +98,139 @@ export function ScenarioViewer({ pensionId }: ScenarioViewerProps) {
       }).formatted}%`
     })
 
-    setFormattedValues({
-      planned: {
-        pessimistic: formatScenario(scenariosData.planned.pessimistic),
-        realistic: formatScenario(scenariosData.planned.realistic),
-        optimistic: formatScenario(scenariosData.planned.optimistic),
-        retirementAge: scenariosData.planned.realistic.retirement_age,
-        yearsToRetirement: scenariosData.planned.realistic.years_to_retirement
-      },
-      possible: {
-        pessimistic: formatScenario(scenariosData.possible.pessimistic),
-        realistic: formatScenario(scenariosData.possible.realistic),
-        optimistic: formatScenario(scenariosData.possible.optimistic),
-        retirementAge: scenariosData.possible.realistic.retirement_age,
-        yearsToRetirement: scenariosData.possible.realistic.years_to_retirement
-      }
-    })
+    // Check if all the required scenarios exist
+    if (scenariosData.planned.pessimistic && 
+        scenariosData.planned.realistic && 
+        scenariosData.planned.optimistic &&
+        scenariosData.possible.pessimistic && 
+        scenariosData.possible.realistic && 
+        scenariosData.possible.optimistic) {
+      
+      setFormattedValues({
+        planned: {
+          pessimistic: formatScenario(scenariosData.planned.pessimistic),
+          realistic: formatScenario(scenariosData.planned.realistic),
+          optimistic: formatScenario(scenariosData.planned.optimistic),
+          retirementAge: scenariosData.planned.realistic.retirement_age,
+          yearsToRetirement: scenariosData.planned.realistic.years_to_retirement
+        },
+        possible: {
+          pessimistic: formatScenario(scenariosData.possible.pessimistic),
+          realistic: formatScenario(scenariosData.possible.realistic),
+          optimistic: formatScenario(scenariosData.possible.optimistic),
+          retirementAge: scenariosData.possible.realistic.retirement_age,
+          yearsToRetirement: scenariosData.possible.realistic.years_to_retirement
+        }
+      })
+    }
   }, [scenariosData, settings])
 
   // Loading state
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Pension Projections</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
     )
   }
 
   // Error state
-  if (error || !scenariosData) {
+  if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Pension Projections</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertDescription>
-              Unable to load pension projections. Please try again later.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <Alert variant="destructive">
+        <AlertDescription>
+          Unable to load pension projections. Please try again later.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+  
+  // No statements state - check if scenarios data exists but is empty
+  if (!scenariosData || Object.keys(scenariosData.planned).length === 0) {
+    return (
+      <Alert>
+        <AlertDescription>
+          There are currently no statements with which scenarios could be calculated. Please add at least one pension statement to see projections.
+        </AlertDescription>
+      </Alert>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pension Projections</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Planned Retirement Age Scenarios */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Planned Retirement Age ({formattedValues.planned.retirementAge})</h3>
-          <p className="text-sm text-muted-foreground">
-            Projected benefits if you retire at your planned retirement age in {formattedValues.planned.yearsToRetirement} years.
-          </p>
-          
-          <ExplanationStats columns={3}>
-            <ExplanationStat
-              icon={TrendingDown}
-              label="Pessimistic"
-              value={formattedValues.planned.pessimistic.monthlyAmount}
-              subValue={formattedValues.planned.pessimistic.growthRate}
-              tooltip="Lower growth rate scenario"
-            />
-            <ExplanationStat
-              icon={ArrowRight}
-              label="Realistic"
-              value={formattedValues.planned.realistic.monthlyAmount}
-              subValue={formattedValues.planned.realistic.growthRate}
-              tooltip="Expected growth rate scenario"
-            />
-            <ExplanationStat
-              icon={TrendingUp}
-              label="Optimistic"
-              value={formattedValues.planned.optimistic.monthlyAmount}
-              subValue={formattedValues.planned.optimistic.growthRate}
-              tooltip="Higher growth rate scenario"
-            />
-          </ExplanationStats>
-          
-          <p className="text-sm text-muted-foreground mt-2">
-            Annual pension amounts: {formattedValues.planned.pessimistic.annualAmount} (pessimistic), {formattedValues.planned.realistic.annualAmount} (realistic), {formattedValues.planned.optimistic.annualAmount} (optimistic)
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Planned Retirement Age Scenarios */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Planned Retirement Age ({formattedValues.planned.retirementAge})</h3>
+        <p className="text-sm text-muted-foreground">
+          Projected benefits if you retire at your planned retirement age in {formattedValues.planned.yearsToRetirement} years.
+        </p>
         
-        {/* Alternative Retirement Age Scenarios */}
-        <div className="space-y-4 pt-6 border-t">
-          <h3 className="text-lg font-semibold">Alternative Retirement Age ({formattedValues.possible.retirementAge})</h3>
-          <p className="text-sm text-muted-foreground">
-            Projected benefits if you delay retirement to age {formattedValues.possible.retirementAge} (in {formattedValues.possible.yearsToRetirement} years).
-          </p>
-          
-          <ExplanationStats columns={3}>
-            <ExplanationStat
-              icon={TrendingDown}
-              label="Pessimistic"
-              value={formattedValues.possible.pessimistic.monthlyAmount}
-              subValue={formattedValues.possible.pessimistic.growthRate}
-              tooltip="Lower growth rate scenario"
-            />
-            <ExplanationStat
-              icon={ArrowRight}
-              label="Realistic"
-              value={formattedValues.possible.realistic.monthlyAmount}
-              subValue={formattedValues.possible.realistic.growthRate}
-              tooltip="Expected growth rate scenario"
-            />
-            <ExplanationStat
-              icon={TrendingUp}
-              label="Optimistic"
-              value={formattedValues.possible.optimistic.monthlyAmount}
-              subValue={formattedValues.possible.optimistic.growthRate}
-              tooltip="Higher growth rate scenario"
-            />
-          </ExplanationStats>
-          
-          <p className="text-sm text-muted-foreground mt-2">
-            Annual pension amounts: {formattedValues.possible.pessimistic.annualAmount} (pessimistic), {formattedValues.possible.realistic.annualAmount} (realistic), {formattedValues.possible.optimistic.annualAmount} (optimistic)
-          </p>
-        </div>
+        <ExplanationStats columns={3}>
+          <ExplanationStat
+            icon={TrendingDown}
+            label="Pessimistic"
+            value={formattedValues.planned.pessimistic.monthlyAmount}
+            subValue={formattedValues.planned.pessimistic.growthRate}
+            tooltip="Lower growth rate scenario"
+          />
+          <ExplanationStat
+            icon={ArrowRight}
+            label="Realistic"
+            value={formattedValues.planned.realistic.monthlyAmount}
+            subValue={formattedValues.planned.realistic.growthRate}
+            tooltip="Expected growth rate scenario"
+          />
+          <ExplanationStat
+            icon={TrendingUp}
+            label="Optimistic"
+            value={formattedValues.planned.optimistic.monthlyAmount}
+            subValue={formattedValues.planned.optimistic.growthRate}
+            tooltip="Higher growth rate scenario"
+          />
+        </ExplanationStats>
         
-        <ExplanationAlert>
-          These projections are estimates based on current contribution rates and growth assumptions.
-          Actual benefits may vary based on policy changes and economic factors.
-        </ExplanationAlert>
+        <p className="text-sm text-muted-foreground mt-2">
+          Annual pension amounts: {formattedValues.planned.pessimistic.annualAmount} (pessimistic), {formattedValues.planned.realistic.annualAmount} (realistic), {formattedValues.planned.optimistic.annualAmount} (optimistic)
+        </p>
+      </div>
+      
+      {/* Alternative Retirement Age Scenarios */}
+      <div className="space-y-4 pt-6 border-t">
+        <h3 className="text-lg font-semibold">Alternative Retirement Age ({formattedValues.possible.retirementAge})</h3>
+        <p className="text-sm text-muted-foreground">
+          Projected benefits if you delay retirement to age {formattedValues.possible.retirementAge} (in {formattedValues.possible.yearsToRetirement} years).
+        </p>
         
+        <ExplanationStats columns={3}>
+          <ExplanationStat
+            icon={TrendingDown}
+            label="Pessimistic"
+            value={formattedValues.possible.pessimistic.monthlyAmount}
+            subValue={formattedValues.possible.pessimistic.growthRate}
+            tooltip="Lower growth rate scenario"
+          />
+          <ExplanationStat
+            icon={ArrowRight}
+            label="Realistic"
+            value={formattedValues.possible.realistic.monthlyAmount}
+            subValue={formattedValues.possible.realistic.growthRate}
+            tooltip="Expected growth rate scenario"
+          />
+          <ExplanationStat
+            icon={TrendingUp}
+            label="Optimistic"
+            value={formattedValues.possible.optimistic.monthlyAmount}
+            subValue={formattedValues.possible.optimistic.growthRate}
+            tooltip="Higher growth rate scenario"
+          />
+        </ExplanationStats>
+        
+        <p className="text-sm text-muted-foreground mt-2">
+          Annual pension amounts: {formattedValues.possible.pessimistic.annualAmount} (pessimistic), {formattedValues.possible.realistic.annualAmount} (realistic), {formattedValues.possible.optimistic.annualAmount} (optimistic)
+        </p>
+      </div>
+
         {/* Expandable details section */}
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <div className={cn(
@@ -295,7 +296,6 @@ export function ScenarioViewer({ pensionId }: ScenarioViewerProps) {
             </CollapsibleContent>
           </div>
         </Collapsible>
-      </CardContent>
-    </Card>
+    </div>
   )
 } 

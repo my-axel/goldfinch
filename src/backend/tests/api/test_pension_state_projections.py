@@ -77,9 +77,16 @@ def test_scenarios_with_no_statements(client: TestClient, db_session: Session):
     """Test scenario calculation for pension without statements."""
     pension = create_test_pension_state(db_session)
     
-    # Should return 400 Bad Request when no statements
+    # Should return empty projection structure when no statements
     response = client.get(f"/api/v1/pension/state/{pension.id}/scenarios")
-    assert response.status_code == 400
+    assert response.status_code == 200
+    
+    data = response.json()
+    # Verify empty projection structure
+    assert "planned" in data
+    assert "possible" in data
+    assert data["planned"] == {}
+    assert data["possible"] == {}
 
 @pytest.mark.integration
 def test_scenarios_with_invalid_pension(client: TestClient, db_session: Session):

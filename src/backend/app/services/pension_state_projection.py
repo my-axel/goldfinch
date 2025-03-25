@@ -36,8 +36,12 @@ class PensionStateProjectionService:
         
         Returns scenarios for both planned and possible retirement dates,
         each containing pessimistic, realistic, and optimistic projections.
+        
+        If no statements are available, returns an empty projection structure
+        with empty dictionaries for both planned and possible scenarios.
         """
         if not pension.statements:
+            # Return empty projection structure when no statements are available
             return StatePensionProjection(
                 planned={},
                 possible={}

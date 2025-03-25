@@ -17,9 +17,19 @@ def test_get_list(db_session: Session):
     pension1 = create_test_pension_state(db_session, name="Test Pension 1")
     pension2 = create_test_pension_state(db_session, name="Test Pension 2")
     
+    # Add statements to first pension
+    statement1 = create_test_pension_statement(db_session, pension_id=pension1.id)
+    statement2 = create_test_pension_statement(db_session, pension_id=pension1.id)
+    
     # Test basic list
     results = pension_state.get_list(db=db_session)
     assert len(results) == 2
+    
+    # Verify statements count
+    pension1_result = next(r for r in results if r["id"] == pension1.id)
+    pension2_result = next(r for r in results if r["id"] == pension2.id)
+    assert pension1_result["statements_count"] == 2
+    assert pension2_result["statements_count"] == 0
     
     # Test pagination
     results = pension_state.get_list(db=db_session, skip=0, limit=1)
@@ -29,6 +39,7 @@ def test_get_list(db_session: Session):
     results = pension_state.get_list(db=db_session, member_id=pension1.member_id)
     assert len(results) == 1
     assert results[0]["id"] == pension1.id
+    assert results[0]["statements_count"] == 2
 
 @pytest.mark.unit
 def test_get_by_id(db_session: Session):
@@ -73,6 +84,183 @@ def test_update(db_session: Session):
     )
     assert updated_pension.name == update_data["name"]
     assert updated_pension.notes == update_data["notes"]
+
+@pytest.mark.unit
+def test_update_with_statements(db_session: Session):
+    """Test updating a state pension with statements."""
+    # Create a pension with an existing statement
+    pension = create_test_pension_state(db_session)
+    existing_statement = create_test_pension_statement(
+        db_session, 
+        pension_id=pension.id,
+        statement_date=date(2023, 1, 1),
+        current_monthly_amount=Decimal("400.00")
+    )
+    
+    # Prepare update data with:
+    # 1. Update to existing statement
+    # 2. New statement to be created
+    update_data = {
+        "name": "Updated With Statements",
+        "notes": "Updated with statements test",
+        "statements": [
+            # Update existing statement
+            {
+                "id": existing_statement.id,
+                "pension_id": pension.id,
+                "statement_date": date(2023, 1, 1),
+                "current_monthly_amount": Decimal("450.00"),  # Changed amount
+                "note": "Updated statement"
+            },
+            # New statement to be created
+            {
+                "statement_date": date(2024, 1, 1),
+                "current_monthly_amount": Decimal("500.00"),
+                "projected_monthly_amount": Decimal("600.00"),
+                "note": "New statement"
+            }
+        ]
+    }
+    
+    # Update the pension with statements
+    updated_pension = pension_state.update(
+        db=db_session,
+        db_obj=pension,
+        obj_in=update_data
+    )
+    
+    # Verify basic pension data is updated
+    assert updated_pension.name == update_data["name"]
+    assert updated_pension.notes == update_data["notes"]
+    
+    # Verify statements are updated properly
+    assert len(updated_pension.statements) == 2
+    
+    # Check existing statement was updated
+    updated_statement = next((s for s in updated_pension.statements if s.id == existing_statement.id), None)
+    assert updated_statement is not None
+    assert updated_statement.current_monthly_amount == Decimal("450.00")
+    assert updated_statement.note == "Updated statement"
+    
+    # Check new statement was created
+    new_statement = next((s for s in updated_pension.statements if s.id != existing_statement.id), None)
+    assert new_statement is not None
+    assert new_statement.statement_date == date(2024, 1, 1)
+    assert new_statement.current_monthly_amount == Decimal("500.00")
+    assert new_statement.projected_monthly_amount == Decimal("600.00")
+    assert new_statement.note == "New statement"
+
+@pytest.mark.unit
+def test_update_preserves_unmentioned_statements(db_session: Session):
+    """Test that statements not included in the update data are preserved."""
+    # Create a pension with multiple statements
+    pension = create_test_pension_state(db_session)
+    statement1 = create_test_pension_statement(
+        db_session, 
+        pension_id=pension.id,
+        statement_date=date(2023, 1, 1),
+        current_monthly_amount=Decimal("400.00"),
+        note="Statement 1"
+    )
+    statement2 = create_test_pension_statement(
+        db_session, 
+        pension_id=pension.id,
+        statement_date=date(2023, 6, 1),
+        current_monthly_amount=Decimal("450.00"),
+        note="Statement 2"
+    )
+    
+    # Update data only mentions one of the existing statements
+    update_data = {
+        "name": "Updated With Partial Statements",
+        "statements": [
+            # Update only the first statement
+            {
+                "id": statement1.id,
+                "pension_id": pension.id,
+                "statement_date": date(2023, 1, 1),
+                "current_monthly_amount": Decimal("420.00"),
+                "note": "Updated statement 1"
+            }
+        ]
+    }
+    
+    # Update the pension
+    updated_pension = pension_state.update(
+        db=db_session,
+        db_obj=pension,
+        obj_in=update_data
+    )
+    
+    # Verify basic pension data is updated
+    assert updated_pension.name == update_data["name"]
+    
+    # Verify both statements still exist
+    assert len(updated_pension.statements) == 2
+    
+    # Verify first statement was updated
+    updated_statement = next((s for s in updated_pension.statements if s.id == statement1.id), None)
+    assert updated_statement is not None
+    assert updated_statement.current_monthly_amount == Decimal("420.00")
+    assert updated_statement.note == "Updated statement 1"
+    
+    # Verify second statement was preserved unchanged
+    preserved_statement = next((s for s in updated_pension.statements if s.id == statement2.id), None)
+    assert preserved_statement is not None
+    assert preserved_statement.current_monthly_amount == Decimal("450.00")
+    assert preserved_statement.note == "Statement 2"
+
+@pytest.mark.unit
+def test_update_with_invalid_statements(db_session: Session):
+    """Test error handling when updating with invalid statements."""
+    # Create a pension
+    pension = create_test_pension_state(db_session)
+    
+    # Create initial statement to check for rollback
+    initial_statement = create_test_pension_statement(
+        db_session, 
+        pension_id=pension.id,
+        statement_date=date(2023, 1, 1),
+        current_monthly_amount=Decimal("400.00")
+    )
+    
+    # Get original name for verification later
+    original_name = pension.name
+    
+    # Create update data with a valid statement and an invalid one (missing required field)
+    update_data = {
+        "name": "Should Not Update",
+        "statements": [
+            # Valid statement update
+            {
+                "id": initial_statement.id,
+                "pension_id": pension.id,
+                "statement_date": date(2023, 1, 1),
+                "current_monthly_amount": Decimal("450.00")
+            },
+            # Invalid statement (missing required statement_date)
+            {
+                "current_monthly_amount": Decimal("500.00"),
+                "note": "Invalid statement"
+            }
+        ]
+    }
+    
+    # Try to update and expect an exception
+    with pytest.raises(Exception):
+        updated_pension = pension_state.update(
+            db=db_session,
+            db_obj=pension,
+            obj_in=update_data
+        )
+    
+    # Reload pension from DB and verify it wasn't changed (transaction rolled back)
+    db_session.refresh(pension)
+    assert pension.name == original_name
+    
+    # Verify statement wasn't updated
+    db_session.refresh(initial_statement)
+    assert initial_statement.current_monthly_amount == Decimal("400.00")
 
 @pytest.mark.unit
 def test_delete(db_session: Session):

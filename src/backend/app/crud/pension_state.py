@@ -117,6 +117,11 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             else:
                 update_data = obj_in.model_dump(exclude_unset=True)
 
+            # Extract statements if present
+            statements_data = None
+            if "statements" in update_data:
+                statements_data = update_data.pop("statements")
+
             # Update fields directly in the database with a query
             update_values = {}
             for field, value in update_data.items():
@@ -127,6 +132,37 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
                 db.query(PensionState).filter(
                     PensionState.id == db_obj.id
                 ).update(update_values)
+                
+            # Process statements if provided
+            if statements_data:
+                for stmt_data in statements_data:
+                    # Check if this is an existing statement (has ID) or new one
+                    if "id" in stmt_data and stmt_data["id"]:
+                        # Update existing statement
+                        stmt_id = stmt_data["id"]
+                        stmt = db.get(PensionStateStatement, stmt_id)
+                        
+                        if stmt and stmt.pension_id == db_obj.id:
+                            # Update the statement fields
+                            for field, value in stmt_data.items():
+                                if hasattr(stmt, field) and field not in ["id", "pension_id"]:
+                                    setattr(stmt, field, value)
+                            db.add(stmt)
+                        else:
+                            # Statement not found or belongs to different pension
+                            logger.warning(f"Statement {stmt_id} not found or belongs to different pension")
+                    else:
+                        # Create new statement
+                        # Remove id if present and empty
+                        if "id" in stmt_data:
+                            del stmt_data["id"]
+                            
+                        # Ensure pension_id is set correctly
+                        stmt_data["pension_id"] = db_obj.id
+                        
+                        # Create the statement
+                        db_stmt = PensionStateStatement(**stmt_data)
+                        db.add(db_stmt)
 
             db.commit()
             return self.get(db=db, id=db_obj.id)
@@ -291,6 +327,19 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
         # If no pensions found, return empty list
         if not pension_ids:
             return []
+            
+        # Get statement counts for all pensions in one query
+        statement_counts = db.query(
+            PensionStateStatement.pension_id,
+            func.count(PensionStateStatement.id).label("count")
+        ).filter(
+            PensionStateStatement.pension_id.in_(pension_ids)
+        ).group_by(
+            PensionStateStatement.pension_id
+        ).all()
+        
+        # Create a lookup dictionary for statement counts
+        statement_count_map = {row.pension_id: row.count for row in statement_counts}
         
         # Get latest statements for all pensions in one query
         latest_statements_subquery = db.query(
@@ -310,32 +359,34 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             (PensionStateStatement.statement_date == latest_statements_subquery.c.max_date)
         ).all()
         
-        # Create a dictionary mapping pension_id to latest statement data
-        latest_statement_data = {
-            stmt.pension_id: {
-                "statement_date": stmt.statement_date,
-                "current_monthly_amount": stmt.current_monthly_amount,
-                "projected_monthly_amount": stmt.projected_monthly_amount,
-                "current_value": stmt.current_value
-            }
-            for stmt in latest_statements
-        }
+        # Create a lookup dictionary for latest statements
+        latest_statements_map = {stmt.pension_id: stmt for stmt in latest_statements}
         
-        # Build the response list
-        return [
-            {
+        # Build the final result
+        result_list = []
+        for row in result:
+            pension_dict = {
                 "id": row.id,
                 "name": row.name,
                 "member_id": row.member_id,
                 "start_date": row.start_date,
                 "status": row.status,
-                "latest_statement_date": latest_statement_data.get(row.id, {}).get("statement_date"),
-                "latest_monthly_amount": latest_statement_data.get(row.id, {}).get("current_monthly_amount"),
-                "latest_projected_amount": latest_statement_data.get(row.id, {}).get("projected_monthly_amount"),
-                "latest_current_value": latest_statement_data.get(row.id, {}).get("current_value")
+                "statements_count": statement_count_map.get(row.id, 0)  # Get count or default to 0
             }
-            for row in result
-        ]
+            
+            # Add latest statement information if available
+            latest_stmt = latest_statements_map.get(row.id)
+            if latest_stmt:
+                pension_dict.update({
+                    "latest_statement_date": latest_stmt.statement_date,
+                    "latest_monthly_amount": latest_stmt.current_monthly_amount,
+                    "latest_projected_amount": latest_stmt.projected_monthly_amount,
+                    "latest_current_value": latest_stmt.current_value
+                })
+            
+            result_list.append(pension_dict)
+            
+        return result_list
 
     def update_status(
         self,

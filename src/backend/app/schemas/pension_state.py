@@ -55,6 +55,7 @@ class PensionStateUpdate(BaseModel):
     notes: Optional[str] = None
     start_date: Optional[date] = None
     status: Optional[PensionStatus] = None
+    statements: Optional[List[dict]] = Field(default=None, description="Optional list of statements to update or create with the pension")
 
 # Schema for state pension response
 class PensionStateResponse(PensionStateBase):
@@ -80,6 +81,7 @@ class StatePensionListSchema(BaseModel):
     latest_monthly_amount: Optional[Decimal] = Field(default=None, description="Current monthly amount from latest statement (EUR)")
     latest_projected_amount: Optional[Decimal] = Field(default=None, description="Projected monthly amount from latest statement (EUR)")
     latest_current_value: Optional[Decimal] = Field(default=None, description="Current total value from latest statement (EUR)")
+    statements_count: int = Field(default=0, description="Number of statements available for this pension")
 
     model_config = ConfigDict(
         from_attributes=True,

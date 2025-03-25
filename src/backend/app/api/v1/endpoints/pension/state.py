@@ -262,7 +262,6 @@ def delete_statement(
     responses={
         200: {"description": "Scenarios calculated successfully"},
         404: {"description": "State pension not found"},
-        400: {"description": "Cannot calculate scenarios (no statements or member)"}
     }
 )
 async def calculate_pension_scenarios(
@@ -278,6 +277,8 @@ async def calculate_pension_scenarios(
     
     Returns scenarios for both planned and possible retirement dates,
     each containing pessimistic, realistic, and optimistic projections.
+    
+    If the pension has no statements, returns an empty projection structure.
     
     Example response:
     ```json
@@ -337,9 +338,10 @@ async def calculate_pension_scenarios(
         raise HTTPException(status_code=404, detail="State pension not found")
         
     if not pension.statements:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot calculate scenarios without any statements"
+        # Return empty projection structure instead of 400 error
+        return StatePensionProjection(
+            planned={},
+            possible={}
         )
     
     # Get member for retirement age

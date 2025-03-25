@@ -283,6 +283,7 @@ export interface StatePensionList {
   latest_monthly_amount?: number
   latest_projected_amount?: number
   latest_current_value?: number
+  statements_count: number  // Number of statements available
 }
 
 /** Union type of all possible pension types */

@@ -45,10 +45,23 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   const [formattedDates, setFormattedDates] = useState<{[key: number]: string}>({})
   const [statementToDelete, setStatementToDelete] = useState<{ index: number, date: string } | null>(null)
 
-  // Use a simpler approach - latest statement is the last one added
+  // Get the index of the latest statement by date
   const getLatestStatementIndex = () => {
     if (statementFields.length === 0) return -1
-    return statementFields.length - 1
+    
+    // Find the index of the statement with the most recent date
+    let latestIndex = 0
+    let latestDate = new Date(0) // Start with earliest possible date
+    
+    statementFields.forEach((field, index) => {
+      const statementDate = form.getValues(`statements.${index}.statement_date`)
+      if (statementDate && new Date(statementDate) > latestDate) {
+        latestDate = new Date(statementDate)
+        latestIndex = index
+      }
+    })
+    
+    return latestIndex
   }
 
   // Initialize dates when form data changes
@@ -222,13 +235,17 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   const renderPreviousStatements = () => {
     if (statementFields.length <= 1) return null;
     
-    // Get all statements except the latest one
-    const previousStatements = statementFields.slice(0, -1);
+    const latestIndex = getLatestStatementIndex();
+    
+    // Get all statements except the latest one by date
+    const previousStatements = statementFields.filter((_, index) => index !== latestIndex);
     
     // Sort previous statements by date (latest on top)
     const sortedPreviousStatements = [...previousStatements].sort((a, b) => {
-      const dateA = new Date(form.getValues(`statements.${previousStatements.indexOf(a)}.statement_date`)).getTime();
-      const dateB = new Date(form.getValues(`statements.${previousStatements.indexOf(b)}.statement_date`)).getTime();
+      const indexA = statementFields.findIndex(field => field.id === a.id);
+      const indexB = statementFields.findIndex(field => field.id === b.id);
+      const dateA = new Date(form.getValues(`statements.${indexA}.statement_date`)).getTime();
+      const dateB = new Date(form.getValues(`statements.${indexB}.statement_date`)).getTime();
       return dateB - dateA; // Sort in descending order (latest first)
     });
     
@@ -237,7 +254,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
         <h3 className="text-lg font-medium">Previous Statements</h3>
         {sortedPreviousStatements.map((field) => {
           // Get the original index to access the correct data
-          const originalIndex = previousStatements.indexOf(field);
+          const originalIndex = statementFields.findIndex(f => f.id === field.id);
           
           return (
             <Collapsible
@@ -282,15 +299,19 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     );
   }
 
-  // Render the latest statement form (the one with the highest index)
+  // Render the latest statement form (the one with the most recent date)
   const renderLatestStatementForm = () => {
     if (statementFields.length === 0) return null;
     
     const latestIndex = getLatestStatementIndex();
     
+    // Get the date string for display
+    const statementDate = form.getValues(`statements.${latestIndex}.statement_date`);
+    const formattedDate = statementDate ? <FormattedDate value={statementDate} /> : "latest statement";
+    
     return (
       <div className="space-y-6">
-        <h3 className="text-lg font-medium">Latest Statement</h3>
+        <h3 className="text-lg font-medium">Latest Statement ({formattedDate})</h3>
         <div className="p-4 border rounded-md">
           {renderStatementForm(latestIndex)}
         </div>
