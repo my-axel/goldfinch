@@ -1,6 +1,6 @@
 import "./styles/globals.css";
 import { ThemeProvider } from "@/src/frontend/components/layout/theme-provider";
-import { SidebarProvider } from "@/src/frontend/components/ui/sidebar"
+import { SidebarProvider, SidebarTrigger } from "@/src/frontend/components/ui/sidebar"
 import { AppSidebar } from "@/frontend/components/layout/AppSidebar";
 import { AppProviders } from '@/frontend/providers/AppProviders'
 import type { Metadata } from 'next'
@@ -29,11 +29,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SidebarProvider>
-                <div className="flex h-screen">
+                <div className="flex h-screen w-full">
                   <div className="flex">
                     <AppSidebar />
+                    <div className="flex flex-col pl-2 py-6">
+                      <SidebarTrigger />
+                    </div>
                   </div>
-                  <main className="flex-1 py-6 px-8">
+                  <main className="flex-1 py-6 px-8 overflow-auto w-full text-left">
                     {children}
                   </main>
                 </div>

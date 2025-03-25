@@ -26,6 +26,7 @@ import { Textarea } from "@/frontend/components/ui/textarea"
 import { FormattedDate } from "@/frontend/components/shared/formatting/FormattedDate"
 // Import standardized input components
 import { CurrencyInput } from "@/frontend/components/shared/inputs/CurrencyInput"
+import { toDateObject } from '@/frontend/lib/dateUtils'
 
 interface StatementsCardProps {
   form: UseFormReturn<StatePensionFormData>
@@ -54,9 +55,11 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
     let latestDate = new Date(0) // Start with earliest possible date
     
     statementFields.forEach((field, index) => {
-      const statementDate = form.getValues(`statements.${index}.statement_date`)
-      if (statementDate && new Date(statementDate) > latestDate) {
-        latestDate = new Date(statementDate)
+      const rawDate = form.getValues(`statements.${index}.statement_date`)
+      const statementDate = toDateObject(rawDate)
+      
+      if (statementDate && (statementDate > latestDate)) {
+        latestDate = statementDate
         latestIndex = index
       }
     })

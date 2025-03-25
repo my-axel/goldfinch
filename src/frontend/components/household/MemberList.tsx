@@ -32,7 +32,7 @@ interface MemberListProps {
  */
 function AddMemberCard({ onClick }: { onClick: () => void }) {
   return (
-    <Card className="flex flex-col items-center justify-center min-h-[140px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
+    <Card className="flex flex-col items-center justify-center w-[270px] h-[230px] border-dashed cursor-pointer hover:border-primary/50 transition-colors" onClick={onClick}>
       <CardContent className="flex flex-col items-center justify-center py-6 w-full">
         <PlusCircle className="h-6 w-6 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">Add New Member</p>
@@ -50,7 +50,7 @@ export function MemberList({ members = [], onDelete, onEdit, onAdd, isLoading = 
 
   if (!members || members.length === 0) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-wrap gap-4">
         <AddMemberCard onClick={onAdd} />
       </div>
     )
@@ -58,11 +58,11 @@ export function MemberList({ members = [], onDelete, onEdit, onAdd, isLoading = 
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-wrap gap-4">
         {members.map((member) => {
           const computed = calculateMemberFields(member)
           return (
-            <Card key={member.id}>
+            <Card key={member.id} className="w-[270px]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle>{formatMemberName(member)}</CardTitle>
                 <div className="flex space-x-1">

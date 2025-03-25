@@ -19,7 +19,7 @@ import { StatementsExplanation } from "@/frontend/components/pension/state/expla
 import { ScenariosExplanation } from "@/frontend/components/pension/state/explanations/ScenariosExplanation"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { toISODateString } from "@/frontend/lib/dateUtils"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useStatePension, useUpdateStatePension, useUpdateStatePensionStatus } from "@/frontend/hooks/pension/useStatePensions"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { LoadingState } from "@/frontend/components/shared/LoadingState"
@@ -58,6 +58,14 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
     // We'll set default values when the pension data loads
     defaultValues: pension ? statePensionToForm(pension) : undefined
   })
+
+  // Update form data when pension data loads
+  useEffect(() => {
+    if (pension) {
+      const formData = statePensionToForm(pension)
+      form.reset(formData) // This reinitializes the form with the data including statements
+    }
+  }, [pension, form])
 
   // Handle form submission
   const handleSubmit = async (data: StatePensionFormData) => {
@@ -163,7 +171,7 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
 
   return (
     <ErrorBoundary>
-      <div className="container mx-auto py-10">
+      <div className="container">
         {/* Page header with title and buttons */}
         <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center mb-6">
           <div>

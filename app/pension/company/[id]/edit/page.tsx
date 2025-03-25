@@ -210,7 +210,7 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
 
   return (
     <ErrorBoundary>
-      <div className="container mx-auto py-10">
+      <div className="container py-10">
         {/* Page header with title and buttons */}
         <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center mb-6">
           <div>

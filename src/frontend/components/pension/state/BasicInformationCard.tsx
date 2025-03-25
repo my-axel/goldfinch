@@ -27,7 +27,7 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="e.g., State Pension" />
+                <Input {...field} value={field.value || ''} placeholder="e.g., State Pension" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -63,6 +63,7 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
               <FormControl>
                 <Textarea 
                   {...field} 
+                  value={field.value || ''}
                   placeholder="Add any notes about this pension plan"
                   className="resize-none h-24"
                 />
