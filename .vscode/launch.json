@@ -54,7 +54,8 @@
                 "app.tasks",
                 "worker",
                 "--loglevel=info",
-                "--pool=solo"
+                "--pool=solo",
+                "--uid=999"
             ],
             "cwd": "${workspaceFolder}/src/backend",
             "python": "${workspaceFolder}/src/backend/venv/bin/python",
