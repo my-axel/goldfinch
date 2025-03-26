@@ -129,7 +129,7 @@ Listed by priority and dependency readiness:
      > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
    - React Query Implementation (2-3 weeks) 🟡 In Progress
      > Migrate from Context-based state management to React Query for data fetching
-     > Household module fully migrated (✅), State Pension migrated (✅), ETF and Settings next in priority
+     > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF next in priority
      > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 
 2. **Core Features** (Dependencies ready)
@@ -261,7 +261,7 @@ graph LR
 | State Pension | 🟡 In Progress | 80% | None | Implementation complete, pending testing and refinement |
 | Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
 | Household | ✅ Complete | 100% | None | Basic CRUD, migrated to React Query |
-| Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented |
+| Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented, migrated to React Query |
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
 | Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms |
 | Payout Strategy | ⚠️ UI Only | 10% | Dashboard | Financial modeling |
@@ -269,7 +269,7 @@ graph LR
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
 | Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
-| React Query | 🟡 In Progress | 15% | None | Modern data fetching, State Pension & Household complete |
+| React Query | 🟡 In Progress | 25% | None | Modern data fetching, State Pension, Settings & Household complete |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
 
 ## 🎯 Project Milestones

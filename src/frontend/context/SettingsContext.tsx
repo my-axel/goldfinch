@@ -1,9 +1,8 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { api } from '@/frontend/lib/api-client'
-import { settingsService } from '@/frontend/services/settings'
-import { FrontendSettings, SettingsState, SettingsContextType } from '@/frontend/types/settings'
+import { createContext, useContext, useCallback, useEffect } from 'react'
+import { FrontendSettings, SettingsContextType } from '@/frontend/types/settings'
+import { useSettings as useSettingsQuery, useUpdateSettings } from '@/frontend/hooks/useSettings'
 
 const defaultSettings: FrontendSettings = {
   ui_locale: 'en-US',
@@ -23,13 +22,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const STORAGE_KEY = 'app_settings'
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<SettingsState>({
-    data: loadSettingsFromStorage() || defaultSettings,
-    isLoading: true,
-    error: null,
-  })
-
-  // Load settings from localStorage
+  // Load settings from localStorage for initial data
   function loadSettingsFromStorage(): FrontendSettings | null {
     if (typeof window === 'undefined') return null;
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -48,81 +41,40 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   }
 
-  // Fetch settings from backend
-  const fetchSettings = useCallback(async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }))
-      const response = await settingsService.getSettings()
-      const settings: FrontendSettings = {
-        ui_locale: response.ui_locale,
-        number_locale: response.number_locale,
-        currency: response.currency,
-        projection_pessimistic_rate: response.projection_pessimistic_rate,
-        projection_realistic_rate: response.projection_realistic_rate,
-        projection_optimistic_rate: response.projection_optimistic_rate,
-        state_pension_pessimistic_rate: response.state_pension_pessimistic_rate,
-        state_pension_realistic_rate: response.state_pension_realistic_rate,
-        state_pension_optimistic_rate: response.state_pension_optimistic_rate,
-        inflation_rate: response.inflation_rate,
-      }
-      setState({ data: settings, isLoading: false, error: null })
-      saveSettingsToStorage(settings)
-      // Update API client locale for number parsing
-      api.setLocale(settings.number_locale)
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: 'Failed to load settings'
-      }))
-    }
-  }, [])
+  // Use React Query hooks
+  const { 
+    data: querySettings, 
+    isLoading: isQueryLoading, 
+    error: queryError 
+  } = useSettingsQuery({
+    initialData: loadSettingsFromStorage() || defaultSettings,
+  })
+  
+  const updateSettingsMutation = useUpdateSettings()
 
-  // Initial fetch
+  // Update localStorage when settings change
   useEffect(() => {
-    fetchSettings()
-  }, [fetchSettings])
+    if (querySettings) {
+      saveSettingsToStorage(querySettings)
+    }
+  }, [querySettings])
 
-  // Update settings
+  // Update settings - maintains the same API as before
   const updateSettings = useCallback(async (newSettings: Partial<FrontendSettings>) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }))
-      
-      const updatedSettings = await settingsService.updateSettings(newSettings)
-      const settings: FrontendSettings = {
-        ui_locale: updatedSettings.ui_locale,
-        number_locale: updatedSettings.number_locale,
-        currency: updatedSettings.currency,
-        projection_pessimistic_rate: updatedSettings.projection_pessimistic_rate,
-        projection_realistic_rate: updatedSettings.projection_realistic_rate,
-        projection_optimistic_rate: updatedSettings.projection_optimistic_rate,
-        state_pension_pessimistic_rate: updatedSettings.state_pension_pessimistic_rate,
-        state_pension_realistic_rate: updatedSettings.state_pension_realistic_rate,
-        state_pension_optimistic_rate: updatedSettings.state_pension_optimistic_rate,
-        inflation_rate: updatedSettings.inflation_rate,
-      }
-      
-      setState({ data: settings, isLoading: false, error: null })
-      saveSettingsToStorage(settings)
-      
-      // Update API client locale for number parsing
-      api.setLocale(settings.number_locale)
+      await updateSettingsMutation.mutateAsync(newSettings)
+      return
     } catch (error) {
       console.error('Error updating settings:', error)
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: 'Failed to update settings'
-      }))
       throw error // Re-throw for UI handling
     }
-  }, [])
+  }, [updateSettingsMutation])
 
-  const value = {
-    settings: state.data,
-    isLoading: state.isLoading,
-    error: state.error,
+  // Create the context value with the same API as before
+  const value: SettingsContextType = {
+    settings: querySettings || defaultSettings,
+    isLoading: isQueryLoading,
+    error: queryError ? 'Failed to load settings' : null,
     updateSettings,
   }
 
