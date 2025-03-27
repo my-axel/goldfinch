@@ -115,10 +115,10 @@ Last Updated: 2023-10-07
 ## 📋 Current Status & Next Steps
 
 ### Active Development
-- State Pension Implementation (Nearly Complete)
-  > Core implementation completed with frontend and backend functionality.
-  > Currently ~80% complete, with only testing and fine-tuning remaining.
-  > **Details**: [State Pension Frontend Implementation](docs/plans/active/state_pension/frontend_core_implementation.md) | [State Pension Backend Implementation](docs/plans/active/state_pension/backend_implementation.md)
+- React Query Implementation (2-3 weeks) 🟡 In Progress
+  > Migrate from Context-based state management to React Query for data fetching
+  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF next in priority
+  > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 
 ### Ready to Implement
 Listed by priority and dependency readiness:
@@ -127,14 +127,11 @@ Listed by priority and dependency readiness:
    - Statement Custom Hooks Implementation (1-2 weeks)
      > Standardize statement management across pension types with reusable hooks
      > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
-   - React Query Implementation (2-3 weeks) 🟡 In Progress
-     > Migrate from Context-based state management to React Query for data fetching
-     > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF next in priority
-     > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 
 2. **Core Features** (Dependencies ready)
    - Savings Pension Implementation (2-3 weeks)
-   > **Details**: [Pension Plans Implementation](docs/plans/active/pension_plans.md)
+   > Implementation of security-focused savings pension type with interest calculations
+   > **Details**: [Savings Pension Backend Implementation](docs/plans/active/pension_savings/savings_backend.md) | [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
 
 3. **Cross-Cutting Features** (Partial dependencies)
    - Currency System Frontend Integration (1-2 weeks)
@@ -158,7 +155,7 @@ graph TD
     ETF[ETF Pension ✅<br/>Weight: 15%] --> D
     CP[Company Pension ✅<br/>Weight: 15%] --> D
     IP[Insurance Pension ✅<br/>Weight: 15%] --> D
-    SP[State Pension 📝<br/>Weight: 10%] --> D
+    SP[State Pension ✅<br/>Weight: 10%] --> D
     SVP[Savings Pension 📝<br/>Weight: 10%] --> D
     D[Dashboard 📝<br/>Weight: 25%] --> C
     D --> PS
@@ -209,9 +206,9 @@ graph TD
     classDef complete fill:#90EE90,stroke:#000
     classDef partial fill:#FFE5B4,stroke:#000
     classDef notStarted fill:#FFB6C6,stroke:#000
-    class ETF,H,CP,IP complete
+    class ETF,H,CP,IP,SP complete
     class S partial
-    class SP,SVP,CS,I18n,D,C,PS,SCH,RQ,CM notStarted
+    class SVP,CS,I18n,D,C,PS,SCH,RQ,CM notStarted
 ```
 <details>
 <summary><strong>📊 Graph Legend</strong></summary>
@@ -258,7 +255,7 @@ graph LR
 | ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts |
 | Company Pension | ✅ Complete | 100% | None | Contribution tracking |
 | Insurance Pension | ✅ Complete | 100% | None | Premium logic |
-| State Pension | 🟡 In Progress | 80% | None | Implementation complete, pending testing and refinement |
+| State Pension | ✅ Complete | 100% | None | Implementation complete, testing and documentation finalized |
 | Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
 | Household | ✅ Complete | 100% | None | Basic CRUD, migrated to React Query |
 | Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented, migrated to React Query |
@@ -269,7 +266,7 @@ graph LR
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
 | Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
-| React Query | 🟡 In Progress | 25% | None | Modern data fetching, State Pension, Settings & Household complete |
+| React Query | 🟡 In Progress | 35% | None | Modern data fetching, State Pension, Settings & Household complete |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
 
 ## 🎯 Project Milestones
@@ -290,9 +287,10 @@ graph LR
 
 #### Key Deliverables:
 1. ✅ Company Pension Implementation
-2. 🟡 State Pension Implementation (~80% complete, pending testing)
+2. ✅ State Pension Implementation (100% complete)
 3. ✅ Insurance Pension Implementation
 4. Savings Pension Implementation
+   > **Details**: [Savings Pension Backend Implementation](docs/plans/active/pension_savings/savings_backend.md) | [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
 5. ✅ ETF Pension Enhancements
 
 ### Milestone 3: Technical Improvements (2-3 months)

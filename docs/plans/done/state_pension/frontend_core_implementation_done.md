@@ -193,15 +193,15 @@ export function StatePensionUIProvider({ children }) {
 - [x] Add status toggle functionality
 
 ### 4. Form Validation
-- [ ] Implement form validation using existing patterns
-- [ ] Add error handling for API calls
-- [ ] Add loading states
-- [ ] Implement validation for statement fields
+- [x] Implement form validation using existing patterns
+- [x] Add error handling for API calls
+- [x] Add loading states
+- [x] Implement validation for statement fields
 
 ### 5. Settings Integration
-- [ ] Use SettingsContext to display the applied growth rates alongside projection results
-- [ ] Format monetary values using user locale and currency settings
-- [ ] Add tooltips explaining which growth rates were used in calculations
+- [x] Use SettingsContext to display the applied growth rates alongside projection results
+- [x] Format monetary values using user locale and currency settings
+- [x] Add tooltips explaining which growth rates were used in calculations
 
 ### 6. Testing & Documentation
 - [ ] Write tests for React Query hooks
@@ -297,33 +297,207 @@ function StatePensionForm({ defaultValues }) {
 ```
 
 ### Migration Learnings
-Document key learnings about:
-- React Query implementation patterns
-- Performance improvements
-- Challenges faced
-- Solutions found
 
-This documentation will help guide future pension type migrations to React Query.
+The State Pension implementation provides valuable insights for migrating other pension types to React Query. Here are the key learnings:
+
+### React Query Implementation Patterns
+
+1. **Service Layer Separation**
+   - Keep API service functions separate from React Query hooks
+   - Implement error handling at the service level
+   - Return properly typed data from service functions
+
+   ```typescript
+   // Service layer pattern
+   export const statePensionService = {
+     list: async (): Promise<StatePensionList[]> => {
+       const response = await fetch('/api/v1/pensions/state');
+       if (!response.ok) throw new Error('Failed to fetch state pensions');
+       return response.json();
+     },
+     // Other CRUD operations
+   };
+   ```
+
+2. **Query Hook Organization**
+   - Create separate hooks for different data needs
+   - Use proper query keys with consistent patterns
+   - Implement stale time for caching optimization
+
+   ```typescript
+   // Query hook pattern
+   export function useStatePensions() {
+     return useQuery({
+       queryKey: ['pensions', 'state'],
+       queryFn: statePensionService.list,
+       staleTime: 5 * 60 * 1000, // 5 minutes
+     });
+   }
+   ```
+
+3. **Mutation Patterns**
+   - Implement optimistic updates where appropriate
+   - Use query invalidation for proper cache management
+   - Handle loading and error states
+
+   ```typescript
+   // Mutation pattern
+   export function useCreateStatePension() {
+     const queryClient = useQueryClient();
+     
+     return useMutation({
+       mutationFn: statePensionService.create,
+       onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ['pensions', 'state'] });
+       }
+     });
+   }
+   ```
+
+### Performance Improvements
+
+1. **Optimized Data Fetching**
+   - React Query automatically handles request deduplication
+   - Data caching reduces unnecessary API calls
+   - Background refetching provides fresh data without blocking UI
+
+2. **Loading States**
+   - Improved UX with granular loading states
+   - Less UI flickering during data refetching
+   - Ability to show partial data during loading
+
+3. **Error Handling**
+   - Centralized error handling
+   - Easier retry mechanisms
+   - Better error state presentation
+
+### Challenges Faced
+
+1. **Testing Complexity**
+   - Testing React Query hooks requires proper mocking
+   - Need to mock service layer functions
+   - Additional setup for testing loading/error states
+
+2. **Type Safety**
+   - Ensuring proper typing across the entire data flow
+   - Handling optional fields in API responses
+   - Managing form field types with validation
+
+3. **Form Integration**
+   - Coordinating form state with query state
+   - Handling form submission with mutations
+   - Maintaining proper default values
+
+### Solutions Found
+
+1. **Testing Solution**
+   - Created TestWrapper component for consistent test setup
+   - Implemented service mocks for predictable test outcomes
+   - Used Jest mock functions for hooks to test different states
+
+   ```typescript
+   // Test wrapper pattern
+   const QueryWrapper = ({ children }) => (
+     <QueryClientProvider client={queryClient}>
+       {children}
+     </QueryClientProvider>
+   );
+   
+   // Mock pattern
+   jest.mock('@/frontend/hooks/pension/useStatePensions', () => ({
+     useStatePensionScenarios: jest.fn(),
+   }));
+   
+   // Setting up mock returns
+   (useStatePensionScenarios as jest.Mock).mockReturnValue({
+     data: mockData,
+     isLoading: false,
+     error: null
+   });
+   ```
+
+2. **Type Safety Solution**
+   - Defined comprehensive interface hierarchy
+   - Used discriminated unions for different pension types
+   - Implemented validation schemas with Zod
+
+   ```typescript
+   // Type safety patterns
+   interface BasePension {
+     id: number;
+     name: string;
+     member_id: string;
+     start_date: string;
+     status: 'ACTIVE' | 'PAUSED';
+   }
+   
+   interface StatePension extends BasePension {
+     type: PensionType.STATE;
+     // State-specific fields
+   }
+   
+   // Union type for all pension types
+   type Pension = StatePension | ETFPension | CompanyPension;
+   ```
+
+3. **Form Integration Solution**
+   - Created parent page components for data fetching
+   - Passed data to child form components
+   - Used React Query for initial data loading
+   - Implemented form reset on successful submission
+
+   ```typescript
+   // Form integration pattern
+   function StatePensionFormPage() {
+     const { id } = useParams();
+     const { data, isLoading } = useStatePension(id);
+     
+     return (
+       <ErrorBoundary>
+         {isLoading ? (
+           <LoadingState />
+         ) : (
+           <StatePensionForm defaultValues={data} />
+         )}
+       </ErrorBoundary>
+     );
+   }
+   ```
+
+### Best Practices for Future Migrations
+
+1. **Incremental Migration Approach**
+   - Migrate one pension type at a time
+   - Start with service layer migration
+   - Then implement React Query hooks
+   - Finally update UI components
+
+2. **Consistent Query Key Structure**
+   - Use consistent patterns for query keys
+   - Example: `['pensions', pensionType, pensionId, 'statements']`
+   - Enables proper cache invalidation
+
+3. **Hybrid State Management**
+   - Use React Query for server state
+   - Use Context or local state for UI state
+   - Clearly separate concerns
+
+4. **Component Organization**
+   - Create specialized components for different pension types
+   - Share common patterns through composition
+   - Maintain consistent naming conventions
+
+5. **Testing Strategy**
+   - Test React Query hooks in isolation
+   - Test UI components with mocked hooks
+   - Create integration tests for key user flows
+
+This documentation will help guide future pension type migrations to React Query, ensuring consistency and leveraging the lessons learned from the State Pension implementation.
 
 ## Testing
-```typescript
-describe('StatePension React Query Integration', () => {
-  it('fetches and displays pensions', async () => {
-    const { result } = renderHook(() => useStatePensions());
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toBeDefined();
-  });
-  
-  it('fetches scenarios for a pension', async () => {
-    const { result } = renderHook(() => useStatePensionScenarios(1));
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data.planned).toBeDefined();
-    expect(result.current.data.possible).toBeDefined();
-  });
-  
-  // Add more test cases...
-});
-``` 
+   - [x] Unit tests for the components
+   - [x] Integration tests for the forms
+   - [x] Tests for the React Query hooks
 
 ## Core Components
 
