@@ -6,11 +6,10 @@ import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, type ETFPension } from "@/frontend/types/pension"
-import { usePension } from "@/frontend/context/pension"
 import { useHouseholdMembers } from "@/frontend/hooks/useHouseholdMembers"
 import { toast } from "sonner"
 import { use } from "react"
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { Skeleton } from "@/frontend/components/ui/skeleton"
 import {
@@ -32,9 +31,9 @@ import { HistoricalPerformanceExplanation } from "@/frontend/components/pension/
 import { ContributionPlanExplanation } from "@/frontend/components/pension/etf/explanations/ContributionPlanExplanation"
 import { TrendingUp } from "lucide-react"
 import { toISODateString } from "@/frontend/lib/dateUtils"
-import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
 import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
 import { etfPensionToForm } from "@/frontend/lib/transformers/etfPensionTransformers"
+import { useEtfPension, useEtfPensionStatistics, useUpdateEtfPension, useUpdateEtfPensionStatus } from "@/frontend/hooks/pension/useEtfPensions"
 
 interface EditETFPensionPageProps {
   params: Promise<{
@@ -68,18 +67,16 @@ const transformFormDataToPension = (data: ETFPensionFormData, currentPension: ET
 
 export default function EditETFPensionPage({ params }: EditETFPensionPageProps) {
   const router = useRouter()
-  const { 
-    updateEtfPension, 
-    pensionStatistics,
-    isLoadingStatistics,
-    fetchPensionStatistics,
-    updatePensionStatus
-  } = usePension()
   const { data: members = [] } = useHouseholdMembers()
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
-  const { data: pension, isLoading, error } = usePensionData<ETFPension>(pensionId, PensionType.ETF_PLAN)
-  const statistics = pensionStatistics[pensionId]
+  
+  // React Query hooks for ETF pension data
+  const { data: pension, isLoading, error } = useEtfPension(pensionId)
+  const { data: statistics, isLoading: isLoadingStatistics } = useEtfPensionStatistics(pensionId)
+  const updateEtfPensionMutation = useUpdateEtfPension()
+  const updatePensionStatusMutation = useUpdateEtfPensionStatus()
+  
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
 
@@ -137,9 +134,24 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
   // Unified loading state
   const loadingState = {
     isPageLoading: isLoading,
-    isStatisticsLoading: isLoadingStatistics[pensionId] || false,
-    isAnyLoading: isLoading || isLoadingStatistics[pensionId] || false
+    isStatisticsLoading: isLoadingStatistics,
+    isAnyLoading: isLoading || isLoadingStatistics
   }
+
+  // Helper function to check if pension is of ETF_PLAN type, with special handling for page refreshes
+  const isPensionTypeValid = useMemo(() => {
+    // Always show loading state if we're still loading pension data
+    if (loadingState.isPageLoading) return true;
+    
+    // If pension data is loaded but null, there's a real issue
+    if (!pension) return false;
+    
+    // Special case: If type is an empty string on page refresh, treat it as valid
+    if (!pension.type || String(pension.type).trim() === "") return true;
+    
+    // Normal case: Compare the types
+    return String(pension.type) === String(PensionType.ETF_PLAN);
+  }, [pension, loadingState.isPageLoading]);
 
   // Unified error handler
   const handleError = (error: unknown, action: string) => {
@@ -148,22 +160,6 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
       description: `Failed to ${action}. Please try again.`
     })
   }
-
-  // Separate effect for fetching statistics after pension is loaded
-  useEffect(() => {
-    if (!pension || pension.type !== PensionType.ETF_PLAN) return;
-    
-    const loadStatistics = async () => {
-      try {
-        await fetchPensionStatistics(pensionId, PensionType.ETF_PLAN);
-      } catch (statsError) {
-        console.warn("Failed to fetch pension statistics:", statsError);
-        // Don't fail the entire page load if statistics can't be fetched
-      }
-    };
-    
-    loadStatistics();
-  }, [pension, pensionId, fetchPensionStatistics]);
 
   const handleSubmit = async (data: ETFPensionFormData) => {
     try {
@@ -179,7 +175,7 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
       }
 
       const payload = transformFormDataToPension(data, pension)
-      await updateEtfPension(pensionId, payload)
+      await updateEtfPensionMutation.mutateAsync({ id: pensionId, data: payload })
 
       toast.success("Success", { description: "ETF pension updated successfully" })
       router.push(getPensionListRoute())
@@ -193,9 +189,12 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     if (!pension) return
 
     try {
-      await updatePensionStatus(pensionId, {
-        status: 'PAUSED',
-        paused_at: toISODateString(pauseDate)
+      await updatePensionStatusMutation.mutateAsync({
+        pensionId,
+        statusData: {
+          status: 'PAUSED',
+          paused_at: toISODateString(pauseDate)
+        }
       })
       setShowPauseDialog(false)
     } catch (error) {
@@ -210,9 +209,12 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
     if (!pension) return
 
     try {
-      await updatePensionStatus(pensionId, {
-        status: 'ACTIVE',
-        resume_at: toISODateString(resumeDate)
+      await updatePensionStatusMutation.mutateAsync({
+        pensionId,
+        statusData: {
+          status: 'ACTIVE',
+          resume_at: toISODateString(resumeDate)
+        }
       })
       setShowResumeDialog(false)
     } catch (error) {
@@ -260,10 +262,12 @@ export default function EditETFPensionPage({ params }: EditETFPensionPageProps) 
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>Pension not found</AlertDescription>
           </Alert>
-        ) : pension.type !== PensionType.ETF_PLAN ? (
+        ) : !isPensionTypeValid ? (
           <Alert variant="destructive">
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Invalid pension type</AlertDescription>
+            <AlertDescription>
+              Invalid pension type: &ldquo;{pension.type}&rdquo; (expected: &ldquo;{PensionType.ETF_PLAN}&rdquo;)
+            </AlertDescription>
           </Alert>
         ) : (
           <Form {...form}>

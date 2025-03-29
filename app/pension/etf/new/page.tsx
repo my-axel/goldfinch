@@ -6,7 +6,6 @@ import { Form, FormField } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { ETFPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType } from "@/frontend/types/pension"
-import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -22,11 +21,12 @@ import { Input } from "@/frontend/components/ui/input"
 import { ContributionPlanCard } from "@/frontend/components/pension/etf/ContributionPlanCard"
 import { NumberInput } from "@/frontend/components/shared/inputs/NumberInput"
 import { DateInput } from "@/frontend/components/ui/date-input"
+import { useCreateEtfPension } from "@/frontend/hooks/pension/useEtfPensions"
 
 export default function NewETFPensionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { createEtfPension } = usePension()
+  const createEtfPensionMutation = useCreateEtfPension()
   const [initializationMethod, setInitializationMethod] = useState<"new" | "existing" | "historical" | null>(null)
   
   // Define default values as a stable reference using useMemo
@@ -64,7 +64,7 @@ export default function NewETFPensionPage() {
         return
       }
 
-      await createEtfPension({
+      await createEtfPensionMutation.mutateAsync({
         type: PensionType.ETF_PLAN,
         name: data.name,
         member_id: memberId,
@@ -102,7 +102,9 @@ export default function NewETFPensionPage() {
         })
         router.push(getPensionListRoute())
       } else {
-        // Error is handled by the context
+        toast.error("Error", {
+          description: "Failed to create ETF pension"
+        })
       }
     }
   }

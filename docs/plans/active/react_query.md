@@ -235,37 +235,72 @@ function PensionValue({ value }) {
    - Follow the same pattern as State Pension
    - Reuse common patterns and hooks
 
-### Dashboard and Compass Implementation
+### Migrated Features
+
+1. **ETF Pension Module** ✅
+   - Successfully migrated to React Query
+   - Implemented proper pension type validation
+   - Added service layer and query/mutation hooks
+   - Improved error handling for loading states
+
+2. **Household Module** ✅
+   - Migrated to React Query
+   - Implemented efficient caching
+
+3. **Settings Module** ✅
+   - Migrated to React Query
+   - Added proper validation
+
+4. **ETF Module** ✅
+   - Migrated to React Query
+   - Implemented service layer and hooks
+
+### Pending Migration
+
+1. **Company Pension Module** 🟡
+   - Prepare service layer
+   - Implement query/mutation hooks
+   - Migrate components to use new hooks
+
+2. **Insurance Pension Module** 🟡
+   - Prepare service layer
+   - Implement query/mutation hooks
+   - Migrate components to use new hooks
+
+### Modules Not Requiring Migration
+
+These modules are currently UI-only templates and will be built with React Query from the start when fully implemented:
 
 1. **Dashboard Module** ⚠️
-   - Implement with React Query
-   - Use parallel queries for efficient data loading
-   - Implement proper caching strategies
+   - Currently UI-only template
+   - Will use React Query when implementing actual data fetching
+   - No migration needed (will be built with React Query from scratch)
 
 2. **Compass Module** ⚠️
-   - Use React Query for complex calculations
-   - Implement optimistic updates for better UX
-   - Cache expensive calculations
+   - Currently UI-only template
+   - Will use React Query for complex calculations when implemented
+   - No migration needed (will be built with React Query from scratch)
 
-### Gradual Migration of Existing Features
+3. **Payout Strategy Module** ⚠️
+   - Currently UI-only template
+   - Will use React Query when implementing actual functionality
+   - No migration needed (will be built with React Query from scratch)
 
-Migrate existing features only when significant changes are needed:
+### Implementation Guidelines for Template Modules
 
-1. **Extract API Calls**
-   - Move API calls to service functions
+When implementing the full functionality for these template modules:
+
+1. **Create API Services First**
+   - Build a proper service layer for each module
+   - Follow established patterns from migrated modules
+
+2. **Implement React Query Hooks**
+   - Design with proper caching strategies
    - Ensure proper error handling
 
-2. **Create Query Hooks**
-   - Implement React Query hooks for each API endpoint
-   - Set appropriate caching strategies
-
-3. **Split Context**
-   - Separate data fetching from UI state
-   - Create UI-only Context if needed
-
-4. **Update Components**
-   - Replace Context data with React Query hooks
-   - Keep UI state in Context
+3. **Integrate with UI Templates**
+   - Enhance existing UI templates with real data
+   - Implement loading and error states
 
 ## 📱 Specific Module Plans
 

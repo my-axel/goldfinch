@@ -117,7 +117,9 @@ Last Updated: 2023-10-07
 ### Active Development
 - React Query Implementation (2-3 weeks) 🟡 In Progress
   > Migrate from Context-based state management to React Query for data fetching
-  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF migrated (✅)
+  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF migrated (✅), ETF Pension migrated (✅)
+  > Company Pension migration needed, Insurance Pension migration needed
+  > Dashboard, Compass and Payout Strategy modules don't need migration (templates only)
   > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 
 ### Ready to Implement
@@ -251,25 +253,25 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~50%]`
+## 📊 Implementation Status `[Overall Progress: ~60%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
-| ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts |
+| ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts, migrated to React Query |
 | Company Pension | ✅ Complete | 100% | None | Contribution tracking |
 | Insurance Pension | ✅ Complete | 100% | None | Premium logic |
 | State Pension | ✅ Complete | 100% | None | Implementation complete, testing and documentation finalized |
 | Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
 | Household | ✅ Complete | 100% | None | Basic CRUD, migrated to React Query |
 | Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented, migrated to React Query |
-| Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation |
-| Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms |
-| Payout Strategy | ⚠️ UI Only | 10% | Dashboard | Financial modeling |
+| Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation, template only (no React Query needed yet) |
+| Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms, template only (no React Query needed yet) |
+| Payout Strategy | ⚠️ UI Only | 10% | Dashboard | Financial modeling, template only (no React Query needed yet) |
 | Currency System Backend | ✅ Complete | 100% | None | Exchange rates + API |
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
 | Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
-| React Query | 🟡 In Progress | 45% | None | Modern data fetching, State Pension, Settings, Household & ETF complete |
+| React Query | 🟡 In Progress | 70% | None | Modern data fetching, State Pension, Settings, Household, ETF & ETF Pension complete |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
 | Tanstack Form | 📝 Not Started | 0% | None | Form state management and validation |
 

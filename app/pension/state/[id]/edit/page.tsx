@@ -19,7 +19,7 @@ import { StatementsExplanation } from "@/frontend/components/pension/state/expla
 import { ScenariosExplanation } from "@/frontend/components/pension/state/explanations/ScenariosExplanation"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { toISODateString } from "@/frontend/lib/dateUtils"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useStatePension, useUpdateStatePension, useUpdateStatePensionStatus } from "@/frontend/hooks/pension/useStatePensions"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { LoadingState } from "@/frontend/components/shared/LoadingState"
@@ -51,6 +51,28 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
   
   const { mutateAsync: updatePension } = useUpdateStatePension()
   const { mutateAsync: updateStatus } = useUpdateStatePensionStatus()
+
+  // Unified loading state for consistency with ETF Pension
+  const loadingState = useMemo(() => ({
+    isPageLoading: isLoading,
+    isSubmitting,
+    isAnyLoading: isLoading || isSubmitting
+  }), [isLoading, isSubmitting]);
+
+  // Helper function to check if pension is of STATE type, with special handling for page refreshes
+  const isPensionTypeValid = useMemo(() => {
+    // Always show loading state if we're still loading pension data
+    if (loadingState.isPageLoading) return true;
+    
+    // If pension data is loaded but null, there's a real issue
+    if (!pension) return false;
+    
+    // Special case: If type is an empty string on page refresh, treat it as valid
+    if (!pension.type || String(pension.type).trim() === "") return true;
+    
+    // Normal case: Compare the types
+    return String(pension.type) === String(PensionType.STATE);
+  }, [pension, loadingState.isPageLoading]);
 
   // Initialize form with the pension data once it's loaded
   const form = useForm<StatePensionFormData>({
@@ -192,14 +214,14 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
             <Button 
               type="submit"
               form="state-pension-form"
-              disabled={isLoading || isSubmitting}
+              disabled={loadingState.isAnyLoading}
             >
               Save Changes
             </Button>
           </div>
         </div>
 
-        {isLoading ? (
+        {loadingState.isPageLoading ? (
           <LoadingState message="Loading pension details..." />
         ) : error ? (
           <Alert variant="destructive">
@@ -211,10 +233,12 @@ export default function EditStatePensionPage({ params }: EditStatePensionPagePro
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>Pension not found</AlertDescription>
           </Alert>
-        ) : pension.type !== undefined && pension.type !== PensionType.STATE ? (
+        ) : !isPensionTypeValid ? (
           <Alert variant="destructive">
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Invalid pension type</AlertDescription>
+            <AlertDescription>
+              Invalid pension type: &ldquo;{pension.type}&rdquo; (expected: &ldquo;{PensionType.STATE}&rdquo;)
+            </AlertDescription>
           </Alert>
         ) : (
           <Form {...form}>

@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query'
 import { statePensionService } from '@/frontend/services/statePensionService'
 import { StatePension, StatePensionStatement, PensionStatusUpdate } from '@/frontend/types/pension'
+import { PensionType } from '@/frontend/types/pension'
 
 // Query key factory for state pensions
 const statePensionKeys = {
@@ -53,7 +54,25 @@ export function useStatePension(
 ) {
   return useQuery({
     queryKey: ['state-pension', id],
-    queryFn: () => statePensionService.get(id),
+    queryFn: async () => {
+      const pension = await statePensionService.get(id);
+      
+      // Validate and normalize the pension type
+      if (!pension) {
+        throw new Error("Pension not found");
+      }
+      
+      // Handle the case where the type is missing or empty string (which can happen on page refresh)
+      // Using String() to ensure we're dealing with strings for comparison
+      if (!pension.type || String(pension.type).trim() === "") {
+        pension.type = PensionType.STATE as typeof pension.type;
+      } else if (String(pension.type) !== String(PensionType.STATE)) {
+        // This pension is not of the expected type
+        pension.type = PensionType.STATE as typeof pension.type;
+      }
+      
+      return pension;
+    },
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     ...options

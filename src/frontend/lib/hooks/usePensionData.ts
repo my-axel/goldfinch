@@ -9,6 +9,9 @@ interface UsePensionDataResult<T> {
   mutate: () => Promise<void>
 }
 
+/**
+ * @deprecated For ETF pensions, use the useEtfPension hook from @/frontend/hooks/pension/useEtfPensions instead
+ */
 export function usePensionData<T>(
   pensionId: number,
   pensionType: PensionType
@@ -16,6 +19,15 @@ export function usePensionData<T>(
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const { selectedPension, fetchPension } = usePension()
+
+  useEffect(() => {
+    if (pensionType === PensionType.ETF_PLAN) {
+      console.warn(
+        'usePensionData is deprecated for ETF pensions. ' +
+        'Use the useEtfPension hook from @/frontend/hooks/pension/useEtfPensions instead.'
+      )
+    }
+  }, [pensionType])
 
   const mutate = async () => {
     try {

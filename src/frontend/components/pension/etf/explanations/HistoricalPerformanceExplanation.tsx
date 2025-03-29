@@ -1,7 +1,6 @@
 "use client"
 
 import { memo, useEffect, useState } from "react"
-import { usePension } from "@/frontend/context/pension"
 import { useSettings } from "@/frontend/context/SettingsContext"
 import { formatCurrency, formatPercent } from "@/frontend/lib/transforms"
 import {
@@ -10,18 +9,18 @@ import {
 } from "@/frontend/components/ui/explanation"
 import { CalendarClock, CircleDot, TrendingUp, Wallet } from "lucide-react"
 import { cn } from "@/frontend/lib/utils"
-import { PensionType } from "@/frontend/types/pension"
+import { useEtfPension, useEtfPensionStatistics } from "@/frontend/hooks/pension/useEtfPensions"
 
 interface HistoricalPerformanceExplanationProps {
   pensionId: number
 }
 
 export const HistoricalPerformanceExplanation = memo(function HistoricalPerformanceExplanation({ pensionId }: HistoricalPerformanceExplanationProps) {
-  const { pensionStatistics, isLoadingStatistics, fetchPensionStatistics, pensions, fetchPension } = usePension()
   const { settings } = useSettings()
-  const statistics = pensionStatistics[pensionId]
-  const isLoading = isLoadingStatistics[pensionId]
-  const pension = pensions.find(p => p.id === pensionId)
+  
+  // Use React Query hooks
+  const { data: pension } = useEtfPension(pensionId)
+  const { data: statistics, isLoading } = useEtfPensionStatistics(pensionId)
   
   // State for formatted values to avoid hydration mismatches
   const [formattedStats, setFormattedStats] = useState({
@@ -30,19 +29,6 @@ export const HistoricalPerformanceExplanation = memo(function HistoricalPerforma
     totalReturn: "0",
     annualReturn: ""
   })
-
-  useEffect(() => {
-    // First ensure we have the pension data
-    if (!pension) {
-      fetchPension(pensionId, PensionType.ETF_PLAN)
-      return
-    }
-
-    // Then fetch statistics if needed
-    if (!statistics && !isLoading) {
-      fetchPensionStatistics(pensionId, PensionType.ETF_PLAN)
-    }
-  }, [pensionId, statistics, isLoading, fetchPensionStatistics, pension, fetchPension])
   
   // Format values client-side only to avoid hydration mismatches
   useEffect(() => {
