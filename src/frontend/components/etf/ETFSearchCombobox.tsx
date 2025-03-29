@@ -5,9 +5,9 @@ import { Button } from "@/frontend/components/ui/button"
 import { Input } from "@/frontend/components/ui/input"
 import { cn } from "@/frontend/lib/utils"
 import { Check, Search } from "lucide-react"
-import { useState, useEffect } from "react"
-import { useETF } from "@/frontend/context/ETFContext"
-import { isYFinanceETF, ETF,YFinanceETF } from "@/frontend/types/etf"
+import { useState } from "react"
+import { useETFs, useETFSearch, useYFinanceSearch, useETF } from "@/frontend/hooks/useETF"
+import { isYFinanceETF, ETF, YFinanceETF } from "@/frontend/types/etf"
 import { useDebounce } from "@/frontend/hooks/useDebounce"
 
 interface ETFSearchComboboxProps {
@@ -19,111 +19,31 @@ interface ETFSearchComboboxProps {
 export function ETFSearchCombobox({ value, onSelect, readOnly = false }: ETFSearchComboboxProps) {
   const [showSearch, setShowSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [yfinanceResults, setYfinanceResults] = useState<YFinanceETF[]>([])
-  const [selectedYFinanceETF, setSelectedYFinanceETF] = useState<YFinanceETF | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
-  const { etfs, isLoading, error } = useETF()
+  
+  // Use the new React Query hooks
+  const { data: specificETF } = useETF(value, { enabled: !!value })
+  const { data: etfs = [] } = useETFs()
   
   // Only debounce if we have at least 3 characters
   const shouldSearch = searchTerm.length >= 3
   const debouncedSearchTerm = useDebounce(shouldSearch ? searchTerm : "", 1000)
-    
-  useEffect(() => {
-    if (value) {
-      const foundInDB = etfs.find(etf => etf.id === value)
-      if (foundInDB) return
-      
-      // If not found in DB and we don't have it in state, search YFinance
-      if (!selectedYFinanceETF || selectedYFinanceETF.symbol !== value) {
-        const controller = new AbortController();
-        
-        const searchYFinance = async () => {
-          try {
-            const response = await fetch(
-              `/api/v1/etf/search?query=${encodeURIComponent(value)}`,
-              { signal: controller.signal }
-            )
-            if (!response.ok) {
-              if (response.status === 429) {
-                console.error('Rate limit reached, please try again later')
-                return
-              }
-              throw new Error(`HTTP error! status: ${response.status}`)
-            }
-            const [yfinanceData] = await response.json()
-            if (yfinanceData && yfinanceData.symbol === value) {
-              setSelectedYFinanceETF(yfinanceData)
-            }
-          } catch (error: unknown) {
-            if (error instanceof Error && error.name === 'AbortError') return
-            console.error('Error fetching YFinance ETF:', error)
-          }
-        }
-        searchYFinance()
-        return () => controller.abort()
-      }
-    }
-  }, [value, etfs, selectedYFinanceETF])
-
-  const selectedEtf = etfs.find(etf => etf.id === value) || 
-    (value === selectedYFinanceETF?.symbol ? selectedYFinanceETF : null)
-
-  useEffect(() => {
-    // Only search if we have a debounced term (which means we had >= 3 chars)
-    if (!debouncedSearchTerm) {
-      setYfinanceResults([])
-      return
-    }
-
-    const controller = new AbortController();
-    let isActive = true
-
-    const searchETFs = async () => {
-      if (!isActive) return
-
-      setIsSearching(true)
-      try {
-        const response = await fetch(
-          `/api/v1/etf/search?query=${encodeURIComponent(debouncedSearchTerm)}`,
-          { signal: controller.signal }
-        )
-        
-        if (!response.ok) {
-          if (response.status === 429) {
-            console.error('Rate limit reached, please try again later')
-            setYfinanceResults([])
-            return
-          }
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        if (!isActive) return
-        
-        const data = await response.json()
-        if (isActive && Array.isArray(data)) {
-          setYfinanceResults(data)
-        } else {
-          setYfinanceResults([])
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error && error.name === 'AbortError') return
-        console.error('Error fetching ETFs:', error)
-        if (isActive) {
-          setYfinanceResults([])
-        }
-      } finally {
-        if (isActive) {
-          setIsSearching(false)
-        }
-      }
-    }
-
-    searchETFs()
-    return () => { 
-      isActive = false
-      controller.abort()
-    }
-  }, [debouncedSearchTerm])
+  
+  // Use React Query for database ETF search
+  const { data: searchResults = [], isLoading: isSearchLoading } = 
+    useETFSearch(debouncedSearchTerm)
+  
+  // Use React Query for YFinance search
+  const { 
+    data: yfinanceResults = [], 
+    isLoading: isYFinanceLoading
+  } = useYFinanceSearch(debouncedSearchTerm)
+  
+  // Determine if we are currently searching
+  const isSearching = isSearchLoading || isYFinanceLoading
+  
+  // Get the selected ETF details
+  const selectedEtf = specificETF || etfs.find(etf => etf.id === value) ||
+    (yfinanceResults.find(etf => etf.symbol === value) as YFinanceETF | undefined)
 
   const displayName = selectedEtf && (
     isYFinanceETF(selectedEtf) 
@@ -145,7 +65,7 @@ export function ETFSearchCombobox({ value, onSelect, readOnly = false }: ETFSear
       )}
       <Input
         readOnly
-        value={selectedEtf ? `${selectedEtf.symbol} - ${displayName}` : ""}
+        value={selectedEtf ? `${isYFinanceETF(selectedEtf) ? selectedEtf.symbol : (selectedEtf as ETF).symbol} - ${displayName}` : ""}
         placeholder={readOnly ? "" : "Select an ETF..."}
         className="flex-1"
       />
@@ -161,17 +81,15 @@ export function ETFSearchCombobox({ value, onSelect, readOnly = false }: ETFSear
             <CommandList>
               {!shouldSearch ? (
                 <CommandEmpty>Enter at least 3 characters to search...</CommandEmpty>
-              ) : (isLoading || isSearching) ? (
+              ) : isSearching ? (
                 <CommandEmpty>Searching...</CommandEmpty>
-              ) : error ? (
-                <CommandEmpty>Error loading ETFs.</CommandEmpty>
-              ) : etfs.length === 0 && yfinanceResults.length === 0 ? (
+              ) : searchResults.length === 0 && yfinanceResults.length === 0 ? (
                 <CommandEmpty>No ETF found.</CommandEmpty>
               ) : (
                 <>
-                  {etfs.length > 0 && (
+                  {searchResults.length > 0 && (
                     <CommandGroup heading="Database Results">
-                      {etfs.map(etf => (
+                      {searchResults.map(etf => (
                         <CommandItem
                           key={etf.id}
                           value={etf.id}

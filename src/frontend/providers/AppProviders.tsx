@@ -3,7 +3,7 @@
 import { HouseholdUIProvider } from '@/frontend/context/HouseholdUIContext'
 import { StatePensionUIProvider } from '@/frontend/context/StatePensionUIContext'
 import { PensionProvider } from '@/frontend/context/pension'
-import { ETFProvider } from '@/frontend/context/ETFContext'
+import { ETFUIProvider } from '@/frontend/context/ETFUIContext'
 import { SettingsProvider } from '@/frontend/context/SettingsContext'
 import { Toaster } from '@/frontend/components/ui/sonner'
 import { QueryProvider } from './QueryProvider'
@@ -14,12 +14,12 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <SettingsProvider>
         <HouseholdUIProvider>
           <StatePensionUIProvider>
-            <ETFProvider>
+            <ETFUIProvider>
               <PensionProvider>
                 {children}
                 <Toaster richColors closeButton position="top-right" />
               </PensionProvider>
-            </ETFProvider>
+            </ETFUIProvider>
           </StatePensionUIProvider>
         </HouseholdUIProvider>
       </SettingsProvider>

@@ -117,7 +117,7 @@ Last Updated: 2023-10-07
 ### Active Development
 - React Query Implementation (2-3 weeks) 🟡 In Progress
   > Migrate from Context-based state management to React Query for data fetching
-  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF next in priority
+  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF migrated (✅)
   > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 
 ### Ready to Implement
@@ -127,6 +127,9 @@ Listed by priority and dependency readiness:
    - Statement Custom Hooks Implementation (1-2 weeks)
      > Standardize statement management across pension types with reusable hooks
      > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
+   - Tanstack Form Migration (6-8 weeks)
+     > Migrate forms to Tanstack Form with improved type safety and validation
+     > **Details**: [Tanstack Form Migration Plan](docs/plans/active/tanstack_form_migration.md)
 
 2. **Core Features** (Dependencies ready)
    - Savings Pension Implementation (2-3 weeks)
@@ -266,8 +269,9 @@ graph LR
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
 | Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
-| React Query | 🟡 In Progress | 35% | None | Modern data fetching, State Pension, Settings & Household complete |
+| React Query | 🟡 In Progress | 45% | None | Modern data fetching, State Pension, Settings, Household & ETF complete |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
+| Tanstack Form | 📝 Not Started | 0% | None | Form state management and validation |
 
 ## 🎯 Project Milestones
 
