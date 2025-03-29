@@ -6,7 +6,6 @@ import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/types/pension"
-import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
@@ -19,6 +18,8 @@ import { FormLayout, FormSection } from "@/frontend/components/shared"
 import { BasicInformationExplanation } from "@/frontend/components/pension/company/explanations/BasicInformationExplanation"
 import { ContributionPlanExplanation } from "@/frontend/components/pension/company/explanations/ContributionPlanExplanation"
 import { StatementsExplanation } from "@/frontend/components/pension/company/explanations/StatementsExplanation"
+import { useCreateCompanyPension, useCreateCompanyPensionWithStatement } from "@/frontend/hooks/pension/useCompanyPensions"
+import React from "react"
 
 const defaultValues: CompanyPensionFormData = {
   type: PensionType.COMPANY,
@@ -36,7 +37,10 @@ const defaultValues: CompanyPensionFormData = {
 export default function NewCompanyPensionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { createCompanyPension, createCompanyPensionWithStatement } = usePension()
+  
+  // Replace usePension with React Query hooks
+  const { mutateAsync: createCompanyPension, isPending: isCreatingPension } = useCreateCompanyPension()
+  const { mutateAsync: createCompanyPensionWithStatement, isPending: isCreatingWithStatement } = useCreateCompanyPensionWithStatement()
   
   const memberId = searchParams?.get('member_id') || ""
 
@@ -79,9 +83,9 @@ export default function NewCompanyPensionPage() {
       // If there are statements, use createCompanyPensionWithStatement
       if (data.statements && data.statements.length > 0) {
         const firstStatement = data.statements[0]
-        await createCompanyPensionWithStatement(
-          pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
-          {
+        await createCompanyPensionWithStatement({
+          pension: pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
+          statements: [{
             statement_date: toISODateString(firstStatement.statement_date),
             value: typeof firstStatement.value === 'string' ? parseFloat(firstStatement.value) : firstStatement.value,
             note: firstStatement.note || "",
@@ -95,21 +99,22 @@ export default function NewCompanyPensionPage() {
                     parseFloat(projection.total_capital) : projection.total_capital
                 }))
               : []
-          }
-        )
+          }]
+        })
       } else {
         // If no statements, use regular createCompanyPension
         await createCompanyPension(pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
       }
 
-      toast.success("Success", { description: "Company pension created successfully" })
       router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
       console.error('Failed to create pension:', error)
-      // Error is handled by the context
+      // Error is handled by the React Query hook
     }
   }
+
+  const isSubmitting = isCreatingPension || isCreatingWithStatement
 
   return (
     <div className="container mx-auto py-10">
@@ -127,14 +132,16 @@ export default function NewCompanyPensionPage() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button 
             type="submit"
             form="company-pension-form"
+            disabled={isSubmitting}
           >
-            Create Pension
+            {isSubmitting ? "Creating..." : "Create Pension"}
           </Button>
         </div>
       </div>

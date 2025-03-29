@@ -6,7 +6,6 @@ import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/types/pension"
-import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { use } from "react"
 import { useState, useMemo } from "react"
@@ -16,7 +15,6 @@ import { BasicInformationCard } from "@/frontend/components/pension/company/Basi
 import { ContributionPlanCard } from "@/frontend/components/pension/company/ContributionPlanCard"
 import { PensionStatementsCard } from "@/frontend/components/pension/company/PensionStatementsCard"
 import { ContributionHistoryCard } from "@/frontend/components/pension/company/ContributionHistoryCard"
-import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
 import { LoadingState } from "@/frontend/components/shared/LoadingState"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { toISODateString } from "@/frontend/lib/dateUtils"
@@ -30,6 +28,14 @@ import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/di
 import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
 import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
 import { companyPensionToForm } from "@/frontend/lib/transformers/companyPensionTransformers"
+import { 
+  useCompanyPension, 
+  useUpdateCompanyPension, 
+  useUpdateCompanyPensionWithStatement, 
+  useCreateCompanyPensionStatement, 
+  useUpdateCompanyPensionStatus 
+} from '@/frontend/hooks/pension/useCompanyPensions'
+import React from "react"
 
 interface EditCompanyPensionPageProps {
   params: Promise<{
@@ -39,10 +45,18 @@ interface EditCompanyPensionPageProps {
 
 export default function EditCompanyPensionPage({ params }: EditCompanyPensionPageProps) {
   const router = useRouter()
-  const { updateCompanyPensionWithStatement, updateCompanyPension, createCompanyPensionStatement, updatePensionStatus } = usePension()
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
-  const { data: pension, isLoading, error } = usePensionData<CompanyPension>(pensionId, PensionType.COMPANY)
+  
+  // Use React Query hooks instead of usePension context
+  const { mutateAsync: updateCompanyPension, isPending: isUpdatingPension } = useUpdateCompanyPension()
+  const { mutateAsync: updateCompanyPensionWithStatement, isPending: isUpdatingWithStatement } = useUpdateCompanyPensionWithStatement()
+  const { mutateAsync: createCompanyPensionStatement, isPending: isCreatingStatement } = useCreateCompanyPensionStatement()
+  const { mutateAsync: updatePensionStatus, isPending: isUpdatingStatus } = useUpdateCompanyPensionStatus()
+  
+  // Replace usePensionData with useCompanyPension
+  const { data: pension, isLoading, error } = useCompanyPension(pensionId)
+  
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
 
@@ -129,10 +143,10 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
 
       // First update the pension and existing statements
       if (existingStatements.length > 0) {
-        await updateCompanyPensionWithStatement(
-          pensionId, 
-          pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
-          existingStatements as Array<{
+        await updateCompanyPensionWithStatement({
+          id: pensionId, 
+          pension: pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>,
+          statements: existingStatements as Array<{
             id: number;
             statement_date: string;
             value: number;
@@ -144,31 +158,33 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
               total_capital: number;
             }>;
           }>
-        )
+        })
       } else {
         // If no existing statements, just update the pension data
-        await updateCompanyPension(pensionId, pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'>)
+        await updateCompanyPension({ 
+          id: pensionId, 
+          data: pensionData as unknown as Omit<CompanyPension, 'id' | 'current_value'> 
+        })
       }
 
       // Then create any new statements
       for (const statement of newStatements) {
-        await createCompanyPensionStatement(
+        await createCompanyPensionStatement({
           pensionId,
-          {
+          data: {
             statement_date: statement.statement_date,
             value: statement.value,
             note: statement.note,
             retirement_projections: statement.retirement_projections
           }
-        )
+        })
       }
 
-      toast.success("Success", { description: "Company pension updated successfully" })
       router.push(getPensionListRoute())
       router.refresh()
     } catch (error) {
       console.error('Failed to update pension:', error)
-      // Error is handled by the context
+      // Error is handled by the hooks
     }
   }
 
@@ -176,17 +192,17 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
     if (!pension) return
 
     try {
-      await updatePensionStatus(pensionId, {
-        status: 'PAUSED',
-        paused_at: pauseDate.toISOString().split('T')[0]
+      await updatePensionStatus({
+        pensionId,
+        statusData: {
+          status: 'PAUSED',
+          paused_at: pauseDate.toISOString().split('T')[0]
+        }
       })
       setShowPauseDialog(false)
-      toast.success("Success", { description: "Pension paused successfully" })
     } catch (error) {
       console.error('Error updating pension status:', error)
-      toast.error('Error', {
-        description: 'Failed to update pension status'
-      })
+      // Error is handled by the hook
     }
   }
 
@@ -194,19 +210,21 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
     if (!pension) return
 
     try {
-      await updatePensionStatus(pensionId, {
-        status: 'ACTIVE',
-        resume_at: resumeDate.toISOString().split('T')[0]
+      await updatePensionStatus({
+        pensionId,
+        statusData: {
+          status: 'ACTIVE',
+          resume_at: resumeDate.toISOString().split('T')[0]
+        }
       })
       setShowResumeDialog(false)
-      toast.success("Success", { description: "Pension resumed successfully" })
     } catch (error) {
       console.error('Error updating pension status:', error)
-      toast.error('Error', {
-        description: 'Failed to update pension status'
-      })
+      // Error is handled by the hook
     }
   }
+  
+  const isSubmitting = isUpdatingPension || isUpdatingWithStatement || isCreatingStatement || isUpdatingStatus
 
   return (
     <ErrorBoundary>
@@ -225,15 +243,16 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
               type="button"
               variant="outline"
               onClick={() => router.back()}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button 
               type="submit"
               form="company-pension-form"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
             >
-              Save Changes
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </div>
@@ -250,78 +269,80 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>Pension not found</AlertDescription>
           </Alert>
-        ) : pension.type !== PensionType.COMPANY ? (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Invalid pension type</AlertDescription>
-          </Alert>
         ) : (
-          <Form {...form}>
-            <form 
-              id="company-pension-form"
-              onSubmit={form.handleSubmit(handleSubmit)} 
-            >
-              <FormLayout>
-                {/* Basic Information Section */}
-                <FormSection
-                  title="Basic Information"
-                  description="Keep your pension details up to date with the latest information from your employer"
-                  explanation={<BasicInformationExplanation />}
-                  headerActions={
-                    <PensionStatusActions
-                      status={pension.status}
-                      onPause={() => setShowPauseDialog(true)}
-                      onResume={() => setShowResumeDialog(true)}
-                    />
-                  }
-                >
-                  <BasicInformationCard form={form} />
-                </FormSection>
-                
-                {/* Contribution Plan Section */}
-                <FormSection
-                  title="Contribution Plan"
-                  description="Track changes in your contribution amount over time"
-                  explanation={<ContributionPlanExplanation />}
-                >
-                  <ContributionPlanCard form={form} />
-                </FormSection>
-                
-                {/* Statements Section */}
-                <FormSection
-                  title="Pension Statements"
-                  description="Record information from your pension statements to track growth"
-                  explanation={<StatementsExplanation />}
-                >
-                  <PensionStatementsCard form={form} pensionId={pensionId} />
-                </FormSection>
-                
-                {/* Contribution History Section */}
-                <FormSection
-                  title="Contribution History"
-                  description="View all past contributions to this pension plan"
-                  explanation={<ContributionHistoryExplanation />}
-                >
-                  <ContributionHistoryCard pension={pension} />
-                </FormSection>
-              </FormLayout>
-            </form>
-          </Form>
+          <>
+            {/* Form */}
+            <Form {...form}>
+              <form 
+                id="company-pension-form"
+                onSubmit={form.handleSubmit(handleSubmit)} 
+              >
+                <FormLayout>
+                  {/* Basic Information Section */}
+                  <FormSection
+                    title="Basic Information"
+                    description="Manage your company pension plan details"
+                    explanation={<BasicInformationExplanation />}
+                    headerActions={
+                      <PensionStatusActions
+                        status={pension.status}
+                        onPause={() => setShowPauseDialog(true)}
+                        onResume={() => setShowResumeDialog(true)}
+                      />
+                    }
+                  >
+                    <BasicInformationCard form={form} />
+                  </FormSection>
+                  
+                  {/* Contribution Plan Section */}
+                  <FormSection
+                    title="Contribution Plan"
+                    description="Set up your contribution schedule"
+                    explanation={<ContributionPlanExplanation />}
+                  >
+                    <ContributionPlanCard form={form} />
+                  </FormSection>
+                  
+                  {/* Statements Section */}
+                  <FormSection
+                    title="Pension Statements"
+                    description="Track the value of your pension over time"
+                    explanation={<StatementsExplanation />}
+                  >
+                    <PensionStatementsCard form={form} />
+                  </FormSection>
+                  
+                  {/* Contribution History Section */}
+                  <FormSection
+                    title="Contribution History"
+                    description="Record your pension contribution history"
+                    explanation={<ContributionHistoryExplanation />}
+                  >
+                    <ContributionHistoryCard pension={pension} />
+                  </FormSection>
+                </FormLayout>
+              </form>
+            </Form>
+          </>
         )}
-
-        {/* Status change dialogs */}
+      </div>
+      
+      {/* Pause and Resume Dialogs */}
+      {showPauseDialog && (
         <PauseConfirmationDialog
           open={showPauseDialog}
           onOpenChange={setShowPauseDialog}
           onConfirm={handlePauseConfirm}
         />
-
+      )}
+      
+      {showResumeDialog && (
         <ResumeDateDialog
           open={showResumeDialog}
           onOpenChange={setShowResumeDialog}
           onConfirm={handleResumeConfirm}
         />
-      </div>
+      )}
     </ErrorBoundary>
   )
 } 

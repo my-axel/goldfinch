@@ -255,14 +255,15 @@ function PensionValue({ value }) {
    - Migrated to React Query
    - Implemented service layer and hooks
 
+5. **Company Pension Module** ✅
+   - Successfully migrated to React Query
+   - Implemented service layer with proper hooks
+   - Improved UI with status actions in BasicInformation card header
+   - Aligned layout with State Pension implementation
+
 ### Pending Migration
 
-1. **Company Pension Module** 🟡
-   - Prepare service layer
-   - Implement query/mutation hooks
-   - Migrate components to use new hooks
-
-2. **Insurance Pension Module** 🟡
+1. **Insurance Pension Module** 🟡
    - Prepare service layer
    - Implement query/mutation hooks
    - Migrate components to use new hooks

@@ -117,8 +117,8 @@ Last Updated: 2023-10-07
 ### Active Development
 - React Query Implementation (2-3 weeks) 🟡 In Progress
   > Migrate from Context-based state management to React Query for data fetching
-  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF migrated (✅), ETF Pension migrated (✅)
-  > Company Pension migration needed, Insurance Pension migration needed
+  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF migrated (✅), ETF Pension migrated (✅), Company Pension migrated (✅)
+  > Insurance Pension migration needed
   > Dashboard, Compass and Payout Strategy modules don't need migration (templates only)
   > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 
@@ -253,12 +253,12 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~60%]`
+## 📊 Implementation Status `[Overall Progress: ~65%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
 | ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts, migrated to React Query |
-| Company Pension | ✅ Complete | 100% | None | Contribution tracking |
+| Company Pension | ✅ Complete | 100% | None | Contribution tracking, migrated to React Query |
 | Insurance Pension | ✅ Complete | 100% | None | Premium logic |
 | State Pension | ✅ Complete | 100% | None | Implementation complete, testing and documentation finalized |
 | Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
@@ -271,7 +271,7 @@ graph LR
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
 | Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
-| React Query | 🟡 In Progress | 70% | None | Modern data fetching, State Pension, Settings, Household, ETF & ETF Pension complete |
+| React Query | 🟡 In Progress | 85% | None | Modern data fetching, State Pension, Settings, Household, ETF, ETF Pension & Company Pension complete |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
 | Tanstack Form | 📝 Not Started | 0% | None | Form state management and validation |
 
