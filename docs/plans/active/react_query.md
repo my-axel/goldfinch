@@ -31,6 +31,10 @@
 > - Dashboard implementation
 > - Compass module implementation
 >
+> ### 5. Remaining Components to Migrate
+> - List of components still using context API
+> - Migration plan for these components
+>
 > ## Decision Making Guide
 >
 > ### When Implementing New Features
@@ -261,12 +265,53 @@ function PensionValue({ value }) {
    - Improved UI with status actions in BasicInformation card header
    - Aligned layout with State Pension implementation
 
-### Pending Migration
+6. **Insurance Pension Module** ✅
+   - Successfully migrated to React Query
+   - Implemented service layer with proper hooks
+   - Created appropriate query and mutation hooks
+   - Replaced context API in edit and new pages
 
-1. **Insurance Pension Module** 🟡
-   - Prepare service layer
-   - Implement query/mutation hooks
-   - Migrate components to use new hooks
+### Remaining Components to Migrate ⚠️
+
+While the main pension modules have been migrated, there are still components using the old context API:
+
+1. **Main Pension Listing Page** (`app/pension/page.tsx`) 🟡
+   - Still using `usePension` for fetching and managing pension lists
+   - Need to create a new service and hooks for fetching all pension types
+
+2. **Statement Components** 🟡
+   - `src/frontend/components/pension/insurance/StatementsCard.tsx` - Uses `deleteInsurancePensionStatement` from context
+   - `src/frontend/components/pension/company/PensionStatementsCard.tsx` - Uses `deleteCompanyPensionStatement` from context
+   - Should migrate to use the appropriate delete mutation hooks
+
+3. **Investment Modal Components** 🟡
+   - `src/frontend/components/pension/company/YearlyInvestmentModal.tsx` - Uses `createContributionHistory` from context
+   - `src/frontend/components/pension/etf/components/OneTimeInvestmentModal.tsx` - Uses `addOneTimeInvestment` from context
+   - Should create appropriate service functions and mutation hooks
+
+4. **Provider Setup** 🟡
+   - `src/frontend/providers/AppProviders.tsx` - Still includes the `PensionProvider`
+   - Should be removed once all components are migrated
+
+### Migration Plan for Remaining Components
+
+1. **Create Pension List Services and Hooks (1-2 days)**
+   - Implement service to fetch all pension types
+   - Create appropriate hooks
+   - Update the main pension listing page
+
+2. **Update Statement Components (1-2 days)**
+   - Migrate statement components to use existing mutation hooks
+   - Ensure proper error handling and loading states
+
+3. **Update Investment Modals (1-2 days)**
+   - Create service functions for investment operations
+   - Implement mutation hooks
+   - Update modal components
+
+4. **Remove Old Context (1 day)**
+   - Once all components are migrated, remove the PensionProvider
+   - Update AppProviders.tsx
 
 ### Modules Not Requiring Migration
 
@@ -428,20 +473,21 @@ function FormattedPensionList() {
 
 ## 🚀 Next Steps
 
-1. **Infrastructure Setup**
-   - Install dependencies
-   - Create QueryProvider
-   - Add to application layout
+1. **Complete Remaining Component Migrations**
+   - Migrate the main pension listing page
+   - Update statement components
+   - Migrate investment modals
+   - Remove old context provider
 
-2. **State Pension Implementation**
-   - Create API services
-   - Implement query hooks
-   - Build UI components
-
-3. **Documentation**
-   - Create usage examples
+2. **Documentation**
+   - Update usage examples
    - Document common patterns
    - Update existing documentation
+
+3. **Statement Custom Hooks Implementation**
+   - Use React Query as the foundation
+   - Create reusable hooks for statement management
+   - Implement across pension types
 
 ## 📚 Resources
 

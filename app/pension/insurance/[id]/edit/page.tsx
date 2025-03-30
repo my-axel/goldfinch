@@ -6,7 +6,6 @@ import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, InsurancePension } from "@/frontend/types/pension"
-import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { use } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
@@ -19,7 +18,6 @@ import { ContributionDetailsExplanation } from "@/frontend/components/pension/in
 import { StatementsExplanation } from "@/frontend/components/pension/insurance/explanations/StatementsExplanation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { insurancePensionSchema } from "@/frontend/lib/validations/pension"
-import { usePensionData } from "@/frontend/lib/hooks/usePensionData"
 import { LoadingState } from "@/frontend/components/shared/LoadingState"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { useFormReset } from "@/frontend/lib/hooks/useFormReset"
@@ -31,6 +29,13 @@ import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/di
 import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
 import { useState } from "react"
 import { PensionStatusActions } from "@/frontend/components/pension/shared/PensionStatusActions"
+import { 
+  useInsurancePension, 
+  useUpdateInsurancePension, 
+  useCreateInsurancePensionStatement, 
+  useUpdateInsurancePensionStatement,
+  useUpdateInsurancePensionStatus
+} from '@/frontend/hooks/pension/useInsurancePensions'
 
 interface EditInsurancePensionPageProps {
   params: Promise<{
@@ -54,12 +59,17 @@ const defaultValues: InsurancePensionFormData = {
 
 export default function EditInsurancePensionPage({ params }: EditInsurancePensionPageProps) {
   const router = useRouter()
-  const { updateInsurancePensionWithStatement, createInsurancePensionStatement, updatePensionStatus } = usePension()
   const resolvedParams = use(params)
   const pensionId = parseInt(resolvedParams.id)
-  const { data: pension, isLoading, error } = usePensionData<InsurancePension>(pensionId, PensionType.INSURANCE)
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
+
+  // React Query hooks
+  const { data: pension, isLoading, error } = useInsurancePension(pensionId)
+  const updateInsurancePension = useUpdateInsurancePension()
+  const createStatement = useCreateInsurancePensionStatement()
+  const updateStatement = useUpdateInsurancePensionStatement()
+  const updateStatus = useUpdateInsurancePensionStatus()
 
   const form = useForm<InsurancePensionFormData>({
     resolver: zodResolver(insurancePensionSchema),
@@ -112,47 +122,22 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
         }))
       })) || []
 
+      // First update the pension
+      await updateInsurancePension.mutateAsync({
+        id: pensionId,
+        data: pensionData as unknown as Omit<InsurancePension, 'id' | 'current_value'>
+      })
+
       // Separate existing and new statements
       const existingStatements = statements.filter(statement => typeof statement.id === 'number')
       const newStatements = statements.filter(statement => !statement.id)
 
-      // First update the pension and existing statements
-      if (existingStatements.length > 0) {
-        await updateInsurancePensionWithStatement(
+      // Update existing statements
+      for (const statement of existingStatements) {
+        await updateStatement.mutateAsync({
           pensionId,
-          pensionData as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
-          existingStatements as Array<{
-            id: number;
-            statement_date: string;
-            value: number;
-            total_contributions: number;
-            total_benefits: number;
-            costs_amount: number;
-            costs_percentage: number;
-            note?: string;
-            projections?: Array<{
-              id?: number;
-              scenario_type: 'with_contributions' | 'without_contributions';
-              return_rate: number;
-              value_at_retirement: number;
-              monthly_payout: number;
-            }>;
-          }>
-        )
-      } else {
-        // If no existing statements, just update the pension data
-        await updateInsurancePensionWithStatement(
-          pensionId,
-          pensionData as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
-          []
-        )
-      }
-
-      // Then create any new statements
-      for (const statement of newStatements) {
-        await createInsurancePensionStatement(
-          pensionId,
-          {
+          statementId: statement.id as number,
+          data: {
             statement_date: statement.statement_date,
             value: statement.value,
             total_contributions: statement.total_contributions,
@@ -162,7 +147,24 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
             note: statement.note,
             projections: statement.projections
           }
-        )
+        })
+      }
+
+      // Create new statements
+      for (const statement of newStatements) {
+        await createStatement.mutateAsync({
+          pensionId,
+          data: {
+            statement_date: statement.statement_date,
+            value: statement.value,
+            total_contributions: statement.total_contributions,
+            total_benefits: statement.total_benefits,
+            costs_amount: statement.costs_amount,
+            costs_percentage: statement.costs_percentage,
+            note: statement.note,
+            projections: statement.projections
+          }
+        })
       }
 
       toast.success("Success", { description: "Insurance pension updated successfully" })
@@ -186,9 +188,12 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
     if (!pension) return
 
     try {
-      await updatePensionStatus(pensionId, {
-        status: 'PAUSED',
-        paused_at: pauseDate.toISOString(),
+      await updateStatus.mutateAsync({
+        pensionId,
+        statusData: {
+          status: 'PAUSED',
+          paused_at: pauseDate.toISOString(),
+        }
       })
       setShowPauseDialog(false)
     } catch (error) {
@@ -203,9 +208,12 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
     if (!pension) return
 
     try {
-      await updatePensionStatus(pensionId, {
-        status: 'ACTIVE',
-        resume_at: resumeDate.toISOString(),
+      await updateStatus.mutateAsync({
+        pensionId,
+        statusData: {
+          status: 'ACTIVE',
+          resume_at: resumeDate.toISOString(),
+        }
       })
       setShowResumeDialog(false)
     } catch (error) {
@@ -253,24 +261,13 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>Pension not found</AlertDescription>
           </Alert>
-        ) : pension.type !== PensionType.INSURANCE ? (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Invalid pension type</AlertDescription>
-          </Alert>
         ) : (
           <Form {...form}>
-            <form id="insurance-pension-form" onSubmit={form.handleSubmit(handleSubmit, (errors) => {
-              console.error('Form validation errors:', errors)
-              toast.error('Error', {
-                description: 'Please fix the validation errors before submitting'
-              })
-            })}>
+            <form id="insurance-pension-form" onSubmit={form.handleSubmit(handleSubmit)}>
               <FormLayout>
-                {/* Basic Information Section */}
                 <FormSection
                   title="Basic Information"
-                  description="Enter the basic details of your insurance pension plan"
+                  description="Enter the basic details about your insurance pension plan."
                   explanation={<BasicInformationExplanation />}
                   headerActions={
                     <PensionStatusActions
@@ -283,44 +280,42 @@ export default function EditInsurancePensionPage({ params }: EditInsurancePensio
                   <BasicInformationCard form={form} />
                 </FormSection>
 
-                {/* Contribution Details Section */}
                 <FormSection
                   title="Contribution Details"
-                  description="Set up your contribution plan"
+                  description="Specify how you contribute to this insurance pension plan."
                   explanation={<ContributionDetailsExplanation />}
                 >
                   <ContributionDetailsCard form={form} />
                 </FormSection>
 
-                {/* Statements Section */}
                 <FormSection
                   title="Statements"
-                  description="Track the performance of your pension plan"
+                  description="Add pension statements to track the value over time."
                   explanation={<StatementsExplanation />}
                 >
-                  <StatementsCard form={form} pensionId={pensionId} />
+                  <StatementsCard form={form} />
                 </FormSection>
               </FormLayout>
             </form>
           </Form>
         )}
+
+        {/* Status Dialogs */}
+        {showPauseDialog && (
+          <PauseConfirmationDialog
+            open={showPauseDialog}
+            onOpenChange={setShowPauseDialog}
+            onConfirm={handlePauseConfirm}
+          />
+        )}
+        {showResumeDialog && (
+          <ResumeDateDialog
+            open={showResumeDialog}
+            onOpenChange={setShowResumeDialog}
+            onConfirm={handleResumeConfirm}
+          />
+        )}
       </div>
-      
-      {/* Dialogs */}
-      {showPauseDialog && (
-        <PauseConfirmationDialog
-          open={showPauseDialog}
-          onOpenChange={setShowPauseDialog}
-          onConfirm={handlePauseConfirm}
-        />
-      )}
-      {showResumeDialog && (
-        <ResumeDateDialog
-          open={showResumeDialog}
-          onOpenChange={setShowResumeDialog}
-          onConfirm={handleResumeConfirm}
-        />
-      )}
     </ErrorBoundary>
   )
-} 
+}

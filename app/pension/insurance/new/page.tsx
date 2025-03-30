@@ -6,7 +6,6 @@ import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { InsurancePensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, InsurancePension } from "@/frontend/types/pension"
-import { usePension } from "@/frontend/context/pension"
 import { toast } from "sonner"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
@@ -20,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { insurancePensionSchema } from "@/frontend/lib/validations/pension"
 import { toISODateString } from "@/frontend/lib/dateUtils"
 import { FormLayout, FormSection } from "@/frontend/components/shared"
+import { useCreateInsurancePensionWithStatement } from "@/frontend/hooks/pension/useInsurancePensions"
 
 const defaultValues: InsurancePensionFormData = {
   type: PensionType.INSURANCE,
@@ -38,7 +38,7 @@ const defaultValues: InsurancePensionFormData = {
 export default function AddInsurancePensionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { createInsurancePensionWithStatement } = usePension()
+  const createPensionWithStatement = useCreateInsurancePensionWithStatement()
   
   const memberId = searchParams?.get('member_id') || ""
 
@@ -54,8 +54,8 @@ export default function AddInsurancePensionPage() {
     try {
       const { statements, ...pensionData } = data
       
-      await createInsurancePensionWithStatement(
-        {
+      await createPensionWithStatement.mutateAsync({
+        pension: {
           type: PensionType.INSURANCE,
           name: pensionData.name,
           member_id: pensionData.member_id,
@@ -68,23 +68,36 @@ export default function AddInsurancePensionPage() {
           contribution_plan_steps: pensionData.contribution_plan_steps,
           status: "ACTIVE"
         } as unknown as Omit<InsurancePension, 'id' | 'current_value'>,
-        statements.map(statement => ({
+        statements: statements.map(statement => ({
           statement_date: toISODateString(statement.statement_date),
-          value: statement.value,
-          total_contributions: statement.total_contributions,
-          total_benefits: statement.total_benefits,
-          costs_amount: statement.costs_amount,
-          costs_percentage: statement.costs_percentage,
+          value: typeof statement.value === 'string' ? parseFloat(statement.value) : statement.value,
+          total_contributions: typeof statement.total_contributions === 'string' ? 
+            parseFloat(statement.total_contributions) : statement.total_contributions,
+          total_benefits: typeof statement.total_benefits === 'string' ? 
+            parseFloat(statement.total_benefits) : statement.total_benefits,
+          costs_amount: typeof statement.costs_amount === 'string' ? 
+            parseFloat(statement.costs_amount) : statement.costs_amount,
+          costs_percentage: typeof statement.costs_percentage === 'string' ? 
+            parseFloat(statement.costs_percentage) : statement.costs_percentage,
           note: statement.note,
-          projections: statement.projections
+          projections: statement.projections?.map(proj => ({
+            scenario_type: proj.scenario_type,
+            return_rate: typeof proj.return_rate === 'string' ? 
+              parseFloat(proj.return_rate) : proj.return_rate,
+            value_at_retirement: typeof proj.value_at_retirement === 'string' ? 
+              parseFloat(proj.value_at_retirement) : proj.value_at_retirement,
+            monthly_payout: typeof proj.monthly_payout === 'string' ? 
+              parseFloat(proj.monthly_payout) : proj.monthly_payout
+          }))
         }))
-      )
+      })
 
       toast.success('Success', {
         description: 'Insurance pension created successfully'
       })
       router.push(getPensionListRoute())
-    } catch {
+    } catch (error) {
+      console.error('Failed to create insurance pension:', error)
       toast.error('Error', {
         description: 'Failed to create insurance pension'
       })

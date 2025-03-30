@@ -23,13 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/frontend/components/ui/alert-dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/frontend/components/ui/select"
 // Import standardized formatting components
 import { FormattedDate } from "@/frontend/components/shared/formatting/FormattedDate"
 // Import standardized input components
@@ -377,7 +370,7 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
         <div className="space-y-4">
           {statementsWithProjections[index]?.length > 0 && (
             <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr_auto] gap-4 px-4">
-              <div className="text-sm font-medium text-muted-foreground">Scenario Type</div>
+              <div className="text-sm font-medium text-muted-foreground">Contribution</div>
               <div className="text-sm font-medium text-muted-foreground">Return Rate</div>
               <div className="text-sm font-medium text-muted-foreground">Value at Retirement</div>
               <div className="text-sm font-medium text-muted-foreground">Monthly Payout</div>
@@ -392,20 +385,24 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
                 name={`statements.${index}.projections.${projectionIndex}.scenario_type` as FormPath}
                 render={({ field }) => (
                   <FormItem className="space-y-0">
-                    <Select
-                      value={field.value?.toString() || 'with_contributions'}
-                      onValueChange={(value) => field.onChange(value as 'with_contributions' | 'without_contributions')}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select scenario type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="with_contributions">With Contributions</SelectItem>
-                        <SelectItem value="without_contributions">Without Contributions</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex w-full overflow-hidden rounded-md border">
+                      <button
+                        type="button"
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium ${field.value === 'with_contributions' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+                        onClick={() => field.onChange('with_contributions')}
+                        title="With Contributions"
+                      >
+                        With
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium ${field.value === 'without_contributions' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+                        onClick={() => field.onChange('without_contributions')}
+                        title="Without Contributions"
+                      >
+                        Without
+                      </button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
