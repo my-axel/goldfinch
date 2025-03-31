@@ -77,6 +77,8 @@ class StatePensionListSchema(BaseModel):
     member_id: int
     start_date: date
     status: PensionStatus
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
     latest_statement_date: Optional[date] = None
     latest_monthly_amount: Optional[Decimal] = Field(default=None, description="Current monthly amount from latest statement (EUR)")
     latest_projected_amount: Optional[Decimal] = Field(default=None, description="Projected monthly amount from latest statement (EUR)")

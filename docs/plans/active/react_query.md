@@ -493,4 +493,4 @@ function FormattedPensionList() {
 
 - [React Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
 - [Formatting Best Practices](docs/tech/best-practices/formatting.md)
-- [Technical Guidelines](docs/tech/guidelines/README.md) 
+- [Technical Guidelines](docs/tech/guidelines/README.md) 3

@@ -313,7 +313,9 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
             PensionState.name,
             PensionState.member_id,
             PensionState.start_date,
-            PensionState.status
+            PensionState.status,
+            PensionState.paused_at,
+            PensionState.resume_at
         )
         
         if member_id is not None:
@@ -371,6 +373,8 @@ class CRUDPensionState(CRUDBase[PensionState, PensionStateCreate, PensionStateUp
                 "member_id": row.member_id,
                 "start_date": row.start_date,
                 "status": row.status,
+                "paused_at": row.paused_at,
+                "resume_at": row.resume_at,
                 "statements_count": statement_count_map.get(row.id, 0)  # Get count or default to 0
             }
             

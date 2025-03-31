@@ -279,6 +279,8 @@ export interface StatePensionList {
   member_id: number
   start_date: string
   status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
   latest_statement_date?: string
   latest_monthly_amount?: number
   latest_projected_amount?: number
