@@ -1,5 +1,5 @@
 # 🎯 Retirement Planning Application - Project Progress & Plan
-Last Updated: 2023-10-07
+Last Updated: 2025-03-31
 
 > <details>
 > <summary><strong>🤖 AI Assistant Guide</strong></summary>
@@ -82,12 +82,17 @@ Last Updated: 2023-10-07
 > 4. Update Implementation Status table
 >
 > ### Progress Calculation
-> - Module progress based on completed features
+> - Each module has an assigned weight reflecting its complexity and importance
+> - Weights are calibrated to sum to 100% across all modules
+> - Module progress based on completed features (0-100%)
 > - Overall progress calculation:
 >   ```
->   Sum of (Module Weight × Module Progress)
+>   Overall Progress = Sum of (Module Weight × Module Progress)
 >   ```
-> - Update progress percentages in Implementation Status table
+> - Core modules with low completion percentages (Dashboard, Compass, Payout Strategy) 
+>   significantly impact overall progress due to their higher weights
+> - Update progress percentages in Implementation Status table when work is completed
+> - Re-validate weights periodically to ensure they reflect current project priorities
 >
 > ### Documentation Organization
 > - Active plans: `docs/plans/active/`
@@ -118,6 +123,9 @@ Last Updated: 2023-10-07
 - Statement Custom Hooks Implementation (1-2 weeks) 🟡 In Progress (10%)
   > Beginning implementation of reusable statement management hooks across pension types
   > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
+- Savings Pension Frontend Implementation (2-3 weeks) 🟡 In Progress (0%)
+  > Implementing frontend for the security-focused savings pension type
+  > **Details**: [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
 
 ### Ready to Implement
 Listed by priority and dependency readiness:
@@ -128,14 +136,13 @@ Listed by priority and dependency readiness:
      > **Details**: [Tanstack Form Migration Plan](docs/plans/active/tanstack_form_migration.md)
 
 2. **Core Features** (Dependencies ready)
-   - Savings Pension Implementation (2-3 weeks)
-   > Implementation of security-focused savings pension type with interest calculations
-   > **Details**: [Savings Pension Backend Implementation](docs/plans/active/pension_savings/savings_backend.md) | [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
+   - Currency System Frontend Integration (1-2 weeks)
+   > Implementation of currency exchange system in the frontend
+   > **Details**: [Currency System Plan](docs/plans/active/currency_system.md)
 
 3. **Cross-Cutting Features** (Partial dependencies)
-   - Currency System Frontend Integration (1-2 weeks)
    - Internationalization Implementation (4-5 weeks)
-   > **Details**: [Currency System Plan](docs/plans/active/currency_system.md) | [i18n Plan](docs/plans/active/internationalization.md)
+   > **Details**: [i18n Plan](docs/plans/active/internationalization.md)
 
 ### Blocked Items
 - Contribution Management System (3-4 weeks) (Blocked by: State Pension, Savings Pension)
@@ -151,24 +158,24 @@ Listed by priority and dependency readiness:
 ```mermaid
 graph TD
     %% Core Modules
-    ETF[ETF Pension ✅<br/>Weight: 15%] --> D
-    CP[Company Pension ✅<br/>Weight: 15%] --> D
-    IP[Insurance Pension ✅<br/>Weight: 15%] --> D
-    SP[State Pension ✅<br/>Weight: 10%] --> D
-    SVP[Savings Pension 📝<br/>Weight: 10%] --> D
-    D[Dashboard 📝<br/>Weight: 25%] --> C
+    ETF[ETF Pension ✅<br/>Weight: 8%] --> D
+    CP[Company Pension ✅<br/>Weight: 8%] --> D
+    IP[Insurance Pension ✅<br/>Weight: 8%] --> D
+    SP[State Pension ✅<br/>Weight: 5%] --> D
+    SVP[Savings Pension ⚠️<br/>Weight: 5%] --> D
+    D[Dashboard 📝<br/>Weight: 20%] --> C
     D --> PS
     
     %% Dependent Modules
-    C[Compass 📝<br/>Weight: 25%]
-    PS[Payout Strategy 📝<br/>Weight: 15%]
+    C[Compass 📝<br/>Weight: 15%]
+    PS[Payout Strategy 📝<br/>Weight: 10%]
     
     %% Cross-Cutting Features
-    CS[Currency System 📝<br/>Weight: 15%] --> S
-    I18n[Internationalization 📝<br/>Weight: 20%] --> S
+    CS[Currency System 📝<br/>Weight: 5%] --> S
+    I18n[Internationalization 📝<br/>Weight: 5%] --> S
     
     %% Settings affects all modules
-    S[Settings ⚠️<br/>Weight: 10%] -.-> ETF
+    S[Settings ⚠️<br/>Weight: 5%] -.-> ETF
     S -.-> CP
     S -.-> IP
     S -.-> SP
@@ -178,20 +185,20 @@ graph TD
     S -.-> PS
     
     %% Household integration
-    H[Household ✅<br/>Weight: 10%] -.-> ETF
+    H[Household ✅<br/>Weight: 3%] -.-> ETF
     H -.-> CP
     H -.-> IP
     H -.-> SP
     H -.-> SVP
     
     %% Technical Improvements
-    SCH[Statement Custom Hooks 🟡<br/>Weight: 5%] -.-> ETF
+    SCH[Statement Custom Hooks 🟡<br/>Weight: 2%] -.-> ETF
     SCH -.-> CP
     SCH -.-> IP
-    RQ[React Query ✅<br/>Weight: 10%] -.-> D
+    RQ[React Query ✅<br/>Weight: 3%] -.-> D
     RQ -.-> C
     RQ -.-> PS
-    CM[Contribution Management 📝<br/>Weight: 10%] -.-> ETF
+    CM[Contribution Management 📝<br/>Weight: 3%] -.-> ETF
     CM -.-> CP
     CM -.-> IP
     CM -.-> SP
@@ -207,8 +214,8 @@ graph TD
     classDef notStarted fill:#FFB6C6,stroke:#000
     classDef inProgress fill:#FFFF99,stroke:#000
     class ETF,H,CP,IP,SP,RQ complete
-    class S partial
-    class SVP,CS,I18n,D,C,PS,CM notStarted
+    class S,SVP partial
+    class CS,I18n,D,C,PS,CM notStarted
     class SCH inProgress
 ```
 <details>
@@ -252,7 +259,7 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~70%]`
+## 📊 Implementation Status `[Overall Progress: ~55%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
@@ -260,7 +267,7 @@ graph LR
 | Company Pension | ✅ Complete | 100% | None | Contribution tracking, migrated to React Query |
 | Insurance Pension | ✅ Complete | 100% | None | Premium logic, migrated to React Query |
 | State Pension | ✅ Complete | 100% | None | Implementation complete, testing and documentation finalized |
-| Savings Pension | 📝 Not Started | 0% | None | Security-focused savings |
+| Savings Pension | ⚠️ Partial | 50% | None | Backend fully implemented, frontend in progress |
 | Household | ✅ Complete | 100% | None | Basic CRUD, migrated to React Query |
 | Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented, migrated to React Query |
 | Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation, template only (no React Query needed yet) |
@@ -294,8 +301,9 @@ graph LR
 1. ✅ Company Pension Implementation
 2. ✅ State Pension Implementation (100% complete)
 3. ✅ Insurance Pension Implementation
-4. Savings Pension Implementation
-   > **Details**: [Savings Pension Backend Implementation](docs/plans/active/pension_savings/savings_backend.md) | [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
+4. ⚠️ Savings Pension Implementation (50% complete)
+   > Backend implementation completed, frontend in progress
+   > **Details**: [Savings Pension Backend Implementation](docs/plans/active/pension_savings/savings_backend_done.md) | [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
 5. ✅ ETF Pension Enhancements
 
 ### Milestone 3: Technical Improvements (2-3 months)
