@@ -18,8 +18,15 @@ class PensionType(str, Enum):
     INSURANCE = "INSURANCE"
     COMPANY = "COMPANY"
     STATE = "STATE"
+    SAVINGS = "SAVINGS"
     OTHER = "OTHER"
 
 class PensionStatus(str, Enum):
     ACTIVE = "ACTIVE"
-    PAUSED = "PAUSED" 
+    PAUSED = "PAUSED"
+
+class CompoundingFrequency(str, Enum):
+    DAILY = "DAILY"
+    MONTHLY = "MONTHLY"
+    QUARTERLY = "QUARTERLY"
+    ANNUALLY = "ANNUALLY" 

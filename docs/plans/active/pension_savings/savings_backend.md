@@ -56,7 +56,7 @@
 > 5. Document APIs and calculation logic
 > </details>
 
-**Status**: 📝 Planning Phase  
+**Status**: 🟡 In Progress  
 **Duration**: 2-3 weeks  
 **Approach**: Test-Driven Development  
 
@@ -72,9 +72,9 @@ Key features:
 
 ## 2. Test-Driven Implementation Process
 
-### Phase 1: Model Tests (Week 1, Days 1-2)
+### Phase 1: Model Tests (Week 1, Days 1-2) ✅
 
-#### 2.1.1 PensionSavings Model Tests
+#### 2.1.1 PensionSavings Model Tests ✅
 
 ```python
 # src/backend/tests/models/test_pension_savings_models.py
@@ -202,7 +202,7 @@ def test_pension_savings_relationships(db_session, test_member):
     assert pension.statements[0].statement_date > pension.statements[1].statement_date
 ```
 
-#### 2.1.2 Factory Functions for Tests
+#### 2.1.2 Factory Functions for Tests ✅
 
 ```python
 # src/backend/tests/factories.py (add these functions)
@@ -265,7 +265,7 @@ def create_test_savings_contribution_step(db_session, pension_savings_id: int, *
     return contribution
 ```
 
-### Phase 2: Schema Tests (Week 1, Day 3)
+### Phase 2: Schema Tests (Week 1, Day 3) ✅
 
 ```python
 # src/backend/tests/schemas/test_pension_savings_schemas.py
@@ -328,7 +328,7 @@ def test_pension_savings_create_schema():
         )
 ```
 
-### Phase 3: CRUD Tests (Week 1, Days 4-5)
+### Phase 3: CRUD Tests (Week 1, Days 4-5) ✅
 
 ```python
 # src/backend/tests/crud/test_pension_savings_crud.py
@@ -402,7 +402,7 @@ def test_update(db_session: Session):
     assert updated_pension.optimistic_rate == update_data["optimistic_rate"]
 ```
 
-### Phase 4: API Tests (Week 2, Days 1-3)
+### Phase 4: API Tests (Week 2, Days 1-3) ✅
 
 ```python
 # src/backend/tests/api/test_pension_savings_api.py
@@ -536,7 +536,7 @@ def test_get_pension_summary(client: TestClient, db_session: Session):
     assert data[0]["id"] == pension.id
 ```
 
-### Phase 5: Projection Tests (Week 2, Days 4-5)
+### Phase 5: Projection Tests (Week 2, Days 4-5) ✅
 
 ```python
 # src/backend/tests/services/test_pension_savings_projection.py
@@ -623,7 +623,7 @@ def test_calculate_scenarios(db_session):
 
 ## 3. Implementation Based on Tests
 
-### Phase 1: Models (Week 1, Days 1-2)
+### Phase 1: Models (Week 1, Days 1-2) ✅
 
 1. Implement pension_savings.py model with:
    - PensionSavings base model
@@ -634,7 +634,7 @@ def test_calculate_scenarios(db_session):
    - Update PensionType enum to include SAVINGS
    - Create CompoundingFrequency enum with DAILY, MONTHLY, QUARTERLY, ANNUALLY options
 
-### Phase 2: Schemas (Week 1, Day 3)
+### Phase 2: Schemas (Week 1, Day 3) ✅
 
 1. Implement pension_savings.py schemas with:
    - PensionSavingsBase
@@ -650,7 +650,7 @@ def test_calculate_scenarios(db_session):
    - Interest rate relationships (pessimistic ≤ realistic ≤ optimistic)
    - Range limits (0% to 20%)
 
-### Phase 3: CRUD Operations (Week 1, Days 4-5)
+### Phase 3: CRUD Operations (Week 1, Days 4-5) ✅
 
 1. Implement pension_savings.py CRUD with:
    - Create operation
@@ -660,7 +660,7 @@ def test_calculate_scenarios(db_session):
    - Statement management
    - Contribution plan management
 
-### Phase 4: API Endpoints (Week 2, Days 1-3)
+### Phase 4: API Endpoints (Week 2, Days 1-3) ✅
 
 1. Implement pension_savings.py router with:
    - GET /api/v1/pension/savings
@@ -673,25 +673,25 @@ def test_calculate_scenarios(db_session):
 
 2. Update API dependencies and routing configuration
 
-### Phase 5: Projection Service (Week 2, Days 4-5)
+### Phase 5: Projection Service (Week 2, Days 4-5) ✅
 
-1. Implement pension_savings_projection.py service with:
+1. Implement pension_savings_projection.py service with: ✅
    - Calculation of compound interest with contributions
    - Support for different compounding frequencies
    - Generation of pessimistic, realistic, and optimistic scenarios
    - Support for planned and possible retirement dates
 
-2. Implement projection API endpoint:
-   - GET /api/v1/pension/savings/{id}/projection
+2. Implement projection API endpoint: ✅
+   - GET /api/v1/pension/savings/{id}/scenarios
 
-## 4. Integration
+## 4. Integration ✅
 
 1. Update household member model to include savings pensions relationship
 2. Update the pension type enum
 3. Update the frontend API paths
 4. Add database migrations for the new models
 
-## 5. Testing & Documentation
+## 5. Testing & Documentation ✅
 
 1. Complete any remaining tests
 2. Document the API endpoints

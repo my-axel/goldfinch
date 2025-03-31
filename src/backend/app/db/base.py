@@ -4,6 +4,7 @@ from app.models.pension_etf import PensionETF, PensionETFContributionPlanStep, P
 from app.models.pension_insurance import PensionInsurance, PensionInsuranceContributionPlanStep, PensionInsuranceContributionHistory  # noqa
 from app.models.pension_company import PensionCompany, PensionCompanyContributionPlanStep, PensionCompanyContributionHistory  # noqa
 from app.models.pension_state import PensionState, PensionStateStatement  # noqa
+from app.models.pension_savings import PensionSavings, PensionSavingsStatement, PensionSavingsContributionPlanStep  # noqa
 from app.models.etf import ETF  # noqa
 from app.models.etf import ETFUpdate  # noqa
 from app.models.etf import ETFError  # noqa

@@ -22,6 +22,7 @@ class HouseholdMember(Base):
     insurance_pensions = relationship("PensionInsurance", back_populates="member", cascade="all, delete-orphan")
     company_pensions = relationship("PensionCompany", back_populates="member", cascade="all, delete-orphan")
     state_pensions = relationship("PensionState", back_populates="member", cascade="all, delete-orphan")
+    savings_pensions = relationship("PensionSavings", back_populates="member", cascade="all, delete-orphan")
 
     @property
     def pensions(self):
@@ -30,7 +31,8 @@ class HouseholdMember(Base):
             *self.etf_pensions,
             *self.insurance_pensions,
             *self.company_pensions,
-            *self.state_pensions
+            *self.state_pensions,
+            *self.savings_pensions
         ]
 
     def calculate_retirement_dates(self):

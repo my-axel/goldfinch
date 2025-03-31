@@ -7,10 +7,12 @@ from app.crud.pension_etf import pension_etf
 from app.crud.pension_company import pension_company
 from app.crud.pension_insurance import pension_insurance
 from app.crud.pension_state import pension_state
+from app.crud.pension_savings import pension_savings
 from app.schemas.pension_etf import ETFPensionListSchema
 from app.schemas.pension_company import CompanyPensionListSchema
 from app.schemas.pension_insurance import InsurancePensionListSchema
 from app.schemas.pension_state import StatePensionListSchema
+from app.schemas.pension_savings import PensionSavingsListSchema
 import logging
 
 # Use the app.api namespace to ensure logs go to the right place
@@ -92,4 +94,21 @@ async def get_state_pension_summaries(
         skip=skip, 
         limit=limit, 
         member_id=member_id
-    ) 
+    )
+
+@router.get("/savings", response_model=List[PensionSavingsListSchema])
+async def get_savings_pension_summaries(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    member_id: Optional[int] = None,
+) -> List[PensionSavingsListSchema]:
+    """
+    Get a lightweight list of savings pensions with summary information.
+    This endpoint is optimized for list views and returns only essential data.
+    """
+    # Note: We're using get_for_list_view instead of get_list to maintain consistency with the method name
+    pensions = pension_savings.get_for_list_view(db=db, member_id=member_id)
+    
+    # Apply skip and limit manually
+    return pensions[skip:skip+limit] 
