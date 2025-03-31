@@ -174,7 +174,7 @@ def create_one_time_investment(
     # Create a contribution history entry for the one-time investment
     contribution_data = schemas.pension_etf.ContributionHistoryCreate(
         amount=investment_in.amount,
-        date=investment_in.investment_date,
+        contribution_date=investment_in.investment_date,
         note=investment_in.note,
         is_manual=True
     )

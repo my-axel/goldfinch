@@ -100,7 +100,7 @@ export function CombinedProjectionChart({
         .map(point => {
           // Get the raw monthly contribution for this date
           const monthlyContribution = Number(contributionData.find(
-            c => format(new Date(c.date), "yyyy-MM") === format(point.date, "yyyy-MM")
+            c => format(new Date(c.contribution_date), "yyyy-MM") === format(point.date, "yyyy-MM")
           )?.amount || 0);
 
           // Accumulate the contributions

@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { PensionList } from '@/frontend/components/pension/shared/PensionList'
-import { usePension } from '@/frontend/context/pension'
 import { useHouseholdMembers } from '@/frontend/hooks/useHouseholdMembers'
 import { LoadingState } from '@/frontend/components/shared/LoadingState'
 import { toast } from 'sonner'
 import { PensionList as PensionListType } from '@/frontend/types/pension'
+import { usePensionList, useDeletePension } from '@/frontend/hooks/pension/usePensionList'
 
 /**
  * Pension Page Component
@@ -22,50 +22,44 @@ import { PensionList as PensionListType } from '@/frontend/types/pension'
  * - Shows loading state while data is being fetched
  */
 export default function PensionPage() {
+  // Use the new React Query hooks for fetching pensions
   const { 
-    pensions, 
-    fetchListPensions,
-    deletePension,
-    isLoading: isPensionsLoading
-  } = usePension()
+    data: pensions = [], 
+    isLoading: isPensionsLoading,
+    refetch: refetchPensions
+  } = usePensionList()
   
+  // Use React Query for household members (already implemented)
   const { 
     data: members = [], 
     isLoading: isMembersLoading 
   } = useHouseholdMembers()
   
-  const [isInitializing, setIsInitializing] = useState(true)
-  
-  // Initialize data
-  useEffect(() => {
-    const initData = async () => {
-      try {
-        await fetchListPensions() // Only fetch pensions now, members are handled by React Query
-      } catch (error) {
-        console.error('Failed to initialize pension page:', error)
-      } finally {
-        setIsInitializing(false)
-      }
-    }
-    
-    initData()
-  }, [fetchListPensions])
+  // Use the new React Query mutation hook for deleting pensions
+  const { mutateAsync: deletePensionMutation } = useDeletePension()
   
   // Handle pension deletion
   const handleDelete = useCallback(async (id: number) => {
+    // Find the pension type from the list of pensions
+    const pension = pensions.find(p => p.id === id)
+    if (!pension) {
+      toast.error('Pension not found')
+      return
+    }
+    
     try {
-      await deletePension(id)
+      await deletePensionMutation({ id, pensionType: pension.type })
       toast.success('Pension deleted successfully')
       // Refresh the list after deletion
-      await fetchListPensions()
+      await refetchPensions()
     } catch (error) {
       console.error('Failed to delete pension:', error)
       toast.error('Failed to delete pension')
     }
-  }, [deletePension, fetchListPensions])
+  }, [pensions, deletePensionMutation, refetchPensions])
   
   // Determine if we're still loading data
-  const isLoading = isInitializing || isPensionsLoading || isMembersLoading
+  const isLoading = isPensionsLoading || isMembersLoading
 
   return (
     <div className="space-y-6">

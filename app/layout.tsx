@@ -3,6 +3,7 @@ import { ThemeProvider } from "@/src/frontend/components/layout/theme-provider";
 import { SidebarProvider, SidebarTrigger } from "@/src/frontend/components/ui/sidebar"
 import { AppSidebar } from "@/frontend/components/layout/AppSidebar";
 import { AppProviders } from '@/frontend/providers/AppProviders'
+import { Toaster } from '@/frontend/components/ui/sonner'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -41,6 +42,7 @@ export default function RootLayout({
                   </main>
                 </div>
             </SidebarProvider>
+            <Toaster richColors closeButton position="top-right" />
           </ThemeProvider>      
         </AppProviders>
       </body>

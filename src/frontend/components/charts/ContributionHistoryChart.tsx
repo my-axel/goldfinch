@@ -67,12 +67,12 @@ export function HistoricalPerformanceChart({
       const contributionPoints = new Map<string, number>()
       
       contributionData
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .sort((a, b) => new Date(a.contribution_date).getTime() - new Date(b.contribution_date).getTime())
         .forEach((contribution) => {
           const amount = Number(contribution.amount)
           if (!isNaN(amount)) {
             accumulatedAmount += amount
-            const dateKey = new Date(contribution.date).toLocaleDateString(
+            const dateKey = new Date(contribution.contribution_date).toLocaleDateString(
               settings.number_locale,
               { month: "short", year: "numeric" }
             )

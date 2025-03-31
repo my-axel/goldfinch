@@ -10,7 +10,6 @@ import { useState, useEffect } from "react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { useDateFormat } from "@/frontend/hooks/useDateFormat"
-import { usePension } from "@/frontend/context/pension"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +25,8 @@ import { FormattedDate } from "@/frontend/components/shared/formatting/Formatted
 // Import standardized input components
 import { CurrencyInput } from "@/frontend/components/shared/inputs/CurrencyInput"
 import { NumberInput } from "@/frontend/components/shared/inputs/NumberInput"
+// Import React Query hooks
+import { useDeleteCompanyPensionStatement } from "@/frontend/hooks/pension/useCompanyPensions"
 
 interface PensionStatementsCardProps {
   form: UseFormReturn<CompanyPensionFormData>
@@ -42,8 +43,8 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     name: "statements"
   })
   
-  const { deleteCompanyPensionStatement } = usePension()
   const { formatDate } = useDateFormat()
+  const deleteStatementMutation = useDeleteCompanyPensionStatement()
   const [statementValueInputs, setStatementValueInputs] = useState<string[]>([])
   const [projectionInputs, setProjectionInputs] = useState<{[key: string]: string}>({})
   const [statementsWithProjections, setStatementsWithProjections] = useState<{[key: number]: RetirementProjection[]}>({})
@@ -210,9 +211,12 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     // If the statement has an ID and we have a pensionId, it exists in the database and needs to be deleted
     if (statement?.id && pensionId) {
       try {
-        await deleteCompanyPensionStatement(pensionId, statement.id)
-      } catch {
-        // Error is handled by the context
+        await deleteStatementMutation.mutateAsync({
+          pensionId,
+          statementId: statement.id
+        })
+      } catch (error) {
+        console.error('Error deleting statement:', error)
         return
       }
     }
@@ -251,18 +255,6 @@ export function PensionStatementsCard({ form, pensionId }: PensionStatementsCard
     
     setProjectionInputs(newProjectionInputs)
     setStatementsWithProjections(newStatementsWithProjections)
-    
-    // Explicitly set the statements array in the form to ensure the change is tracked
-    form.setValue('statements', updatedStatements, {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true
-    })
-
-    // Force the form to recognize the change
-    form.trigger('statements')
-    
-    // Clear the statement to delete
     setStatementToDelete(null)
   }
 

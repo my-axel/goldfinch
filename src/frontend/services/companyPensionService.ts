@@ -259,26 +259,6 @@ export const companyPensionService = {
   },
 
   /**
-   * Add a one-time investment to a company pension
-   * @param pensionId Company pension ID
-   * @param data Investment data
-   * @returns Updated company pension
-   */
-  async addOneTimeInvestment(
-    pensionId: number, 
-    data: { 
-      amount: number, 
-      investment_date: string, 
-      note?: string 
-    }
-  ) {
-    return api.post<CompanyPension>(
-      `${getPensionApiRouteWithId(PensionType.COMPANY, pensionId)}/one-time-investment`,
-      data as Record<string, unknown>
-    )
-  },
-
-  /**
    * Create contribution history entry for a company pension
    * @param pensionId Company pension ID
    * @param data Contribution data
@@ -288,7 +268,7 @@ export const companyPensionService = {
     pensionId: number, 
     data: {
       amount: number,
-      date: string,
+      contribution_date: string,
       is_manual: boolean,
       note?: string
     }
@@ -380,5 +360,25 @@ export const companyPensionService = {
     }
     
     return updatedPension
+  },
+
+  /**
+   * Add a one-time investment to a company pension
+   * @param pensionId Company pension ID
+   * @param data Investment data
+   * @returns Updated company pension
+   */
+  async addOneTimeInvestment(
+    pensionId: number, 
+    data: { 
+      amount: number, 
+      investment_date: string, 
+      note?: string 
+    }
+  ) {
+    return api.post<CompanyPension>(
+      `${getPensionApiRouteWithId(PensionType.COMPANY, pensionId)}/one-time-investment`,
+      data as Record<string, unknown>
+    )
   }
 } 

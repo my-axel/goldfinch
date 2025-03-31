@@ -12,7 +12,6 @@ import { getCurrencySymbol, safeNumberValue } from "@/frontend/lib/transforms"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/frontend/components/ui/collapsible"
 import { DateInput } from '@/frontend/components/ui/date-input'
 import { useDateFormat } from "@/frontend/hooks/useDateFormat"
-import { usePension } from "@/frontend/context/pension"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +27,8 @@ import { FormattedDate } from "@/frontend/components/shared/formatting/Formatted
 // Import standardized input components
 import { CurrencyInput } from "@/frontend/components/shared/inputs/CurrencyInput"
 import { PercentInput } from "@/frontend/components/shared/inputs/PercentInput"
+// Import React Query hooks
+import { useDeleteInsurancePensionStatement } from "@/frontend/hooks/pension/useInsurancePensions"
 
 interface StatementsCardProps {
   form: UseFormReturn<InsurancePensionFormData>
@@ -61,8 +62,8 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
   })
   
   const { settings } = useSettings()
-  const { deleteInsurancePensionStatement } = usePension()
   const { formatDate } = useDateFormat()
+  const deleteStatementMutation = useDeleteInsurancePensionStatement()
   
   const [expandedStatements, setExpandedStatements] = useState<{[key: number]: boolean}>({})
   const [formattedDates, setFormattedDates] = useState<{[key: number]: string}>({})
@@ -200,7 +201,10 @@ export function StatementsCard({ form, pensionId }: StatementsCardProps) {
 
     if (pensionId && statement?.id) {
       try {
-        await deleteInsurancePensionStatement(pensionId, statement.id)
+        await deleteStatementMutation.mutateAsync({ 
+          pensionId, 
+          statementId: statement.id
+        })
       } catch (error) {
         console.error('Error deleting statement:', error)
         return

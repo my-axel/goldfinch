@@ -242,7 +242,7 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             raise ValueError(f"ETF Pension {pension_id} not found")
 
         today = date.today()
-        realized_dates = set(ch.date for ch in pension.contribution_history)
+        realized_dates = set(ch.contribution_date for ch in pension.contribution_history)
         logger.info(f"Realizing historical contributions for pension {pension_id}")
 
         try:
@@ -294,7 +294,7 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                     # Create contribution history entry
                     history = PensionETFContributionHistory(
                         pension_etf_id=pension_id,
-                        date=contribution_date,
+                        contribution_date=contribution_date,
                         amount=step.amount,
                         is_manual=False,
                         note=f"Using ETF price from {price.date}" if price.date != contribution_date else None
@@ -385,7 +385,7 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             # Calculate annual return if we have enough history
             annual_return = None
             if pension.contribution_history:
-                first_contribution = min(ch.date for ch in pension.contribution_history)
+                first_contribution = min(ch.contribution_date for ch in pension.contribution_history)
                 days_invested = (date.today() - first_contribution).days
                 if days_invested > 0:
                     # Use the time-weighted return formula
@@ -400,11 +400,11 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             value_history = []
             if pension.contribution_history:
                 running_units = Decimal('0')
-                for ch in sorted(pension.contribution_history, key=lambda x: x.date):
+                for ch in sorted(pension.contribution_history, key=lambda x: x.contribution_date):
                     # Get ETF price for this date
-                    price = etf_crud.get_price_for_date(db=db, etf_id=pension.etf_id, date=ch.date)
+                    price = etf_crud.get_price_for_date(db=db, etf_id=pension.etf_id, date=ch.contribution_date)
                     if not price:
-                        price = etf_crud.get_next_available_price(db=db, etf_id=pension.etf_id, after_date=ch.date)
+                        price = etf_crud.get_next_available_price(db=db, etf_id=pension.etf_id, after_date=ch.contribution_date)
                     
                     if price:
                         # Calculate units bought
@@ -412,7 +412,7 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
                         running_units += units
                         value = running_units * price.price
                         value_history.append({
-                            "date": ch.date.isoformat(),
+                            "date": ch.contribution_date.isoformat(),
                             "value": str(value)
                         })
 

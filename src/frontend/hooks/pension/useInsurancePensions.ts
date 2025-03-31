@@ -420,4 +420,40 @@ export function useCreateInsurancePensionWithStatement() {
       console.error('Failed to create insurance pension with statements:', error)
     }
   })
+}
+
+// Mutation hook to add one-time investment
+export function useAddOneTimeInvestment() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ 
+      pensionId, 
+      data 
+    }: { 
+      pensionId: number, 
+      data: { 
+        amount: number, 
+        investment_date: string, 
+        note?: string 
+      }
+    }) => insurancePensionService.addOneTimeInvestment(pensionId, data),
+    onSuccess: (updatedPension) => {
+      // Update the cache for this specific pension
+      queryClient.setQueryData(insurancePensionKeys.detail(updatedPension.id), updatedPension)
+      
+      // Invalidate statistics that need to be refreshed
+      queryClient.invalidateQueries({ queryKey: insurancePensionKeys.statistics(updatedPension.id) })
+      
+      // Invalidate the lists that might contain this pension
+      queryClient.invalidateQueries({ queryKey: insurancePensionKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: insurancePensionKeys.summaries() })
+      
+      toast.success('Success', { description: 'One-time investment added successfully' })
+    },
+    onError: (error) => {
+      toast.error('Error', { description: 'Failed to add one-time investment' })
+      console.error('Failed to add one-time investment:', error)
+    }
+  })
 } 

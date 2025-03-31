@@ -25,7 +25,7 @@ export function ContributionHistoryTable({ contributions }: ContributionHistoryT
   useEffect(() => {
     const formatted = contributions.map(contribution => ({
       id: contribution.id,
-      date: formatDate(contribution.date, { locale: settings.ui_locale }).formatted,
+      date: formatDate(contribution.contribution_date, { locale: settings.ui_locale }).formatted,
       amount: formatCurrency(contribution.amount, {
         locale: settings.number_locale,
         currency: settings.currency
@@ -35,8 +35,8 @@ export function ContributionHistoryTable({ contributions }: ContributionHistoryT
     
     // Sort contributions by date (newest first)
     const sortedContributions = [...formatted].sort((a, b) => {
-      const dateA = new Date(contributions.find(c => c.id === a.id)?.date || 0)
-      const dateB = new Date(contributions.find(c => c.id === b.id)?.date || 0)
+      const dateA = new Date(contributions.find(c => c.id === a.id)?.contribution_date || 0)
+      const dateB = new Date(contributions.find(c => c.id === b.id)?.contribution_date || 0)
       return dateB.getTime() - dateA.getTime()
     })
     

@@ -328,4 +328,66 @@ def delete_company_pension_statement(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete statement: {str(e)}"
-        ) 
+        )
+
+@router.post("/{pension_id}/one-time-investment", response_model=schemas.pension_company.PensionCompanyResponse)
+def create_one_time_investment(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    investment_in: schemas.pension.OneTimeInvestmentCreate,
+) -> schemas.pension_company.PensionCompanyResponse:
+    """Record a one-time investment for a company pension."""
+    logger.info(f"API: Adding one-time investment for company pension {pension_id}")
+    
+    try:
+        # First check if the pension exists
+        pension = pension_company.get(db=db, id=pension_id)
+        if not pension:
+            logger.warning(f"API: Company Pension {pension_id} not found")
+            raise HTTPException(status_code=404, detail="Company Pension not found")
+        
+        # Create a contribution history entry for the one-time investment
+        contribution_data = schemas.pension_company.ContributionHistoryCreate(
+            amount=investment_in.amount,
+            contribution_date=investment_in.investment_date,
+            note=investment_in.note,
+            is_manual=True
+        )
+        
+        # Create the contribution history entry
+        pension_company.create_contribution_history(
+            db=db, pension_id=pension_id, obj_in=contribution_data
+        )
+        
+        # Update the current value of the pension by adding the investment amount
+        updated_value = pension.current_value + investment_in.amount
+        pension_company.update(
+            db=db, 
+            db_obj=pension, 
+            obj_in={"current_value": updated_value}
+        )
+        
+        # Get the updated pension
+        updated_pension = pension_company.get(db=db, id=pension_id)
+        logger.info(f"API: Successfully added one-time investment to pension {pension_id}")
+        
+        return updated_pension
+    except Exception as e:
+        logger.error(f"API: Failed to add one-time investment: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to add one-time investment: {str(e)}"
+        )
+
+@router.post("/{pension_id}/contribution-history", response_model=schemas.pension_company.PensionCompanyResponse)
+def create_contribution_history(
+    *, 
+    db: Session = Depends(deps.get_db), 
+    pension_id: int, 
+    contribution_in: schemas.pension_company.ContributionHistoryCreate
+) -> schemas.pension_company.PensionCompanyResponse:
+    """Record a contribution history entry for a company pension."""
+    return pension_company.create_contribution_history(
+        db=db, pension_id=pension_id, obj_in=contribution_in
+    ) 

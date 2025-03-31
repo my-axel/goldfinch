@@ -78,7 +78,7 @@ export const HistoricalPerformanceExplanation = memo(function HistoricalPerforma
   
   // Format the last contribution date
   const lastContributionDate = statistics.contribution_history.length > 0 
-    ? new Date(statistics.contribution_history[statistics.contribution_history.length - 1].date)
+    ? new Date(statistics.contribution_history[statistics.contribution_history.length - 1].contribution_date)
         .toLocaleDateString(settings.number_locale, { month: 'short', year: 'numeric' })
     : undefined
 

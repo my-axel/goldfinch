@@ -145,5 +145,25 @@ export const etfPensionService = {
       getPensionRealizeHistoricalRoute(PensionType.ETF_PLAN, id),
       {}
     )
+  },
+
+  /**
+   * Add a one-time investment to an ETF pension
+   * @param pensionId ETF pension ID
+   * @param data Investment data
+   * @returns Updated ETF pension
+   */
+  async addOneTimeInvestment(
+    pensionId: number, 
+    data: { 
+      amount: number, 
+      investment_date: string, 
+      note?: string 
+    }
+  ) {
+    return api.post<ETFPension>(
+      `${getPensionApiRouteWithId(PensionType.ETF_PLAN, pensionId)}/one-time-investment`,
+      data as Record<string, unknown>
+    )
   }
 } 

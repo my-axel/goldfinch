@@ -196,10 +196,7 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
 
         # Create the contribution history
         contribution_data = obj_in.dict()
-        # Map contribution_date to date field in the model
-        if 'contribution_date' in contribution_data:
-            contribution_data['date'] = contribution_data.pop('contribution_date')
-            
+        
         db_obj = PensionInsuranceContributionHistory(
             **contribution_data,
             pension_insurance_id=pension_id

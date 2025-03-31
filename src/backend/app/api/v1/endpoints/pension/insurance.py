@@ -217,6 +217,50 @@ def update_insurance_statement(
     
     return updated_statement
 
+@router.post("/{pension_id}/one-time-investment", response_model=schemas.pension_insurance.PensionInsuranceResponse)
+def create_one_time_investment(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+    investment_in: schemas.pension.OneTimeInvestmentCreate,
+) -> schemas.pension_insurance.PensionInsuranceResponse:
+    """Record a one-time investment for an insurance pension."""
+    # First check if the pension exists
+    pension = pension_insurance.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Insurance Pension not found")
+    
+    # Create a contribution history entry for the one-time investment
+    contribution_data = schemas.pension_insurance.ContributionHistoryCreate(
+        amount=investment_in.amount,
+        contribution_date=investment_in.investment_date,
+        note=investment_in.note,
+        is_manual=True
+    )
+    
+    try:
+        # Create the contribution history entry
+        pension_insurance.create_contribution_history(
+            db=db, pension_id=pension_id, obj_in=contribution_data
+        )
+        
+        # Update the current value of the pension by adding the investment amount
+        updated_value = pension.current_value + investment_in.amount
+        pension_insurance.update(
+            db=db, 
+            db_obj=pension, 
+            obj_in={"current_value": updated_value}
+        )
+        
+        # Get the updated pension
+        updated_pension = pension_insurance.get(db=db, id=pension_id)
+        return updated_pension
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to add one-time investment: {str(e)}"
+        )
+
 @router.post(
     "/{pension_id}/benefits",
     response_model=schemas.pension_insurance.BenefitResponse,

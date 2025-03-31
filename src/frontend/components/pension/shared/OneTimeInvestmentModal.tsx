@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { useForm } from "react-hook-form"
-import { usePension } from "@/frontend/context/pension"
 import { Textarea } from "@/frontend/components/ui/textarea"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -12,6 +11,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { NumberInput } from "@/frontend/components/shared/inputs/NumberInput"
 import { DateInput } from "@/frontend/components/ui/date-input"
 import { toISODateString } from "@/frontend/lib/dateUtils"
+import { PensionType } from "@/frontend/types/pension"
+import { useAddOneTimeInvestment as useAddEtfOneTimeInvestment } from "@/frontend/hooks/pension/useEtfPensions"
+import { useAddOneTimeInvestment as useAddCompanyOneTimeInvestment } from "@/frontend/hooks/pension/useCompanyPensions"
+import { useAddOneTimeInvestment as useAddInsuranceOneTimeInvestment } from "@/frontend/hooks/pension/useInsurancePensions"
 
 const formSchema = z.object({
   amount: z.number({
@@ -29,6 +32,8 @@ interface OneTimeInvestmentModalProps {
   onOpenChange: (open: boolean) => void
   pensionId: number
   pensionName: string
+  pensionType: PensionType
+  onSuccess?: () => void
 }
 
 type OneTimeInvestmentFormData = z.infer<typeof formSchema>
@@ -37,9 +42,14 @@ export function OneTimeInvestmentModal({
   open, 
   onOpenChange, 
   pensionId,
-  pensionName 
+  pensionName,
+  pensionType,
+  onSuccess
 }: OneTimeInvestmentModalProps) {
-  const { addOneTimeInvestment } = usePension()
+  // Use the appropriate mutation hook based on pension type
+  const addEtfOneTimeInvestmentMutation = useAddEtfOneTimeInvestment()
+  const addCompanyOneTimeInvestmentMutation = useAddCompanyOneTimeInvestment()
+  const addInsuranceOneTimeInvestmentMutation = useAddInsuranceOneTimeInvestment()
   
   const form = useForm<OneTimeInvestmentFormData>({
     resolver: zodResolver(formSchema),
@@ -65,15 +75,42 @@ export function OneTimeInvestmentModal({
     }
 
     try {
-      await addOneTimeInvestment(pensionId, {
+      const investmentData = {
         amount: data.amount,
         investment_date: data.investment_date,
         note: data.note && data.note.trim() !== "" ? data.note : undefined
-      })
-      toast.success("Success", {
-        description: "One-time investment added successfully"
-      })
+      }
+
+      // Call the appropriate mutation based on pension type
+      switch (pensionType) {
+        case PensionType.ETF_PLAN:
+          await addEtfOneTimeInvestmentMutation.mutateAsync({
+            pensionId,
+            data: investmentData
+          })
+          break
+        case PensionType.COMPANY:
+          await addCompanyOneTimeInvestmentMutation.mutateAsync({
+            pensionId,
+            data: investmentData
+          })
+          break
+        case PensionType.INSURANCE:
+          await addInsuranceOneTimeInvestmentMutation.mutateAsync({
+            pensionId,
+            data: investmentData
+          })
+          break
+        default:
+          throw new Error(`One-time investment not supported for pension type: ${pensionType}`)
+      }
+
+      // Success toast is handled by the mutation hooks, so we don't need it here
       handleClose()
+      
+      if (onSuccess) {
+        onSuccess()
+      }
     } catch (error) {
       console.error('Failed to add one-time investment:', error)
       toast.error("Error", {
@@ -88,7 +125,7 @@ export function OneTimeInvestmentModal({
         <DialogHeader>
           <DialogTitle>Add One-Time Investment to {pensionName}</DialogTitle>
           <DialogDescription>
-            This will add an one-time investment to the pension.
+            This will add a one-time investment to the pension.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

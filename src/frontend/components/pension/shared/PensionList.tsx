@@ -30,8 +30,7 @@ import {
 import { useState } from "react"
 import { HouseholdMember } from "@/frontend/types/household"
 import { formatMemberName } from "@/frontend/types/household-helpers"
-import { OneTimeInvestmentModal } from "../etf/components/OneTimeInvestmentModal"
-import { YearlyInvestmentModal } from "../company/YearlyInvestmentModal"
+import { OneTimeInvestmentModal } from "../shared/OneTimeInvestmentModal"
 import { Badge } from "@/frontend/components/ui/badge"
 import { PensionTypeSelectionModal } from "./dialogs/PensionTypeSelectionModal"
 import { useRouter } from "next/navigation"
@@ -119,6 +118,7 @@ function ETFPensionContent({ pension }: { pension: ETFPensionList & { type: Pens
         onOpenChange={setShowOneTimeInvestment}
         pensionId={pension.id}
         pensionName={pension.name}
+        pensionType={PensionType.ETF_PLAN}
       />
     </>
   )
@@ -128,6 +128,8 @@ function ETFPensionContent({ pension }: { pension: ETFPensionList & { type: Pens
  * Displays insurance pension specific information
  */
 function InsurancePensionContent({ pension }: { pension: InsurancePensionList & { type: PensionType.INSURANCE } }) {
+  const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
+  
   return (
     <>
       <div>
@@ -156,6 +158,26 @@ function InsurancePensionContent({ pension }: { pension: InsurancePensionList & 
         <dt className="text-muted-foreground">Current Value</dt>
         <dd><FormattedCurrency value={pension.current_value} /></dd>
       </div>
+      
+      {pension.status !== 'PAUSED' && (
+        <div className="flex justify-end mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowOneTimeInvestment(true)}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            One-Time Investment
+          </Button>
+        </div>
+      )}
+      <OneTimeInvestmentModal
+        open={showOneTimeInvestment}
+        onOpenChange={setShowOneTimeInvestment}
+        pensionId={pension.id}
+        pensionName={pension.name}
+        pensionType={PensionType.INSURANCE}
+      />
     </>
   )
 }
@@ -170,7 +192,7 @@ function CompanyPensionContent({
   pension: CompanyPensionList & { type: PensionType.COMPANY }
   member?: HouseholdMember
 }) {
-  const [showYearlyInvestment, setShowYearlyInvestment] = useState(false)
+  const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
   
   // Get the latest projections if available
   const latestProjections = pension.latest_projections || []
@@ -229,18 +251,19 @@ function CompanyPensionContent({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowYearlyInvestment(true)}
+            onClick={() => setShowOneTimeInvestment(true)}
           >
             <PlusCircle className="h-4 w-4 mr-2" />
-            Yearly Investment
+            One-Time Investment
           </Button>
         </div>
       )}
-      <YearlyInvestmentModal
-        open={showYearlyInvestment}
-        onOpenChange={setShowYearlyInvestment}
+      <OneTimeInvestmentModal
+        open={showOneTimeInvestment}
+        onOpenChange={setShowOneTimeInvestment}
         pensionId={pension.id}
         pensionName={pension.name}
+        pensionType={PensionType.COMPANY}
       />
     </>
   )

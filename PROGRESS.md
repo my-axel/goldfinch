@@ -115,20 +115,14 @@ Last Updated: 2023-10-07
 ## 📋 Current Status & Next Steps
 
 ### Active Development
-- React Query Implementation (2-3 weeks) ⚠️ Partial (95%)
-  > Migrated most components from Context-based state management to React Query for data fetching
-  > Household module fully migrated (✅), State Pension migrated (✅), Settings migrated (✅), ETF migrated (✅), ETF Pension migrated (✅), Company Pension migrated (✅), Insurance Pension migrated (✅)
-  > Main pension listing page and some statement/investment components still use old context API and need migration
-  > Dashboard, Compass and Payout Strategy modules don't need migration (templates only)
-  > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
+- Statement Custom Hooks Implementation (1-2 weeks) 🟡 In Progress (10%)
+  > Beginning implementation of reusable statement management hooks across pension types
+  > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
 
 ### Ready to Implement
 Listed by priority and dependency readiness:
 
 1. **Technical Improvements** (No external dependencies)
-   - Statement Custom Hooks Implementation (1-2 weeks)
-     > Standardize statement management across pension types with reusable hooks
-     > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
    - Tanstack Form Migration (6-8 weeks)
      > Migrate forms to Tanstack Form with improved type safety and validation
      > **Details**: [Tanstack Form Migration Plan](docs/plans/active/tanstack_form_migration.md)
@@ -191,10 +185,10 @@ graph TD
     H -.-> SVP
     
     %% Technical Improvements
-    SCH[Statement Custom Hooks 📝<br/>Weight: 5%] -.-> ETF
+    SCH[Statement Custom Hooks 🟡<br/>Weight: 5%] -.-> ETF
     SCH -.-> CP
     SCH -.-> IP
-    RQ[React Query 📝<br/>Weight: 10%] -.-> D
+    RQ[React Query ✅<br/>Weight: 10%] -.-> D
     RQ -.-> C
     RQ -.-> PS
     CM[Contribution Management 📝<br/>Weight: 10%] -.-> ETF
@@ -211,9 +205,11 @@ graph TD
     classDef complete fill:#90EE90,stroke:#000
     classDef partial fill:#FFE5B4,stroke:#000
     classDef notStarted fill:#FFB6C6,stroke:#000
-    class ETF,H,CP,IP,SP complete
+    classDef inProgress fill:#FFFF99,stroke:#000
+    class ETF,H,CP,IP,SP,RQ complete
     class S partial
-    class SVP,CS,I18n,D,C,PS,SCH,RQ,CM notStarted
+    class SVP,CS,I18n,D,C,PS,CM notStarted
+    class SCH inProgress
 ```
 <details>
 <summary><strong>📊 Graph Legend</strong></summary>
@@ -223,6 +219,7 @@ graph LR
     %% Status Legend
     L1[Complete ✅] --> L2[Partial ⚠️]
     L2 --> L3[Not Started 📝]
+    L3 --> L4[In Progress 🟡]
     
     %% Dependency Types
     D1[Module A] --> D2[Module B]
@@ -232,9 +229,11 @@ graph LR
     classDef complete fill:#90EE90,stroke:#000
     classDef partial fill:#FFE5B4,stroke:#000
     classDef notStarted fill:#FFB6C6,stroke:#000
+    classDef inProgress fill:#FFFF99,stroke:#000
     class L1 complete
     class L2 partial
     class L3 notStarted
+    class L4 inProgress
     
     %% Legend Labels
     style D1 fill:#fff,stroke:#000
@@ -253,7 +252,7 @@ graph LR
 </details>
 <br>
 
-## 📊 Implementation Status `[Overall Progress: ~69%]`
+## 📊 Implementation Status `[Overall Progress: ~70%]`
 
 | Module | Status | Progress | Dependencies | Notes |
 |--------|---------|-----------|--------------|-------|
@@ -270,8 +269,8 @@ graph LR
 | Currency System Backend | ✅ Complete | 100% | None | Exchange rates + API |
 | Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
 | Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
-| Statement Custom Hooks | 📝 Not Started | 0% | None | Reusable statement management |
-| React Query | ⚠️ Partial | 95% | None | Most modules migrated, some components still using old context |
+| Statement Custom Hooks | 🟡 In Progress | 10% | None | Reusable statement management |
+| React Query | ✅ Complete | 100% | None | All modules and components migrated to React Query |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
 | Tanstack Form | 📝 Not Started | 0% | None | Form state management and validation |
 
@@ -300,12 +299,12 @@ graph LR
 5. ✅ ETF Pension Enhancements
 
 ### Milestone 3: Technical Improvements (2-3 months)
-> **Status**: 🟡 Planning Phase
+> **Status**: 🟡 In Progress
 
 #### Key Deliverables:
-1. Statement Custom Hooks Implementation
+1. 🟡 Statement Custom Hooks Implementation (10% complete)
    > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
-2. React Query Implementation
+2. ✅ React Query Implementation (100% complete)
    > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
 3. Contribution Management System
    > **Details**: [Contribution Management Plan](docs/plans/active/contribution_management.md)

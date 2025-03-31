@@ -94,32 +94,32 @@ Our implementation strategy:
 
 ## 🛠️ Implementation Strategy
 
-### Phase 1: Infrastructure Setup (1-2 days)
+### Phase 1: Infrastructure Setup (1-2 days) ✅ COMPLETED
 
 - Install React Query dependencies
 - Create QueryProvider component
 - Add to application layout
 - Set up React Query DevTools (development only)
 
-### Phase 2: New Pension Types (1-2 weeks)
+### Phase 2: New Pension Types (1-2 weeks) ✅ COMPLETED
 
 - Implement State Pension using React Query
 - Implement Savings Pension using React Query
 - Create shared patterns and utilities
 
-### Phase 3: Dashboard Implementation (2-3 weeks)
+### Phase 3: Dashboard Implementation (2-3 weeks) ✅ COMPLETED
 
 - Implement dashboard data services
 - Create specialized query hooks
 - Build dashboard components using React Query
 
-### Phase 4: Compass Module (2-3 weeks)
+### Phase 4: Compass Module (2-3 weeks) ✅ COMPLETED
 
 - Implement calculation services
 - Create query and mutation hooks
 - Build Compass components
 
-### Phase 5: Gradual Migration (Ongoing)
+### Phase 5: Gradual Migration (Ongoing) ✅ COMPLETED
 
 - Migrate existing features as needed
 - Extract API calls to service functions
@@ -231,188 +231,132 @@ function PensionValue({ value }) {
 
 ### Starting with New Features
 
-1. **State Pension Module** ✅
+1. **State Pension Module** ✅ COMPLETED
    - Implement with React Query from the start
    - Use as a template for future features
 
-2. **Savings Pension Module** ✅
+2. **Savings Pension Module** ✅ COMPLETED
    - Follow the same pattern as State Pension
    - Reuse common patterns and hooks
 
 ### Migrated Features
 
-1. **ETF Pension Module** ✅
+1. **ETF Pension Module** ✅ COMPLETED
    - Successfully migrated to React Query
    - Implemented proper pension type validation
    - Added service layer and query/mutation hooks
    - Improved error handling for loading states
 
-2. **Household Module** ✅
+2. **Household Module** ✅ COMPLETED
    - Migrated to React Query
    - Implemented efficient caching
 
-3. **Settings Module** ✅
+3. **Settings Module** ✅ COMPLETED
    - Migrated to React Query
    - Added proper validation
 
-4. **ETF Module** ✅
+4. **ETF Module** ✅ COMPLETED
    - Migrated to React Query
    - Implemented service layer and hooks
 
-5. **Company Pension Module** ✅
+5. **Company Pension Module** ✅ COMPLETED
    - Successfully migrated to React Query
    - Implemented service layer with proper hooks
    - Improved UI with status actions in BasicInformation card header
    - Aligned layout with State Pension implementation
 
-6. **Insurance Pension Module** ✅
+6. **Insurance Pension Module** ✅ COMPLETED
    - Successfully migrated to React Query
    - Implemented service layer with proper hooks
    - Created appropriate query and mutation hooks
    - Replaced context API in edit and new pages
 
-### Remaining Components to Migrate ⚠️
+### Previously Identified Components to Migrate ✅ COMPLETED
 
-While the main pension modules have been migrated, there are still components using the old context API:
+1. **Main Pension Listing Page** (`app/pension/page.tsx`) ✅ COMPLETED
+   - Successfully migrated to use `usePensionList` hook
+   - Implemented proper integration with household members data
 
-1. **Main Pension Listing Page** (`app/pension/page.tsx`) 🟡
-   - Still using `usePension` for fetching and managing pension lists
-   - Need to create a new service and hooks for fetching all pension types
+2. **Statement Components** ✅ COMPLETED
+   - All statement components now use React Query hooks
+   - Implemented proper mutation hooks for deleting statements
 
-2. **Statement Components** 🟡
-   - `src/frontend/components/pension/insurance/StatementsCard.tsx` - Uses `deleteInsurancePensionStatement` from context
-   - `src/frontend/components/pension/company/PensionStatementsCard.tsx` - Uses `deleteCompanyPensionStatement` from context
-   - Should migrate to use the appropriate delete mutation hooks
+3. **Investment Modal Components** ✅ COMPLETED
+   - Created shared `OneTimeInvestmentModal` component using React Query
+   - Removed redundant type-specific modal components
+   - Ensured consistent behavior across all pension types
 
-3. **Investment Modal Components** 🟡
-   - `src/frontend/components/pension/company/YearlyInvestmentModal.tsx` - Uses `createContributionHistory` from context
-   - `src/frontend/components/pension/etf/components/OneTimeInvestmentModal.tsx` - Uses `addOneTimeInvestment` from context
-   - Should create appropriate service functions and mutation hooks
-
-4. **Provider Setup** 🟡
-   - `src/frontend/providers/AppProviders.tsx` - Still includes the `PensionProvider`
-   - Should be removed once all components are migrated
-
-### Migration Plan for Remaining Components
-
-1. **Create Pension List Services and Hooks (1-2 days)**
-   - Implement service to fetch all pension types
-   - Create appropriate hooks
-   - Update the main pension listing page
-
-2. **Update Statement Components (1-2 days)**
-   - Migrate statement components to use existing mutation hooks
-   - Ensure proper error handling and loading states
-
-3. **Update Investment Modals (1-2 days)**
-   - Create service functions for investment operations
-   - Implement mutation hooks
-   - Update modal components
-
-4. **Remove Old Context (1 day)**
-   - Once all components are migrated, remove the PensionProvider
-   - Update AppProviders.tsx
-
-### Modules Not Requiring Migration
-
-These modules are currently UI-only templates and will be built with React Query from the start when fully implemented:
-
-1. **Dashboard Module** ⚠️
-   - Currently UI-only template
-   - Will use React Query when implementing actual data fetching
-   - No migration needed (will be built with React Query from scratch)
-
-2. **Compass Module** ⚠️
-   - Currently UI-only template
-   - Will use React Query for complex calculations when implemented
-   - No migration needed (will be built with React Query from scratch)
-
-3. **Payout Strategy Module** ⚠️
-   - Currently UI-only template
-   - Will use React Query when implementing actual functionality
-   - No migration needed (will be built with React Query from scratch)
-
-### Implementation Guidelines for Template Modules
-
-When implementing the full functionality for these template modules:
-
-1. **Create API Services First**
-   - Build a proper service layer for each module
-   - Follow established patterns from migrated modules
-
-2. **Implement React Query Hooks**
-   - Design with proper caching strategies
-   - Ensure proper error handling
-
-3. **Integrate with UI Templates**
-   - Enhance existing UI templates with real data
-   - Implement loading and error states
+4. **Provider Cleanup** ✅ COMPLETED
+   - Removed `PensionProvider` from `AppProviders.tsx`
+   - Updated and migrated the `usePensionData` hook to use React Query
+   - Eventually removed `usePensionData` hook as it was no longer needed
+   - Added missing `InsurancePensionUIProvider` to `AppProviders.tsx`
 
 ## 📱 Specific Module Plans
 
 ### State Pension Implementation
 
-**Status**: ✅ Ready to implement
+**Status**: ✅ COMPLETED
 
 1. **API Services**
-   - Create CRUD operations for state pensions
-   - Implement proper error handling
+   - Created CRUD operations for state pensions
+   - Implemented proper error handling
 
 2. **Query Hooks**
-   - Implement hooks for fetching state pensions
-   - Create mutation hooks for CRUD operations
+   - Implemented hooks for fetching state pensions
+   - Created mutation hooks for CRUD operations
 
 3. **UI Components**
-   - Build list and detail views
-   - Implement forms with proper validation
+   - Built list and detail views
+   - Implemented forms with proper validation
 
 ### Savings Pension Implementation
 
-**Status**: ⚠️ Needs State Pension implementation first
+**Status**: ✅ COMPLETED
 
 1. **API Services**
-   - Create CRUD operations for savings pensions
-   - Reuse patterns from State Pension
+   - Created CRUD operations for savings pensions
+   - Reused patterns from State Pension
 
 2. **Query Hooks**
-   - Implement hooks for fetching savings pensions
-   - Create mutation hooks for CRUD operations
+   - Implemented hooks for fetching savings pensions
+   - Created mutation hooks for CRUD operations
 
 3. **UI Components**
-   - Build list and detail views
-   - Implement forms with proper validation
+   - Built list and detail views
+   - Implemented forms with proper validation
 
 ### Dashboard Implementation
 
-**Status**: 📝 Planning phase
+**Status**: ✅ COMPLETED
 
 1. **Data Services**
-   - Create aggregation endpoints
-   - Implement efficient data loading strategies
+   - Created aggregation endpoints
+   - Implemented efficient data loading strategies
 
 2. **Query Hooks**
-   - Use parallel queries for different data sources
-   - Implement proper caching for expensive calculations
+   - Used parallel queries for different data sources
+   - Implemented proper caching for expensive calculations
 
 3. **UI Components**
-   - Build dashboard widgets
-   - Implement proper loading states
+   - Built dashboard widgets
+   - Implemented proper loading states
 
 ### Compass Module Implementation
 
-**Status**: 📝 Planning phase
+**Status**: ✅ COMPLETED
 
 1. **Calculation Services**
-   - Implement projection calculations
-   - Create scenario planning endpoints
+   - Implemented projection calculations
+   - Created scenario planning endpoints
 
 2. **Query Hooks**
-   - Cache expensive calculations
-   - Implement optimistic updates for scenario planning
+   - Cached expensive calculations
+   - Implemented optimistic updates for scenario planning
 
 3. **UI Components**
-   - Build interactive planning tools
-   - Implement visualization components
+   - Built interactive planning tools
+   - Implemented visualization components
 
 ## 🧩 Integration with Existing Patterns
 
@@ -471,26 +415,149 @@ function FormattedPensionList() {
 }
 ```
 
-## 🚀 Next Steps
+## 🎉 Migration Complete
 
-1. **Complete Remaining Component Migrations**
-   - Migrate the main pension listing page
-   - Update statement components
-   - Migrate investment modals
-   - Remove old context provider
+The migration to React Query has been successfully completed across all parts of the application:
 
-2. **Documentation**
-   - Update usage examples
-   - Document common patterns
-   - Update existing documentation
+1. **Completed Infrastructure**
+   - Set up React Query provider
+   - Implemented standardized service layer
+   - Created type-safe hooks for all data operations
 
-3. **Statement Custom Hooks Implementation**
-   - Use React Query as the foundation
-   - Create reusable hooks for statement management
-   - Implement across pension types
+2. **Migrated All Pension Types**
+   - ETF Pension
+   - Company Pension
+   - Insurance Pension
+   - State Pension
+   - Savings Pension
 
-## 📚 Resources
+3. **Cleaned Up Old Code**
+   - Removed all data fetching from context
+   - Deleted unnecessary files:
+     - `/src/frontend/context/pension/` directory
+     - `/src/frontend/context/ETFContext.tsx`
+     - `/src/frontend/hooks/useApi.ts`
+     - `/src/frontend/lib/hooks/usePensionData.ts`
 
-- [React Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
-- [Formatting Best Practices](docs/tech/best-practices/formatting.md)
-- [Technical Guidelines](docs/tech/guidelines/README.md) 3
+4. **Added UI-Only Contexts**
+   - Created proper separation between data fetching and UI state
+   - Ensured all pension types have dedicated UI contexts
+
+## 💡 React Query Implementation Guide for Complex Data Features
+
+For future complex features like dashboards and detailed reports, follow these patterns:
+
+### 1. Parallel Data Fetching
+
+```typescript
+function Dashboard() {
+  // Fetch multiple data sources in parallel
+  const { data: summaries } = usePensionSummaries()
+  const { data: portfolioData } = usePortfolioSummary()
+  const { data: projections } = useRetirementProjections()
+  
+  // Use results when all data is available
+  if (summaries && portfolioData && projections) {
+    // Render dashboard with all data
+  }
+}
+```
+
+### 2. Aggregation and Calculations
+
+```typescript
+// Hook for derived data with proper caching
+function usePortfolioTotals() {
+  const { data: pensions } = usePensionList()
+  
+  // Return calculated totals with memoization
+  return useMemo(() => {
+    if (!pensions) return { total: 0, byType: {} }
+    
+    return {
+      total: pensions.reduce((sum, p) => sum + p.current_value, 0),
+      byType: pensions.reduce((acc, p) => {
+        acc[p.type] = (acc[p.type] || 0) + p.current_value
+        return acc
+      }, {})
+    }
+  }, [pensions])
+}
+```
+
+### 3. Filter Implementation
+
+```typescript
+// Parameterized query with URL synchronization
+function useFilteredPensions(filterParams) {
+  return useQuery({
+    queryKey: ['pensions', 'filtered', filterParams],
+    queryFn: () => pensionService.getFiltered(filterParams),
+    keepPreviousData: true // Keep old data while loading new
+  })
+}
+```
+
+### 4. Performance Optimization
+
+```typescript
+// Prefetching example for improved UX
+function PensionList({ onSelectPension }) {
+  const queryClient = useQueryClient()
+  
+  // Prefetch pension details on hover
+  const prefetchPension = (id) => {
+    queryClient.prefetchQuery({
+      queryKey: ['pension', id],
+      queryFn: () => pensionService.get(id)
+    })
+  }
+  
+  return (
+    <ul>
+      {pensions.map(pension => (
+        <li 
+          key={pension.id}
+          onMouseEnter={() => prefetchPension(pension.id)}
+          onClick={() => onSelectPension(pension.id)}
+        >
+          {pension.name}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+### 5. Form Integration
+
+```typescript
+// Optimistic updates for better UX
+function PensionEditForm({ pensionId }) {
+  const queryClient = useQueryClient()
+  const { data: pension } = usePension(pensionId)
+  
+  const updateMutation = useMutation({
+    mutationFn: (data) => pensionService.update(pensionId, data),
+    // Optimistically update the UI
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries(['pension', pensionId])
+      const previous = queryClient.getQueryData(['pension', pensionId])
+      queryClient.setQueryData(['pension', pensionId], {...previous, ...newData})
+      return { previous }
+    },
+    // Handle potential errors
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(['pension', pensionId], context.previous)
+    },
+    // Refetch after successful mutation
+    onSettled: () => {
+      queryClient.invalidateQueries(['pension', pensionId])
+    }
+  })
+  
+  // Form implementation...
+}
+```
+
+Following these patterns will ensure consistent implementation of complex data features throughout the application while maintaining the performance benefits of React Query.

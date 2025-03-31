@@ -1,7 +1,5 @@
 "use client"
 
-import { useState } from "react"
-import { YearlyInvestmentModal } from "./YearlyInvestmentModal"
 import { CompanyPension, ExtraContribution } from "@/frontend/types/pension"
 import { FormattedCurrency } from "@/frontend/components/shared/formatting/FormattedCurrency"
 import { FormattedDate } from "@/frontend/components/shared/formatting/FormattedDate"
@@ -17,20 +15,17 @@ type GroupedContributions = {
 }
 
 export function ContributionHistoryCard({ pension }: ContributionHistoryCardProps) {
-  const [showAddContribution, setShowAddContribution] = useState(false)
-  const [, setRefreshKey] = useState(0)
-
   // Group contributions by year and month
   const groupedContributions: GroupedContributions = {}
   
   // Sort contributions by date, newest first
   const sortedContributions = [...(pension.contribution_history || [])].sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime()
+    return new Date(b.contribution_date).getTime() - new Date(a.contribution_date).getTime()
   })
   
   // Group by year and month
   sortedContributions.forEach(contribution => {
-    const date = new Date(contribution.date)
+    const date = new Date(contribution.contribution_date)
     const year = date.getFullYear().toString()
     const month = date.toLocaleString('default', { month: 'long' })
     
@@ -44,10 +39,6 @@ export function ContributionHistoryCard({ pension }: ContributionHistoryCardProp
     
     groupedContributions[year][month].push(contribution)
   })
-  
-  const handleContributionAdded = () => {
-    setRefreshKey(prev => prev + 1)
-  }
 
   return (
     <>
@@ -70,7 +61,7 @@ export function ContributionHistoryCard({ pension }: ContributionHistoryCardProp
                           <div key={`${year}-${month}-${index}`} className="flex justify-between items-center py-1 border-b border-border last:border-0">
                             <div className="text-sm">
                               <FormattedDate 
-                                value={contribution.date} 
+                                value={contribution.contribution_date} 
                                 format={{ day: 'numeric', month: 'short' }}
                               />
                             </div>
@@ -93,13 +84,6 @@ export function ContributionHistoryCard({ pension }: ContributionHistoryCardProp
           </div>
         )}
       </div>
-      
-      <YearlyInvestmentModal
-        open={showAddContribution}
-        onOpenChange={setShowAddContribution}
-        pensionId={pension.id}
-        onSuccess={handleContributionAdded}
-      />
     </>
   )
 }

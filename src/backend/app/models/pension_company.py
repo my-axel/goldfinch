@@ -51,7 +51,7 @@ class PensionCompanyContributionHistory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     pension_company_id = Column(Integer, ForeignKey("pension_company.id", ondelete="CASCADE"), nullable=False)
-    date = Column(Date, nullable=False)
+    contribution_date = Column(Date, nullable=False)
     amount = Column(Numeric(20, 2), nullable=False)
     is_manual = Column(Boolean, nullable=False, default=False)
     note = Column(String, nullable=True)

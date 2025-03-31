@@ -9,6 +9,7 @@ import {
 import { etfPensionService } from '@/frontend/services/etfPensionService'
 import { ETFPension, PensionStatusUpdate } from '@/frontend/types/pension'
 import { PensionType } from '@/frontend/types/pension'
+import { toast } from 'sonner'
 
 // Query key factory for ETF pensions
 const etfPensionKeys = {
@@ -174,6 +175,42 @@ export function useRealizeHistoricalContributions() {
       // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: etfPensionKeys.lists() })
       queryClient.invalidateQueries({ queryKey: etfPensionKeys.summaries() })
+    }
+  })
+}
+
+// Mutation hook to add one-time investment
+export function useAddOneTimeInvestment() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ 
+      pensionId, 
+      data 
+    }: { 
+      pensionId: number, 
+      data: { 
+        amount: number, 
+        investment_date: string, 
+        note?: string 
+      }
+    }) => etfPensionService.addOneTimeInvestment(pensionId, data),
+    onSuccess: (updatedPension: ETFPension) => {
+      // Update the cache for this specific pension
+      queryClient.setQueryData(etfPensionKeys.detail(updatedPension.id), updatedPension)
+      
+      // Invalidate statistics that need to be refreshed
+      queryClient.invalidateQueries({ queryKey: etfPensionKeys.statistics(updatedPension.id) })
+      
+      // Invalidate the lists that might contain this pension
+      queryClient.invalidateQueries({ queryKey: etfPensionKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: etfPensionKeys.summaries() })
+      
+      toast.success('Success', { description: 'One-time investment added successfully' })
+    },
+    onError: (error) => {
+      toast.error('Error', { description: 'Failed to add one-time investment' })
+      console.error('Failed to add one-time investment:', error)
     }
   })
 } 

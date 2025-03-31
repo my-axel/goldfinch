@@ -412,7 +412,7 @@ export function useCreateContributionHistory() {
       pensionId: number, 
       data: {
         amount: number,
-        date: string,
+        contribution_date: string,
         is_manual: boolean,
         note?: string
       }

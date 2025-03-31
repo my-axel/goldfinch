@@ -263,5 +263,25 @@ export const insurancePensionService = {
    */
   async deleteStatement(pensionId: number, statementId: number) {
     return api.delete(getInsurancePensionStatementRoute(pensionId, statementId))
+  },
+
+  /**
+   * Add a one-time investment to an insurance pension
+   * @param pensionId Insurance pension ID
+   * @param data Investment data
+   * @returns Updated insurance pension
+   */
+  async addOneTimeInvestment(
+    pensionId: number, 
+    data: { 
+      amount: number, 
+      investment_date: string, 
+      note?: string 
+    }
+  ) {
+    return api.post<InsurancePension>(
+      `${getPensionApiRouteWithId(PensionType.INSURANCE, pensionId)}/one-time-investment`,
+      data as Record<string, unknown>
+    )
   }
 } 

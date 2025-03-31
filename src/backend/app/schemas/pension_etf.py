@@ -45,7 +45,7 @@ class ContributionPlanStepResponse(ContributionPlanStepBase):
     model_config = ConfigDict(from_attributes=True)
 
 class ContributionHistoryBase(BaseModel):
-    date: date
+    contribution_date: date
     amount: Decimal = Field(ge=0)
     is_manual: bool = False
     note: Optional[str] = None

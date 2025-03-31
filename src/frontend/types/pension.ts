@@ -66,7 +66,7 @@ export interface ExtraContribution {
   id: number
   pension_id: number
   amount: number
-  date: Date
+  contribution_date: Date
   note?: string
 }
 
@@ -303,7 +303,7 @@ export interface PensionStatusUpdate {
 export interface ContributionHistoryResponse {
   id: number
   pension_etf_id: number
-  date: string
+  contribution_date: string
   amount: number
   is_manual: boolean
   note?: string
