@@ -5,7 +5,8 @@ import {
   ETFPensionList,
   InsurancePensionList,
   CompanyPensionList,
-  StatePensionList
+  StatePensionList,
+  SavingsPensionList
 } from '@/frontend/types/pension'
 import { 
   getPensionApiRouteWithId, 
@@ -24,11 +25,12 @@ export const pensionService = {
   async getAllPensions(memberId?: number) {
     const queryParam = memberId ? `?member_id=${memberId}` : ''
     
-    const [etfResponse, insuranceResponse, companyResponse, stateResponse] = await Promise.all([
+    const [etfResponse, insuranceResponse, companyResponse, stateResponse, savingsResponse] = await Promise.all([
       api.get<ETFPensionList[]>(`/api/v1/pension-summaries/etf${queryParam}`),
       api.get<InsurancePensionList[]>(`/api/v1/pension-summaries/insurance${queryParam}`),
       api.get<CompanyPensionList[]>(`/api/v1/pension-summaries/company${queryParam}`),
-      api.get<StatePensionList[]>(`/api/v1/pension-summaries/state${queryParam}`)
+      api.get<StatePensionList[]>(`/api/v1/pension-summaries/state${queryParam}`),
+      api.get<SavingsPensionList[]>(`/api/v1/pension-summaries/savings${queryParam}`)
     ])
 
     // Process ETF pensions
@@ -68,13 +70,23 @@ export const pensionService = {
       resume_at: p.resume_at ? new Date(p.resume_at) : undefined,
       latest_statement_date: p.latest_statement_date ? new Date(p.latest_statement_date) : undefined
     }))
+    
+    // Process Savings pensions
+    const savingsPensions = savingsResponse.map(p => ({
+      ...p,
+      type: PensionType.SAVINGS as const,
+      paused_at: p.paused_at ? new Date(p.paused_at) : undefined,
+      resume_at: p.resume_at ? new Date(p.resume_at) : undefined,
+      latest_statement_date: p.latest_statement_date ? new Date(p.latest_statement_date) : undefined
+    }))
 
     // Combine all pensions
     return [
       ...etfPensions,
       ...insurancePensions,
       ...companyPensions,
-      ...statePensions
+      ...statePensions,
+      ...savingsPensions
     ]
   },
 

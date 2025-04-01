@@ -1,5 +1,5 @@
 import * as z from "zod"
-import { PensionType, ContributionFrequency } from "@/frontend/types/pension"
+import { PensionType, ContributionFrequency, CompoundingFrequency } from "@/frontend/types/pension"
 
 const basePensionSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -86,7 +86,44 @@ export const statePensionSchema = basePensionSchema.extend({
   })).default([])
 })
 
+export const savingsPensionSchema = basePensionSchema.extend({
+  type: z.literal(PensionType.SAVINGS),
+  start_date: z.date(),
+  status: z.enum(['ACTIVE', 'PAUSED']).default('ACTIVE'),
+  
+  // Interest rates with constraints
+  pessimistic_rate: z.number().min(0).max(20, "Rate must be between 0% and 20%"),
+  realistic_rate: z.number().min(0).max(20, "Rate must be between 0% and 20%"),
+  optimistic_rate: z.number().min(0).max(20, "Rate must be between 0% and 20%"),
+  
+  // Compounding frequency
+  compounding_frequency: z.nativeEnum(CompoundingFrequency),
+  
+  // Related data
+  statements: z.array(z.object({
+    id: z.number().optional(),
+    statement_date: z.date(),
+    balance: z.number().min(0, "Balance must be positive"),
+    note: z.string().optional()
+  })).default([]),
+  
+  contribution_plan_steps: z.array(contributionStepSchema).default([])
+}).refine(
+  (data) => data.pessimistic_rate <= data.realistic_rate,
+  {
+    message: "Pessimistic rate must be less than or equal to realistic rate",
+    path: ["pessimistic_rate"]
+  }
+).refine(
+  (data) => data.realistic_rate <= data.optimistic_rate, 
+  {
+    message: "Realistic rate must be less than or equal to optimistic rate",
+    path: ["realistic_rate"]
+  }
+)
+
 export type ETFPensionFormData = z.infer<typeof etfPensionSchema>
 export type InsurancePensionFormData = z.infer<typeof insurancePensionSchema>
 export type CompanyPensionFormData = z.infer<typeof companyPensionSchema>
-export type StatePensionFormData = z.infer<typeof statePensionSchema> 
+export type StatePensionFormData = z.infer<typeof statePensionSchema>
+export type SavingsPensionFormData = z.infer<typeof savingsPensionSchema> 

@@ -13,9 +13,10 @@ import {
   ETFPensionList, 
   InsurancePensionList, 
   CompanyPensionList,
-  PensionList as PensionListType
+  PensionList as PensionListType,
+  SavingsPensionList
 } from "@/frontend/types/pension"
-import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle, Landmark } from "lucide-react"
+import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle, Landmark, Coins } from "lucide-react"
 import { Button } from "@/frontend/components/ui/button"
 import {
   AlertDialog,
@@ -270,6 +271,69 @@ function CompanyPensionContent({
 }
 
 /**
+ * Displays savings pension specific information
+ */
+function SavingsPensionContent({ pension }: { pension: SavingsPensionList & { type: PensionType.SAVINGS } }) {
+  const [showOneTimeInvestment, setShowOneTimeInvestment] = useState(false)
+  
+  return (
+    <>
+      {pension.latest_statement_date && (
+        <div>
+          <dt className="text-muted-foreground">Latest Statement</dt>
+          <dd>
+            <FormattedDate value={pension.latest_statement_date} />
+          </dd>
+        </div>
+      )}
+      
+      <div>
+        <dt className="text-muted-foreground">Current Balance</dt>
+        <dd>
+          <FormattedCurrency value={pension.latest_balance || 0} />
+        </dd>
+      </div>
+      
+      <div>
+        <dt className="text-muted-foreground">Interest Rate</dt>
+        <dd>
+          <FormattedPercent value={pension.realistic_rate} decimals={1} />
+        </dd>
+      </div>
+      
+      {pension.current_step_amount && pension.current_step_frequency && (
+        <div>
+          <dt className="text-muted-foreground">Regular Contribution</dt>
+          <dd>
+            <FormattedCurrency value={pension.current_step_amount} /> <FormattedFrequency value={pension.current_step_frequency} />
+          </dd>
+        </div>
+      )}
+      
+      {pension.status !== 'PAUSED' && (
+        <div className="flex justify-end mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowOneTimeInvestment(true)}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            One-Time Investment
+          </Button>
+        </div>
+      )}
+      <OneTimeInvestmentModal
+        open={showOneTimeInvestment}
+        onOpenChange={setShowOneTimeInvestment}
+        pensionId={pension.id}
+        pensionName={pension.name}
+        pensionType={PensionType.SAVINGS}
+      />
+    </>
+  )
+}
+
+/**
  * Displays a single pension plan card with type-specific content
  */
 function PensionCard({ 
@@ -295,6 +359,8 @@ function PensionCard({
         return <Building className="h-4 w-4" />;
       case PensionType.STATE:
         return <Landmark className="h-4 w-4" />;
+      case PensionType.SAVINGS:
+        return <Coins className="h-4 w-4" />;
       default:
         return null;
     }
@@ -310,6 +376,8 @@ function PensionCard({
         return <CompanyPensionContent pension={pension} member={member} />
       case PensionType.STATE:
         return <StatePensionListCard pension={pension} />
+      case PensionType.SAVINGS:
+        return <SavingsPensionContent pension={pension} />
       default:
         return null
     }
@@ -379,6 +447,7 @@ function sortPensions(a: PensionListType, b: PensionListType): number {
     [PensionType.COMPANY]: 2,
     [PensionType.INSURANCE]: 3,
     [PensionType.ETF_PLAN]: 4,
+    [PensionType.SAVINGS]: 5,
   }
   
   const typeComparison = typeOrder[a.type] - typeOrder[b.type]

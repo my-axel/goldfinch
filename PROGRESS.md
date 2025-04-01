@@ -123,17 +123,23 @@ Last Updated: 2025-03-31
 - Statement Custom Hooks Implementation (1-2 weeks) 🟡 In Progress (10%)
   > Beginning implementation of reusable statement management hooks across pension types
   > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
-- Savings Pension Frontend Implementation (2-3 weeks) 🟡 In Progress (0%)
+- Savings Pension Frontend Implementation (2-3 weeks) 🟡 In Progress (85%)
   > Implementing frontend for the security-focused savings pension type
   > **Details**: [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
+  > - ✅ Phase 1: Types and API Client
+  > - ✅ Phase 2: React Query Hooks
+  > - ✅ Phase 3: Form and Card Components
+  > - 🟡 Phase 4: Page Components and Integration
+  >   - ✅ 4.1: New/Add Page
+  >   - ✅ 4.2: Edit Page
+  >   - ✅ 4.3: PensionList Integration
+  >   - ✅ 4.4: PensionTypeSelectionModal Integration
+  >   - ✅ 4.5: Routes and Navigation Updates
 
 ### Ready to Implement
 Listed by priority and dependency readiness:
 
 1. **Technical Improvements** (No external dependencies)
-   - Tanstack Form Migration (6-8 weeks)
-     > Migrate forms to Tanstack Form with improved type safety and validation
-     > **Details**: [Tanstack Form Migration Plan](docs/plans/active/tanstack_form_migration.md)
 
 2. **Core Features** (Dependencies ready)
    - Currency System Frontend Integration (1-2 weeks)
@@ -162,7 +168,7 @@ graph TD
     CP[Company Pension ✅<br/>Weight: 8%] --> D
     IP[Insurance Pension ✅<br/>Weight: 8%] --> D
     SP[State Pension ✅<br/>Weight: 5%] --> D
-    SVP[Savings Pension ⚠️<br/>Weight: 5%] --> D
+    SVP[Savings Pension ✅<br/>Weight: 5%] --> D
     D[Dashboard 📝<br/>Weight: 20%] --> C
     D --> PS
     
@@ -213,8 +219,8 @@ graph TD
     classDef partial fill:#FFE5B4,stroke:#000
     classDef notStarted fill:#FFB6C6,stroke:#000
     classDef inProgress fill:#FFFF99,stroke:#000
-    class ETF,H,CP,IP,SP,RQ complete
-    class S,SVP partial
+    class ETF,H,CP,IP,SP,RQ,SVP complete
+    class S partial
     class CS,I18n,D,C,PS,CM notStarted
     class SCH inProgress
 ```
@@ -279,7 +285,6 @@ graph LR
 | Statement Custom Hooks | 🟡 In Progress | 10% | None | Reusable statement management |
 | React Query | ✅ Complete | 100% | None | All modules and components migrated to React Query |
 | Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
-| Tanstack Form | 📝 Not Started | 0% | None | Form state management and validation |
 
 ## 🎯 Project Milestones
 

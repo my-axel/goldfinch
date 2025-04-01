@@ -21,7 +21,20 @@ export enum PensionType {
   ETF_PLAN = 'ETF_PLAN',      // Self-managed ETF-based pension
   INSURANCE = 'INSURANCE',     // Insurance company managed pension
   COMPANY = 'COMPANY',         // Employer-sponsored pension plan
-  STATE = 'STATE'              // Government/state pension
+  STATE = 'STATE',             // Government/state pension
+  SAVINGS = 'SAVINGS'          // Savings account based pension
+}
+
+/** 
+ * Defines the frequency at which interest is compounded in a savings account.
+ * Used to calculate accurate growth projections.
+ */
+export enum CompoundingFrequency {
+  DAILY = 'DAILY',
+  MONTHLY = 'MONTHLY',
+  QUARTERLY = 'QUARTERLY',
+  SEMI_ANNUALLY = 'SEMI_ANNUALLY',
+  ANNUALLY = 'ANNUALLY'
 }
 
 /** 
@@ -288,8 +301,98 @@ export interface StatePensionList {
   statements_count: number  // Number of statements available
 }
 
+/**
+ * Represents a statement for a savings pension plan.
+ * Contains information about the account balance at a specific date.
+ */
+export interface SavingsPensionStatement {
+  id: number
+  pension_id: number
+  statement_date: string
+  balance: number
+  note?: string
+}
+
+/** 
+ * Savings pension plan interface with features specific
+ * to savings account based retirement planning.
+ */
+export interface SavingsPension {
+  id: number
+  type: PensionType.SAVINGS
+  name: string
+  member_id: number
+  start_date: string
+  notes?: string
+  
+  // Interest rates for different scenarios (in percentage)
+  pessimistic_rate: number
+  realistic_rate: number
+  optimistic_rate: number
+  
+  // How often interest is compounded
+  compounding_frequency: CompoundingFrequency
+  
+  // Status management
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
+  
+  // Related data
+  statements?: SavingsPensionStatement[]
+  contribution_plan_steps: ContributionStep[]
+}
+
+/**
+ * Represents a projection scenario for a savings pension.
+ */
+export interface SavingsPensionScenario {
+  balance: number
+  retirement_age: number
+  years_to_retirement: number
+  growth_rate: number
+  total_contributions: number
+  balance_without_contributions: number
+}
+
+/**
+ * Complete projection including both retirement dates.
+ */
+export interface SavingsPensionProjection {
+  planned: {
+    pessimistic: SavingsPensionScenario
+    realistic: SavingsPensionScenario
+    optimistic: SavingsPensionScenario
+  }
+  possible: {
+    pessimistic: SavingsPensionScenario
+    realistic: SavingsPensionScenario
+    optimistic: SavingsPensionScenario
+  }
+}
+
+/**
+ * Lightweight savings pension schema for list views
+ */
+export interface SavingsPensionList {
+  id: number
+  name: string
+  member_id: number
+  status: 'ACTIVE' | 'PAUSED'
+  paused_at?: string
+  resume_at?: string
+  latest_balance?: number
+  latest_statement_date?: string
+  pessimistic_rate: number
+  realistic_rate: number
+  optimistic_rate: number
+  compounding_frequency: CompoundingFrequency
+  current_step_amount?: number
+  current_step_frequency?: ContributionFrequency
+}
+
 /** Union type of all possible pension types */
-export type Pension = ETFPension | InsurancePension | CompanyPension | StatePension
+export type Pension = ETFPension | InsurancePension | CompanyPension | StatePension | SavingsPension
 
 /**
  * Interface for updating pension status with optional date fields
@@ -383,3 +486,4 @@ export type PensionList =
   | (CompanyPensionList & { type: PensionType.COMPANY })
   | (InsurancePensionList & { type: PensionType.INSURANCE })
   | (StatePensionList & { type: PensionType.STATE })
+  | (SavingsPensionList & { type: PensionType.SAVINGS })

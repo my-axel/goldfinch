@@ -1,4 +1,4 @@
-import { PensionType, ContributionFrequency } from "./pension"
+import { PensionType, ContributionFrequency, CompoundingFrequency } from "./pension"
 
 /**
  * Represents a single contribution step in a pension plan
@@ -135,4 +135,40 @@ export type StatePensionFormData = {
   notes?: string
   status: 'ACTIVE' | 'PAUSED'
   statements: StatePensionStatementFormData[]
+}
+
+/**
+ * Savings Pension statement form data
+ */
+export type SavingsPensionStatementFormData = {
+  id?: number
+  statement_date: Date
+  balance: number
+  note?: string
+}
+
+/**
+ * Savings Pension form data
+ */
+export type SavingsPensionFormData = {
+  type: PensionType.SAVINGS
+  name: string
+  member_id: string         // String for form input, converted to number on submit
+  start_date: Date
+  notes?: string
+  
+  // Interest rates for different scenarios (in percentage)
+  pessimistic_rate: number
+  realistic_rate: number
+  optimistic_rate: number
+  
+  // How often interest is compounded
+  compounding_frequency: CompoundingFrequency
+  
+  // Status management
+  status: 'ACTIVE' | 'PAUSED'
+  
+  // Related data
+  statements: SavingsPensionStatementFormData[]
+  contribution_plan_steps: ContributionPlanStep[]
 }

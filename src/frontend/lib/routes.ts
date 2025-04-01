@@ -7,7 +7,8 @@ export const PENSION_ROUTE_MAPPING: Record<PensionType, string> = {
   [PensionType.ETF_PLAN]: 'etf',
   [PensionType.INSURANCE]: 'insurance',
   [PensionType.COMPANY]: 'company',
-  [PensionType.STATE]: 'state'
+  [PensionType.STATE]: 'state',
+  [PensionType.SAVINGS]: 'savings'
 } as const
 
 /**
