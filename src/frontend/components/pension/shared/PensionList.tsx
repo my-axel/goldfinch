@@ -16,7 +16,7 @@ import {
   PensionList as PensionListType,
   SavingsPensionList
 } from "@/frontend/types/pension"
-import { Trash2, Pencil, PiggyBank, Building, Shield, PlusCircle, Landmark, Coins } from "lucide-react"
+import { Trash2, Pencil, Building, Shield, PlusCircle, Landmark, Coins, LineChart } from "lucide-react"
 import { Button } from "@/frontend/components/ui/button"
 import {
   AlertDialog,
@@ -352,7 +352,7 @@ function PensionCard({
   const renderIcon = () => {
     switch (pension.type) {
       case PensionType.ETF_PLAN:
-        return <PiggyBank className="h-4 w-4" />;
+        return <LineChart className="h-4 w-4" />;
       case PensionType.INSURANCE:
         return <Shield className="h-4 w-4" />;
       case PensionType.COMPANY:

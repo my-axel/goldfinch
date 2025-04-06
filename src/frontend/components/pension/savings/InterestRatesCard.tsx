@@ -25,7 +25,7 @@ export function InterestRatesCard({ form }: InterestRatesCardProps) {
               <FormLabel>Pessimistic Rate (%)</FormLabel>
               <FormControl>
                 <PercentInput
-                  value={field.value}
+                  value={field.value ?? null}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   placeholder="e.g., 1.5"
@@ -47,7 +47,7 @@ export function InterestRatesCard({ form }: InterestRatesCardProps) {
               <FormLabel>Realistic Rate (%)</FormLabel>
               <FormControl>
                 <PercentInput
-                  value={field.value}
+                  value={field.value ?? null}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   placeholder="e.g., 3.0"
@@ -69,7 +69,7 @@ export function InterestRatesCard({ form }: InterestRatesCardProps) {
               <FormLabel>Optimistic Rate (%)</FormLabel>
               <FormControl>
                 <PercentInput
-                  value={field.value}
+                  value={field.value ?? null}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   placeholder="e.g., 5.0"

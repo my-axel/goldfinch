@@ -18,9 +18,9 @@ class PensionSavings(Base):
     notes = Column(String, nullable=True)
     
     # Savings specific fields
-    pessimistic_rate = Column(Numeric(4, 2), nullable=False, default=1.0)
-    realistic_rate = Column(Numeric(4, 2), nullable=False, default=2.0)
-    optimistic_rate = Column(Numeric(4, 2), nullable=False, default=3.0)
+    pessimistic_rate = Column(Numeric(4, 2), nullable=False, default=0.01)
+    realistic_rate = Column(Numeric(4, 2), nullable=False, default=0.02)
+    optimistic_rate = Column(Numeric(4, 2), nullable=False, default=0.03)
     compounding_frequency = Column(SQLEnum(CompoundingFrequency), nullable=False, default=CompoundingFrequency.ANNUALLY)
     
     # Status management

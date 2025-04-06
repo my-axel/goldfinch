@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Form } from "@/frontend/components/ui/form"
 import { Button } from "@/frontend/components/ui/button"
 import { SavingsPensionFormData } from "@/frontend/types/pension-form"
-import { PensionType, SavingsPension, SavingsPensionStatement } from "@/frontend/types/pension"
+import { PensionType, SavingsPension } from "@/frontend/types/pension"
 import { toast } from "sonner"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { savingsPensionSchema } from "@/frontend/lib/validations/pension"
@@ -25,7 +25,7 @@ import React, { useState, useEffect, useMemo } from "react"
 import { useSavingsPension, useUpdateSavingsPension, useUpdateSavingsPensionStatus } from "@/frontend/hooks/useSavingsPensions"
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert"
 import { LoadingState } from "@/frontend/components/shared/LoadingState"
-import { savingsPensionToForm } from "@/frontend/lib/transformers/savingsPensionTransformers"
+import { savingsPensionToForm, formToSavingsPension } from "@/frontend/lib/transformers/savingsPensionTransformers"
 import { PensionStatusActions } from "@/frontend/components/pension/shared/PensionStatusActions"
 import { PauseConfirmationDialog } from "@/frontend/components/pension/shared/dialogs/PauseConfirmationDialog"
 import { ResumeDateDialog } from "@/frontend/components/pension/shared/dialogs/ResumeDateDialog"
@@ -95,62 +95,47 @@ export default function EditSavingsPensionPage({ params }: EditSavingsPensionPag
   const handleSubmit = async (data: SavingsPensionFormData) => {
     try {
       setIsSubmitting(true)
-      const memberId = parseInt(data.member_id)
+      
+      console.log("Form data before processing:", data);
+      
+      // Ensure numeric fields are actually numbers (this is a safeguard in addition to Zod preprocessing)
+      const processedData: SavingsPensionFormData = {
+        ...data,
+        pessimistic_rate: Number(data.pessimistic_rate),
+        realistic_rate: Number(data.realistic_rate),
+        optimistic_rate: Number(data.optimistic_rate),
+        statements: data.statements.map(statement => ({
+          ...statement,
+          balance: Number(statement.balance)
+        })),
+        contribution_plan_steps: data.contribution_plan_steps.map(step => ({
+          ...step,
+          amount: Number(step.amount)
+        }))
+      };
+      
+      console.log("Form data after manual processing:", processedData);
+      
+      const memberId = parseInt(processedData.member_id)
       if (isNaN(memberId)) {
         toast.error("Error", { description: "Invalid member ID" })
         return
       }
 
-      // Process statements to match SavingsPensionStatement[]
-      const statements: SavingsPensionStatement[] = data.statements
-        .filter(statement => statement.statement_date) // Only include statements with dates
-        .map(statement => {
-          // Create a valid statement object
-          const processedStatement: SavingsPensionStatement = {
-            pension_id: pensionId,
-            statement_date: toISODateString(statement.statement_date),
-            balance: statement.balance,
-            note: statement.note || "",
-            // Only include id if it exists and is a number
-            id: statement.id || 0
-          }
-          return processedStatement
-        })
-
-      // Create a pension data object that matches what the API expects
-      const pensionData = {
-        type: PensionType.SAVINGS as const,
-        name: data.name,
-        member_id: memberId,
-        start_date: toISODateString(data.start_date),
-        notes: data.notes || "",
-        
-        // Interest rates
-        pessimistic_rate: data.pessimistic_rate,
-        realistic_rate: data.realistic_rate,
-        optimistic_rate: data.optimistic_rate,
-        
-        // Compounding frequency
-        compounding_frequency: data.compounding_frequency,
-        
-        // Status
-        status: data.status,
-        
-        // Statements (already processed above)
-        statements: statements,
-        
-        // Contribution plan steps (convert dates to ISO strings)
-        contribution_plan_steps: data.contribution_plan_steps.map(step => ({
-          amount: step.amount,
-          frequency: step.frequency,
-          start_date: toISODateString(step.start_date),
-          end_date: step.end_date ? toISODateString(step.end_date) : undefined,
-          note: step.note || ""
-        }))
-      }
+      // Use the transformer to convert form data to API format
+      const pensionData = formToSavingsPension(processedData)
+      
+      // Add pension ID to each statement
+      const statements = pensionData.statements?.map(statement => ({
+        ...statement,
+        pension_id: pensionId
+      })) || []
       
       // Update the pension using React Query mutation
-      await updatePension(pensionData as unknown as Partial<SavingsPension>)
+      await updatePension({
+        ...pensionData,
+        statements
+      } as unknown as Partial<SavingsPension>)
       
       toast.success("Success", { description: "Savings pension updated" })
       router.push(getPensionListRoute())

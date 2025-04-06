@@ -91,10 +91,19 @@ export const savingsPensionSchema = basePensionSchema.extend({
   start_date: z.date(),
   status: z.enum(['ACTIVE', 'PAUSED']).default('ACTIVE'),
   
-  // Interest rates with constraints
-  pessimistic_rate: z.number().min(0).max(20, "Rate must be between 0% and 20%"),
-  realistic_rate: z.number().min(0).max(20, "Rate must be between 0% and 20%"),
-  optimistic_rate: z.number().min(0).max(20, "Rate must be between 0% and 20%"),
+  // Interest rates with constraints - add preprocess to handle string values
+  pessimistic_rate: z.preprocess(
+    (val) => (typeof val === 'string' ? parseFloat(val) : val),
+    z.number().min(0).max(20, "Rate must be between 0% and 20%")
+  ),
+  realistic_rate: z.preprocess(
+    (val) => (typeof val === 'string' ? parseFloat(val) : val),
+    z.number().min(0).max(20, "Rate must be between 0% and 20%")
+  ),
+  optimistic_rate: z.preprocess(
+    (val) => (typeof val === 'string' ? parseFloat(val) : val),
+    z.number().min(0).max(20, "Rate must be between 0% and 20%")
+  ),
   
   // Compounding frequency
   compounding_frequency: z.nativeEnum(CompoundingFrequency),
@@ -103,11 +112,25 @@ export const savingsPensionSchema = basePensionSchema.extend({
   statements: z.array(z.object({
     id: z.number().optional(),
     statement_date: z.date(),
-    balance: z.number().min(0, "Balance must be positive"),
+    balance: z.preprocess(
+      (val) => (typeof val === 'string' ? parseFloat(val) : val),
+      z.number().min(0, "Balance must be positive")
+    ),
     note: z.string().optional()
   })).default([]),
   
-  contribution_plan_steps: z.array(contributionStepSchema).default([])
+  contribution_plan_steps: z.array(
+    z.object({
+      amount: z.preprocess(
+        (val) => (typeof val === 'string' ? parseFloat(val) : val),
+        z.number().gt(0, "Amount must be greater than 0")
+      ),
+      frequency: z.nativeEnum(ContributionFrequency),
+      start_date: z.date(),
+      end_date: z.date().optional(),
+      note: z.string().optional()
+    })
+  ).default([])
 }).refine(
   (data) => data.pessimistic_rate <= data.realistic_rate,
   {

@@ -29,7 +29,7 @@ export function BasicInformationCard({ form }: BasicInformationCardProps) {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="e.g., Retirement Savings Account" />
+                <Input {...field} value={field.value || ''} placeholder="e.g., Retirement Savings Account" />
               </FormControl>
               <FormMessage />
             </FormItem>
