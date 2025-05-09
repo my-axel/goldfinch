@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   distDir: '.next',
   // Allow cross-origin requests during development
   allowedDevOrigins: [
-    'goldfinch.homelab.myaxel.de'
+    'localhost'
   ],
 };
 

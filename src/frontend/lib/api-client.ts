@@ -20,7 +20,10 @@ class ApiClient {
   private locale: string = 'en-US';
 
   constructor() {
-    this.api = axios.create();
+    // Set the base URL to point to the backend running on port 8000
+    this.api = axios.create({
+      baseURL: 'http://localhost:8000'
+    });
 
     // Add request interceptor for data transformation
     this.api.interceptors.request.use(

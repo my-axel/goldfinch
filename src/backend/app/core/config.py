@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Goldfinch"
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
-    DATABASE_URL: str = "postgresql+psycopg2://goldfinch_dev:rYngef-bafnib-vinro1@localhost:5432/goldfinch_dev"
+    DATABASE_URL: str = "postgresql+psycopg2://goldfinch_dev:rYngef-bafnib-vinro1@192.168.0.20:5432/goldfinch_dev"
     BASE_CURRENCY: str = "EUR"
     CURRENCY_DECIMALS: int = 2  # Number of decimal places for currency values
     

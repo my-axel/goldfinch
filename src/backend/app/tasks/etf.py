@@ -14,6 +14,15 @@ logger = get_task_logger(__name__)
 def handle_task_error(task, exc, etf_id: str, task_type: str):
     """Handle task errors with proper logging and retry logic."""
     try:
+        # Test database connection
+        try:
+            db = SessionLocal()
+            db.execute("SELECT 1")
+            logger.info(f"Database connection test successful for {task_type} task")
+        except Exception as db_exc:
+            logger.error(f"Database connection test failed: {str(db_exc)}")
+            raise
+
         # Log the error
         if isinstance(exc, SQLAlchemyError):
             logger.error(f"Database error in {task_type} for ETF {etf_id}: {str(exc)}")
