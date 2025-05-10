@@ -19,12 +19,9 @@ export const savingsPensionService = {
    * Returns a lightweight representation for list views.
    */
   getAll: async (memberId?: number): Promise<SavingsPensionList[]> => {
-    const url = new URL('/api/v1/pension/savings', window.location.origin)
-    if (memberId) url.searchParams.append('member_id', memberId.toString())
-    
-    const response = await fetch(url.toString())
-    if (!response.ok) throw new Error('Failed to fetch savings pensions')
-    return response.json()
+    let url = '/api/v1/pension/savings';
+    if (memberId) url += `?member_id=${memberId}`;
+    return api.get<SavingsPensionList[]>(url);
   },
   
   /**
@@ -32,45 +29,28 @@ export const savingsPensionService = {
    * Returns the full pension data including statements and contribution plan steps.
    */
   get: async (id: number): Promise<SavingsPension> => {
-    const response = await fetch(`/api/v1/pension/savings/${id}`)
-    if (!response.ok) throw new Error('Failed to fetch savings pension')
-    return response.json()
+    return api.get<SavingsPension>(`/api/v1/pension/savings/${id}`);
   },
   
   /**
    * Create a new savings pension.
    */
   create: async (data: Omit<SavingsPension, 'id'>): Promise<SavingsPension> => {
-    const response = await fetch('/api/v1/pension/savings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to create savings pension')
-    return response.json()
+    return api.post<SavingsPension, Omit<SavingsPension, 'id'>>('/api/v1/pension/savings', data);
   },
   
   /**
    * Update an existing savings pension.
    */
   update: async (id: number, data: Partial<SavingsPension>): Promise<SavingsPension> => {
-    const response = await fetch(`/api/v1/pension/savings/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update savings pension')
-    return response.json()
+    return api.patch<SavingsPension, Partial<SavingsPension>>(`/api/v1/pension/savings/${id}`, data);
   },
   
   /**
    * Delete a savings pension.
    */
   delete: async (id: number): Promise<void> => {
-    const response = await fetch(`/api/v1/pension/savings/${id}`, {
-      method: 'DELETE'
-    })
-    if (!response.ok) throw new Error('Failed to delete savings pension')
+    await api.delete<void>(`/api/v1/pension/savings/${id}`);
   },
   
   /**
@@ -80,23 +60,14 @@ export const savingsPensionService = {
     pensionId: number, 
     data: Omit<SavingsPensionStatement, 'id' | 'pension_id'>
   ): Promise<SavingsPensionStatement> => {
-    const response = await fetch(`/api/v1/pension/savings/${pensionId}/statements`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to add savings pension statement')
-    return response.json()
+    return api.post<SavingsPensionStatement, Omit<SavingsPensionStatement, 'id' | 'pension_id'>>(`/api/v1/pension/savings/${pensionId}/statements`, data);
   },
   
   /**
    * Delete a statement from a savings pension.
    */
   deleteStatement: async (pensionId: number, statementId: number): Promise<void> => {
-    const response = await fetch(`/api/v1/pension/savings/${pensionId}/statements/${statementId}`, {
-      method: 'DELETE'
-    })
-    if (!response.ok) throw new Error('Failed to delete savings pension statement')
+    await api.delete<void>(`/api/v1/pension/savings/${pensionId}/statements/${statementId}`);
   },
   
   /**

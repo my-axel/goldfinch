@@ -88,6 +88,20 @@ class ApiClient {
     }
   }
 
+  async patch<T, D extends ApiData = ApiData>(
+    url: string,
+    data: D,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    try {
+      const response = await this.api.patch<T>(url, data, config);
+      return response.data;
+    } catch (error) {
+      console.error(`Error patching ${url}:`, error);
+      throw error;
+    }
+  }
+
   async put<T, D extends ApiData = ApiData>(
     url: string,
     data: D,
