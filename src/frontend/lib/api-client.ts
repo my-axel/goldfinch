@@ -21,8 +21,13 @@ class ApiClient {
 
   constructor() {
     // Set the base URL to point to the backend running on port 8000
+    // Dynamically select backend host for compatibility with Preview and local dev
+    const backendHost =
+      typeof window !== 'undefined' && window.location.hostname === '127.0.0.1'
+        ? '127.0.0.1'
+        : 'localhost';
     this.api = axios.create({
-      baseURL: 'http://localhost:8000'
+      baseURL: `http://${backendHost}:8000`
     });
 
     // Add request interceptor for data transformation

@@ -4,7 +4,8 @@ const nextConfig: NextConfig = {
   distDir: '.next',
   // Allow cross-origin requests during development
   allowedDevOrigins: [
-    'localhost'
+    'localhost',
+    '127.0.0.1'
   ],
 };
 
