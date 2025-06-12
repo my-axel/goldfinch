@@ -45,19 +45,25 @@ function getContributionForDate(date: Date, steps: ContributionStep[]): number {
     return isSameMonth ? Number(applicableStep.amount) : 0;
   }
 
-  // Calculate months between start_date and current date
-  const monthsSinceStart = differenceInMonths(normalizedDate, new Date(applicableStep.start_date.getFullYear(), applicableStep.start_date.getMonth(), 1));
-
   // Check if this is a valid contribution month based on frequency
   switch (applicableStep.frequency) {
     case ContributionFrequency.MONTHLY:
       return Number(applicableStep.amount);
-    case ContributionFrequency.QUARTERLY:
+    case ContributionFrequency.QUARTERLY: {
+      const monthsSinceStart = differenceInMonths(normalizedDate, new Date(applicableStep.start_date.getFullYear(), applicableStep.start_date.getMonth(), 1));
       return monthsSinceStart % 3 === 0 ? Number(applicableStep.amount) : 0;
-    case ContributionFrequency.SEMI_ANNUALLY:
+    }
+    case ContributionFrequency.SEMI_ANNUALLY: {
+      const monthsSinceStart = differenceInMonths(normalizedDate, new Date(applicableStep.start_date.getFullYear(), applicableStep.start_date.getMonth(), 1));
       return monthsSinceStart % 6 === 0 ? Number(applicableStep.amount) : 0;
-    case ContributionFrequency.ANNUALLY:
-      return monthsSinceStart % 12 === 0 ? Number(applicableStep.amount) : 0;
+    }
+    case ContributionFrequency.ANNUALLY: {
+      // For annual contributions, check if the month and day match the start date
+      // This is more reliable than using monthsSinceStart % 12 around year boundaries
+      const isSameMonth = normalizedDate.getMonth() === applicableStep.start_date.getMonth();
+      const isSameDay = normalizedDate.getDate() === applicableStep.start_date.getDate();
+      return isSameMonth && isSameDay ? Number(applicableStep.amount) : 0;
+    }
     default:
       return 0;
   }
@@ -242,10 +248,11 @@ export function calculateCombinedScenarios(params: CombinedScenariosInput): Comb
     // Get contribution for this date based on contribution steps
     const contribution = getContributionForDate(currentDate, contributionSteps);
     
-    // Apply monthly interest and contribution to all scenarios
-    pessimisticValue = pessimisticValue * (1 + monthlyRates.pessimistic) + contribution;
-    realisticValue = realisticValue * (1 + monthlyRates.realistic) + contribution;
-    optimisticValue = optimisticValue * (1 + monthlyRates.optimistic) + contribution;
+    // Add contribution at the beginning of the period, then apply interest
+    // This creates smoother projections as contributions earn interest for the full period
+    pessimisticValue = (pessimisticValue + contribution) * (1 + monthlyRates.pessimistic);
+    realisticValue = (realisticValue + contribution) * (1 + monthlyRates.realistic);
+    optimisticValue = (optimisticValue + contribution) * (1 + monthlyRates.optimistic);
     
     // Update accumulated contributions
     accumulatedContributions += contribution;
@@ -288,10 +295,10 @@ export function calculateCombinedScenarios(params: CombinedScenariosInput): Comb
   const finalDate = new Date(endDate);
   const finalContribution = getContributionForDate(finalDate, contributionSteps);
   
-  // Apply final month's growth and contribution
-  pessimisticValue = pessimisticValue * (1 + monthlyRates.pessimistic) + finalContribution;
-  realisticValue = realisticValue * (1 + monthlyRates.realistic) + finalContribution;
-  optimisticValue = optimisticValue * (1 + monthlyRates.optimistic) + finalContribution;
+  // Apply final month's contribution at the beginning of the period, then apply interest
+  pessimisticValue = (pessimisticValue + finalContribution) * (1 + monthlyRates.pessimistic);
+  realisticValue = (realisticValue + finalContribution) * (1 + monthlyRates.realistic);
+  optimisticValue = (optimisticValue + finalContribution) * (1 + monthlyRates.optimistic);
   
   // Update final accumulated contributions
   accumulatedContributions += finalContribution;

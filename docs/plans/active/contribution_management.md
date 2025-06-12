@@ -16,18 +16,22 @@ CREATE TABLE contribution_realization_tracking (
     amount DECIMAL(20,2) NOT NULL,
     status VARCHAR NOT NULL,  -- pending, processing, completed, failed
     attempts INTEGER DEFAULT 0,
+    max_attempts INTEGER DEFAULT 3,  -- When to give up on failed attempts
+    idempotency_key VARCHAR(64),     -- For deduplication (e.g., MD5 hash of pension_id+date+amount)
     last_attempt_at TIMESTAMP,
     completed_at TIMESTAMP,
     error TEXT,
     metadata JSONB,  -- For type-specific data (e.g., ETF prices, employer matching)
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT unique_contribution UNIQUE (pension_id, pension_type, contribution_date, idempotency_key)
 );
 
 -- Indexes
 CREATE INDEX idx_contribution_tracking_status ON contribution_realization_tracking(status);
 CREATE INDEX idx_contribution_tracking_date ON contribution_realization_tracking(contribution_date);
 CREATE INDEX idx_contribution_tracking_pension ON contribution_realization_tracking(pension_id, pension_type);
+CREATE UNIQUE INDEX idx_contribution_idempotency ON contribution_realization_tracking(idempotency_key) WHERE idempotency_key IS NOT NULL;
 ```
 
 ### 2. Task System
@@ -44,10 +48,11 @@ def check_daily_contributions():
 ```
 
 #### Retry Mechanism
-- Exponential backoff (1h, 2h, 4h, 8h)
-- Maximum 3 retries
-- Different strategies per pension type
-- Notification on final failure
+- Simple retry with exponential backoff (1h, 2h, 4h, 8h)
+- Maximum 3 retries (configurable per pension)
+- Basic error logging with timestamps
+- Transaction management to ensure atomic operations
+- Idempotency check using idempotency_key to prevent duplicate processing
 
 ### 3. Core Features
 

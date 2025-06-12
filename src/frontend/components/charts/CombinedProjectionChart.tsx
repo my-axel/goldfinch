@@ -47,7 +47,8 @@ interface CombinedProjectionChartProps {
 }
 
 interface ChartDataPoint {
-  date: string
+  date: Date  // Store as Date for consistent sorting
+  displayDate: string  // Formatted date for display
   value: number
   historical: number | null
   realistic: number | null
@@ -106,8 +107,10 @@ export function CombinedProjectionChart({
           // Accumulate the contributions
           accumulatedContribution += monthlyContribution;
 
+          const date = new Date(point.date);
           return {
-            date: new Date(point.date).toLocaleDateString(
+            date: date,
+            displayDate: date.toLocaleDateString(
               settings.number_locale,
               { month: "short", year: "numeric" }
             ),
@@ -137,8 +140,10 @@ export function CombinedProjectionChart({
             p => format(new Date(p.date), "yyyy-MM") === format(point.date, "yyyy-MM")
           );
 
+          const date = new Date(point.date);
           return {
-            date: new Date(point.date).toLocaleDateString(
+            date: date,
+            displayDate: date.toLocaleDateString(
               settings.number_locale,
               { month: "short", year: "numeric" }
             ),
@@ -153,9 +158,9 @@ export function CombinedProjectionChart({
           };
         });
 
-      // Combine and sort all data
+// Combine and sort all data by the actual Date object
       return [...historicalData, ...projectionData]
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
     } catch (error) {
       console.error('Error processing chart data:', error);
       throw new Error('Failed to process projection data');
@@ -212,7 +217,7 @@ export function CombinedProjectionChart({
           >
             <CartesianGrid {...chartTheme.grid} />
             <XAxis
-              dataKey="date"
+              dataKey="displayDate"
               type="category"
               {...chartTheme.xAxis}
               angle={-45}
@@ -222,9 +227,9 @@ export function CombinedProjectionChart({
             <YAxis {...chartTheme.yAxis} tickFormatter={formatYAxis} />
 
             {/* Today marker */}
-            {chartData.findIndex(point => point.date === todayString) !== -1 && (
+            {chartData.findIndex(point => point.displayDate === todayString) !== -1 && (
               <ReferenceLine
-                x={chartData.findIndex(point => point.date === todayString)}
+                x={chartData.findIndex(point => point.displayDate === todayString)}
                 yAxisId={0}
                 {...chartTheme.referenceLine}
                 label={{
@@ -237,9 +242,9 @@ export function CombinedProjectionChart({
             )}
 
             {/* Retirement date marker */}
-            {chartData.findIndex(point => point.date === retirementString) !== -1 && (
+            {chartData.findIndex(point => point.displayDate === retirementString) !== -1 && (
               <ReferenceLine
-                x={chartData.findIndex(point => point.date === retirementString)}
+                x={chartData.findIndex(point => point.displayDate === retirementString)}
                 yAxisId={0}
                 {...chartTheme.referenceLine}
                 label={{
@@ -300,7 +305,7 @@ export function CombinedProjectionChart({
                 <ChartTooltip
                   active={active}
                   payload={payload as Payload<number, string>[]}
-                  title={payload?.[0]?.payload?.date}
+                  title={payload?.[0]?.payload?.displayDate}
                 >
                   {active &&
                     payload &&
