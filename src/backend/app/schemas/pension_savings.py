@@ -35,6 +35,11 @@ class PensionSavingsStatementBase(BaseModel):
 class PensionSavingsStatementCreate(PensionSavingsStatementBase):
     pass
 
+class PensionSavingsStatementUpdate(BaseModel):
+    statement_date: Optional[date] = None
+    balance: Optional[Decimal] = Field(default=None, ge=0)
+    note: Optional[str] = None
+
 class PensionSavingsStatementResponse(PensionSavingsStatementBase):
     id: int
     pension_id: int

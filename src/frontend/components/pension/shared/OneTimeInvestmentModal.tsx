@@ -15,6 +15,7 @@ import { PensionType } from "@/frontend/types/pension"
 import { useAddOneTimeInvestment as useAddEtfOneTimeInvestment } from "@/frontend/hooks/pension/useEtfPensions"
 import { useAddOneTimeInvestment as useAddCompanyOneTimeInvestment } from "@/frontend/hooks/pension/useCompanyPensions"
 import { useAddOneTimeInvestment as useAddInsuranceOneTimeInvestment } from "@/frontend/hooks/pension/useInsurancePensions"
+import { useAddOneTimeInvestment as useAddSavingsOneTimeInvestment } from "@/frontend/hooks/useSavingsPensions"
 
 const formSchema = z.object({
   amount: z.number({
@@ -50,6 +51,7 @@ export function OneTimeInvestmentModal({
   const addEtfOneTimeInvestmentMutation = useAddEtfOneTimeInvestment()
   const addCompanyOneTimeInvestmentMutation = useAddCompanyOneTimeInvestment()
   const addInsuranceOneTimeInvestmentMutation = useAddInsuranceOneTimeInvestment()
+  const addSavingsOneTimeInvestmentMutation = useAddSavingsOneTimeInvestment()
   
   const form = useForm<OneTimeInvestmentFormData>({
     resolver: zodResolver(formSchema),
@@ -97,6 +99,12 @@ export function OneTimeInvestmentModal({
           break
         case PensionType.INSURANCE:
           await addInsuranceOneTimeInvestmentMutation.mutateAsync({
+            pensionId,
+            data: investmentData
+          })
+          break
+        case PensionType.SAVINGS:
+          await addSavingsOneTimeInvestmentMutation.mutateAsync({
             pensionId,
             data: investmentData
           })

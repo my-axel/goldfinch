@@ -100,5 +100,21 @@ export const savingsPensionService = {
       getPensionStatusRoute(PensionType.SAVINGS, id),
       {...statusData} as unknown as Record<string, unknown>
     )
+  },
+
+  /**
+   * Add a one-time investment to a savings pension
+   * @param pensionId Pension ID
+   * @param data Investment data (amount, date, note)
+   * @returns The created statement reflecting the new balance
+   */
+  addOneTimeInvestment: async (
+    pensionId: number,
+    data: { amount: number; investment_date: string; note?: string }
+  ): Promise<SavingsPensionStatement> => {
+    return api.post<SavingsPensionStatement>(
+      `/api/v1/pension/savings/${pensionId}/one-time-investment`,
+      data as unknown as Record<string, unknown>
+    )
   }
 } 
