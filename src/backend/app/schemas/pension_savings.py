@@ -53,18 +53,18 @@ class PensionSavingsBase(BaseModel):
     notes: Optional[str] = Field(default=None, description="Optional notes about this savings account")
     
     pessimistic_rate: Decimal = Field(
-        default=Decimal("1.0"), 
-        ge=0, le=20, 
+        default=Decimal("2.0"),
+        ge=0, le=20,
         description="Annual interest rate (%) for pessimistic scenario"
     )
     realistic_rate: Decimal = Field(
-        default=Decimal("2.0"), 
-        ge=0, le=20, 
+        default=Decimal("3.0"),
+        ge=0, le=20,
         description="Annual interest rate (%) for realistic scenario"
     )
     optimistic_rate: Decimal = Field(
-        default=Decimal("3.0"), 
-        ge=0, le=20, 
+        default=Decimal("4.0"),
+        ge=0, le=20,
         description="Annual interest rate (%) for optimistic scenario"
     )
     compounding_frequency: CompoundingFrequency = Field(
