@@ -46,18 +46,19 @@ export const savingsPensionToForm = (
   member_id: pension.member_id.toString(),
   start_date: toDateObject(pension.start_date) || new Date(),
   notes: pension.notes,
-  
-  // Interest rates
-  pessimistic_rate: pension.pessimistic_rate,
-  realistic_rate: pension.realistic_rate,
-  optimistic_rate: pension.optimistic_rate,
-  
+
+  // Interest rates - convert from percentage (API) to decimal (PercentInput)
+  // API: 2.0 = 2%, Frontend: 0.02 = 2%
+  pessimistic_rate: pension.pessimistic_rate / 100,
+  realistic_rate: pension.realistic_rate / 100,
+  optimistic_rate: pension.optimistic_rate / 100,
+
   // Compounding frequency
   compounding_frequency: pension.compounding_frequency,
-  
+
   // Status
   status: pension.status,
-  
+
   // Related data
   statements: ensureArray(pension.statements).map(statementToForm),
   contribution_plan_steps: ensureArray(pension.contribution_plan_steps).map(step => ({
@@ -91,18 +92,19 @@ export const formToSavingsPension = (
     member_id: parseInt(formData.member_id, 10),
     start_date: toISODateString(formData.start_date),
     notes: formData.notes,
-    
-    // Interest rates
-    pessimistic_rate: formData.pessimistic_rate,
-    realistic_rate: formData.realistic_rate,
-    optimistic_rate: formData.optimistic_rate,
-    
+
+    // Interest rates - convert from decimal (PercentInput) to percentage (API)
+    // Frontend: 0.02 = 2%, API: 2.0 = 2%
+    pessimistic_rate: formData.pessimistic_rate * 100,
+    realistic_rate: formData.realistic_rate * 100,
+    optimistic_rate: formData.optimistic_rate * 100,
+
     // Compounding frequency
     compounding_frequency: formData.compounding_frequency,
-    
+
     // Status
     status: formData.status,
-    
+
     // Related data
     statements,
     contribution_plan_steps: contributionSteps
@@ -119,10 +121,10 @@ export const defaultSavingsPensionValues: SavingsPensionFormData = {
   start_date: new Date(),
   notes: '',
   
-  // Default interest rates
-  pessimistic_rate: 1.0,
-  realistic_rate: 2.0,
-  optimistic_rate: 3.0,
+  // Default interest rates (as decimals: 0.02 = 2%)
+  pessimistic_rate: 0.02,
+  realistic_rate: 0.03,
+  optimistic_rate: 0.04,
   
   // Default compounding frequency
   compounding_frequency: CompoundingFrequency.ANNUALLY,
