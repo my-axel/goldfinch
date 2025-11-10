@@ -45,6 +45,8 @@ export const useCreateSavingsPension = () => {
     onSuccess: () => {
       // Invalidate the list query to refetch
       queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.lists() })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -61,6 +63,8 @@ export const useUpdateSavingsPension = (id: number) => {
       // Update both list and detail queries
       queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.lists() })
       queryClient.setQueryData(savingsPensionsKeys.detail(id), updatedPension)
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -77,6 +81,8 @@ export const useDeleteSavingsPension = () => {
       // Invalidate the list query and remove the detail query
       queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.lists() })
       queryClient.removeQueries({ queryKey: savingsPensionsKeys.detail(deletedId) })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -144,6 +150,8 @@ export const useUpdateSavingsPensionStatus = () => {
 
       // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.lists() })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
       toast.success('Success', { description: 'Pension status updated successfully' })
     },
     onError: (error) => {
@@ -173,6 +181,8 @@ export const useAddOneTimeInvestment = () => {
 
       // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.lists() })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
 
       toast.success('Success', { description: 'One-time investment added successfully' })
     },
