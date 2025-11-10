@@ -7,9 +7,10 @@ from sqlalchemy import desc, and_, or_
 from app.crud.base import CRUDBase
 from app.models.pension_savings import PensionSavings, PensionSavingsStatement, PensionSavingsContributionPlanStep
 from app.schemas.pension_savings import (
-    PensionSavingsCreate, 
-    PensionSavingsUpdate, 
+    PensionSavingsCreate,
+    PensionSavingsUpdate,
     PensionSavingsStatementCreate,
+    PensionSavingsStatementUpdate,
     ContributionPlanStepCreate
 )
 from app.models.enums import PensionStatus
@@ -204,10 +205,72 @@ class CRUDPensionSavings(CRUDBase[PensionSavings, PensionSavingsCreate, PensionS
         db.refresh(pension)
         return pension
     
-    def get_for_list_view(self, db: Session, *, member_id: Optional[int] = None) -> List[Dict]:
+    def get_statements(
+        self,
+        db: Session,
+        *,
+        pension_id: int,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[PensionSavingsStatement]:
+        """Get all statements for a savings pension with pagination."""
+        return db.query(PensionSavingsStatement).filter(
+            PensionSavingsStatement.pension_id == pension_id
+        ).order_by(desc(PensionSavingsStatement.statement_date)).offset(skip).limit(limit).all()
+
+    def update_statement(
+        self,
+        db: Session,
+        *,
+        statement_id: int,
+        obj_in: Union[PensionSavingsStatementUpdate, Dict[str, Any]]
+    ) -> PensionSavingsStatement:
+        """Update a statement."""
+        statement = db.query(PensionSavingsStatement).get(statement_id)
+        if not statement:
+            raise ValueError(f"Statement with ID {statement_id} not found")
+
+        # Convert to dict if it's a schema object
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.model_dump(exclude_unset=True)
+
+        # Update statement fields
+        for field, value in update_data.items():
+            if hasattr(statement, field):
+                setattr(statement, field, value)
+
+        db.add(statement)
+        db.commit()
+        db.refresh(statement)
+        return statement
+
+    def remove_statement(
+        self,
+        db: Session,
+        *,
+        statement_id: int
+    ) -> bool:
+        """Remove a savings pension statement."""
+        try:
+            statement = db.query(PensionSavingsStatement).get(statement_id)
+            if not statement:
+                return False
+
+            db.delete(statement)
+            db.commit()
+            return True
+
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to delete statement: {str(e)}")
+            raise
+
+    def get_list(self, db: Session, *, member_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[Dict]:
         """
         Get savings pensions in a lightweight format for list views.
-        
+
         Includes the latest statement balance and the current contribution step.
         If member_id is provided, filters to that member's pensions.
         """

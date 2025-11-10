@@ -5,15 +5,18 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.deps import get_db
 from app.crud.pension_savings import pension_savings
+from app.models.pension_savings import PensionSavingsStatement
 from app.schemas.pension_savings import (
     PensionSavingsCreate,
     PensionSavingsUpdate,
     PensionSavingsResponse,
     PensionSavingsStatementCreate,
+    PensionSavingsStatementUpdate,
     PensionSavingsStatementResponse,
     PensionSavingsListSchema,
     PensionSavingsProjection
 )
+from app.schemas.pension import OneTimeInvestmentCreate
 from app.models.enums import PensionStatus
 from app.services.pension_savings_projection import PensionSavingsProjectionService
 
@@ -121,12 +124,198 @@ def create_savings_statement(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Savings pension with ID {id} not found"
         )
-    
+
     try:
         return pension_savings.add_statement(
-            db=db, 
-            pension_id=id, 
+            db=db,
+            pension_id=id,
             statement_in=statement_in
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
+
+@router.get(
+    "/{id}/statements",
+    response_model=List[PensionSavingsStatementResponse],
+    responses={
+        200: {"description": "List of statements retrieved successfully"},
+        404: {"description": "Savings pension not found"}
+    }
+)
+def get_savings_statements(
+    id: int = Path(..., description="The ID of the savings pension"),
+    skip: int = Query(0, description="Number of statements to skip"),
+    limit: int = Query(100, description="Maximum number of statements to return"),
+    db: Session = Depends(get_db)
+):
+    """Get all statements for a savings pension."""
+    # Verify pension exists
+    pension = pension_savings.get(db=db, id=id)
+    if not pension:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Savings pension with ID {id} not found"
+        )
+
+    return pension_savings.get_statements(
+        db=db,
+        pension_id=id,
+        skip=skip,
+        limit=limit
+    )
+
+@router.get(
+    "/{id}/statements/{statement_id}",
+    response_model=PensionSavingsStatementResponse,
+    responses={
+        200: {"description": "Statement retrieved successfully"},
+        404: {"description": "Statement not found"}
+    }
+)
+def get_savings_statement(
+    id: int = Path(..., description="The ID of the savings pension"),
+    statement_id: int = Path(..., description="The ID of the statement"),
+    db: Session = Depends(get_db)
+):
+    """Get a specific statement by ID."""
+    # First verify the pension exists
+    pension = pension_savings.get(db=db, id=id)
+    if not pension:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Savings pension with ID {id} not found"
+        )
+
+    # Get the statement
+    statement = db.query(PensionSavingsStatement).filter_by(
+        id=statement_id,
+        pension_id=id
+    ).first()
+
+    if not statement:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Statement with ID {statement_id} not found"
+        )
+
+    return statement
+
+@router.put(
+    "/{id}/statements/{statement_id}",
+    response_model=PensionSavingsStatementResponse,
+    responses={
+        200: {"description": "Statement updated successfully"},
+        404: {"description": "Statement not found"},
+        422: {"description": "Validation error"}
+    }
+)
+def update_savings_statement(
+    statement_in: PensionSavingsStatementUpdate,
+    id: int = Path(..., description="The ID of the savings pension"),
+    statement_id: int = Path(..., description="The ID of the statement to update"),
+    db: Session = Depends(get_db)
+):
+    """Update a statement."""
+    # First verify the pension exists
+    pension = pension_savings.get(db=db, id=id)
+    if not pension:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Savings pension with ID {id} not found"
+        )
+
+    try:
+        return pension_savings.update_statement(
+            db=db,
+            statement_id=statement_id,
+            obj_in=statement_in
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+
+@router.delete(
+    "/{id}/statements/{statement_id}",
+    responses={
+        204: {"description": "Statement deleted successfully"},
+        404: {"description": "Statement not found"}
+    },
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_savings_statement(
+    id: int = Path(..., description="The ID of the savings pension"),
+    statement_id: int = Path(..., description="The ID of the statement to delete"),
+    db: Session = Depends(get_db)
+):
+    """Delete a statement."""
+    # First verify the pension exists
+    pension = pension_savings.get(db=db, id=id)
+    if not pension:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Savings pension with ID {id} not found"
+        )
+
+    result = pension_savings.remove_statement(db=db, statement_id=statement_id)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Statement with ID {statement_id} not found"
+        )
+
+@router.post(
+    "/{id}/one-time-investment",
+    response_model=PensionSavingsStatementResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {"description": "One-time investment recorded successfully"},
+        404: {"description": "Savings pension not found"},
+        422: {"description": "Validation error"}
+    }
+)
+def create_one_time_investment(
+    investment_in: OneTimeInvestmentCreate,
+    id: int = Path(..., description="The ID of the savings pension"),
+    db: Session = Depends(get_db)
+):
+    """
+    Record a one-time investment for a savings pension.
+
+    This creates a new statement with the updated balance after the investment.
+    The new balance will be the latest balance plus the investment amount.
+    """
+    # Verify pension exists
+    pension = pension_savings.get(db=db, id=id)
+    if not pension:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Savings pension with ID {id} not found"
+        )
+
+    # Get the latest statement to determine current balance
+    latest_statement = pension_savings.get_latest_statement(db=db, pension_id=id)
+    current_balance = latest_statement.balance if latest_statement else 0
+
+    # Calculate new balance
+    new_balance = current_balance + investment_in.amount
+
+    # Create a new statement with the updated balance
+    statement_data = PensionSavingsStatementCreate(
+        statement_date=investment_in.investment_date,
+        balance=new_balance,
+        note=investment_in.note or f"One-time investment: {investment_in.amount}"
+    )
+
+    try:
+        return pension_savings.add_statement(
+            db=db,
+            pension_id=id,
+            statement_in=statement_data
         )
     except ValueError as e:
         raise HTTPException(

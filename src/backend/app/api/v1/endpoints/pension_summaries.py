@@ -107,8 +107,9 @@ async def get_savings_pension_summaries(
     Get a lightweight list of savings pensions with summary information.
     This endpoint is optimized for list views and returns only essential data.
     """
-    # Note: We're using get_for_list_view instead of get_list to maintain consistency with the method name
-    pensions = pension_savings.get_for_list_view(db=db, member_id=member_id)
-    
-    # Apply skip and limit manually
-    return pensions[skip:skip+limit] 
+    return pension_savings.get_list(
+        db=db,
+        member_id=member_id,
+        skip=skip,
+        limit=limit
+    ) 

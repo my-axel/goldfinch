@@ -129,19 +129,19 @@ export const useSavingsPensionProjections = (id: number, referenceDate?: string)
  */
 export const useUpdateSavingsPensionStatus = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ 
-      pensionId, 
-      statusData 
-    }: { 
-      pensionId: number, 
-      statusData: PensionStatusUpdate 
+    mutationFn: ({
+      pensionId,
+      statusData
+    }: {
+      pensionId: number,
+      statusData: PensionStatusUpdate
     }) => savingsPensionService.updateStatus(pensionId, statusData),
     onSuccess: (updatedPension) => {
       // Update the cache for this specific pension
       queryClient.setQueryData(savingsPensionsKeys.detail(updatedPension.id), updatedPension)
-      
+
       // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.lists() })
       toast.success('Success', { description: 'Pension status updated successfully' })
@@ -149,6 +149,36 @@ export const useUpdateSavingsPensionStatus = () => {
     onError: (error) => {
       toast.error('Error', { description: 'Failed to update pension status' })
       console.error('Failed to update pension status:', error)
+    }
+  })
+}
+
+/**
+ * Hook for adding a one-time investment to a savings pension
+ */
+export const useAddOneTimeInvestment = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      pensionId,
+      data
+    }: {
+      pensionId: number,
+      data: { amount: number; investment_date: string; note?: string }
+    }) => savingsPensionService.addOneTimeInvestment(pensionId, data),
+    onSuccess: (_, { pensionId }) => {
+      // Invalidate the detail query to refetch with new statement
+      queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.detail(pensionId) })
+
+      // Invalidate the lists that might contain this pension
+      queryClient.invalidateQueries({ queryKey: savingsPensionsKeys.lists() })
+
+      toast.success('Success', { description: 'One-time investment added successfully' })
+    },
+    onError: (error) => {
+      toast.error('Error', { description: 'Failed to add one-time investment' })
+      console.error('Failed to add one-time investment:', error)
     }
   })
 } 
