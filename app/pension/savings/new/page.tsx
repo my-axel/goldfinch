@@ -73,27 +73,27 @@ export default function NewSavingsPensionPage() {
         member_id: memberId,
         start_date: toISODateString(data.start_date),
         notes: data.notes || "",
-        
-        // Interest rates
-        pessimistic_rate: data.pessimistic_rate,
-        realistic_rate: data.realistic_rate,
-        optimistic_rate: data.optimistic_rate,
-        
+
+        // Interest rates - convert from decimal (Form: 0.04) to percentage (API: 4.0)
+        pessimistic_rate: data.pessimistic_rate * 100,
+        realistic_rate: data.realistic_rate * 100,
+        optimistic_rate: data.optimistic_rate * 100,
+
         // Compounding frequency
         compounding_frequency: data.compounding_frequency,
-        
+
         // Status
         status: data.status,
-        
+
         // Statements (convert dates to ISO strings)
-        statements: data.statements.length > 0 
+        statements: data.statements.length > 0
           ? data.statements.map(statement => ({
               statement_date: toISODateString(statement.statement_date),
               balance: statement.balance,
               note: statement.note || ""
-            })) 
+            }))
           : undefined,
-        
+
         // Contribution plan steps (convert dates to ISO strings)
         contribution_plan_steps: data.contribution_plan_steps.length > 0
           ? data.contribution_plan_steps.map(step => ({
