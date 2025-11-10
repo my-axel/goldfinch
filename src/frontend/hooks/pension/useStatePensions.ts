@@ -102,13 +102,15 @@ export function useStatePensionScenarios(pensionId: number) {
 // Mutation hook to create a state pension
 export function useCreateStatePension() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: (data: Omit<StatePension, 'id'>) => 
+    mutationFn: (data: Omit<StatePension, 'id'>) =>
       statePensionService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -116,17 +118,19 @@ export function useCreateStatePension() {
 // Mutation hook to update a state pension
 export function useUpdateStatePension() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: number, data: Partial<Omit<StatePension, 'id'>> }) => 
+    mutationFn: ({ id, data }: { id: number, data: Partial<Omit<StatePension, 'id'>> }) =>
       statePensionService.update(id, data),
     onSuccess: (updatedPension) => {
       // Update the cache for this specific pension
       queryClient.setQueryData(['state-pension', updatedPension.id], updatedPension)
-      
+
       // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -134,16 +138,18 @@ export function useUpdateStatePension() {
 // Mutation hook to delete a state pension
 export function useDeleteStatePension() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (id: number) => statePensionService.delete(id),
     onSuccess: (_, id) => {
       // Remove the deleted pension from the cache
       queryClient.removeQueries({ queryKey: ['state-pension', id] })
-      
+
       // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -151,14 +157,14 @@ export function useDeleteStatePension() {
 // Mutation hook to create a statement
 export function useCreateStatePensionStatement() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ 
-      pensionId, 
-      data 
-    }: { 
-      pensionId: number, 
-      data: Omit<StatePensionStatement, 'id' | 'pension_id'> 
+    mutationFn: ({
+      pensionId,
+      data
+    }: {
+      pensionId: number,
+      data: Omit<StatePensionStatement, 'id' | 'pension_id'>
     }) => statePensionService.createStatement(pensionId, data),
     onSuccess: (_, { pensionId }) => {
       // Invalidate statements for this pension
@@ -170,6 +176,8 @@ export function useCreateStatePensionStatement() {
       // Refresh lists that show the latest statement data
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -177,16 +185,16 @@ export function useCreateStatePensionStatement() {
 // Mutation hook to update a statement
 export function useUpdateStatePensionStatement() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ 
-      pensionId, 
-      statementId, 
-      data 
-    }: { 
-      pensionId: number, 
+    mutationFn: ({
+      pensionId,
+      statementId,
+      data
+    }: {
+      pensionId: number,
       statementId: number,
-      data: Partial<Omit<StatePensionStatement, 'id' | 'pension_id'>> 
+      data: Partial<Omit<StatePensionStatement, 'id' | 'pension_id'>>
     }) => statePensionService.updateStatement(pensionId, statementId, data),
     onSuccess: (_, { pensionId }) => {
       // Invalidate statements for this pension
@@ -198,6 +206,8 @@ export function useUpdateStatePensionStatement() {
       // Refresh lists that show the latest statement data
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -205,9 +215,9 @@ export function useUpdateStatePensionStatement() {
 // Mutation hook to delete a statement
 export function useDeleteStatePensionStatement() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ pensionId, statementId }: { pensionId: number, statementId: number }) => 
+    mutationFn: ({ pensionId, statementId }: { pensionId: number, statementId: number }) =>
       statePensionService.deleteStatement(pensionId, statementId),
     onSuccess: (_, { pensionId }) => {
       // Invalidate statements for this pension
@@ -219,6 +229,8 @@ export function useDeleteStatePensionStatement() {
       // Refresh lists that show the latest statement data
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 }
@@ -226,22 +238,24 @@ export function useDeleteStatePensionStatement() {
 // Mutation hook to update state pension status
 export function useUpdateStatePensionStatus() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ 
-      pensionId, 
-      statusData 
-    }: { 
-      pensionId: number, 
-      statusData: PensionStatusUpdate 
+    mutationFn: ({
+      pensionId,
+      statusData
+    }: {
+      pensionId: number,
+      statusData: PensionStatusUpdate
     }) => statePensionService.updateStatus(pensionId, statusData),
     onSuccess: (updatedPension) => {
       // Update the cache for this specific pension
       queryClient.setQueryData(['state-pension', updatedPension.id], updatedPension)
-      
+
       // Invalidate the lists that might contain this pension
       queryClient.invalidateQueries({ queryKey: ['state-pensions'] })
       queryClient.invalidateQueries({ queryKey: ['state-pension-summaries'] })
+      // Also invalidate the main pension list to update the overview
+      queryClient.invalidateQueries({ queryKey: ['pensions', 'list'] })
     }
   })
 } 
