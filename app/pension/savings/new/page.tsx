@@ -37,15 +37,15 @@ export default function NewSavingsPensionPage() {
     member_id: searchParams.get('member_id') || "",
     start_date: new Date(),
     notes: "",
-    
-    // Default interest rates
-    pessimistic_rate: 1.0,
-    realistic_rate: 2.0,
-    optimistic_rate: 3.0,
-    
+
+    // Default interest rates (stored as decimals: 0.01 = 1%)
+    pessimistic_rate: 0.01,
+    realistic_rate: 0.02,
+    optimistic_rate: 0.03,
+
     // Default compounding frequency
     compounding_frequency: CompoundingFrequency.ANNUALLY,
-    
+
     // Status and related data
     status: "ACTIVE",
     statements: [],
