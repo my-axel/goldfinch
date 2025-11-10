@@ -30,7 +30,7 @@ export function InterestRatesCard({ form }: InterestRatesCardProps) {
                   onBlur={field.onBlur}
                   placeholder="e.g., 1.5"
                   min={0}
-                  max={20}
+                  max={0.20}
                   decimals={1}
                 />
               </FormControl>
@@ -52,7 +52,7 @@ export function InterestRatesCard({ form }: InterestRatesCardProps) {
                   onBlur={field.onBlur}
                   placeholder="e.g., 3.0"
                   min={0}
-                  max={20}
+                  max={0.20}
                   decimals={1}
                 />
               </FormControl>
@@ -74,7 +74,7 @@ export function InterestRatesCard({ form }: InterestRatesCardProps) {
                   onBlur={field.onBlur}
                   placeholder="e.g., 5.0"
                   min={0}
-                  max={20}
+                  max={0.20}
                   decimals={1}
                 />
               </FormControl>
