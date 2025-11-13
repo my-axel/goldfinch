@@ -297,7 +297,7 @@ function SavingsPensionContent({ pension }: { pension: SavingsPensionList & { ty
       <div>
         <dt className="text-muted-foreground">Interest Rate</dt>
         <dd>
-          <FormattedPercent value={pension.realistic_rate} decimals={1} />
+          <FormattedPercent value={pension.realistic_rate / 100} decimals={1} />
         </dd>
       </div>
       
