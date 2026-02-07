@@ -17,7 +17,7 @@
 - [ ] Add comprehensive logging
 
 ### 3. 🔄 Task System Cleanup & Migration
-> Detailed migration plan: [Task Monitoring Migration](../refactoring/active/task_monitoring_migration.md) and implementation guide: [Task Monitoring Best Practices](../best-practices/task-monitoring.md)
+> Detailed migration plan: [Task Monitoring Migration](../refactoring/active/task_monitoring_migration.md) and implementation guide: [Task Monitoring Best Practices](../best-practices/task_monitoring.md)
 
 #### Current State Analysis
 - [ ] Audit TaskStatus table usage

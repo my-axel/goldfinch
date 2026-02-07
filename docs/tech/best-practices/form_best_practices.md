@@ -69,7 +69,7 @@ This document consolidates best practices for implementing forms in the Goldfinc
 // Parent Component (Page)
 export default function EditPensionPage() {
   const { id } = useParams();
-  const { data, isLoading } = usePensionData(id, PensionType.STATE);
+  const { data, isLoading } = useStatePension(Number(id));
   const form = useForm<StatePensionFormType>({ defaultValues: {} });
   
   // Form reset logic using useFormReset for edit forms
@@ -112,17 +112,19 @@ export function StatePensionForm({ form }: { form: UseFormReturn<StatePensionFor
 
 Create pure API service functions first:
 
+Note: current backend routes are singular (`/api/v1/pension/...`), not `/pensions/...`.
+
 ```tsx
 // services/statePensionService.ts
 export const statePensionService = {
   get: async (id: number) => {
-    const response = await fetch(`/api/v1/pensions/state/${id}`);
+    const response = await fetch(`/api/v1/pension/state/${id}`);
     if (!response.ok) throw new Error('Failed to fetch pension');
     return response.json();
   },
   
   create: async (data: StatePensionCreate) => {
-    const response = await fetch('/api/v1/pensions/state', {
+    const response = await fetch('/api/v1/pension/state', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)

@@ -1,112 +1,44 @@
-# Testing Strategy & Status
+# Testing Strategy & Status (Current)
 
-## Completed Tests ✅
-1. **Context Testing**
-   - [x] HouseholdContext test setup with Jest and React Testing Library
-   - [x] Provider integration tests
-   - [x] Hook usage tests
-   - [x] Error handling tests
+## Current Snapshot
 
-## Priority Testing Areas
+- Test command: `npm test -- --runInBand`
+- Latest local result: failing overall because of
+  - stale tests importing `@/frontend/context/pension`
+  - global coverage thresholds (80%) not met
 
-### Immediate Testing Needs
-1. **Complex Calculation Functions**
-   - [ ] `calculateMemberFields` (household-helpers.ts) - age and retirement calculations
-   - [ ] `generateFutureContributions` (contribution-plan.ts) - pension contribution projections
-   - [ ] `analyzeContributionStep` (ContributionPlanExplanation.tsx) - growth opportunities
-   - [ ] `calculateProjection` (projection-preview.tsx) - financial projections with inflation
+## Key Observations
 
-2. **Business Logic Validators**
-   - [ ] `validateRetirementAges` (household-helpers.ts)
-   - [ ] Pension validation schemas (validations/pension.ts)
+1. Several suites pass for newer hook/service areas (state and savings pension hooks).
+2. Legacy test files still reference removed architecture (`usePensionData`, shared pension context).
+3. Coverage configuration is strict, while current effective coverage is far below threshold.
 
-3. **Data Transformation Functions**
-   - [ ] `getContributionForDate` (projection-utils.ts)
-   - [ ] `formatPensionSummary` (pension-helpers.ts)
+## Immediate Priorities
 
-### Future Feature Testing Requirements
-1. **Currency System Integration**
-   - [ ] Currency conversion utilities
-   - [ ] Currency formatting functions
-   - [ ] Exchange rate calculations
-   - [ ] Multi-currency portfolio aggregation
+1. Stabilize test suite
+- Remove or migrate tests that target deleted modules.
+- Align remaining tests with React Query hooks and service-based data layer.
 
-2. **Enhanced Projection & Analysis**
-   - [ ] Multi-pension type projections
-   - [ ] Market condition scenarios
-   - [ ] Tax implication calculations
-   - [ ] Inflation scenario handling
-   - [ ] Gap analysis algorithms
-   - [ ] Risk assessment calculations
+2. Restore meaningful coverage reporting
+- Either raise real coverage by adding tests in active modules, or
+- temporarily scope coverage targets by directory until migrations are complete.
 
-3. **Advanced Contribution Management**
-   - [ ] Company matching rules
-   - [ ] Insurance premium patterns
-   - [ ] Variable contribution schedules
-   - [ ] Tax-limit validations
-   - [ ] Cross-pension contribution optimization
+3. Add contract tests for backend API docs
+- Validate documented endpoint paths and response shapes against actual app routers.
 
-4. **Payout Strategy Calculations**
-   - [ ] Withdrawal calculation algorithms
-   - [ ] Phase transition logic
-   - [ ] Market condition simulation
-   - [ ] Portfolio rebalancing functions
-   - [ ] Tax-efficient withdrawal strategies
+## Frontend Testing Focus
 
-5. **Dashboard Data Aggregation**
-   - [ ] Cross-pension portfolio aggregation
-   - [ ] XIRR calculations
-   - [ ] Performance comparison algorithms
-   - [ ] Distribution analysis functions
-   - [ ] Real-time update calculations
+- Hook-level tests for pension CRUD hooks (`src/frontend/hooks/pension/*`).
+- Service-layer tests for route and payload correctness (`src/frontend/services/*`).
+- Integration tests for key form pages (`app/pension/*/(new|[id]/edit)/page.tsx`).
 
-## Test Infrastructure Setup ✅
-- [x] Jest configuration for React components
-- [x] React Testing Library setup
-- [x] API mocking utilities
-- [x] Test helper functions
-- [ ] Setup CI/CD test pipeline
-- [ ] Implement test coverage reporting
-- [ ] Create testing documentation
-- [ ] Setup automated test runs
-- [ ] Configure test environments
+## Backend Testing Focus
 
-## Frontend Testing
-- [x] Basic context testing patterns established
-- [ ] Unit tests for React components (Jest + React Testing Library)
-  - [ ] Form validation logic
-  - [ ] Component state management
-  - [ ] UI interactions and events
-  - [ ] Currency formatting utilities
-  - [ ] Date handling utilities
-- [ ] Integration tests
-  - [x] Context provider integration
-  - [ ] User flows (form submissions, navigation)
-  - [ ] API integration points
-  - [ ] State management integration
-- [ ] E2E tests (Cypress/Playwright)
-  - [ ] Critical user journeys
-  - [ ] Pension plan creation flow
-  - [ ] Settings modification flow
-  - [ ] Dashboard interactions
-- [ ] Accessibility testing (axe-core)
-- [ ] Performance testing (Lighthouse CI)
+- Endpoint contract tests for `/api/v1/pension/*`, `/api/v1/settings`, `/api/v1/exchange-rates/*`, `/api/v1/etf/*`.
+- Task-related tests for celery-triggered flows (exchange rates and ETF updates).
+- Schema validation tests for settings and pension payloads.
 
-## Backend Testing
-- [ ] Unit tests (pytest)
-  - [ ] Data models and schemas
-  - [ ] Utility functions
-  - [ ] Service layer logic
-  - [ ] Currency conversion logic
-- [ ] Integration tests
-  - [ ] API endpoints
-  - [ ] Database operations
-  - [ ] External service integrations
-- [ ] Load testing (k6)
-  - [ ] API endpoint performance
-  - [ ] Concurrent user simulation
-  - [ ] Database query performance
-- [ ] Security testing
-  - [ ] Input validation
-  - [ ] Authentication flows
-  - [ ] API security headers 
+## Notes
+
+- Historical testing checklists in older docs may not reflect the current architecture.
+- Treat this file as the canonical test-status reference.

@@ -1,171 +1,46 @@
-# Exchange Rate Service Migration Guide
+# Exchange Rate Service Migration Notes (Current)
 
-## Overview of Changes
+## Scope
 
-The Exchange Rate Service has been enhanced with the following major changes:
-1. New update tracking system
-2. Improved error handling and logging
-3. Automated cleanup of old records
-4. Enhanced monitoring capabilities
+This document describes API and operational migration notes for exchange-rate updates.
 
-## Breaking Changes
+## Endpoint status
 
-1. **API Endpoints**
-   - `/api/v1/exchange-rates/update` is deprecated in favor of:
-     - `/api/v1/exchange-rates/update/latest` for latest rates
-     - `/api/v1/exchange-rates/update/historical` for historical data
-   - `/api/v1/exchange-rates/backfill` is deprecated in favor of `/api/v1/exchange-rates/update/historical`
+Current endpoints:
+- `GET /api/v1/exchange-rates/latest`
+- `GET /api/v1/exchange-rates/status`
+- `GET /api/v1/exchange-rates/historical/{rate_date}`
+- `POST /api/v1/exchange-rates/update/latest`
+- `POST /api/v1/exchange-rates/update/historical`
+- `POST /api/v1/exchange-rates/update` (legacy compatibility endpoint; still present)
 
-2. **Database Schema**
-   - New `exchange_rate_updates` table for tracking updates
-   - Enhanced indexes on existing tables
-   - New columns in error tracking table
+Important:
+- The legacy `POST /update` endpoint still exists in code and is not yet removed.
+- Migrations should move callers to `/update/latest` or `/update/historical`.
 
-3. **Configuration**
-   - New logging configuration required
-   - Updated Celery task scheduling
-   - Additional environment variables for monitoring
+## Recommended migration steps
 
-## Upgrade Instructions
+1. Client migration
+- Replace `POST /update` calls with explicit `/update/latest` or `/update/historical`.
+- Update monitoring/alerts to track new task types.
 
-1. **Pre-upgrade Tasks**
-   ```bash
-   # Backup database
-   pg_dump goldfinch_dev > backup.sql
-   
-   # Stop services
-   systemctl stop goldfinch-celery
-   systemctl stop goldfinch-api
-   ```
+2. Operational verification
+- Verify celery worker and beat are running.
+- Verify `/status` returns recent update entries.
+- Verify `/latest` returns expected currencies.
 
-2. **Database Migration**
-   ```bash
-   # Run Alembic migrations
-   cd src/backend
-   alembic upgrade head
-   ```
+3. Cleanup phase (after clients are migrated)
+- Remove legacy `/update` endpoint.
+- Update integration tests and docs in the same PR.
 
-3. **Configuration Updates**
-   ```bash
-   # Update environment variables
-   echo "LOG_LEVEL=INFO" >> .env
-   echo "LOG_DIR=/var/log/goldfinch" >> .env
-   ```
+## Rollback guidance
 
-4. **Service Updates**
-   ```bash
-   # Update Celery configuration
-   systemctl stop goldfinch-celery-beat
-   cp config/celery.service /etc/systemd/system/
-   systemctl daemon-reload
-   ```
+If migration causes issues:
+- Re-enable old client route usage (`POST /update`) temporarily.
+- Keep database schema at current migration level.
+- Diagnose with `/status` and task logs before retrying migration.
 
-5. **Initial Data Load**
-   ```bash
-   # Run backfill script for historical data
-   python -m app.scripts.backfill_exchange_rates
-   ```
+## Known caveats
 
-6. **Start Services**
-   ```bash
-   systemctl start goldfinch-api
-   systemctl start goldfinch-celery
-   systemctl start goldfinch-celery-beat
-   ```
-
-## Verification Steps
-
-1. **Database Migration**
-   ```sql
-   -- Verify new table
-   SELECT count(*) FROM exchange_rate_updates;
-   
-   -- Check indexes
-   SELECT * FROM pg_indexes WHERE tablename = 'exchange_rate_updates';
-   ```
-
-2. **API Endpoints**
-   ```bash
-   # Check new endpoints
-   curl http://localhost:8000/api/v1/exchange-rates/status
-   curl http://localhost:8000/api/v1/exchange-rates/latest
-   ```
-
-3. **Logging**
-   ```bash
-   # Verify log files
-   ls -l /var/log/goldfinch/
-   tail -f /var/log/goldfinch/services.log
-   ```
-
-4. **Celery Tasks**
-   ```bash
-   # Check task registration
-   celery -A app.core.celery_app inspect registered
-   
-   # Monitor task execution
-   celery -A app.core.celery_app events
-   ```
-
-## Rollback Procedures
-
-1. **Database Rollback**
-   ```bash
-   # Stop services
-   systemctl stop goldfinch-celery goldfinch-api
-   
-   # Restore database
-   psql goldfinch_dev < backup.sql
-   
-   # Revert Alembic migration
-   alembic downgrade -1
-   ```
-
-2. **Service Rollback**
-   ```bash
-   # Restore old configuration
-   cp config/celery.service.bak /etc/systemd/system/celery.service
-   systemctl daemon-reload
-   
-   # Start services
-   systemctl start goldfinch-api goldfinch-celery
-   ```
-
-3. **Verification**
-   ```bash
-   # Check service status
-   systemctl status goldfinch-api
-   systemctl status goldfinch-celery
-   
-   # Verify database state
-   psql goldfinch_dev -c "SELECT count(*) FROM exchange_rates;"
-   ```
-
-## Known Issues
-
-1. **Rate Limit Changes**
-   - New rate limiting may affect high-frequency API users
-   - Monitor response codes for 429 errors
-   - Adjust client retry logic if needed
-
-2. **Data Migration**
-   - Initial backfill may take several hours
-   - Monitor progress through status endpoint
-   - Historical data gaps will be logged
-
-3. **Logging Volume**
-   - Enhanced logging may increase disk usage
-   - Monitor log rotation and cleanup
-   - Adjust retention settings if needed
-
-## Support
-
-For issues during migration:
-1. Check logs in `/var/log/goldfinch/`
-2. Review error tracking tables
-3. Use status endpoint for health checks
-4. Contact development team with:
-   - Error messages
-   - Log snippets
-   - Database state
-   - API response codes 
+- Historical loading and latest loading use different task trigger paths.
+- `/update/latest` currently uses a background-task wrapper around celery delay; validate behavior in your environment.

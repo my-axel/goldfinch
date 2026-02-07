@@ -1,4 +1,6 @@
-# Form Architecture Pattern
+# Form Architecture Pattern (Archive)
+
+> This document is historical reference. Current implementation uses pension-type-specific React Query hooks and service modules.
 
 For forms, use a parent page component with a custom data hook for data fetching, pass the data to a child form component that uses useForm with proper default values, wrap everything in ErrorBoundary, and use LoadingState for loading states - never fetch or manage global state directly in form components.
 

@@ -1,7 +1,7 @@
 # 🔄 Task Monitoring System Migration Plan
 
 ## Overview
-This document outlines the step-by-step migration plan from the current task tracking implementations to the new specialized task monitoring system, following the principles defined in [Task Monitoring](../../best-practices/task-monitoring.md).
+This document outlines the step-by-step migration plan from the current task tracking implementations to the new specialized task monitoring system, following the principles defined in [Task Monitoring](../../best-practices/task_monitoring.md).
 
 ### Goals
 - Standardize task tracking across all background operations

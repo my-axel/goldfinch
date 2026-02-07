@@ -178,9 +178,10 @@ Edit forms should use the `LoadingState` component to display a loading indicato
 
 ```tsx
 import { LoadingState } from '@/frontend/components/shared/LoadingState';
+import { useEtfPension } from '@/frontend/hooks/pension/useEtfPensions';
 
 function EditPensionForm() {
-  const { data, isLoading, error } = usePensionData(id);
+  const { data, isLoading, error } = useEtfPension(id);
   
   if (isLoading) {
     return <LoadingState />;
@@ -200,15 +201,15 @@ function EditPensionForm() {
 
 ## Data Loading Pattern
 
-All pension forms should use the `usePensionData` hook for data fetching and the `useFormReset` hook for form initialization:
+All pension forms should use pension-type-specific React Query hooks for data fetching and `useFormReset` for form initialization:
 
 ```tsx
-import { usePensionData } from '@/frontend/lib/hooks/usePensionData';
+import { useEtfPension } from '@/frontend/hooks/pension/useEtfPensions';
 import { useFormReset } from '@/frontend/lib/hooks/useFormReset';
 import { etfPensionToForm } from '@/frontend/lib/transformers/etfPensionTransformers';
 
 function EditPensionForm() {
-  const { data, isLoading, error } = usePensionData(id, PensionType.ETF_PLAN);
+  const { data, isLoading, error } = useEtfPension(id);
   const form = useForm({ defaultValues });
   
   useFormReset({
