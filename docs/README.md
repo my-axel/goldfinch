@@ -18,6 +18,7 @@ This directory contains project documentation for the Goldfinch retirement plann
 - Active implementation plans (`/active`)
 - Completed work logs (`/done`)
 - Draft ideas and templates
+- Local-only MVP rebuild plan (`/active/local_mvp_rebuild`)
 
 ### Tech (`/tech`)
 - Architecture and design notes
