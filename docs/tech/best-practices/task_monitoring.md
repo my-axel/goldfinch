@@ -1,5 +1,7 @@
 # 🎯 Task Monitoring System Design Principles
 
+> Target architecture guideline: parts of the current implementation still use legacy `TaskStatus` and are being migrated.
+
 > <details>
 > <summary><strong>🤖 AI Assistant Guide</strong></summary>
 >

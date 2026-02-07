@@ -1,191 +1,45 @@
-# Exchange Rate Service Security Review
+# Exchange Rate Service Security Review (Current)
 
-## Overview
+## Summary
 
-This document outlines the security considerations and measures implemented in the Exchange Rate Service.
+Security posture is mixed: input validation and query constraints are present, but there are critical infrastructure and access-control gaps.
 
-## Security Measures
+## What is currently in place
 
-### API Security
+- Query parameter bounds are enforced on status endpoint (`limit <= 100`).
+- Date parsing and typing are enforced by FastAPI/Pydantic.
+- External API requests use explicit timeouts.
+- Error responses generally follow consistent `{"detail": ...}` shape.
 
-1. **Rate Limiting**
-   - ✓ Implemented chunk-based processing (90 days)
-   - ✓ Manual updates are queued and processed asynchronously
-   - ✓ ECB API calls are rate-limited
+## High-risk gaps
 
-2. **Input Validation**
-   - ✓ All dates are validated before processing
-   - ✓ Currency codes are checked against allowed list
-   - ✓ Query parameters have enforced limits
+1. Hardcoded infrastructure credentials
+- Database URL is hardcoded in backend config.
+- Celery broker credentials are hardcoded.
 
-3. **Error Handling**
-   - ✓ No sensitive information in error messages
-   - ✓ Structured error responses
-   - ✓ Proper HTTP status codes
+2. No API-level authentication/authorization
+- Exchange-rate update triggers are currently callable without auth checks.
 
-### Data Security
+3. Logging and error leakage risk
+- Some handlers include raw exception strings in responses/logs.
 
-1. **Database**
-   - ✓ No sensitive data stored
-   - ✓ Proper indexing to prevent DOS
-   - ✓ Transaction management for data integrity
+## Medium-risk gaps
 
-2. **Logging**
-   - ✓ No sensitive data in logs
-   - ✓ Proper log rotation
-   - ✓ Separate logs by component
+- No global request rate limiting layer on write/update endpoints.
+- No explicit abuse controls for repeated manual update triggers.
+- No security test suite validating authorization and abuse scenarios.
 
-3. **Cleanup**
-   - ✓ Automated cleanup of old records
-   - ✓ Safe deletion procedures
-   - ✓ Audit trail maintained
+## Recommended actions
 
-### Infrastructure
+1. Move all secrets to environment variables and rotate exposed credentials.
+2. Add authN/authZ for update-trigger endpoints at minimum.
+3. Add request throttling for update endpoints.
+4. Standardize error handling to avoid leaking internals.
+5. Add automated security regression tests for endpoint access and misuse.
 
-1. **Service Configuration**
-   - ✓ Environment-based settings
-   - ✓ Secure default values
-   - ✓ No hardcoded credentials
+## Verification checklist
 
-2. **Dependencies**
-   - ✓ Using latest stable versions
-   - ✓ Regular security updates
-   - ✓ Minimal external dependencies
-
-## Potential Vulnerabilities
-
-### API Endpoints
-
-1. **Rate Limiting**
-   ```python
-   @router.get("/status")
-   async def get_update_status(
-       limit: int = Query(10, gt=0, le=100),  # ✓ Enforced limits
-       db: Session = Depends(deps.get_db)
-   ):
-   ```
-   - ✓ Protected against excessive requests
-   - ✓ Validated query parameters
-   - ✓ Database session management
-
-2. **Update Triggers**
-   ```python
-   @router.post("/update/historical")
-   async def trigger_historical_update(
-       background_tasks: BackgroundTasks,  # ✓ Async processing
-       start_date: Optional[date] = None,  # ✓ Optional with validation
-       currencies: Optional[List[str]] = None,  # ✓ Optional with validation
-   ):
-   ```
-   - ✓ Protected against long-running operations
-   - ✓ Input validation
-   - ✓ Resource cleanup
-
-### Data Processing
-
-1. **ECB API Integration**
-   ```python
-   async with httpx.AsyncClient(
-       timeout=30.0,  # ✓ Timeout protection
-       follow_redirects=True,
-       headers={
-           'Accept': 'application/json',
-           'User-Agent': 'Goldfinch/1.0'  # ✓ Proper identification
-       }
-   ) as client:
-   ```
-   - ✓ Timeouts configured
-   - ✓ TLS verification
-   - ✓ Proper headers
-
-2. **Database Operations**
-   ```python
-   try:
-       # Operations
-       db.commit()
-   except Exception as e:
-       db.rollback()  # ✓ Proper error handling
-       raise
-   finally:
-       db.close()  # ✓ Resource cleanup
-   ```
-   - ✓ Transaction management
-   - ✓ Connection pooling
-   - ✓ Resource cleanup
-
-### Logging
-
-1. **Log Configuration**
-   ```python
-   formatter = logging.Formatter(
-       '%(asctime)s - %(name)s - %(levelname)s - %(message)s'  # ✓ No sensitive data
-   )
-   ```
-   - ✓ No sensitive data format
-   - ✓ Proper log levels
-   - ✓ Rotation configured
-
-2. **Error Logging**
-   ```python
-   logger.error(f"Failed to update rates: {str(e)}")  # ✓ Safe error logging
-   ```
-   - ✓ No stack traces in production
-   - ✓ No sensitive data in errors
-   - ✓ Proper error categorization
-
-## Recommendations
-
-### High Priority
-
-1. **Rate Limiting**
-   - Consider implementing global rate limiting
-   - Add IP-based rate limiting
-   - Monitor for abuse patterns
-
-2. **Monitoring**
-   - Add automated alerts for failures
-   - Monitor for unusual patterns
-   - Track API usage metrics
-
-3. **Error Handling**
-   - Add more granular error types
-   - Implement circuit breakers
-   - Add retry strategies
-
-### Medium Priority
-
-1. **Logging**
-   - Add structured logging
-   - Implement log aggregation
-   - Add request tracing
-
-2. **Testing**
-   - Add security test suite
-   - Implement fuzz testing
-   - Add load testing
-
-3. **Documentation**
-   - Add security guidelines
-   - Document incident response
-   - Add runbooks
-
-### Low Priority
-
-1. **Optimization**
-   - Cache frequently used data
-   - Optimize database queries
-   - Add performance metrics
-
-2. **Maintenance**
-   - Regular dependency updates
-   - Periodic security reviews
-   - Update documentation
-
-## Conclusion
-
-The Exchange Rate Service implements good security practices and has no critical vulnerabilities. The main areas for improvement are:
-1. Enhanced rate limiting
-2. Better monitoring
-3. More comprehensive error handling
-
-These improvements should be implemented based on the priority levels outlined above. 
+- [ ] No credentials in source files
+- [ ] Update endpoints require authenticated identity
+- [ ] Authorization policy for manual update triggers documented
+- [ ] Security tests run in CI

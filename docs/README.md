@@ -1,58 +1,43 @@
 # Goldfinch Documentation
 
-This directory contains all documentation for the Goldfinch retirement planning platform. The documentation is organized by domain and purpose to make it easy to find what you're looking for.
+This directory contains project documentation for the Goldfinch retirement planning platform.
 
 ## Directory Structure
 
-### 📱 Frontend (`/frontend`)
-Frontend-specific documentation including:
-- Component specifications
-- UI/UX guidelines
-- Frontend best practices
+### Frontend (`/frontend`)
+- Component and UX documentation
+- Form and interaction patterns
+- Frontend-specific implementation notes
 
-### 🔧 Backend (`/backend`)
-Backend-specific documentation including:
-- Service specifications
-- API documentation
-- Deployment guides
+### Backend (`/backend`)
+- Service-level API documentation
+- Operational and deployment notes
+- Backend-specific security and internal docs
 
-### 📋 Plans (`/plans`)
-Project planning documentation:
+### Plans (`/plans`)
 - Active implementation plans (`/active`)
-- Completed implementations (`/done`)
+- Completed work logs (`/done`)
+- Draft ideas and templates
 
-### 💻 Technical (`/tech`)
-Technical documentation and improvements:
-- Active refactoring plans (`/refactoring/active`)
-- Completed refactorings (`/refactoring/done`)
-- Architectural decisions (`/architecture`)
+### Tech (`/tech`)
+- Architecture and design notes
+- Best-practice guidance
+- Refactoring and technical debt tracking
+- Testing and monitoring notes
 
-### 📚 Reference (`/reference`)
-Project-wide reference material:
-- Architectural standards
-- Coding guidelines
-- Best practices
+## Documentation Status Model
 
-## Documentation Guidelines
+Use this model consistently in docs:
+- `Current`: normative documentation that should match implementation
+- `Plan`: proposed or in-progress design
+- `Archive`: historical reference, not normative
 
-1. **File Naming**
-   - Use lowercase with underscores
-   - Be descriptive but concise
-   - Include the domain if applicable
+If a document is `Current`, it must be updated with code changes in the same PR.
 
-2. **Content Structure**
-   - Start with a clear title and description
-   - Use consistent markdown formatting
-   - Include examples where applicable
+## Maintenance Rules
 
-3. **Maintenance**
-   - Update docs when implementing changes
-   - Move completed plans to `/done`
-   - Keep technical debt documented
-   - Review and update regularly
-
-## Contributing
-
-1. Place new documentation in the appropriate section
-2. Follow the existing format and style
-3. Cross-reference related documentation
+1. Keep endpoint paths, schemas, and examples aligned with the backend source.
+2. Mark historical content explicitly (`Archive`) to avoid confusion.
+3. Keep links valid (no dangling references).
+4. Prefer concise, verifiable statements over aspirational claims.
+5. Include migration notes when behavior changes but legacy endpoints still exist.
