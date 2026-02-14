@@ -34,20 +34,13 @@ def setup_celery_logging(logger, *args, **kwargs):
 
 celery_app = Celery(
     "worker",
-    broker="amqp://rabbitmqgoldfinch:rabbitmqgoldfinch@192.168.0.20:5672//",
-    backend="rpc://",
+    broker="redis://192.168.0.20:6379/0",
+    backend="redis://192.168.0.20:6379/1",
     include=["app.tasks"],
     broker_connection_retry_on_startup=True,
     broker_connection_max_retries=10,
     broker_connection_retry=True,
     broker_pool_limit=None,  # Use unlimited pool size
-    broker_heartbeat=30,  # Heartbeat interval
-    broker_transport_options={
-        'max_retries': 10,
-        'interval_start': 0,
-        'interval_step': 0.5,
-        'interval_max': 3.0
-    }
 )
 
 # Optional configurations
