@@ -34,8 +34,8 @@ def setup_celery_logging(logger, *args, **kwargs):
 
 celery_app = Celery(
     "worker",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/1",
+    broker=settings.CELERY_BROKER_URL,
+    backend=settings.CELERY_RESULT_BACKEND,
     include=["app.tasks"],
     broker_connection_retry_on_startup=True,
     broker_connection_max_retries=10,
