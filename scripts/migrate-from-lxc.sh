@@ -5,6 +5,9 @@
 
 set -e  # Exit on error
 
+# Add PostgreSQL to PATH (for Homebrew installations)
+export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
+
 echo "🔄 Goldfinch Database Migration: LXC → Local Docker"
 echo "=================================================="
 echo ""
