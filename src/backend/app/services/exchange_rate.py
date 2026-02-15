@@ -956,9 +956,9 @@ class ExchangeRateService:
     def fetch_sdw_rates_sync(currency: str, start_date: date, end_date: date) -> List[Dict]:
         """
         Synchronous version of fetch_sdw_rates for Celery tasks.
-        Uses requests instead of httpx for synchronous HTTP calls.
+        Uses httpx for synchronous HTTP calls.
         """
-        import requests
+        import httpx
         import time
         
         # Early return for future dates
@@ -984,7 +984,7 @@ class ExchangeRateService:
         
         while retry_count < max_retries:
             try:
-                response = requests.get(
+                response = httpx.get(
                     url,
                     timeout=30.0,
                     headers={

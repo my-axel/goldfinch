@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: goldfinch-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: goldfinch_dev
+      POSTGRES_USER: goldfinch_dev
+      POSTGRES_PASSWORD: rYngef-bafnib-vinro1
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goldfinch_dev -d goldfinch_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - goldfinch-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: goldfinch-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - goldfinch-network
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  goldfinch-network:
+    driver: bridge

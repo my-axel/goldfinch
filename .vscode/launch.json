@@ -2,24 +2,10 @@
     "version": "0.2.0",
     "compounds": [
         {
-            "name": "Full Stack Dev",
-            "configurations": ["Frontend Dev", "Backend", "Celery Worker"],
-            "stopAll": true
-        },
-        {
-            "name": "Full Stack Prod",
-            "configurations": ["Frontend Prod", "Backend", "Celery Worker"],
-            "stopAll": true
-        },
-        {
-            "name": "Frontend Dev + Backend",
-            "configurations": ["Frontend Dev", "Backend"],
-            "stopAll": true
-        },
-        {
-            "name": "Frontend Prod + Backend",
-            "configurations": ["Frontend Prod", "Backend"],
-            "stopAll": true
+            "name": "🚀 Full Stack (All Services)",
+            "configurations": ["Frontend Dev", "Backend", "Celery Worker", "Celery Beat"],
+            "stopAll": true,
+            "preLaunchTask": "🐳 Start Docker Services"
         }
     ],
     "configurations": [
@@ -51,11 +37,10 @@
             "module": "celery",
             "args": [
                 "-A",
-                "app.tasks",
+                "app.core.celery_app.celery_app",
                 "worker",
                 "--loglevel=info",
-                "--pool=solo",
-                //"--uid=999"
+                "--pool=solo"
             ],
             "cwd": "${workspaceFolder}/src/backend",
             "python": "${workspaceFolder}/src/backend/venv/bin/python",
@@ -66,14 +51,15 @@
             }
         },
         {
-            "name": "Celery Flower",
+            "name": "Celery Beat",
             "type": "debugpy",
             "request": "launch",
             "module": "celery",
             "args": [
                 "-A",
-                "app.tasks",
-                "flower"
+                "app.core.celery_app.celery_app",
+                "beat",
+                "--loglevel=info"
             ],
             "cwd": "${workspaceFolder}/src/backend",
             "python": "${workspaceFolder}/src/backend/venv/bin/python",
@@ -92,18 +78,6 @@
             "runtimeArgs": ["run", "dev"],
             "env": {
                 "NODE_ENV": "development"
-            }
-        },
-        {
-            "name": "Frontend Prod",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "npm",
-            "preLaunchTask": "npm: build",
-            "runtimeArgs": ["run", "start"],
-            "env": {
-                "NODE_ENV": "production"
             }
         }
     ]

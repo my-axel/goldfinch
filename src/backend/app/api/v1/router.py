@@ -5,18 +5,6 @@ from app.api.v1.endpoints.pension_summaries import router as pension_summaries_r
 
 api_router = APIRouter()
 
-@api_router.get("/debug/routes")
-async def debug_routes():
-    """Debug endpoint to list all registered routes"""
-    routes = []
-    for route in api_router.routes:
-        routes.append({
-            "path": route.path,
-            "name": route.name,
-            "methods": route.methods
-        })
-    return {"routes": routes}
-
 api_router.include_router(
     household.router,
     prefix="/household",
