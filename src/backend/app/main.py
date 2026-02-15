@@ -8,7 +8,6 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.startup import check_and_trigger_updates
-from app.core.telemetry import setup_telemetry
 from app.db.session import engine
 
 # Initialize logging
@@ -35,12 +34,6 @@ app = FastAPI(
     redirect_slashes=False,
     lifespan=lifespan
 )
-
-# Set up SigNoz telemetry (if configured)
-# Pass the SQLAlchemy engine for database monitoring
-tracer = setup_telemetry(app, engine)
-if tracer:
-    logger.info("SigNoz telemetry initialized")
 
 app.add_middleware(
     CORSMiddleware,
