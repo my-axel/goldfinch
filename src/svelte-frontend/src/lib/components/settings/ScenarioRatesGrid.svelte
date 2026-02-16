@@ -2,6 +2,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import RateInput from './RateInput.svelte';
 	import type { FrontendSettings } from '$lib/types/settings';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let {
 		settings,
@@ -28,14 +29,14 @@
 </script>
 
 <Card
-	title="Growth Rate Scenarios"
-	description="Configure annual growth rates for different pension types"
+	title={m.settings_growth_rates_title()}
+	description={m.settings_growth_rates_description()}
 >
 	<div class="space-y-8">
 		<!-- Inflation Rate -->
 		<div class="grid grid-cols-4 gap-6">
 			<div class="flex items-center">
-				<span class="text-base font-semibold">Inflation Rate</span>
+				<span class="text-base font-semibold">{m.settings_inflation_rate()}</span>
 			</div>
 			<div>
 				<RateInput
@@ -71,7 +72,7 @@
 								d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898M2.25 6l3 3m0-3h3"
 							/>
 						</svg>
-						<span class="text-sm font-medium">Pessimistic</span>
+						<span class="text-sm font-medium">{m.settings_pessimistic()}</span>
 					</div>
 					<div class="flex flex-col items-center w-24">
 						<svg
@@ -87,7 +88,7 @@
 								d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
 							/>
 						</svg>
-						<span class="text-sm font-medium">Realistic</span>
+						<span class="text-sm font-medium">{m.settings_realistic()}</span>
 					</div>
 					<div class="flex flex-col items-center w-24">
 						<svg
@@ -103,7 +104,7 @@
 								d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22M21.75 18V12m0 0h-6"
 							/>
 						</svg>
-						<span class="text-sm font-medium">Optimistic</span>
+						<span class="text-sm font-medium">{m.settings_optimistic()}</span>
 					</div>
 				</div>
 			</div>
@@ -111,7 +112,7 @@
 			<!-- ETF Pension row -->
 			<div class="grid grid-cols-4 gap-6">
 				<div class="flex items-center">
-					<span class="text-base">ETF Pension</span>
+					<span class="text-base">{m.settings_etf_pension()}</span>
 				</div>
 				<div class="grid grid-cols-3 gap-6 col-span-3">
 					{#each etfKeys as key}
@@ -132,7 +133,7 @@
 			<!-- State Pension row -->
 			<div class="grid grid-cols-4 gap-6">
 				<div class="flex items-center">
-					<span class="text-base">State Pension</span>
+					<span class="text-base">{m.settings_state_pension()}</span>
 				</div>
 				<div class="grid grid-cols-3 gap-6 col-span-3">
 					{#each stateKeys as key}

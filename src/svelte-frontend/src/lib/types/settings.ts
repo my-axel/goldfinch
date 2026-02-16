@@ -6,7 +6,6 @@
 
 export enum UILocale {
 	EN_US = 'en-US',
-	EN_GB = 'en-GB',
 	DE_DE = 'de-DE'
 }
 
@@ -23,8 +22,7 @@ export enum Currency {
 }
 
 export const UI_LOCALE_LABELS: Record<UILocale, string> = {
-	[UILocale.EN_US]: 'English (US)',
-	[UILocale.EN_GB]: 'English (UK)',
+	[UILocale.EN_US]: 'English',
 	[UILocale.DE_DE]: 'Deutsch'
 };
 

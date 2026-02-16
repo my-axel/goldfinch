@@ -1,19 +1,20 @@
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 </script>
 
 <div class="space-y-6">
 	<PageHeader
-		title="Dashboard"
-		description="Complete overview of your retirement journey – past achievements and future possibilities"
+		title={m.dashboard_title()}
+		description={m.dashboard_description()}
 	/>
 
 	<!-- Main content container -->
 	<div class="grid grid-cols-1 md:grid-cols-13 gap-6">
 		<!-- Left Column - Current Position & History -->
 		<div class="md:col-span-6 space-y-6">
-			<h2 class="text-2xl font-bold tracking-tight">Current Position & History</h2>
+			<h2 class="text-2xl font-bold tracking-tight">{m.dashboard_current_position()}</h2>
 
 			<!-- Key Metrics -->
 			<div class="grid gap-4 grid-cols-2">
@@ -95,7 +96,7 @@
 			<h2
 				class="text-sm font-medium text-muted-foreground uppercase tracking-wider h-10 flex items-center justify-center"
 			>
-				Today
+				{m.dashboard_today()}
 			</h2>
 			<div class="h-full flex justify-center mt-4">
 				<div class="w-px bg-border h-full"></div>
@@ -104,7 +105,7 @@
 
 		<!-- Right Column - Future Projections -->
 		<div class="md:col-span-6 space-y-6">
-			<h2 class="text-2xl font-bold tracking-tight text-right">Future Projections</h2>
+			<h2 class="text-2xl font-bold tracking-tight text-right">{m.dashboard_future_projections()}</h2>
 
 			<div class="space-y-4">
 				<Card title="Retirement Goal Progress" description="Track your journey to retirement">

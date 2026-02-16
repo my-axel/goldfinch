@@ -7,6 +7,7 @@
 	import MemberModal from '$lib/components/household/MemberModal.svelte';
 	import DeleteConfirm from '$lib/components/household/DeleteConfirm.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 
 	// State
 	let members = $state<HouseholdMember[]>([]);
@@ -35,7 +36,7 @@
 		try {
 			members = await householdApi.list();
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load';
+			error = e instanceof Error ? e.message : m.household_failed_to_load();
 		} finally {
 			loading = false;
 		}
@@ -51,10 +52,10 @@
 		try {
 			await householdApi.create(data);
 			showAddModal = false;
-			showToast('Member added', 'success');
+			showToast(m.household_member_added(), 'success');
 			await loadMembers();
 		} catch {
-			showToast('Failed to add member', 'error');
+			showToast(m.household_add_failed(), 'error');
 		}
 	}
 
@@ -63,10 +64,10 @@
 		try {
 			await householdApi.update(editingMember.id, data);
 			editingMember = undefined;
-			showToast('Member updated', 'success');
+			showToast(m.household_member_updated(), 'success');
 			await loadMembers();
 		} catch {
-			showToast('Failed to update member', 'error');
+			showToast(m.household_update_failed(), 'error');
 		}
 	}
 
@@ -75,10 +76,10 @@
 		try {
 			await householdApi.delete(deletingMember.id);
 			deletingMember = undefined;
-			showToast('Member deleted', 'success');
+			showToast(m.household_member_deleted(), 'success');
 			await loadMembers();
 		} catch {
-			showToast('Failed to delete member', 'error');
+			showToast(m.household_delete_failed(), 'error');
 		}
 	}
 </script>
@@ -97,17 +98,17 @@
 
 <div class="space-y-6">
 	<PageHeader
-		title="Household"
-		description="Manage your household members and their retirement planning."
+		title={m.household_title()}
+		description={m.household_description()}
 	/>
 
 	<!-- Content -->
 	{#if loading}
-		<p class="text-center text-muted-foreground py-8">Loading household members...</p>
+		<p class="text-center text-muted-foreground py-8">{m.household_loading()}</p>
 	{:else if error}
 		<div class="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
 			<p>{error}</p>
-			<button onclick={loadMembers} class="mt-2 text-sm underline">Try again</button>
+			<button onclick={loadMembers} class="mt-2 text-sm underline">{m.household_try_again()}</button>
 		</div>
 	{:else}
 		<div class="flex flex-wrap gap-4">
@@ -145,7 +146,7 @@
 						d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
 					/>
 				</svg>
-				<span class="text-sm text-muted-foreground">New Member</span>
+				<span class="text-sm text-muted-foreground">{m.household_new_member()}</span>
 			</button>
 		</div>
 	{/if}

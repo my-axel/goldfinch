@@ -2,6 +2,7 @@
 	import { calculateMemberFields, formatMemberName } from '$lib/types/household';
 	import type { HouseholdMember } from '$lib/types/household';
 	import { settingsStore } from '$lib/stores/settings.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let {
 		member,
@@ -30,7 +31,7 @@
 			<button
 				onclick={() => onEdit(member)}
 				class="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent/50"
-				title="Edit"
+				title={m.household_edit()}
 			>
 				<svg
 					class="w-4 h-4"
@@ -49,7 +50,7 @@
 			<button
 				onclick={() => onDelete(member)}
 				class="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-accent/50"
-				title="Delete"
+				title={m.household_delete()}
 			>
 				<svg
 					class="w-4 h-4"
@@ -70,23 +71,23 @@
 	<div class="px-4 pb-4">
 		<dl class="space-y-2 text-sm">
 			<div>
-				<dt class="text-muted-foreground">Birthday</dt>
+				<dt class="text-muted-foreground">{m.household_birthday()}</dt>
 				<dd>{formattedBirthday}</dd>
 			</div>
 			<div>
-				<dt class="text-muted-foreground">Age</dt>
-				<dd>{computed.age} years</dd>
+				<dt class="text-muted-foreground">{m.household_age()}</dt>
+				<dd>{m.household_years({ age: computed.age })}</dd>
 			</div>
 			<div>
-				<dt class="text-muted-foreground">Planned Retirement</dt>
+				<dt class="text-muted-foreground">{m.household_planned_retirement()}</dt>
 				<dd>
-					In {computed.years_to_retirement_planned} years (at age {member.retirement_age_planned})
+					{m.household_in_years_at_age({ years: computed.years_to_retirement_planned, age: member.retirement_age_planned })}
 				</dd>
 			</div>
 			<div>
-				<dt class="text-muted-foreground">Earliest Retirement</dt>
+				<dt class="text-muted-foreground">{m.household_earliest_retirement()}</dt>
 				<dd>
-					In {computed.years_to_retirement_possible} years (at age {member.retirement_age_possible})
+					{m.household_in_years_at_age({ years: computed.years_to_retirement_possible, age: member.retirement_age_possible })}
 				</dd>
 			</div>
 		</dl>

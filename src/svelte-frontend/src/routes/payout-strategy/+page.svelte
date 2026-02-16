@@ -1,12 +1,13 @@
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 </script>
 
 <div class="space-y-6">
 	<PageHeader
-		title="Payout Strategy"
-		description="Plan and optimize your retirement income distribution with smart, adaptive strategies"
+		title={m.payout_title()}
+		description={m.payout_description()}
 	/>
 
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -85,8 +86,7 @@
 
 	<div class="mt-8">
 		<p class="text-muted-foreground text-sm">
-			Coming soon: Enhanced features including social security integration, legacy planning tools,
-			and geographic cost-of-living analysis.
+			{m.payout_coming_soon()}
 		</p>
 	</div>
 </div>

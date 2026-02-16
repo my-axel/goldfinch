@@ -71,17 +71,19 @@ export interface ValidationErrors {
 	retirement_age_possible?: string;
 }
 
+import { m } from '$lib/paraglide/messages.js';
+
 export function validateMemberForm(data: HouseholdMemberFormData): ValidationErrors {
 	const errors: ValidationErrors = {};
 
-	if (!data.first_name.trim()) errors.first_name = 'First name is required';
-	if (!data.last_name.trim()) errors.last_name = 'Last name is required';
-	if (!data.birthday) errors.birthday = 'Birthday is required';
+	if (!data.first_name.trim()) errors.first_name = m.household_first_name_required();
+	if (!data.last_name.trim()) errors.last_name = m.household_last_name_required();
+	if (!data.birthday) errors.birthday = m.household_birthday_required();
 
 	if (data.retirement_age_planned < 40 || data.retirement_age_planned > 100)
-		errors.retirement_age_planned = 'Must be between 40 and 100';
+		errors.retirement_age_planned = m.household_must_be_between();
 	if (data.retirement_age_possible < 40 || data.retirement_age_possible > 100)
-		errors.retirement_age_possible = 'Must be between 40 and 100';
+		errors.retirement_age_possible = m.household_must_be_between();
 
 	return errors;
 }

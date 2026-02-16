@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { m } from '$lib/paraglide/messages.js';
+
 	let {
 		locale,
 		currency
@@ -27,15 +29,15 @@
 
 <div class="space-y-3">
 	<div>
-		<p class="text-xs font-medium text-muted-foreground">Number</p>
+		<p class="text-xs font-medium text-muted-foreground">{m.preview_number()}</p>
 		<p class="text-sm font-bold text-muted-foreground/80">{formattedNumber}</p>
 	</div>
 	<div>
-		<p class="text-xs font-medium text-muted-foreground">Currency</p>
+		<p class="text-xs font-medium text-muted-foreground">{m.preview_currency()}</p>
 		<p class="text-sm font-bold text-muted-foreground/80">{formattedCurrency}</p>
 	</div>
 	<div>
-		<p class="text-xs font-medium text-muted-foreground">Date</p>
+		<p class="text-xs font-medium text-muted-foreground">{m.preview_date()}</p>
 		<p class="text-sm font-bold text-muted-foreground/80">{formattedDate}</p>
 	</div>
 </div>

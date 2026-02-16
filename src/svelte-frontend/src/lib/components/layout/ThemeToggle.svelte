@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { themeStore } from '$lib/stores/theme.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let {
 		collapsed = false
@@ -9,15 +10,17 @@
 
 	let showMenu = $state(false);
 
-	const options: { value: 'light' | 'dark' | 'system'; label: string }[] = [
-		{ value: 'light', label: 'Light' },
-		{ value: 'dark', label: 'Dark' },
-		{ value: 'system', label: 'System' }
-	];
+	const themeValues = ['light', 'dark', 'system'] as const;
 
 	function select(value: 'light' | 'dark' | 'system') {
 		themeStore.set(value);
 		showMenu = false;
+	}
+
+	function themeLabel(value: string): string {
+		if (value === 'light') return m.theme_light();
+		if (value === 'dark') return m.theme_dark();
+		return m.theme_system();
 	}
 </script>
 
@@ -28,9 +31,8 @@
 		}}
 		class="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm
 			text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
-		title="Change theme"
+		title={m.theme_change()}
 	>
-		<!-- Sun icon (light) / Moon icon (dark) -->
 		{#if themeStore.current === 'dark'}
 			<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
@@ -46,15 +48,13 @@
 	</button>
 
 	{#if showMenu}
-		<!-- Backdrop -->
 		<button
 			type="button"
 			class="fixed inset-0 z-40 cursor-default"
-			aria-label="Close menu"
+			aria-label={m.theme_close_menu()}
 			onclick={() => { showMenu = false; }}
 		></button>
 
-		<!-- Menu -->
 		<div
 			class="absolute z-50 rounded-lg border border-border bg-popover shadow-lg py-1 min-w-[120px]"
 			class:bottom-full={true}
@@ -64,13 +64,13 @@
 			class:ml-2={collapsed}
 			class:bottom-0={collapsed}
 		>
-			{#each options as option}
+			{#each themeValues as value}
 				<button
-					onclick={() => select(option.value)}
+					onclick={() => select(value)}
 					class="w-full text-left px-3 py-1.5 text-sm hover:bg-accent/50 transition-colors
-						{themeStore.current === option.value ? 'text-primary font-medium' : 'text-popover-foreground'}"
+						{themeStore.current === value ? 'text-primary font-medium' : 'text-popover-foreground'}"
 				>
-					{option.label}
+					{themeLabel(value)}
 				</button>
 			{/each}
 		</div>

@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import { settingsApi } from '$lib/api/settings';
 import type { FrontendSettings } from '$lib/types/settings';
+import { setLocale } from '$lib/paraglide/runtime.js';
 
 const DEFAULTS: FrontendSettings = {
 	ui_locale: 'en-US',
@@ -15,13 +16,30 @@ const DEFAULTS: FrontendSettings = {
 	inflation_rate: 2
 };
 
+/** Map ui_locale values (en-US, en-GB, de-DE) to Paraglide locales (en, de). */
+function toParaglideLocale(uiLocale: string): 'en' | 'de' {
+	if (uiLocale.startsWith('de')) return 'de';
+	return 'en';
+}
+
 class SettingsStore {
 	current = $state<FrontendSettings>({ ...DEFAULTS });
 	loaded = $state(false);
+	/** Reactive Paraglide locale — used as a `{#key}` in the layout to force re-render on language change. */
+	locale = $state<'en' | 'de'>('en');
 
 	constructor() {
 		if (browser) {
 			this.load();
+		}
+	}
+
+	/** Sync Paraglide locale with the current ui_locale setting. */
+	private syncLocale() {
+		if (browser) {
+			const newLocale = toParaglideLocale(this.current.ui_locale);
+			setLocale(newLocale, { reload: false });
+			this.locale = newLocale;
 		}
 	}
 
@@ -30,6 +48,7 @@ class SettingsStore {
 			const data = await settingsApi.get();
 			const { id, created_at, updated_at, ...frontendSettings } = data;
 			this.current = frontendSettings;
+			this.syncLocale();
 		} catch {
 			// Keep defaults on error
 		} finally {
@@ -43,6 +62,9 @@ class SettingsStore {
 			const data = await settingsApi.update(updates);
 			const { id, created_at, updated_at, ...frontendSettings } = data;
 			this.current = frontendSettings;
+			if (updates.ui_locale) {
+				this.syncLocale();
+			}
 		} catch {
 			// Revert on error by reloading
 			await this.load();

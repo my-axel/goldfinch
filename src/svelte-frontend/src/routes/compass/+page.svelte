@@ -1,12 +1,13 @@
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 </script>
 
 <div class="space-y-6">
 	<PageHeader
-		title="Compass"
-		description="Navigate your retirement journey with smart analysis and personalized guidance"
+		title={m.compass_title()}
+		description={m.compass_description()}
 	/>
 
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -49,8 +50,7 @@
 
 	<div class="mt-8">
 		<p class="text-muted-foreground text-sm">
-			Coming soon: Advanced features including inflation adjustment, tax considerations, and
-			historical tracking of your pension health progress.
+			{m.compass_coming_soon()}
 		</p>
 	</div>
 </div>

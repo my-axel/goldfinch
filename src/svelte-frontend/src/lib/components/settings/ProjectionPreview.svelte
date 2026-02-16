@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Explanation from '$lib/components/ui/Explanation.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let {
 		locale,
@@ -55,35 +56,38 @@
 </script>
 
 <div class="space-y-4">
-	<Explanation title="Understanding Projection Rates">
+	<Explanation title={m.projection_understanding_title()}>
 		<p>
-			These rates are used to calculate potential future values of your investments across different
-			market scenarios, adjusted for inflation.
+			{m.projection_understanding_text()}
 		</p>
 	</Explanation>
 
-	<Explanation title="Example">
+	<Explanation title={m.projection_example_title()}>
 		<p>
-			A hypothetical portfolio of {fmtCurrency(currentValue)} with a monthly contribution of {fmtCurrency(monthlyContribution)},
-			a time horizon of {years} years and an inflation rate of {inflationRate.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%.
+			{m.projection_example_text({
+				currentValue: fmtCurrency(currentValue),
+				monthlyContribution: fmtCurrency(monthlyContribution),
+				years: String(years),
+				inflationRate: inflationRate.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+			})}
 		</p>
 	</Explanation>
 
-	<Explanation title="Projected Outcomes">
+	<Explanation title={m.projection_outcomes_title()}>
 		<div class="grid grid-cols-3 gap-4">
 			{#each [
-				{ label: 'Pessimistic', rate: pessimisticRate },
-				{ label: 'Realistic', rate: realisticRate },
-				{ label: 'Optimistic', rate: optimisticRate }
+				{ label: m.settings_pessimistic(), rate: pessimisticRate },
+				{ label: m.settings_realistic(), rate: realisticRate },
+				{ label: m.settings_optimistic(), rate: optimisticRate }
 			] as scenario}
 				<div class="space-y-2">
 					<h5 class="font-medium text-xs">{scenario.label}</h5>
 					<div>
-						<p class="text-xs text-muted-foreground">Nominal</p>
+						<p class="text-xs text-muted-foreground">{m.projection_nominal()}</p>
 						<p class="text-xs font-bold">{fmt(calculateProjection(scenario.rate, false))}</p>
 					</div>
 					<div>
-						<p class="text-xs text-muted-foreground">Real</p>
+						<p class="text-xs text-muted-foreground">{m.projection_real()}</p>
 						<p class="text-xs font-bold">{fmt(calculateProjection(scenario.rate, true))}</p>
 					</div>
 				</div>
