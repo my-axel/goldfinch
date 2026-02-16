@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script>
+			// Prevent FOUC: apply theme before first paint
+			(function () {
+				const theme = localStorage.getItem('theme') || 'system';
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				if (theme === 'dark' || (theme === 'system' && prefersDark)) {
+					document.documentElement.classList.add('dark');
+				}
+			})();
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
