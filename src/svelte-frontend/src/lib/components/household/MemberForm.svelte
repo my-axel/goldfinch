@@ -71,14 +71,14 @@
 <form onsubmit={handleSubmit} class="space-y-4">
 	<div class="grid grid-cols-2 gap-4">
 		<div>
-			<label for="first_name" class="block text-sm font-medium text-foreground/80 mb-1">Vorname</label>
+			<label for="first_name" class="block text-sm font-medium text-foreground/80 mb-1">First Name</label>
 			<input id="first_name" type="text" bind:value={first_name} class={inputClass} />
 			{#if submitted && errors.first_name}
 				<p class="text-sm text-destructive mt-1">{errors.first_name}</p>
 			{/if}
 		</div>
 		<div>
-			<label for="last_name" class="block text-sm font-medium text-foreground/80 mb-1">Nachname</label>
+			<label for="last_name" class="block text-sm font-medium text-foreground/80 mb-1">Last Name</label>
 			<input id="last_name" type="text" bind:value={last_name} class={inputClass} />
 			{#if submitted && errors.last_name}
 				<p class="text-sm text-destructive mt-1">{errors.last_name}</p>
@@ -87,7 +87,7 @@
 	</div>
 
 	<div>
-		<label for="birthday" class="block text-sm font-medium text-foreground/80 mb-1">Geburtstag</label>
+		<label for="birthday" class="block text-sm font-medium text-foreground/80 mb-1">Birthday</label>
 		<input id="birthday" type="date" bind:value={birthday} class={inputClass} />
 		{#if submitted && errors.birthday}
 			<p class="text-sm text-destructive mt-1">{errors.birthday}</p>
@@ -97,7 +97,7 @@
 	<div class="grid grid-cols-2 gap-4">
 		<div>
 			<label for="retirement_planned" class="block text-sm font-medium text-foreground/80 mb-1"
-				>Geplantes Rentenalter</label
+				>Planned Retirement Age</label
 			>
 			<input
 				id="retirement_planned"
@@ -113,7 +113,7 @@
 		</div>
 		<div>
 			<label for="retirement_possible" class="block text-sm font-medium text-foreground/80 mb-1"
-				>Frühestes Rentenalter</label
+				>Earliest Retirement Age</label
 			>
 			<input
 				id="retirement_possible"
@@ -135,13 +135,13 @@
 			onclick={onCancel}
 			class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
 		>
-			Abbrechen
+			Cancel
 		</button>
 		<button
 			type="submit"
 			class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
 		>
-			{member ? 'Speichern' : 'Hinzufügen'}
+			{member ? 'Save' : 'Add'}
 		</button>
 	</div>
 </form>

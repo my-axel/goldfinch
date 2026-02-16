@@ -10,8 +10,8 @@
 	let showMenu = $state(false);
 
 	const options: { value: 'light' | 'dark' | 'system'; label: string }[] = [
-		{ value: 'light', label: 'Hell' },
-		{ value: 'dark', label: 'Dunkel' },
+		{ value: 'light', label: 'Light' },
+		{ value: 'dark', label: 'Dark' },
 		{ value: 'system', label: 'System' }
 	];
 
@@ -28,7 +28,7 @@
 		}}
 		class="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm
 			text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
-		title="Theme wechseln"
+		title="Change theme"
 	>
 		<!-- Sun icon (light) / Moon icon (dark) -->
 		{#if themeStore.current === 'dark'}
@@ -50,7 +50,7 @@
 		<button
 			type="button"
 			class="fixed inset-0 z-40 cursor-default"
-			aria-label="Menü schließen"
+			aria-label="Close menu"
 			onclick={() => { showMenu = false; }}
 		></button>
 

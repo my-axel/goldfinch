@@ -74,14 +74,14 @@ export interface ValidationErrors {
 export function validateMemberForm(data: HouseholdMemberFormData): ValidationErrors {
 	const errors: ValidationErrors = {};
 
-	if (!data.first_name.trim()) errors.first_name = 'Vorname ist erforderlich';
-	if (!data.last_name.trim()) errors.last_name = 'Nachname ist erforderlich';
-	if (!data.birthday) errors.birthday = 'Geburtstag ist erforderlich';
+	if (!data.first_name.trim()) errors.first_name = 'First name is required';
+	if (!data.last_name.trim()) errors.last_name = 'Last name is required';
+	if (!data.birthday) errors.birthday = 'Birthday is required';
 
 	if (data.retirement_age_planned < 40 || data.retirement_age_planned > 100)
-		errors.retirement_age_planned = 'Muss zwischen 40 und 100 liegen';
+		errors.retirement_age_planned = 'Must be between 40 and 100';
 	if (data.retirement_age_possible < 40 || data.retirement_age_possible > 100)
-		errors.retirement_age_possible = 'Muss zwischen 40 und 100 liegen';
+		errors.retirement_age_possible = 'Must be between 40 and 100';
 
 	return errors;
 }

@@ -22,7 +22,7 @@
 		else if (!open && dialogEl.open) dialogEl.close();
 	});
 
-	let title = $derived(member ? 'Mitglied bearbeiten' : 'Neues Mitglied');
+	let title = $derived(member ? 'Edit Member' : 'New Member');
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { householdApi } from '$lib/api/household';
 	import type { HouseholdMember, HouseholdMemberFormData } from '$lib/types/household';
 	import { formatMemberName } from '$lib/types/household';
 	import MemberCard from '$lib/components/household/MemberCard.svelte';
 	import MemberModal from '$lib/components/household/MemberModal.svelte';
 	import DeleteConfirm from '$lib/components/household/DeleteConfirm.svelte';
+	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 
 	// State
 	let members = $state<HouseholdMember[]>([]);
@@ -33,14 +35,14 @@
 		try {
 			members = await householdApi.list();
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Fehler beim Laden';
+			error = e instanceof Error ? e.message : 'Failed to load';
 		} finally {
 			loading = false;
 		}
 	}
 
 	// Load on mount
-	$effect(() => {
+	onMount(() => {
 		loadMembers();
 	});
 
@@ -49,10 +51,10 @@
 		try {
 			await householdApi.create(data);
 			showAddModal = false;
-			showToast('Mitglied hinzugefügt', 'success');
+			showToast('Member added', 'success');
 			await loadMembers();
 		} catch {
-			showToast('Fehler beim Hinzufügen', 'error');
+			showToast('Failed to add member', 'error');
 		}
 	}
 
@@ -61,10 +63,10 @@
 		try {
 			await householdApi.update(editingMember.id, data);
 			editingMember = undefined;
-			showToast('Mitglied aktualisiert', 'success');
+			showToast('Member updated', 'success');
 			await loadMembers();
 		} catch {
-			showToast('Fehler beim Aktualisieren', 'error');
+			showToast('Failed to update member', 'error');
 		}
 	}
 
@@ -73,10 +75,10 @@
 		try {
 			await householdApi.delete(deletingMember.id);
 			deletingMember = undefined;
-			showToast('Mitglied gelöscht', 'success');
+			showToast('Member deleted', 'success');
 			await loadMembers();
 		} catch {
-			showToast('Fehler beim Löschen', 'error');
+			showToast('Failed to delete member', 'error');
 		}
 	}
 </script>
@@ -94,19 +96,18 @@
 {/if}
 
 <div class="space-y-6">
-	<!-- Header -->
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Haushalt</h1>
-		<p class="mt-2 text-muted-foreground">Verwalte deine Haushaltsmitglieder und deren Rentenplanung.</p>
-	</div>
+	<PageHeader
+		title="Household"
+		description="Manage your household members and their retirement planning."
+	/>
 
 	<!-- Content -->
 	{#if loading}
-		<p class="text-center text-muted-foreground py-8">Lade Haushaltsmitglieder...</p>
+		<p class="text-center text-muted-foreground py-8">Loading household members...</p>
 	{:else if error}
 		<div class="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
 			<p>{error}</p>
-			<button onclick={loadMembers} class="mt-2 text-sm underline">Erneut versuchen</button>
+			<button onclick={loadMembers} class="mt-2 text-sm underline">Try again</button>
 		</div>
 	{:else}
 		<div class="flex flex-wrap gap-4">
@@ -144,7 +145,7 @@
 						d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
 					/>
 				</svg>
-				<span class="text-sm text-muted-foreground">Neues Mitglied</span>
+				<span class="text-sm text-muted-foreground">New Member</span>
 			</button>
 		</div>
 	{/if}

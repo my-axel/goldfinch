@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { calculateMemberFields, formatMemberName } from '$lib/types/household';
 	import type { HouseholdMember } from '$lib/types/household';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 
 	let {
 		member,
@@ -14,7 +15,7 @@
 
 	let computed = $derived(calculateMemberFields(member));
 	let formattedBirthday = $derived(
-		new Date(member.birthday).toLocaleDateString('de-DE', {
+		new Date(member.birthday).toLocaleDateString(settingsStore.current.number_locale, {
 			day: '2-digit',
 			month: 'long',
 			year: 'numeric'
@@ -29,7 +30,7 @@
 			<button
 				onclick={() => onEdit(member)}
 				class="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent/50"
-				title="Bearbeiten"
+				title="Edit"
 			>
 				<svg
 					class="w-4 h-4"
@@ -48,7 +49,7 @@
 			<button
 				onclick={() => onDelete(member)}
 				class="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-accent/50"
-				title="Löschen"
+				title="Delete"
 			>
 				<svg
 					class="w-4 h-4"
@@ -69,23 +70,23 @@
 	<div class="px-4 pb-4">
 		<dl class="space-y-2 text-sm">
 			<div>
-				<dt class="text-muted-foreground">Geburtstag</dt>
+				<dt class="text-muted-foreground">Birthday</dt>
 				<dd>{formattedBirthday}</dd>
 			</div>
 			<div>
-				<dt class="text-muted-foreground">Alter</dt>
-				<dd>{computed.age} Jahre</dd>
+				<dt class="text-muted-foreground">Age</dt>
+				<dd>{computed.age} years</dd>
 			</div>
 			<div>
-				<dt class="text-muted-foreground">Geplante Rente</dt>
+				<dt class="text-muted-foreground">Planned Retirement</dt>
 				<dd>
-					In {computed.years_to_retirement_planned} Jahren (mit {member.retirement_age_planned})
+					In {computed.years_to_retirement_planned} years (at age {member.retirement_age_planned})
 				</dd>
 			</div>
 			<div>
-				<dt class="text-muted-foreground">Früheste Rente</dt>
+				<dt class="text-muted-foreground">Earliest Retirement</dt>
 				<dd>
-					In {computed.years_to_retirement_possible} Jahren (mit {member.retirement_age_possible})
+					In {computed.years_to_retirement_possible} years (at age {member.retirement_age_possible})
 				</dd>
 			</div>
 		</dl>

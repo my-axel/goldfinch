@@ -15,7 +15,7 @@
 	<Sidebar />
 
 	<main class="flex-1 overflow-y-auto">
-		<div class="max-w-5xl mx-auto px-8 py-8">
+		<div class="px-8 py-8">
 			{@render children()}
 		</div>
 	</main>
