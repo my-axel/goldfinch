@@ -8,6 +8,7 @@
 	import DeleteConfirm from '$lib/components/household/DeleteConfirm.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { CirclePlus } from '@lucide/svelte';
 
 	// State
 	let members = $state<HouseholdMember[]>([]);
@@ -133,19 +134,7 @@
 					border-2 border-dashed border-border rounded-xl
 					hover:border-primary/50 hover:bg-accent/30 transition-colors cursor-pointer"
 			>
-				<svg
-					class="w-8 h-8 text-muted-foreground mb-2"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="1.5"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-					/>
-				</svg>
+				<CirclePlus class="w-8 h-8 text-muted-foreground mb-2" />
 				<span class="text-sm text-muted-foreground">{m.household_new_member()}</span>
 			</button>
 		</div>

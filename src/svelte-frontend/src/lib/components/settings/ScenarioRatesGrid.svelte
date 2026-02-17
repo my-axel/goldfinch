@@ -3,6 +3,7 @@
 	import RateInput from './RateInput.svelte';
 	import type { FrontendSettings } from '$lib/types/settings';
 	import { m } from '$lib/paraglide/messages.js';
+	import { TrendingDown, ArrowRight, TrendingUp } from '@lucide/svelte';
 
 	let {
 		settings,
@@ -59,51 +60,15 @@
 				<div></div>
 				<div class="grid grid-cols-3 gap-6 col-span-3">
 					<div class="flex flex-col items-center w-24">
-						<svg
-							class="w-5 h-5 mb-2 text-yellow-500"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="1.5"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898M2.25 6l3 3m0-3h3"
-							/>
-						</svg>
+						<TrendingDown class="w-5 h-5 mb-2 text-yellow-500" />
 						<span class="text-sm font-medium">{m.settings_pessimistic()}</span>
 					</div>
 					<div class="flex flex-col items-center w-24">
-						<svg
-							class="w-5 h-5 mb-2 text-blue-500"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="1.5"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-							/>
-						</svg>
+						<ArrowRight class="w-5 h-5 mb-2 text-blue-500" />
 						<span class="text-sm font-medium">{m.settings_realistic()}</span>
 					</div>
 					<div class="flex flex-col items-center w-24">
-						<svg
-							class="w-5 h-5 mb-2 text-green-500"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="1.5"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22M21.75 18V12m0 0h-6"
-							/>
-						</svg>
+						<TrendingUp class="w-5 h-5 mb-2 text-green-500" />
 						<span class="text-sm font-medium">{m.settings_optimistic()}</span>
 					</div>
 				</div>

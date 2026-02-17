@@ -53,6 +53,8 @@ Formulare nutzen `bind:value` + custom validation direkt in den Komponenten. Hou
 Geteilte Basis-Komponenten in `$lib/components/ui/`:
 - **Card.svelte** — Wiederverwendbare Card mit optionalem `title` und `description`
 - **PageHeader.svelte** — Einheitlicher Seiten-Header (`title` + `description`)
+- **ContentSection.svelte** — 2-Spalten-Layout (Haupt-Content + Sidebar)
+- **Explanation.svelte** — Erklärungs-/Hilfe-Container
 
 Weitere werden bei Bedarf ergänzt (nicht vorausgebaut).
 
@@ -151,43 +153,90 @@ goldfinch-dev/
 - [x] Compass (Platzhalter mit Feature-Beschreibungen)
 - [x] Payout Strategy (Platzhalter mit Feature-Beschreibungen)
 
-### Phase 4: Pension Plans — OFFEN
+### Phase 4: Settings & Internationalisierung — ERLEDIGT
 
-**Geteilte Bausteine zuerst:**
-- [ ] Types kopieren (alle Pension-Types, Enums, Interfaces)
-- [ ] API-Services für Pensionen aufsetzen
-- [ ] ContributionPlanCard
-- [ ] PensionStatusActions
-- [ ] FormattedCurrency/Date/Percent
-- [ ] CurrencyInput/PercentInput/NumberInput
-- [ ] ConfirmDeleteDialog (generisch, Household hat bereits DeleteConfirm)
-- [ ] ContributionHistoryTable
-- [ ] Pension-Store-Basis (`createPensionStore`)
+- [x] Settings-Page komplett (Sprache, Zahlenformat, Währung, Szenario-Rates, Theme)
+- [x] Settings-Store (`settings.svelte.ts`) mit Backend-Sync und Auto-Load
+- [x] Settings-API-Service (`$lib/api/settings.ts`)
+- [x] Settings-Types (`$lib/types/settings.ts`) mit Enums: UILocale, NumberLocale, Currency
+- [x] Settings-Komponenten: RateInput, ScenarioRatesGrid, NumberFormatPreview, ProjectionPreview
+- [x] Paraglide i18n Setup (EN + DE, 123+ Übersetzungs-Keys)
+- [x] Locale-Switching mit automatischem Re-Render (`{#key settingsStore.locale}`)
+- [x] Settings-Route: `/settings`
 
-**Dann typ-spezifisch:**
-- [ ] ETF Pension (BasicInformation, ContributionPlan, History, ETF-Suche, Kurs-Anzeige)
-- [ ] Company Pension (BasicInformation, Statements, Retirement-Projections)
-- [ ] Insurance Pension (BasicInformation, Statements, Projections, Benefits)
-- [ ] State Pension (BasicInformation, Statements, Szenario-Viewer)
-- [ ] Savings Pension (BasicInformation, InterestRates, Statements)
+### Phase 5: Pension Plans — OFFEN
 
-### Phase 5: Dashboard & Settings — OFFEN
+Die Pension-Migration erfolgt in 6 Schritten, sortiert nach aufsteigender Komplexität:
 
-- [ ] Settings-Page (Locale, Currency)
-- [ ] Dashboard mit echten Daten (Aggregationen, Übersicht)
+**Schritt 1: Fundament (Types, API, Store-Basis) - ERLEDIGT**
+- [x] Pension-Types aus React kopieren und anpassen (alle 5 Typen + Enums + Shared Interfaces)
+- [x] API-Services: `$lib/api/pension.ts` (CRUD für alle Typen)
+- [x] `createPensionStore(type)` — Basis-Store für Loading, Selection, CRUD-Operationen
+- [x] Pension-List Route (`/pension/+page.svelte`) mit Typ-Auswahl-Modal
+
+**Schritt 2: Geteilte UI-Bausteine — ERLEDIGT**
+- [x] FormattedCurrency, FormattedDate, FormattedPercent (locale-aware via settingsStore)
+- [x] CurrencyInput, PercentInput, NumberInput (custom Inputs mit Locale-Support)
+- [x] ConfirmDeleteDialog (generisch, erweitert bestehenden DeleteConfirm)
+- [x] PensionStatusActions (Pause/Resume Buttons + Dialoge)
+- [x] ContributionPlanCard (Beitragsplan-Schritte: Amount, Frequency, Dates)
+- [x] ContributionHistoryTable (tabellarische Beitragshistorie)
+- [x] @lucide/svelte installiert + PensionCard auf Lucide-Icons umgestellt
+- [x] Format-Utilities ($lib/utils/format.ts) — portiert aus React transforms.ts
+- [x] i18n-Strings für alle neuen Komponenten (EN + DE)
+
+**Schritt 3: State Pension (einfachster Typ — Pilot)**
+- [ ] BasicInformationCard (minimal: monatlicher Betrag)
+- [ ] StatementsCard (einfache Wert-Statements)
+- [ ] ScenarioViewer (Pessimistisch/Realistisch/Optimistisch)
+- [ ] Routes: `/pension/state/new`, `/pension/state/[id]/edit`
+- [ ] i18n-Strings für State Pension (EN + DE)
+
+**Schritt 4: Savings Pension**
+- [ ] BasicInformationCard (Zinssätze, Compounding)
+- [ ] InterestRatesCard (Zinsszenarien)
+- [ ] StatementsCard (Wert-Statements)
+- [ ] ContributionPlanCard (wiederverwendet aus Schritt 2)
+- [ ] Routes: `/pension/savings/new`, `/pension/savings/[id]/edit`
+- [ ] i18n-Strings
+
+**Schritt 5: Insurance + Company Pension**
+- [ ] Insurance: BasicInformation (Provider, Vertrag, Zinsen), Statements (Projektionen + Benefits), ContributionDetails
+- [ ] Company: BasicInformation (Arbeitgeber), Statements (Retirement-Projections), ContributionPlan + History
+- [ ] Routes für beide Typen
+- [ ] i18n-Strings
+
+**Schritt 6: ETF Pension (komplexester Typ)**
+- [ ] BasicInformationCard (ETF-Suche, Units, Kurs-Anzeige)
+- [ ] ContributionPlanCard (wiederverwendet)
+- [ ] ContributionHistoryTable (wiederverwendet)
+- [ ] OneTimeInvestmentModal
+- [ ] Wertentwicklungs-Anzeige
+- [ ] Routes: `/pension/etf/new`, `/pension/etf/[id]/edit`
+- [ ] i18n-Strings
+
+### Phase 6: Dashboard mit echten Daten — OFFEN
+
+- [ ] Dashboard mit echten Pension-Daten (Aggregationen, Übersicht)
 - [ ] Projektions-Charts (LayerChart evaluieren)
+- [ ] Key Metrics: Total Portfolio Value, Total Contributions, Investment Returns
 
-### Phase 6: Testing & Polish — OFFEN
+### Phase 7: Compass & Payout Strategy — OFFEN
+
+- [ ] Compass: Gap Analysis, Smart Recommendations, Interactive Planning
+- [ ] Payout Strategy: Timeline, Szenario-Planung, Withdrawal-Strategien
+
+### Phase 8: Testing & Polish — OFFEN
 
 - [ ] Vitest Setup
 - [ ] Component-Tests für kritische Komponenten
 - [ ] Performance-Optimierung
 - [ ] Accessibility (a11y)
 
-### Phase 7: Cutover — OFFEN
+### Phase 9: Cutover — OFFEN
 
 - [ ] Side-by-Side Vergleich mit React-App
-- [ ] SvelteKit als Standard
+- [ ] SvelteKit als Standard (Port 3000)
 - [ ] React-Code entfernen
 
 ---
@@ -200,31 +249,50 @@ src/svelte-frontend/
 │   ├── lib/
 │   │   ├── api/
 │   │   │   ├── client.ts              # Fetch-basierter API-Client
-│   │   │   └── household.ts           # Household API-Service
+│   │   │   ├── household.ts           # Household API-Service
+│   │   │   └── settings.ts            # Settings API-Service
 │   │   ├── components/
 │   │   │   ├── ui/                    # Geteilte UI-Primitives
 │   │   │   │   ├── Card.svelte
-│   │   │   │   └── PageHeader.svelte
+│   │   │   │   ├── PageHeader.svelte
+│   │   │   │   ├── ContentSection.svelte
+│   │   │   │   └── Explanation.svelte
 │   │   │   ├── layout/
 │   │   │   │   ├── Sidebar.svelte
 │   │   │   │   └── ThemeToggle.svelte
-│   │   │   └── household/
-│   │   │       ├── MemberCard.svelte
-│   │   │       ├── MemberForm.svelte
-│   │   │       ├── MemberModal.svelte
-│   │   │       └── DeleteConfirm.svelte
+│   │   │   ├── household/
+│   │   │   │   ├── MemberCard.svelte
+│   │   │   │   ├── MemberForm.svelte
+│   │   │   │   ├── MemberModal.svelte
+│   │   │   │   └── DeleteConfirm.svelte
+│   │   │   └── settings/
+│   │   │       ├── RateInput.svelte
+│   │   │       ├── ScenarioRatesGrid.svelte
+│   │   │       ├── NumberFormatPreview.svelte
+│   │   │       └── ProjectionPreview.svelte
+│   │   ├── paraglide/                 # Generiert von Paraglide
+│   │   │   ├── messages.js
+│   │   │   ├── runtime.js
+│   │   │   └── messages/{en,de}.js
 │   │   ├── stores/
-│   │   │   └── theme.svelte.ts
+│   │   │   ├── settings.svelte.ts     # Settings-Store mit Backend-Sync
+│   │   │   └── theme.svelte.ts        # Theme-Store (localStorage)
 │   │   └── types/
-│   │       └── household.ts
+│   │       ├── household.ts
+│   │       └── settings.ts
 │   ├── routes/
 │   │   ├── +layout.svelte
-│   │   ├── +page.svelte               # Dashboard
+│   │   ├── +page.svelte               # Dashboard (Platzhalter)
 │   │   ├── household/+page.svelte
-│   │   ├── compass/+page.svelte
-│   │   ├── payout-strategy/+page.svelte
+│   │   ├── settings/+page.svelte
+│   │   ├── compass/+page.svelte       # Platzhalter
+│   │   ├── payout-strategy/+page.svelte  # Platzhalter
 │   │   └── health/+page.svelte        # Health-Check Endpoint
 │   └── app.css                        # Design Tokens + Tailwind
+├── messages/
+│   ├── en.json                        # Englische Übersetzungen (123+ Keys)
+│   └── de.json                        # Deutsche Übersetzungen (123+ Keys)
+├── project.inlang/                    # Paraglide-Konfiguration
 ├── static/
 ├── package.json
 ├── svelte.config.js
@@ -238,10 +306,12 @@ src/svelte-frontend/
 
 | Bereich | Library | Version |
 |---------|---------|---------|
-| Framework | SvelteKit | 2.x |
-| UI | Svelte 5 | 5.x (Runes) |
-| Styling | Tailwind CSS | v4 |
-| UI-Komponenten | Custom (Card, PageHeader, etc.) | — |
+| Framework | SvelteKit | 2.50.x |
+| UI | Svelte 5 | 5.49.x (Runes) |
+| Styling | Tailwind CSS | v4.1.x |
+| Build Tool | Vite | 7.3.x |
+| i18n | Paraglide.js (Inlang) | 2.12.x |
+| UI-Komponenten | Custom (Card, PageHeader, ContentSection, Explanation, etc.) | — |
 | HTTP | Native fetch | — |
 | Theming | CSS Custom Properties + class-basiert | — |
 | Testing | Vitest + Svelte Testing Library | (noch nicht eingerichtet) |
