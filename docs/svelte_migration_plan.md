@@ -48,6 +48,25 @@ Bewusste Entscheidung gegen shadcn-svelte. Stattdessen: Custom Components + Tail
 
 Formulare nutzen `bind:value` + custom validation direkt in den Komponenten. Household-Migration hat gezeigt, dass das für unsere Formularkomplexität ausreicht.
 
+### Paraglide CLI: Outdir beachten
+
+Beim manuellen Kompilieren von Paraglide-Messages muss `--outdir ./src/lib/paraglide` angegeben werden, da die Vite-Plugin-Konfiguration diesen Pfad nutzt, der CLI-Default aber `./src/paraglide/` ist:
+```bash
+npx paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
+```
+
+### Form-Data Pattern: API-Typen vs. Formular-Typen
+
+API-Typen haben oft optionale numerische Felder (`number | undefined`), aber `CurrencyInput` und `NumberInput` erwarten `number`. Lösung: Ein lokales `FormData`-Interface pro Formular definieren, in dem optionale Felder zu `number` werden, und beim Laden der Daten `?? 0` mappen:
+```typescript
+interface StatementFormData {
+  current_value: number;        // statt number | undefined
+  current_monthly_amount: number;
+}
+// Beim Laden:
+statements = apiData.map(s => ({ ...s, current_value: s.current_value ?? 0 }));
+```
+
 ### UI-Komponenten
 
 Geteilte Basis-Komponenten in `$lib/components/ui/`:
@@ -185,12 +204,14 @@ Die Pension-Migration erfolgt in 6 Schritten, sortiert nach aufsteigender Komple
 - [x] Format-Utilities ($lib/utils/format.ts) — portiert aus React transforms.ts
 - [x] i18n-Strings für alle neuen Komponenten (EN + DE)
 
-**Schritt 3: State Pension (einfachster Typ — Pilot)**
-- [ ] BasicInformationCard (minimal: monatlicher Betrag)
-- [ ] StatementsCard (einfache Wert-Statements)
-- [ ] ScenarioViewer (Pessimistisch/Realistisch/Optimistisch)
-- [ ] Routes: `/pension/state/new`, `/pension/state/[id]/edit`
-- [ ] i18n-Strings für State Pension (EN + DE)
+**Schritt 3: State Pension (einfachster Typ — Pilot) — ERLEDIGT**
+- [x] BasicInformationCard (Name, Start Date, Notes)
+- [x] StatementsCard (dynamische Statement-Verwaltung mit Collapsible, Add/Delete)
+- [x] ScenarioViewer (Pessimistisch/Realistisch/Optimistisch für geplantes + alternatives Rentenalter)
+- [x] Routes: `/pension/state/new`, `/pension/state/[id]/edit`
+- [x] i18n-Strings für State Pension (EN + DE, ~65 Keys)
+- [x] API-Erweiterung: `getStatePensionScenarios()`, `deleteStatePensionStatement()`
+- [x] PensionStatusActions (Pause/Resume) in Edit-Page integriert
 
 **Schritt 4: Savings Pension**
 - [ ] BasicInformationCard (Zinssätze, Compounding)
@@ -250,6 +271,7 @@ src/svelte-frontend/
 │   │   ├── api/
 │   │   │   ├── client.ts              # Fetch-basierter API-Client
 │   │   │   ├── household.ts           # Household API-Service
+│   │   │   ├── pension.ts             # Pension API-Service (alle Typen + Scenarios)
 │   │   │   └── settings.ts            # Settings API-Service
 │   │   ├── components/
 │   │   │   ├── ui/                    # Geteilte UI-Primitives
@@ -265,6 +287,17 @@ src/svelte-frontend/
 │   │   │   │   ├── MemberForm.svelte
 │   │   │   │   ├── MemberModal.svelte
 │   │   │   │   └── DeleteConfirm.svelte
+│   │   │   ├── pension/
+│   │   │   │   ├── PensionCard.svelte
+│   │   │   │   ├── PensionTypeSelectionModal.svelte
+│   │   │   │   ├── PensionStatusActions.svelte
+│   │   │   │   ├── ContributionPlanCard.svelte
+│   │   │   │   ├── ContributionHistoryTable.svelte
+│   │   │   │   ├── DeletePensionConfirm.svelte
+│   │   │   │   └── state/
+│   │   │   │       ├── BasicInformationCard.svelte
+│   │   │   │       ├── StatementsCard.svelte
+│   │   │   │       └── ScenarioViewer.svelte
 │   │   │   └── settings/
 │   │   │       ├── RateInput.svelte
 │   │   │       ├── ScenarioRatesGrid.svelte
@@ -276,14 +309,21 @@ src/svelte-frontend/
 │   │   │   └── messages/{en,de}.js
 │   │   ├── stores/
 │   │   │   ├── settings.svelte.ts     # Settings-Store mit Backend-Sync
+│   │   │   ├── pension.svelte.ts      # Pension-Store (List, Delete, Status)
 │   │   │   └── theme.svelte.ts        # Theme-Store (localStorage)
 │   │   └── types/
 │   │       ├── household.ts
+│   │       ├── pension.ts             # Alle 5 Pension-Typen + Enums
 │   │       └── settings.ts
 │   ├── routes/
 │   │   ├── +layout.svelte
 │   │   ├── +page.svelte               # Dashboard (Platzhalter)
 │   │   ├── household/+page.svelte
+│   │   ├── pension/
+│   │   │   ├── +page.svelte           # Pension-Liste
+│   │   │   └── state/
+│   │   │       ├── new/+page.svelte   # State Pension erstellen
+│   │   │       └── [id]/edit/+page.svelte  # State Pension bearbeiten
 │   │   ├── settings/+page.svelte
 │   │   ├── compass/+page.svelte       # Platzhalter
 │   │   ├── payout-strategy/+page.svelte  # Platzhalter

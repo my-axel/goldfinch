@@ -4,6 +4,7 @@ import {
 	PENSION_ROUTE_MAP,
 	type PensionListItem,
 	type PensionStatusUpdate,
+	type StatePensionProjection,
 	type ETFPensionList,
 	type InsurancePensionList,
 	type CompanyPensionList,
@@ -58,5 +59,13 @@ export const pensionApi = {
 
 	/** Update pension status (ACTIVE/PAUSED) */
 	updateStatus: (type: PensionType, id: number, data: PensionStatusUpdate) =>
-		api.put<void>(`${routeFor(type)}/${id}/status`, data)
+		api.put<void>(`${routeFor(type)}/${id}/status`, data),
+
+	/** Get state pension scenarios/projections */
+	getStatePensionScenarios: (pensionId: number) =>
+		api.get<StatePensionProjection>(`${PENSION_BASE}/state/${pensionId}/scenarios`),
+
+	/** Delete a state pension statement */
+	deleteStatePensionStatement: (pensionId: number, statementId: number) =>
+		api.delete<void>(`${PENSION_BASE}/state/${pensionId}/statements/${statementId}`)
 };

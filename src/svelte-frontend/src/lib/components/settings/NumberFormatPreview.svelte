@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import ExplanationStats from '$lib/components/ui/ExplanationStats.svelte';
+	import ExplanationStat from '$lib/components/ui/ExplanationStat.svelte';
 
 	let {
 		locale,
@@ -27,17 +29,8 @@
 	);
 </script>
 
-<div class="space-y-3">
-	<div>
-		<p class="text-xs font-medium text-muted-foreground">{m.preview_number()}</p>
-		<p class="text-sm font-bold text-muted-foreground/80">{formattedNumber}</p>
-	</div>
-	<div>
-		<p class="text-xs font-medium text-muted-foreground">{m.preview_currency()}</p>
-		<p class="text-sm font-bold text-muted-foreground/80">{formattedCurrency}</p>
-	</div>
-	<div>
-		<p class="text-xs font-medium text-muted-foreground">{m.preview_date()}</p>
-		<p class="text-sm font-bold text-muted-foreground/80">{formattedDate}</p>
-	</div>
-</div>
+<ExplanationStats>
+	<ExplanationStat label={m.preview_number()} subValue={formattedNumber} />
+	<ExplanationStat label={m.preview_currency()} subValue={formattedCurrency} />
+	<ExplanationStat label={m.preview_date()} subValue={formattedDate} />
+</ExplanationStats>

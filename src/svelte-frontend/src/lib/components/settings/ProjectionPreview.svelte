@@ -1,5 +1,7 @@
 <script lang="ts">
 	import Explanation from '$lib/components/ui/Explanation.svelte';
+	import ExplanationStats from '$lib/components/ui/ExplanationStats.svelte';
+	import ExplanationStat from '$lib/components/ui/ExplanationStat.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
 	let {
@@ -38,14 +40,6 @@
 		return nominal;
 	}
 
-	function fmt(value: number): string {
-		return new Intl.NumberFormat(locale, {
-			style: 'currency',
-			currency,
-			maximumFractionDigits: 0
-		}).format(value);
-	}
-
 	function fmtCurrency(value: number): string {
 		return new Intl.NumberFormat(locale, {
 			style: 'currency',
@@ -57,9 +51,7 @@
 
 <div class="space-y-4">
 	<Explanation title={m.projection_understanding_title()}>
-		<p>
-			{m.projection_understanding_text()}
-		</p>
+		<p>{m.projection_understanding_text()}</p>
 	</Explanation>
 
 	<Explanation title={m.projection_example_title()}>
@@ -74,24 +66,24 @@
 	</Explanation>
 
 	<Explanation title={m.projection_outcomes_title()}>
-		<div class="grid grid-cols-3 gap-4">
+		<ExplanationStats columns={3}>
 			{#each [
 				{ label: m.settings_pessimistic(), rate: pessimisticRate },
 				{ label: m.settings_realistic(), rate: realisticRate },
 				{ label: m.settings_optimistic(), rate: optimisticRate }
 			] as scenario}
-				<div class="space-y-2">
+				<div class="space-y-3">
 					<h5 class="font-medium text-xs">{scenario.label}</h5>
-					<div>
-						<p class="text-xs text-muted-foreground">{m.projection_nominal()}</p>
-						<p class="text-xs font-bold">{fmt(calculateProjection(scenario.rate, false))}</p>
-					</div>
-					<div>
-						<p class="text-xs text-muted-foreground">{m.projection_real()}</p>
-						<p class="text-xs font-bold">{fmt(calculateProjection(scenario.rate, true))}</p>
-					</div>
+					<ExplanationStat
+						label={m.projection_nominal()}
+						subValue={fmtCurrency(calculateProjection(scenario.rate, false))}
+					/>
+					<ExplanationStat
+						label={m.projection_real()}
+						subValue={fmtCurrency(calculateProjection(scenario.rate, true))}
+					/>
 				</div>
 			{/each}
-		</div>
+		</ExplanationStats>
 	</Explanation>
 </div>
