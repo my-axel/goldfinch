@@ -82,6 +82,7 @@
   "overrides": {
     "@types/react": "19.0.12",
     "@types/react-dom": "19.0.4",
-    "@eslint/plugin-kit": ">=0.3.3"
+    "@eslint/plugin-kit": ">=0.3.3",
+    "ajv": "^8.18.0"
   }
 }
