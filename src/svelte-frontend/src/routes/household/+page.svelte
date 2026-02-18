@@ -1,18 +1,21 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { householdApi } from '$lib/api/household';
 	import type { HouseholdMember, HouseholdMemberFormData } from '$lib/types/household';
 	import { formatMemberName } from '$lib/types/household';
 	import MemberCard from '$lib/components/household/MemberCard.svelte';
 	import MemberModal from '$lib/components/household/MemberModal.svelte';
-	import DeleteConfirm from '$lib/components/household/DeleteConfirm.svelte';
+	import ConfirmDeleteDialog from '$lib/components/ui/ConfirmDeleteDialog.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CirclePlus } from '@lucide/svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	// State
 	let members = $state<HouseholdMember[]>([]);
-	let loading = $state(true);
+	let loading = $state(false);
 	let error = $state('');
 
 	// Dialog state
@@ -20,15 +23,10 @@
 	let editingMember = $state<HouseholdMember | undefined>(undefined);
 	let deletingMember = $state<HouseholdMember | undefined>(undefined);
 
-	// Toast
-	let toast = $state<{ message: string; type: 'success' | 'error' } | null>(null);
-
-	function showToast(message: string, type: 'success' | 'error') {
-		toast = { message, type };
-		setTimeout(() => {
-			toast = null;
-		}, 3000);
-	}
+	$effect(() => {
+		members = data.initialMembers;
+		error = data.initialError;
+	});
 
 	// Load members
 	async function loadMembers() {
@@ -43,20 +41,15 @@
 		}
 	}
 
-	// Load on mount
-	onMount(() => {
-		loadMembers();
-	});
-
 	// CRUD handlers
 	async function handleAdd(data: HouseholdMemberFormData) {
 		try {
 			await householdApi.create(data);
 			showAddModal = false;
-			showToast(m.household_member_added(), 'success');
+			toastStore.success(m.household_member_added());
 			await loadMembers();
 		} catch {
-			showToast(m.household_add_failed(), 'error');
+			toastStore.error(m.household_add_failed());
 		}
 	}
 
@@ -65,10 +58,10 @@
 		try {
 			await householdApi.update(editingMember.id, data);
 			editingMember = undefined;
-			showToast(m.household_member_updated(), 'success');
+			toastStore.success(m.household_member_updated());
 			await loadMembers();
 		} catch {
-			showToast(m.household_update_failed(), 'error');
+			toastStore.error(m.household_update_failed());
 		}
 	}
 
@@ -77,25 +70,13 @@
 		try {
 			await householdApi.delete(deletingMember.id);
 			deletingMember = undefined;
-			showToast(m.household_member_deleted(), 'success');
+			toastStore.success(m.household_member_deleted());
 			await loadMembers();
 		} catch {
-			showToast(m.household_delete_failed(), 'error');
+			toastStore.error(m.household_delete_failed());
 		}
 	}
 </script>
-
-<!-- Toast -->
-{#if toast}
-	<div
-		class="fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium border {toast.type ===
-		'success'
-			? 'bg-card text-foreground border-primary/30'
-			: 'bg-card text-destructive border-destructive/30'}"
-	>
-		{toast.message}
-	</div>
-{/if}
 
 <div class="space-y-6">
 	<PageHeader
@@ -161,9 +142,14 @@
 />
 
 <!-- Delete Confirmation -->
-<DeleteConfirm
+<ConfirmDeleteDialog
 	open={deletingMember !== undefined}
-	memberName={deletingMember ? formatMemberName(deletingMember) : ''}
+	itemName={deletingMember ? formatMemberName(deletingMember) : ''}
+	title={m.household_delete_member()}
+	descriptionBefore={m.household_delete_confirm_before()}
+	descriptionAfter={m.household_delete_confirm_after()}
+	cancelLabel={m.household_cancel()}
+	confirmLabel={m.household_delete()}
 	onConfirm={handleDelete}
 	onCancel={() => {
 		deletingMember = undefined;

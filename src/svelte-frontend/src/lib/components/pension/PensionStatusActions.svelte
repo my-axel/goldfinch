@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { CirclePause, CirclePlay } from '@lucide/svelte';
-	import { toISODate } from '$lib/utils/format';
+	import { todayIsoDate } from '$lib/utils/date-only';
 
 	let {
 		status,
@@ -9,14 +9,14 @@
 		onResume
 	}: {
 		status: 'ACTIVE' | 'PAUSED';
-		onPause: (pauseDate: string) => void;
-		onResume: (resumeDate: string) => void;
+		onPause: (pauseDate: string) => Promise<void>;
+		onResume: (resumeDate: string) => Promise<void>;
 	} = $props();
 
 	let showPauseDialog = $state(false);
 	let showResumeDialog = $state(false);
-	let pauseDate = $state(toISODate(new Date()));
-	let resumeDate = $state(toISODate(new Date()));
+	let pauseDate = $state(todayIsoDate());
+	let resumeDate = $state(todayIsoDate());
 	let submitting = $state(false);
 
 	let pauseDialogEl: HTMLDialogElement;
@@ -37,7 +37,7 @@
 	async function handlePauseConfirm() {
 		submitting = true;
 		try {
-			onPause(pauseDate);
+			await onPause(pauseDate);
 		} finally {
 			submitting = false;
 			showPauseDialog = false;
@@ -47,7 +47,7 @@
 	async function handleResumeConfirm() {
 		submitting = true;
 		try {
-			onResume(resumeDate);
+			await onResume(resumeDate);
 		} finally {
 			submitting = false;
 			showResumeDialog = false;
@@ -97,17 +97,19 @@
 			</label>
 		</div>
 		<div class="mt-4 flex justify-end gap-2">
-			<button
-				onclick={() => showPauseDialog = false}
-				disabled={submitting}
-				class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
+				<button
+					type="button"
+					onclick={() => showPauseDialog = false}
+					disabled={submitting}
+					class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
 			>
 				{m.cancel()}
 			</button>
-			<button
-				onclick={handlePauseConfirm}
-				disabled={submitting}
-				class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
+				<button
+					type="button"
+					onclick={handlePauseConfirm}
+					disabled={submitting}
+					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
 			>
 				{m.confirm()}
 			</button>
@@ -137,17 +139,19 @@
 			</label>
 		</div>
 		<div class="mt-4 flex justify-end gap-2">
-			<button
-				onclick={() => showResumeDialog = false}
-				disabled={submitting}
-				class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
+				<button
+					type="button"
+					onclick={() => showResumeDialog = false}
+					disabled={submitting}
+					class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
 			>
 				{m.cancel()}
 			</button>
-			<button
-				onclick={handleResumeConfirm}
-				disabled={submitting}
-				class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
+				<button
+					type="button"
+					onclick={handleResumeConfirm}
+					disabled={submitting}
+					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
 			>
 				{m.confirm()}
 			</button>

@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
+	import ToastViewport from '$lib/components/ui/ToastViewport.svelte';
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -21,10 +22,11 @@
 	<div class="flex h-screen overflow-hidden">
 		<Sidebar />
 
-		<main class="flex-1 overflow-y-auto">
-			<div class="px-8 py-8">
-				{@render children()}
-			</div>
-		</main>
-	</div>
-{/key}
+			<main class="flex-1 overflow-y-auto">
+				<div class="px-8 py-8">
+					{@render children()}
+				</div>
+			</main>
+		</div>
+		<ToastViewport />
+	{/key}

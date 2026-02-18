@@ -2,7 +2,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { Plus, Trash2 } from '@lucide/svelte';
 	import { ContributionFrequency, type ContributionStep } from '$lib/types/pension';
-	import { toISODate } from '$lib/utils/format';
+	import { addDaysIsoDate, todayIsoDate } from '$lib/utils/date-only';
 	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 
@@ -21,13 +21,11 @@
 	];
 
 	function addStep() {
-		let startDate = toISODate(new Date());
+		let startDate = todayIsoDate();
 		if (steps.length > 0) {
 			const lastStep = steps[steps.length - 1];
 			if (lastStep.end_date) {
-				const nextDay = new Date(lastStep.end_date);
-				nextDay.setDate(nextDay.getDate() + 1);
-				startDate = toISODate(nextDay);
+				startDate = addDaysIsoDate(lastStep.end_date, 1);
 			}
 		}
 		steps = [

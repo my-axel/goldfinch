@@ -1,34 +1,35 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { pensionStore } from '$lib/stores/pension.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 	import { householdApi } from '$lib/api/household';
 	import type { HouseholdMember } from '$lib/types/household';
 	import { formatMemberName } from '$lib/types/household';
 	import { PensionType, PENSION_ROUTE_MAP, type PensionListItem } from '$lib/types/pension';
 	import PensionCard from '$lib/components/pension/PensionCard.svelte';
 	import PensionTypeSelectionModal from '$lib/components/pension/PensionTypeSelectionModal.svelte';
-	import DeletePensionConfirm from '$lib/components/pension/DeletePensionConfirm.svelte';
+	import ConfirmDeleteDialog from '$lib/components/ui/ConfirmDeleteDialog.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CirclePlus } from '@lucide/svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	// Data state
 	let members = $state<HouseholdMember[]>([]);
-	let loading = $state(true);
+	let loading = $state(false);
 	let error = $state('');
 
 	// Dialog state — each member can open their own type selection
 	let addingForMemberId = $state<number | null>(null);
 	let deletingPension = $state<PensionListItem | undefined>(undefined);
 
-	// Toast
-	let toast = $state<{ message: string; type: 'success' | 'error' } | null>(null);
-
-	function showToast(message: string, type: 'success' | 'error') {
-		toast = { message, type };
-		setTimeout(() => { toast = null; }, 3000);
-	}
+	$effect(() => {
+		members = data.initialMembers;
+		error = data.initialError;
+		pensionStore.pensions = data.initialPensions;
+	});
 
 	// Group pensions by member
 	let pensionsByMember = $derived(() => {
@@ -70,8 +71,6 @@
 		}
 	}
 
-	onMount(() => { loadData(); });
-
 	function handleEdit(pension: PensionListItem) {
 		const routeSegment = PENSION_ROUTE_MAP[pension.type];
 		goto(`/pension/${routeSegment}/${pension.id}/edit`);
@@ -82,9 +81,9 @@
 		try {
 			await pensionStore.deletePension(deletingPension.type, deletingPension.id);
 			deletingPension = undefined;
-			showToast(m.pension_deleted(), 'success');
+			toastStore.success(m.pension_deleted());
 		} catch {
-			showToast(m.pension_delete_failed(), 'error');
+			toastStore.error(m.pension_delete_failed());
 		}
 	}
 
@@ -94,17 +93,6 @@
 		goto(`/pension/${routeSegment}/new?member_id=${memberId}`);
 	}
 </script>
-
-<!-- Toast -->
-{#if toast}
-	<div
-		class="fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium border {toast.type === 'success'
-			? 'bg-card text-foreground border-primary/30'
-			: 'bg-card text-destructive border-destructive/30'}"
-	>
-		{toast.message}
-	</div>
-{/if}
 
 <div class="space-y-6">
 	<PageHeader
@@ -162,9 +150,14 @@
 />
 
 <!-- Delete Confirmation -->
-<DeletePensionConfirm
+<ConfirmDeleteDialog
 	open={deletingPension !== undefined}
-	pensionName={deletingPension?.name ?? ''}
+	itemName={deletingPension?.name ?? ''}
+	title={m.pension_delete_confirm_title()}
+	descriptionBefore={m.pension_delete_confirm_before()}
+	descriptionAfter={m.pension_delete_confirm_after()}
+	cancelLabel={m.pension_cancel()}
+	confirmLabel={m.pension_delete()}
 	onConfirm={handleDelete}
 	onCancel={() => { deletingPension = undefined; }}
 />

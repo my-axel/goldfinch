@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionApi } from '$lib/api/pension';
+	import { toastStore } from '$lib/stores/toast.svelte';
 	import { PensionType } from '$lib/types/pension';
-	import { toISODate } from '$lib/utils/format';
+	import { todayIsoDate } from '$lib/utils/date-only';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import ContentSection from '$lib/components/ui/ContentSection.svelte';
@@ -14,6 +14,9 @@
 	import ExplanationListItem from '$lib/components/ui/ExplanationListItem.svelte';
 	import BasicInformationCard from '$lib/components/pension/state/BasicInformationCard.svelte';
 	import StatementsCard from '$lib/components/pension/state/StatementsCard.svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	interface StatementFormData {
 		id: number;
@@ -27,21 +30,13 @@
 
 	// Form state
 	let name = $state('');
-	let startDate = $state(toISODate(new Date()));
+	let startDate = $state(todayIsoDate());
 	let notes = $state('');
 	let statements = $state<StatementFormData[]>([]);
 	let errors = $state<Record<string, string>>({});
 	let submitting = $state(false);
 
-	// Toast
-	let toast = $state<{ message: string; type: 'success' | 'error' } | null>(null);
-	function showToast(message: string, type: 'success' | 'error') {
-		toast = { message, type };
-		setTimeout(() => { toast = null; }, 3000);
-	}
-
-	// Get member_id from URL
-	let memberId = $derived(Number($page.url.searchParams.get('member_id')) || 0);
+	let memberId = $derived(data.memberId);
 
 	function validate(): boolean {
 		const newErrors: Record<string, string> = {};
@@ -75,31 +70,17 @@
 					: undefined
 			};
 
-			await pensionApi.create(PensionType.STATE, pensionData);
-			showToast(m.state_pension_created(), 'success');
-			goto('/pension');
-		} catch (error) {
-			console.error('Error creating state pension:', error);
-			showToast(
-				error instanceof Error ? error.message : m.state_pension_create_failed(),
-				'error'
-			);
-		} finally {
-			submitting = false;
+				await pensionApi.create(PensionType.STATE, pensionData);
+				toastStore.success(m.state_pension_created());
+				goto('/pension');
+			} catch (error) {
+				console.error('Error creating state pension:', error);
+				toastStore.error(error instanceof Error ? error.message : m.state_pension_create_failed());
+			} finally {
+				submitting = false;
+			}
 		}
-	}
 </script>
-
-<!-- Toast -->
-{#if toast}
-	<div
-		class="fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium border {toast.type === 'success'
-			? 'bg-card text-foreground border-primary/30'
-			: 'bg-card text-destructive border-destructive/30'}"
-	>
-		{toast.message}
-	</div>
-{/if}
 
 <div class="space-y-6">
 	<!-- Header -->

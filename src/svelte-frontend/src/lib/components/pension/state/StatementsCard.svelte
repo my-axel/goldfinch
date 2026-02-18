@@ -2,7 +2,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { Plus, Trash2, ChevronDown, ChevronRight } from '@lucide/svelte';
 	import { pensionApi } from '$lib/api/pension';
-	import { toISODate } from '$lib/utils/format';
+	import { compareIsoDate, todayIsoDate } from '$lib/utils/date-only';
 	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
 	import FormattedDate from '$lib/components/ui/FormattedDate.svelte';
 	import type { StatePensionStatement } from '$lib/types/pension';
@@ -39,11 +39,10 @@
 	function getLatestStatementIndex(): number {
 		if (statements.length === 0) return -1;
 		let latestIndex = 0;
-		let latestDate = new Date(0);
+		let latestDate = statements[0].statement_date;
 		statements.forEach((s, i) => {
-			const d = new Date(s.statement_date);
-			if (d > latestDate) {
-				latestDate = d;
+			if (compareIsoDate(s.statement_date, latestDate) > 0) {
+				latestDate = s.statement_date;
 				latestIndex = i;
 			}
 		});
@@ -56,18 +55,16 @@
 		statements
 			.map((s, i) => ({ statement: s, originalIndex: i }))
 			.filter((_, i) => i !== latestIndex)
-			.sort((a, b) => new Date(b.statement.statement_date).getTime() - new Date(a.statement.statement_date).getTime())
+			.sort((a, b) => compareIsoDate(b.statement.statement_date, a.statement.statement_date))
 	);
 
 	function handleAddStatement() {
-		const now = new Date();
-		now.setUTCHours(0, 0, 0, 0);
 		statements = [
 			...statements,
 			{
 				id: 0,
 				pension_id: pensionId ?? 0,
-				statement_date: toISODate(now),
+				statement_date: todayIsoDate(),
 				current_monthly_amount: 0,
 				projected_monthly_amount: 0,
 				current_value: 0,
@@ -217,6 +214,7 @@
 				</label>
 			</div>
 			<div>
+				<!-- svelte-ignore a11y_label_has_associated_control -->
 				<label class="block text-sm font-medium mb-1.5">
 					{m.state_pension_current_value()}
 				</label>
@@ -226,12 +224,14 @@
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 			<div>
+				<!-- svelte-ignore a11y_label_has_associated_control -->
 				<label class="block text-sm font-medium mb-1.5">
 					{m.state_pension_current_monthly()}
 				</label>
 				<CurrencyInput bind:value={statements[index].current_monthly_amount} min={0} />
 			</div>
 			<div>
+				<!-- svelte-ignore a11y_label_has_associated_control -->
 				<label class="block text-sm font-medium mb-1.5">
 					{m.state_pension_projected_monthly()}
 				</label>
