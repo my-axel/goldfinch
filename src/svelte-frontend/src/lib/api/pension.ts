@@ -67,5 +67,17 @@ export const pensionApi = {
 
 	/** Delete a state pension statement */
 	deleteStatePensionStatement: (pensionId: number, statementId: number) =>
-		api.delete<void>(`${PENSION_BASE}/state/${pensionId}/statements/${statementId}`)
+		api.delete<void>(`${PENSION_BASE}/state/${pensionId}/statements/${statementId}`),
+
+	/** Delete a savings pension statement */
+	deleteSavingsPensionStatement: (pensionId: number, statementId: number) =>
+		api.delete<void>(`${PENSION_BASE}/savings/${pensionId}/statements/${statementId}`),
+
+	/** Add a new statement to a savings pension (statements are NOT part of the pension update body) */
+	addSavingsPensionStatement: (pensionId: number, data: { statement_date: string; balance: number; note?: string }) =>
+		api.post<void>(`${PENSION_BASE}/savings/${pensionId}/statements`, data),
+
+	/** Update an existing savings pension statement */
+	updateSavingsPensionStatement: (pensionId: number, statementId: number, data: { statement_date: string; balance: number; note?: string }) =>
+		api.put<void>(`${PENSION_BASE}/savings/${pensionId}/statements/${statementId}`, data)
 };

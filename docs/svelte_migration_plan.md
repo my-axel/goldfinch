@@ -213,13 +213,15 @@ Die Pension-Migration erfolgt in 6 Schritten, sortiert nach aufsteigender Komple
 - [x] API-Erweiterung: `getStatePensionScenarios()`, `deleteStatePensionStatement()`
 - [x] PensionStatusActions (Pause/Resume) in Edit-Page integriert
 
-**Schritt 4: Savings Pension**
-- [ ] BasicInformationCard (Zinssätze, Compounding)
-- [ ] InterestRatesCard (Zinsszenarien)
-- [ ] StatementsCard (Wert-Statements)
-- [ ] ContributionPlanCard (wiederverwendet aus Schritt 2)
-- [ ] Routes: `/pension/savings/new`, `/pension/savings/[id]/edit`
-- [ ] i18n-Strings
+**Schritt 4: Savings Pension — ERLEDIGT**
+- [x] BasicInformationCard (Name, StartDate, CompoundingFrequency, Notes)
+- [x] InterestRatesCard (Pessimistisch/Realistisch/Optimistisch — 3-Spalten-Grid mit PercentInput)
+- [x] StatementsCard (statement_date, balance, note — analog State Pension)
+- [x] ContributionPlanCard (wiederverwendet aus Schritt 2)
+- [x] Routes: `/pension/savings/new`, `/pension/savings/[id]/edit`
+- [x] i18n-Strings (EN + DE, ~60 Keys)
+- [x] API-Erweiterung: `deleteSavingsPensionStatement()`
+- Wichtig: API-Zinssätze als Prozent (2.0 = 2%), Form als Dezimal (0.02) → Konvertierung in den Route-Pages
 
 **Schritt 5: Insurance + Company Pension**
 - [ ] Insurance: BasicInformation (Provider, Vertrag, Zinsen), Statements (Projektionen + Benefits), ContributionDetails
