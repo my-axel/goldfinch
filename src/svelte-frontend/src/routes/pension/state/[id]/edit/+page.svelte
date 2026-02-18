@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionApi } from '$lib/api/pension';
 	import { pensionStore } from '$lib/stores/pension.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 	import { PensionType } from '$lib/types/pension';
 	import type { StatePension } from '$lib/types/pension';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
@@ -18,12 +17,13 @@
 	import StatementsCard from '$lib/components/pension/state/StatementsCard.svelte';
 	import ScenarioViewer from '$lib/components/pension/state/ScenarioViewer.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
+	import type { PageData } from './$types';
 
-	// Get pension ID from route params
-	let pensionId = $derived(Number($page.params.id));
+	let { data }: { data: PageData } = $props();
+
+	let pensionId = $derived(data.pensionId);
 
 	// Loading/error state
-	let loading = $state(true);
 	let loadError = $state('');
 	let submitting = $state(false);
 
@@ -46,30 +46,23 @@
 	let statements = $state<StatementFormData[]>([]);
 	let errors = $state<Record<string, string>>({});
 
-	// Toast
-	let toast = $state<{ message: string; type: 'success' | 'error' } | null>(null);
-	function showToast(message: string, type: 'success' | 'error') {
-		toast = { message, type };
-		setTimeout(() => { toast = null; }, 3000);
+	function hydrateForm(currentPension: StatePension) {
+		name = currentPension.name;
+		startDate = currentPension.start_date;
+		notes = currentPension.notes ?? '';
+		statements = (currentPension.statements ?? []).map((statement) => ({
+			...statement,
+			current_monthly_amount: statement.current_monthly_amount ?? 0,
+			projected_monthly_amount: statement.projected_monthly_amount ?? 0,
+			current_value: statement.current_value ?? 0
+		}));
 	}
 
-	onMount(async () => {
-		try {
-			pension = await pensionApi.get<StatePension>(PensionType.STATE, pensionId);
-			// Populate form
-			name = pension.name;
-			startDate = pension.start_date;
-			notes = pension.notes ?? '';
-			statements = (pension.statements ?? []).map(s => ({
-				...s,
-				current_monthly_amount: s.current_monthly_amount ?? 0,
-				projected_monthly_amount: s.projected_monthly_amount ?? 0,
-				current_value: s.current_value ?? 0
-			}));
-		} catch (e) {
-			loadError = e instanceof Error ? e.message : m.state_pension_not_found();
-		} finally {
-			loading = false;
+	$effect(() => {
+		loadError = data.initialError;
+		pension = data.initialPension;
+		if (data.initialPension) {
+			hydrateForm(data.initialPension);
 		}
 	});
 
@@ -107,18 +100,15 @@
 					}))
 			};
 
-			await pensionApi.update(PensionType.STATE, pensionId, pensionData);
-			showToast(m.state_pension_updated(), 'success');
-			goto('/pension');
-		} catch (error) {
-			console.error('Error updating state pension:', error);
-			showToast(
-				error instanceof Error ? error.message : m.state_pension_update_failed(),
-				'error'
-			);
-		} finally {
-			submitting = false;
-		}
+				await pensionApi.update(PensionType.STATE, pensionId, pensionData);
+				toastStore.success(m.state_pension_updated());
+				goto('/pension');
+			} catch (error) {
+				console.error('Error updating state pension:', error);
+				toastStore.error(error instanceof Error ? error.message : m.state_pension_update_failed());
+			} finally {
+				submitting = false;
+			}
 	}
 
 	async function handlePause(pauseDate: string) {
@@ -130,7 +120,7 @@
 			pension = await pensionApi.get<StatePension>(PensionType.STATE, pensionId);
 		} catch (error) {
 			console.error('Error pausing pension:', error);
-			showToast(error instanceof Error ? error.message : 'Failed to pause pension', 'error');
+			toastStore.error(error instanceof Error ? error.message : m.state_pension_update_failed());
 		}
 	}
 
@@ -143,21 +133,10 @@
 			pension = await pensionApi.get<StatePension>(PensionType.STATE, pensionId);
 		} catch (error) {
 			console.error('Error resuming pension:', error);
-			showToast(error instanceof Error ? error.message : 'Failed to resume pension', 'error');
+			toastStore.error(error instanceof Error ? error.message : m.state_pension_update_failed());
 		}
 	}
 </script>
-
-<!-- Toast -->
-{#if toast}
-	<div
-		class="fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium border {toast.type === 'success'
-			? 'bg-card text-foreground border-primary/30'
-			: 'bg-card text-destructive border-destructive/30'}"
-	>
-		{toast.message}
-	</div>
-{/if}
 
 <div class="space-y-6">
 	<!-- Header -->
@@ -174,23 +153,21 @@
 			>
 				{m.cancel()}
 			</button>
-			<button
-				type="submit"
-				form="state-pension-form"
-				disabled={loading || submitting}
-				class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-			>
-				{m.state_pension_save()}
-			</button>
+				<button
+					type="submit"
+					form="state-pension-form"
+					disabled={submitting}
+					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+				>
+					{m.state_pension_save()}
+				</button>
+			</div>
 		</div>
-	</div>
 
-	{#if loading}
-		<p class="text-center text-muted-foreground py-8">{m.state_pension_loading()}</p>
-	{:else if loadError}
-		<div class="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
-			<p>{loadError}</p>
-		</div>
+		{#if loadError}
+			<div class="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
+				<p>{loadError}</p>
+			</div>
 	{:else if !pension}
 		<div class="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
 			<p>{m.state_pension_not_found()}</p>

@@ -1,3 +1,5 @@
+import { parseIsoDateLocal } from '$lib/utils/date-only';
+
 // Types matching the backend API response
 export interface HouseholdMember {
 	id: number;
@@ -30,7 +32,7 @@ export interface HouseholdMemberFormData {
 // Computed fields for display
 export function calculateMemberFields(member: HouseholdMember): HouseholdMemberWithComputed {
 	const today = new Date();
-	const birthday = new Date(member.birthday);
+	const birthday = parseIsoDateLocal(member.birthday) ?? today;
 
 	const ageYear = today.getFullYear() - birthday.getFullYear();
 	const hadBirthday =
@@ -38,8 +40,8 @@ export function calculateMemberFields(member: HouseholdMember): HouseholdMemberW
 		(today.getMonth() === birthday.getMonth() && today.getDate() >= birthday.getDate());
 	const age = hadBirthday ? ageYear : ageYear - 1;
 
-	const retPlanned = new Date(member.retirement_date_planned);
-	const retPossible = new Date(member.retirement_date_possible);
+	const retPlanned = parseIsoDateLocal(member.retirement_date_planned) ?? today;
+	const retPossible = parseIsoDateLocal(member.retirement_date_possible) ?? today;
 	const msPerYear = 365.25 * 24 * 60 * 60 * 1000;
 
 	return {

@@ -1,4 +1,3 @@
-import { browser } from '$app/environment';
 import { pensionApi } from '$lib/api/pension';
 import type { PensionListItem, PensionStatusUpdate } from '$lib/types/pension';
 import { type PensionType } from '$lib/types/pension';

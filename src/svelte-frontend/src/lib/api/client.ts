@@ -1,7 +1,10 @@
-const BASE_URL = 'http://localhost:8000';
+import { env } from '$env/dynamic/public';
+
+const BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const NORMALIZED_BASE_URL = BASE_URL.replace(/\/$/, '');
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-	const res = await fetch(`${BASE_URL}${path}`, {
+	const res = await fetch(`${NORMALIZED_BASE_URL}${path}`, {
 		headers: { 'Content-Type': 'application/json' },
 		...options
 	});

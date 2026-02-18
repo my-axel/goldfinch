@@ -3,6 +3,7 @@
 	import type { HouseholdMember } from '$lib/types/household';
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { formatIsoDateForLocale } from '$lib/utils/date-only';
 	import { Pencil, Trash2 } from '@lucide/svelte';
 
 	let {
@@ -17,7 +18,7 @@
 
 	let computed = $derived(calculateMemberFields(member));
 	let formattedBirthday = $derived(
-		new Date(member.birthday).toLocaleDateString(settingsStore.current.number_locale, {
+		formatIsoDateForLocale(member.birthday, settingsStore.current.number_locale, {
 			day: '2-digit',
 			month: 'long',
 			year: 'numeric'

@@ -2,6 +2,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import ExplanationStats from '$lib/components/ui/ExplanationStats.svelte';
 	import ExplanationStat from '$lib/components/ui/ExplanationStat.svelte';
+	import { parseIsoDateLocal } from '$lib/utils/date-only';
 
 	let {
 		locale,
@@ -12,7 +13,7 @@
 	} = $props();
 
 	const previewNumber = 1234567.89;
-	const previewDate = new Date('2024-02-23');
+	const previewDate = parseIsoDateLocal('2024-02-23') ?? new Date();
 
 	let formattedNumber = $derived(
 		new Intl.NumberFormat(locale).format(previewNumber)

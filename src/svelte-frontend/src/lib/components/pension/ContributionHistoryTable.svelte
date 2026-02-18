@@ -2,6 +2,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { formatCurrency, formatDate } from '$lib/utils/format';
+	import { compareIsoDate } from '$lib/utils/date-only';
 	import type { ExtraContribution } from '$lib/types/pension';
 
 	let {
@@ -11,9 +12,7 @@
 	} = $props();
 
 	let sorted = $derived(
-		[...contributions].sort((a, b) =>
-			new Date(b.contribution_date).getTime() - new Date(a.contribution_date).getTime()
-		)
+		[...contributions].sort((a, b) => compareIsoDate(b.contribution_date, a.contribution_date))
 	);
 </script>
 

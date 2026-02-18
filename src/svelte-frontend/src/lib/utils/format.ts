@@ -5,6 +5,8 @@
  * (no hydration concerns, no SafeNumber wrapper needed for display components).
  */
 
+import { formatIsoDateForLocale, formatIsoDateLocal, isIsoDateOnly } from './date-only';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -84,6 +86,9 @@ export function formatDate(
 	locale: string,
 	options?: Intl.DateTimeFormatOptions
 ): string {
+	if (typeof date === 'string' && isIsoDateOnly(date)) {
+		return formatIsoDateForLocale(date, locale, options);
+	}
 	const dateObj = typeof date === 'string' ? new Date(date) : date;
 	if (isNaN(dateObj.getTime())) return typeof date === 'string' ? date : '';
 	return new Intl.DateTimeFormat(
@@ -124,5 +129,5 @@ export function parseNumber(input: string, locale: string): number {
 }
 
 export function toISODate(date: Date): string {
-	return date.toISOString().split('T')[0];
+	return formatIsoDateLocal(date);
 }
