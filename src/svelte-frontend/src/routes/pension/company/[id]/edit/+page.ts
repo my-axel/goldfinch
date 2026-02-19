@@ -1,21 +1,16 @@
 import type { PageLoad } from './$types';
 import { createPensionApi } from '$lib/api/pension';
-import { PensionType, type SavingsPension } from '$lib/types/pension';
+import { PensionType, type CompanyPension } from '$lib/types/pension';
 
 export const load: PageLoad = async ({ fetch, params }) => {
 	const pensionId = Number(params.id);
-
 	try {
-		const pension = await createPensionApi(fetch).get<SavingsPension>(PensionType.SAVINGS, pensionId);
-		return {
-			pensionId,
-			initialPension: pension,
-			initialError: ''
-		};
+		const pension = await createPensionApi(fetch).get<CompanyPension>(PensionType.COMPANY, pensionId);
+		return { pensionId, initialPension: pension, initialError: '' };
 	} catch (error) {
 		return {
 			pensionId,
-			initialPension: null,
+			initialPension: null as CompanyPension | null,
 			initialError: error instanceof Error ? error.message : 'Failed to load pension'
 		};
 	}

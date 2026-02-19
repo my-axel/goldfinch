@@ -223,11 +223,12 @@ Die Pension-Migration erfolgt in 6 Schritten, sortiert nach aufsteigender Komple
 - [x] API-Erweiterung: `deleteSavingsPensionStatement()`
 - Wichtig: API-Zinssätze als Prozent (2.0 = 2%), Form als Dezimal (0.02) → Konvertierung in den Route-Pages
 
-**Schritt 5: Insurance + Company Pension**
-- [ ] Insurance: BasicInformation (Provider, Vertrag, Zinsen), Statements (Projektionen + Benefits), ContributionDetails
-- [ ] Company: BasicInformation (Arbeitgeber), Statements (Retirement-Projections), ContributionPlan + History
-- [ ] Routes für beide Typen
-- [ ] i18n-Strings
+**Schritt 5: Insurance + Company Pension — ERLEDIGT**
+- [x] Insurance: BasicInformation (Provider, Vertrag, Zinsen), Statements (Projektionen + Benefits), ContributionDetails
+- [x] Company: BasicInformation (Arbeitgeber), Statements (Retirement-Projections), ContributionPlan + History
+- [x] Routes für beide Typen
+- [x] i18n-Strings (~130 Keys)
+- Wichtig: API-Zinssätze als Prozent (2.0 = 2%), Form als Dezimal (0.02) → Konvertierung in den Route-Pages (nur Insurance)
 
 **Schritt 6: ETF Pension (komplexester Typ)**
 - [ ] BasicInformationCard (ETF-Suche, Units, Kurs-Anzeige)
@@ -237,26 +238,17 @@ Die Pension-Migration erfolgt in 6 Schritten, sortiert nach aufsteigender Komple
 - [ ] Wertentwicklungs-Anzeige
 - [ ] Routes: `/pension/etf/new`, `/pension/etf/[id]/edit`
 - [ ] i18n-Strings
+- Wichtig (Prozentwerte): API speichert Raten als Prozent (2.0 = 2%), `PercentInput` erwartet Dezimalwerte (0.02). Konvertierung `÷100` beim Laden (`hydrateForm`) und `×100` beim Speichern — immer in den Route-Pages, nie in den Komponenten. Welche Felder betroffen sind im React-Code prüfen (z.B. `expense_ratio`, `expected_return`).
+- Wichtig (Select-Höhe): Alle `<select>`-Elemente brauchen `h-9` in der CSS-Klasse, damit sie gleich hoch sind wie die `<input>`-Felder (`py-2 text-sm` = 36px, Browser rendert `<select>` sonst kürzer).
 
-### Phase 6: Dashboard mit echten Daten — OFFEN
-
-- [ ] Dashboard mit echten Pension-Daten (Aggregationen, Übersicht)
-- [ ] Projektions-Charts (LayerChart evaluieren)
-- [ ] Key Metrics: Total Portfolio Value, Total Contributions, Investment Returns
-
-### Phase 7: Compass & Payout Strategy — OFFEN
-
-- [ ] Compass: Gap Analysis, Smart Recommendations, Interactive Planning
-- [ ] Payout Strategy: Timeline, Szenario-Planung, Withdrawal-Strategien
-
-### Phase 8: Testing & Polish — OFFEN
+### Phase 7: Testing & Polish — OFFEN
 
 - [ ] Vitest Setup
 - [ ] Component-Tests für kritische Komponenten
 - [ ] Performance-Optimierung
 - [ ] Accessibility (a11y)
 
-### Phase 9: Cutover — OFFEN
+### Phase 8: Cutover — OFFEN
 
 - [ ] Side-by-Side Vergleich mit React-App
 - [ ] SvelteKit als Standard (Port 3000)

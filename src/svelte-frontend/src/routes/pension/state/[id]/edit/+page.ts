@@ -1,12 +1,12 @@
 import type { PageLoad } from './$types';
-import { pensionApi } from '$lib/api/pension';
+import { createPensionApi } from '$lib/api/pension';
 import { PensionType, type StatePension } from '$lib/types/pension';
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageLoad = async ({ fetch, params }) => {
 	const pensionId = Number(params.id);
 
 	try {
-		const pension = await pensionApi.get<StatePension>(PensionType.STATE, pensionId);
+		const pension = await createPensionApi(fetch).get<StatePension>(PensionType.STATE, pensionId);
 		return {
 			pensionId,
 			initialPension: pension,

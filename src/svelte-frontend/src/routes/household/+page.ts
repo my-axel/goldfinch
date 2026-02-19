@@ -1,10 +1,10 @@
 import type { PageLoad } from './$types';
-import { householdApi } from '$lib/api/household';
+import { createHouseholdApi } from '$lib/api/household';
 import type { HouseholdMember } from '$lib/types/household';
 
-export const load: PageLoad = async () => {
+export const load: PageLoad = async ({ fetch }) => {
 	try {
-		const members = await householdApi.list();
+		const members = await createHouseholdApi(fetch).list();
 		return {
 			initialMembers: members,
 			initialError: ''

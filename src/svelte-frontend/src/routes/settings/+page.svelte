@@ -119,7 +119,7 @@
 						value={settings.ui_locale}
 						onchange={(e) => updateSetting({ ui_locale: (e.target as HTMLSelectElement).value })}
 						disabled={loading}
-						class="w-[280px] rounded-lg border border-input bg-background px-3 py-2 text-sm
+						class="h-9 w-[280px] rounded-lg border border-input bg-background px-3 py-2 text-sm
 							focus:border-ring focus:ring-1 focus:ring-ring outline-none transition-colors"
 					>
 						{#each Object.values(UILocale) as locale}
@@ -142,7 +142,7 @@
 						value={settings.number_locale}
 						onchange={(e) => updateSetting({ number_locale: (e.target as HTMLSelectElement).value })}
 						disabled={loading}
-						class="w-[280px] rounded-lg border border-input bg-background px-3 py-2 text-sm
+						class="h-9 w-[280px] rounded-lg border border-input bg-background px-3 py-2 text-sm
 							focus:border-ring focus:ring-1 focus:ring-ring outline-none transition-colors"
 					>
 						{#each Object.values(NumberLocale) as locale}
@@ -158,7 +158,7 @@
 						value={settings.currency}
 						onchange={(e) => updateSetting({ currency: (e.target as HTMLSelectElement).value })}
 						disabled={loading}
-						class="w-[280px] rounded-lg border border-input bg-background px-3 py-2 text-sm
+						class="h-9 w-[280px] rounded-lg border border-input bg-background px-3 py-2 text-sm
 							focus:border-ring focus:ring-1 focus:ring-ring outline-none transition-colors"
 					>
 						{#each Object.values(Currency) as cur}

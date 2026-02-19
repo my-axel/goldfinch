@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, createApi } from './client';
 import type { HouseholdMember, HouseholdMemberFormData } from '$lib/types/household';
 import { addYearsIsoDate } from '$lib/utils/date-only';
 
@@ -16,11 +16,21 @@ function formatForApi(data: HouseholdMemberFormData): Record<string, unknown> {
 	};
 }
 
-export const householdApi = {
-	list: () => api.get<HouseholdMember[]>(BASE),
-	get: (id: number) => api.get<HouseholdMember>(`${BASE}/${id}`),
-	create: (data: HouseholdMemberFormData) => api.post<HouseholdMember>(BASE, formatForApi(data)),
-	update: (id: number, data: HouseholdMemberFormData) =>
-		api.put<HouseholdMember>(`${BASE}/${id}`, formatForApi(data)),
-	delete: (id: number) => api.delete<void>(`${BASE}/${id}`)
-};
+function buildHouseholdApi(client: ReturnType<typeof createApi>) {
+	return {
+		list: () => client.get<HouseholdMember[]>(BASE),
+		get: (id: number) => client.get<HouseholdMember>(`${BASE}/${id}`),
+		create: (data: HouseholdMemberFormData) => client.post<HouseholdMember>(BASE, formatForApi(data)),
+		update: (id: number, data: HouseholdMemberFormData) =>
+			client.put<HouseholdMember>(`${BASE}/${id}`, formatForApi(data)),
+		delete: (id: number) => client.delete<void>(`${BASE}/${id}`)
+	};
+}
+
+// Factory for load functions — pass SvelteKit's fetch to avoid window.fetch warnings
+export function createHouseholdApi(fetchFn: typeof fetch) {
+	return buildHouseholdApi(createApi(fetchFn));
+}
+
+// Default singleton — used in stores and event handlers (outside load functions)
+export const householdApi = buildHouseholdApi(api);

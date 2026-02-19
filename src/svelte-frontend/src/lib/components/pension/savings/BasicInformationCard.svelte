@@ -65,7 +65,7 @@
 				{m.savings_pension_compounding_frequency()}
 				<select
 					bind:value={compoundingFrequency}
-					class="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+					class="mt-1 h-9 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
 				>
 					{#each compoundingOptions as opt}
 						<option value={opt.value}>{opt.label()}</option>

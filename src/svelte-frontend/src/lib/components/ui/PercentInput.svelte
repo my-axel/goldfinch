@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import NumberInput from './NumberInput.svelte';
 
 	let {
@@ -23,9 +24,11 @@
 	let displayValue = $state(value * 100);
 
 	// Sync inward: external value → display
+	// untrack(displayValue) so this effect only re-runs when value/decimals change,
+	// not when the user types (which would reset the display to the old value)
 	$effect(() => {
 		const rounded = Math.round(value * 100 * 10 ** decimals) / 10 ** decimals;
-		if (Math.abs(rounded - displayValue) > 0.0001) {
+		if (Math.abs(rounded - untrack(() => displayValue)) > 0.0001) {
 			displayValue = rounded;
 		}
 	});
