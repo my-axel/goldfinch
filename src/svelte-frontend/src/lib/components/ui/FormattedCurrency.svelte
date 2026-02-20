@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/FormattedCurrency.svelte
+@kind component
+@purpose Rendert formatierte Werte im Baustein 'FormattedCurrency' auf Basis der aktiven Locale- und Waehrungseinstellungen.
+-->
+
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { formatCurrency } from '$lib/utils/format';

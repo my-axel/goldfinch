@@ -1,3 +1,11 @@
+/**
+ * @file src/lib/types/pension.ts
+ * @kind type
+ * @purpose Definiert zentrale Domainmodelle, Enums und Projektionstypen fuer alle Pension-Typen.
+ * @contains Das Modul enthaelt 3 Enums, 29 Interfaces und 3 Type-Aliase.
+ * @contains Typgruppen decken Domainmodelle, API-Formate und UI-nahe Hilfstypen ab.
+ */
+
 // Enums matching backend values
 
 export enum PensionType {

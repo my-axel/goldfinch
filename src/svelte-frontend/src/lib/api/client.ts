@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/api/client.ts
+ * @kind api
+ * @purpose Kapselt den generischen HTTP-Client fuer API-Aufrufe inklusive Fehlerbehandlung und JSON-Handling.
+ */
+
 import { env } from '$env/dynamic/public';
 
 const BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000';

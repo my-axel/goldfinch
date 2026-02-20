@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/stores/toast.svelte.ts
+ * @kind store
+ * @purpose Verwaltet Toast-Nachrichten inkl. Queue, TTL-Ablauf und Entfernen einzelner Eintraege.
+ */
+
 type ToastType = 'success' | 'error';
 
 interface ToastItem {

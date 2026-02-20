@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/pension/etf/OneTimeInvestmentModal.svelte
+@kind component
+@purpose Steuert den Dialog 'OneTimeInvestmentModal' im Bereich 'pension' inklusive Eingaben und Abschlussaktionen.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `validate()`, `handleSubmit()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionApi } from '$lib/api/pension';

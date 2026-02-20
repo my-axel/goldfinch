@@ -1,3 +1,11 @@
+<!--
+@file src/lib/components/pension/ContributionPlanCard.svelte
+@kind component
+@purpose Kapselt den UI-Abschnitt 'ContributionPlanCard' im Bereich 'pension' mit Darstellung, Eingaben und Aktionen.
+@contains Kernfunktionen `addStep()`, `removeStep()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { Plus, Trash2 } from '@lucide/svelte';

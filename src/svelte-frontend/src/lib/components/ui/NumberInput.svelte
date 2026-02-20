@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/ui/NumberInput.svelte
+@kind component
+@purpose Kapselt den Eingabebaustein 'NumberInput' im Bereich 'ui' mit Formatierungs- und Interaktionslogik.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `handleInput()`, `handleFocus()`, `handleBlur()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { getDecimalSeparator, parseNumber, formatNumberInput } from '$lib/utils/format';

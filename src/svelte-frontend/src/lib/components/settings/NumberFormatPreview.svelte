@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/settings/NumberFormatPreview.svelte
+@kind component
+@purpose Zeigt eine Live-Vorschau fuer Zahlen-, Datums- und Waehrungsformat entsprechend der Settings-Auswahl.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import ExplanationStats from '$lib/components/ui/ExplanationStats.svelte';

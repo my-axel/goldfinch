@@ -1,3 +1,11 @@
+<!--
+@file src/lib/components/ui/PercentInput.svelte
+@kind component
+@purpose Kapselt den Eingabebaustein 'PercentInput' im Bereich 'ui' mit Formatierungs- und Interaktionslogik.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import NumberInput from './NumberInput.svelte';

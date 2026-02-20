@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/stores/pension.svelte.ts
+ * @kind store
+ * @purpose Verwaltet den globalen Pensionslisten-Status inklusive Laden, Loeschen und Statuswechsel.
+ */
+
 import { pensionApi } from '$lib/api/pension';
 import type { PensionListItem, PensionStatusUpdate } from '$lib/types/pension';
 import { type PensionType } from '$lib/types/pension';

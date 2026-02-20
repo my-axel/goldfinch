@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/ToastViewport.svelte
+@kind component
+@purpose Rendert die aktive Toast-Liste und koppelt deren Darstellung an den globalen Toast-Store.
+-->
+
 <script lang="ts">
 	import { toastStore } from '$lib/stores/toast.svelte';
 </script>

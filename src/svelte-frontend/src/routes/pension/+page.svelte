@@ -1,3 +1,12 @@
+<!--
+@file src/routes/pension/+page.svelte
+@kind route
+@purpose Rendert die Route 'pension' und verbindet Seitenzustand, Nutzeraktionen und Unterkomponenten.
+@contains Reaktiver Seitenzustand wird ueber `\$state`, `\$derived` und `\$effect` organisiert.
+@contains Kernfunktionen `sortedPensions()`, `loadData()`, `handleEdit()`, `handleDelete()` steuern Laden, Aktionen und Fehlerpfade.
+@contains Das Markup verdrahtet Sektionen, Dialoge und Aktionen fuer den Route-Workflow.
+-->
+
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { pensionStore } from '$lib/stores/pension.svelte';

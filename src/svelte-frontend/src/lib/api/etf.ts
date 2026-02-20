@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/api/etf.ts
+ * @kind api
+ * @purpose Stellt API-Zugriffe fuer ETF-Suche und ETF-Details bereit.
+ */
+
 import { api } from './client';
 import type { ETFSearchResult, ETFYFinanceResult } from '$lib/types/etf';
 

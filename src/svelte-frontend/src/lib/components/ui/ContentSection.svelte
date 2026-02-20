@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/ContentSection.svelte
+@kind component
+@purpose Strukturiert Seiteninhalte in wiederverwendbare Haupt- und Aside-Bereiche.
+-->
+
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 

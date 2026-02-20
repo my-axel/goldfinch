@@ -1,3 +1,11 @@
+<!--
+@file src/lib/components/pension/etf/ProjectionChart.svelte
+@kind component
+@purpose Visualisiert Kennzahlen und Verlaeufe im Baustein 'ProjectionChart' fuer den Bereich 'pension'.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';

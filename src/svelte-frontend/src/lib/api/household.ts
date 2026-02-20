@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/api/household.ts
+ * @kind api
+ * @purpose Stellt API-Zugriffe fuer Household-Mitglieder bereit und mappt Formdaten in Backend-kompatible Payloads.
+ */
+
 import { api, createApi } from './client';
 import type { HouseholdMember, HouseholdMemberFormData } from '$lib/types/household';
 import { addYearsIsoDate } from '$lib/utils/date-only';

@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/household/MemberForm.svelte
+@kind component
+@purpose Kapselt Eingabe- und Validierungslogik fuer Household-Mitgliederdaten in Erstell- und Bearbeitungsfaellen.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `handleSubmit()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import type {
 		HouseholdMember,

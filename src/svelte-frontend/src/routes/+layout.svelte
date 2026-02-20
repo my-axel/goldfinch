@@ -1,3 +1,9 @@
+<!--
+@file src/routes/+layout.svelte
+@kind route
+@purpose Definiert die globale App-Shell mit Sidebar, Dokument-Sprache und gerendertem Seiteninhalt.
+-->
+
 <script lang="ts">
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';

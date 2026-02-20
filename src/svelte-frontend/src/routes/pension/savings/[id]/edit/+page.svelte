@@ -1,3 +1,12 @@
+<!--
+@file src/routes/pension/savings/[id]/edit/+page.svelte
+@kind route
+@purpose Rendert die Route 'pension/savings/[id]/edit' und verbindet Seitenzustand, Nutzeraktionen und Unterkomponenten.
+@contains Reaktiver Seitenzustand wird ueber `\$state`, `\$derived` und `\$effect` organisiert.
+@contains Kernfunktionen `hydrateForm()`, `validate()`, `handleSubmit()`, `handlePause()` steuern Laden, Aktionen und Fehlerpfade.
+@contains Das Markup verdrahtet Sektionen, Dialoge und Aktionen fuer den Route-Workflow.
+-->
+
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';

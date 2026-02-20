@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/pension/PensionTypeSelectionModal.svelte
+@kind component
+@purpose Steuert den Dialog 'PensionTypeSelectionModal' im Bereich 'pension' inklusive Eingaben und Abschlussaktionen.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `handleConfirm()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { PensionType } from '$lib/types/pension';

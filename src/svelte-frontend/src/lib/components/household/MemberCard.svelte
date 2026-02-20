@@ -1,3 +1,11 @@
+<!--
+@file src/lib/components/household/MemberCard.svelte
+@kind component
+@purpose Kapselt den UI-Abschnitt 'MemberCard' im Bereich 'household' mit Darstellung, Eingaben und Aktionen.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { calculateMemberFields, formatMemberName } from '$lib/types/household';
 	import type { HouseholdMember } from '$lib/types/household';

@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/layout/Sidebar.svelte
+@kind component
+@purpose Rendert die Hauptnavigation mit aktiver Route, Collapse-Zustand und Zugriff auf globale Layout-Aktionen.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `isActive()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { page } from '$app/state';
 	import ThemeToggle from './ThemeToggle.svelte';

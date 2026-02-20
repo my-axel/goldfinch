@@ -1,3 +1,10 @@
+<!--
+@file src/lib/components/settings/ScenarioRatesGrid.svelte
+@kind component
+@purpose Rendert das Eingaberaster fuer pessimistische, realistische und optimistische Renditeannahmen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
 	import RateInput from './RateInput.svelte';

@@ -1,3 +1,11 @@
+/**
+ * @file src/lib/utils/projection.ts
+ * @kind util
+ * @purpose Berechnet projektionale Szenarien ueber Beitragsplaene, Renditen und Zeitraeume.
+ * @contains Hilfsfunktionen `getContributionForDate()`, `calculateCombinedScenarios()` kapseln wiederverwendbare Berechnungs- und Transformationslogik.
+ * @contains Die Exporte sind seiteneffektarm und fuer komponentenuebergreifende Nutzung ausgelegt.
+ */
+
 import { differenceInMonths } from 'date-fns';
 import type {
 	ContributionStep,

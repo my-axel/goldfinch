@@ -1,3 +1,12 @@
+/**
+ * @file src/lib/api/pension.ts
+ * @kind api
+ * @purpose Stellt API-Zugriffe fuer alle Pension-Typen, Statuswechsel und pensionspezifische Spezialendpunkte bereit.
+ * @contains Endpoint-Basen `PENSION_BASE`, `SUMMARIES_BASE` strukturieren die API-Routen des Moduls.
+ * @contains Methoden `routeFor()`, `summaryRouteFor()`, `buildPensionApi()`, `createPensionApi()` kapseln Request-Payloads und Response-Mapping.
+ * @contains Fehlerbehandlung und Typisierung werden zentral ueber den API-Client abgesichert.
+ */
+
 import { api, createApi } from './client';
 import {
 	PensionType,

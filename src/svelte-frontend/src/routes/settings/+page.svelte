@@ -1,3 +1,12 @@
+<!--
+@file src/routes/settings/+page.svelte
+@kind route
+@purpose Rendert die Route 'settings' und verbindet Seitenzustand, Nutzeraktionen und Unterkomponenten.
+@contains Reaktiver Seitenzustand wird ueber `\$state`, `\$derived` und `\$effect` organisiert.
+@contains Kernfunktionen `updateSetting()`, `validateRateRelationships()`, `handleRateChange()` steuern Laden, Aktionen und Fehlerpfade.
+@contains Das Markup verdrahtet Sektionen, Dialoge und Aktionen fuer den Route-Workflow.
+-->
+
 <script lang="ts">
 	import type { FrontendSettings } from '$lib/types/settings';
 	import {

@@ -1,3 +1,11 @@
+/**
+ * @file src/lib/utils/date-only.ts
+ * @kind util
+ * @purpose Bietet Date-only-Helfer fuer ISO-Datumsstrings ohne Zeitzonen-Nebeneffekte.
+ * @contains Hilfsfunktionen `isIsoDateOnly()`, `parseIsoDateLocal()`, `formatIsoDateLocal()`, `todayIsoDate()` kapseln wiederverwendbare Berechnungs- und Transformationslogik.
+ * @contains Die Exporte sind seiteneffektarm und fuer komponentenuebergreifende Nutzung ausgelegt.
+ */
+
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export function isIsoDateOnly(value: unknown): value is string {

@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/ExplanationListItem.svelte
+@kind component
+@purpose Rendert den Hilfs- und Erklaerungsbaustein 'ExplanationListItem' fuer kontextbezogene Seitenerlaeuterungen.
+-->
+
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 

@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/household/MemberModal.svelte
+@kind component
+@purpose Steuert den Dialog 'MemberModal' im Bereich 'household' inklusive Eingaben und Abschlussaktionen.
+-->
+
 <script lang="ts">
 	import type { HouseholdMember, HouseholdMemberFormData } from '$lib/types/household';
 	import MemberForm from './MemberForm.svelte';

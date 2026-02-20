@@ -1,3 +1,9 @@
+/**
+ * @file vite.config.ts
+ * @kind config
+ * @purpose Konfiguriert Vite-Plugins, Paraglide-Generierung und SSR-Einstellungen fuer das Svelte-Frontend.
+ */
+
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';

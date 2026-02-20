@@ -1,3 +1,11 @@
+/**
+ * @file src/lib/stores/settings.svelte.ts
+ * @kind store
+ * @purpose Verwaltet globale Frontend-Einstellungen inkl. Laden, Persistenz und Locale-Synchronisierung.
+ * @contains Store-Statusfelder werden reaktiv verwaltet und von Konsumenten direkt beobachtet.
+ * @contains Aktionen `toParaglideLocale()`, `load()`, `update()` aktualisieren State, triggern API-Aufrufe und setzen Fehlerzustand.
+ */
+
 import { browser } from '$app/environment';
 import { settingsApi } from '$lib/api/settings';
 import type { FrontendSettings } from '$lib/types/settings';

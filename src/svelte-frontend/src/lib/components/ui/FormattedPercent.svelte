@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/FormattedPercent.svelte
+@kind component
+@purpose Rendert formatierte Werte im Baustein 'FormattedPercent' auf Basis der aktiven Locale- und Waehrungseinstellungen.
+-->
+
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { formatPercent } from '$lib/utils/format';

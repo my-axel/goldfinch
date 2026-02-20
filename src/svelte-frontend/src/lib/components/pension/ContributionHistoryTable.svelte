@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/pension/ContributionHistoryTable.svelte
+@kind component
+@purpose Rendert die tabellarische Historie von Einzahlungen inklusive Datum, Betrag und Zusatzinformationen.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';

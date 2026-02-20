@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/layout/ThemeToggle.svelte
+@kind component
+@purpose Ermoeglicht den Wechsel zwischen Light, Dark und System-Theme innerhalb der Seitenleiste.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `select()`, `themeLabel()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { themeStore } from '$lib/stores/theme.svelte';
 	import { m } from '$lib/paraglide/messages.js';

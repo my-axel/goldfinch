@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/pension/savings/StatementsCard.svelte
+@kind component
+@purpose Kapselt den UI-Abschnitt 'StatementsCard' im Bereich 'pension' mit Darstellung, Eingaben und Aktionen.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `getLatestStatementIndex()`, `handleAddStatement()`, `handleRemoveStatement()`, `toggleStatement()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { Plus, Trash2, ChevronDown, ChevronRight } from '@lucide/svelte';

@@ -1,3 +1,9 @@
+/**
+ * @file src/routes/pension/insurance/[id]/edit/+page.ts
+ * @kind route
+ * @purpose Laedt Initialdaten fuer die Route 'pension/insurance/[id]/edit', verarbeitet Parameter und liefert fehlertolerantes PageData.
+ */
+
 import type { PageLoad } from './$types';
 import { createPensionApi } from '$lib/api/pension';
 import { PensionType, type InsurancePension } from '$lib/types/pension';

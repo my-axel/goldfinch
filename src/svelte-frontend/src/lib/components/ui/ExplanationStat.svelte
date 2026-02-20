@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/ExplanationStat.svelte
+@kind component
+@purpose Rendert den Hilfs- und Erklaerungsbaustein 'ExplanationStat' fuer kontextbezogene Seitenerlaeuterungen.
+-->
+
 <script lang="ts">
 	import type { Component } from 'svelte';
 

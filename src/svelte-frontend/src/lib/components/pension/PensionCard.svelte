@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/pension/PensionCard.svelte
+@kind component
+@purpose Kapselt den UI-Abschnitt 'PensionCard' im Bereich 'pension' mit Darstellung, Eingaben und Aktionen.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `formatCurrency()`, `formatPercent()`, `frequencyLabel()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';

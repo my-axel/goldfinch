@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/pension/etf/ETFSearchInput.svelte
+@kind component
+@purpose Kapselt den Eingabebaustein 'ETFSearchInput' im Bereich 'pension' mit Formatierungs- und Interaktionslogik.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `handleSearchInput()`, `performSearch()`, `selectDB()`, `selectYFinance()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { Search, Check } from '@lucide/svelte';
 	import { etfApi } from '$lib/api/etf';

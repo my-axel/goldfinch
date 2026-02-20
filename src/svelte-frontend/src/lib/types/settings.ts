@@ -1,4 +1,12 @@
 /**
+ * @file src/lib/types/settings.ts
+ * @kind type
+ * @purpose Definiert Einstellungsmodelle, Update-Typen und Enum-Labels fuer Sprache, Format und Waehrung.
+ * @contains Das Modul enthaelt 3 Enums, 2 Interfaces und 1 Type-Aliase.
+ * @contains Typgruppen decken Domainmodelle, API-Formate und UI-nahe Hilfstypen ab.
+ */
+
+/**
  * Settings types and enums
  */
 

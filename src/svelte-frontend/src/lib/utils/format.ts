@@ -1,4 +1,12 @@
 /**
+ * @file src/lib/utils/format.ts
+ * @kind util
+ * @purpose Bietet locale-sensitive Formatierungs- und Parse-Helfer fuer Zahlen, Waehrungen, Prozent und Datum.
+ * @contains Hilfsfunktionen `getDecimalSeparator()`, `getThousandsSeparator()`, `getCurrencySymbol()`, `getCurrencyPosition()` kapseln wiederverwendbare Berechnungs- und Transformationslogik.
+ * @contains Die Exporte sind seiteneffektarm und fuer komponentenuebergreifende Nutzung ausgelegt.
+ */
+
+/**
  * Formatting & parsing utilities (locale-aware).
  *
  * Ported from React `src/frontend/lib/transforms.ts` — simplified for Svelte

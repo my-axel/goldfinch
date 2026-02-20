@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/PageHeader.svelte
+@kind component
+@purpose Rendert einen einheitlichen Seitenkopf mit Titel und optionaler Beschreibung.
+-->
+
 <script lang="ts">
 	let {
 		title,

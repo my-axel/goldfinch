@@ -1,3 +1,10 @@
+<!--
+@file src/lib/components/pension/company/BasicInformationCard.svelte
+@kind component
+@purpose Kapselt den UI-Abschnitt 'BasicInformationCard' im Bereich 'pension' mit Darstellung, Eingaben und Aktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { ContributionFrequency } from '$lib/types/pension';

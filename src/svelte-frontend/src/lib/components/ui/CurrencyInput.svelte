@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/CurrencyInput.svelte
+@kind component
+@purpose Kapselt den Eingabebaustein 'CurrencyInput' im Bereich 'ui' mit Formatierungs- und Interaktionslogik.
+-->
+
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { getCurrencySymbol, getCurrencyPosition } from '$lib/utils/format';

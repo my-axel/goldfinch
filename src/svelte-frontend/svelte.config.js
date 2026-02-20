@@ -1,3 +1,9 @@
+/**
+ * @file svelte.config.js
+ * @kind config
+ * @purpose Konfiguriert SvelteKit-Buildverhalten und den verwendeten Deployment-Adapter.
+ */
+
 import adapter from '@sveltejs/adapter-auto';
 
 /** @type {import('@sveltejs/kit').Config} */

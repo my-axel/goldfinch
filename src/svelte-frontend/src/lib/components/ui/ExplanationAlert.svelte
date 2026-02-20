@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/ExplanationAlert.svelte
+@kind component
+@purpose Rendert den Hilfs- und Erklaerungsbaustein 'ExplanationAlert' fuer kontextbezogene Seitenerlaeuterungen.
+-->
+
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { Info } from '@lucide/svelte';

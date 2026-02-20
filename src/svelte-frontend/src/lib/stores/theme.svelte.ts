@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/stores/theme.svelte.ts
+ * @kind store
+ * @purpose Verwaltet Theme-Auswahl inkl. LocalStorage und Synchronisierung mit Systempraeferenz.
+ */
+
 import { browser } from '$app/environment';
 
 type Theme = 'light' | 'dark' | 'system';

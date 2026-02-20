@@ -1,3 +1,11 @@
+<!--
+@file src/lib/components/settings/ProjectionPreview.svelte
+@kind component
+@purpose Visualisiert die Auswirkung der konfigurierten Projektraten in einer kompakten Vorschau.
+@contains Kernfunktionen `calculateProjection()`, `fmtCurrency()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import Explanation from '$lib/components/ui/Explanation.svelte';
 	import ExplanationStats from '$lib/components/ui/ExplanationStats.svelte';

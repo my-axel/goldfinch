@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/types/etf.ts
+ * @kind type
+ * @purpose Definiert Typen fuer ETF-Suche und ETF-Metadaten aus den ETF-Endpunkten.
+ */
+
 export interface ETFSearchResult {
 	id: string;
 	symbol: string;

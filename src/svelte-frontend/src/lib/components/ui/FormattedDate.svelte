@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/FormattedDate.svelte
+@kind component
+@purpose Rendert formatierte Werte im Baustein 'FormattedDate' auf Basis der aktiven Locale- und Waehrungseinstellungen.
+-->
+
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { formatDate } from '$lib/utils/format';

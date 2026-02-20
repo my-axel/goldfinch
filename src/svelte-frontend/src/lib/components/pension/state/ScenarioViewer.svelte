@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/pension/state/ScenarioViewer.svelte
+@kind component
+@purpose Visualisiert mehrere Projektionsergebnisse nebeneinander und erlaeutert deren Szenario-Unterschiede.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `fmt()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { m } from '$lib/paraglide/messages.js';

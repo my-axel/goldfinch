@@ -1,3 +1,9 @@
+/**
+ * @file src/routes/pension/etf/[id]/edit/+page.ts
+ * @kind route
+ * @purpose Laedt Initialdaten fuer die Route 'pension/etf/[id]/edit', verarbeitet Parameter und liefert fehlertolerantes PageData.
+ */
+
 import type { PageLoad } from './$types';
 import { createPensionApi } from '$lib/api/pension';
 import { createHouseholdApi } from '$lib/api/household';

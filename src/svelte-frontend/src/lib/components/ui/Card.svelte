@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/ui/Card.svelte
+@kind component
+@purpose Kapselt den UI-Abschnitt 'Card' im Bereich 'ui' mit Darstellung, Eingaben und Aktionen.
+-->
+
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 

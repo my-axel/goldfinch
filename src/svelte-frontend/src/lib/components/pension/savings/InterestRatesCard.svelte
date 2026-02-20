@@ -1,3 +1,9 @@
+<!--
+@file src/lib/components/pension/savings/InterestRatesCard.svelte
+@kind component
+@purpose Kapselt den UI-Abschnitt 'InterestRatesCard' im Bereich 'pension' mit Darstellung, Eingaben und Aktionen.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import PercentInput from '$lib/components/ui/PercentInput.svelte';

@@ -1,3 +1,10 @@
+<!--
+@file src/routes/payout-strategy/+page.svelte
+@kind route
+@purpose Rendert die Route 'payout-strategy' und verbindet Seitenzustand, Nutzeraktionen und Unterkomponenten.
+@contains Das Markup verdrahtet Sektionen, Dialoge und Aktionen fuer den Route-Workflow.
+-->
+
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';

@@ -1,3 +1,12 @@
+<!--
+@file src/routes/household/+page.svelte
+@kind route
+@purpose Rendert die Route 'household' und verbindet Seitenzustand, Nutzeraktionen und Unterkomponenten.
+@contains Reaktiver Seitenzustand wird ueber `\$state`, `\$derived` und `\$effect` organisiert.
+@contains Kernfunktionen `loadMembers()`, `handleAdd()`, `handleEdit()`, `handleDelete()` steuern Laden, Aktionen und Fehlerpfade.
+@contains Das Markup verdrahtet Sektionen, Dialoge und Aktionen fuer den Route-Workflow.
+-->
+
 <script lang="ts">
 	import { householdApi } from '$lib/api/household';
 	import type { HouseholdMember, HouseholdMemberFormData } from '$lib/types/household';

@@ -1,3 +1,9 @@
+/**
+ * @file src/lib/api/settings.ts
+ * @kind api
+ * @purpose Stellt API-Zugriffe fuer Einstellungen bereit und normalisiert Backend-Werte fuer das Frontend.
+ */
+
 import { api } from './client';
 import type { Settings, SettingsUpdate } from '$lib/types/settings';
 

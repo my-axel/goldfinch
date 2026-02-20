@@ -1,3 +1,9 @@
+<!--
+@file src/routes/compass/+page.svelte
+@kind route
+@purpose Rendert die Route 'compass' und verbindet Seitenzustand, Nutzeraktionen und Unterkomponenten.
+-->
+
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';

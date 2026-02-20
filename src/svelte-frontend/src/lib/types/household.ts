@@ -1,3 +1,11 @@
+/**
+ * @file src/lib/types/household.ts
+ * @kind type
+ * @purpose Definiert Household-Domainmodelle sowie Validierungs- und Berechnungshilfen fuer Mitgliederdaten.
+ * @contains Das Modul enthaelt 0 Enums, 4 Interfaces und 0 Type-Aliase.
+ * @contains Typgruppen decken Domainmodelle, API-Formate und UI-nahe Hilfstypen ab.
+ */
+
 import { parseIsoDateLocal } from '$lib/utils/date-only';
 
 // Types matching the backend API response

@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/settings/RateInput.svelte
+@kind component
+@purpose Kapselt den Eingabebaustein 'RateInput' im Bereich 'settings' mit Formatierungs- und Interaktionslogik.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `formatForLocale()`, `parseLocaleNumber()`, `handleInput()`, `commit()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
 

@@ -1,3 +1,12 @@
+<!--
+@file src/lib/components/pension/PensionStatusActions.svelte
+@kind component
+@purpose Bietet Statusaktionen zum Pausieren und Fortsetzen von Pensionen inklusive Datumsauswahl und Dialogsteuerung.
+@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
+@contains Kernfunktionen `handlePauseConfirm()`, `handleResumeConfirm()` steuern Eingaben, Validierung und Benutzeraktionen.
+@contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
+-->
+
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import { CirclePause, CirclePlay } from '@lucide/svelte';
