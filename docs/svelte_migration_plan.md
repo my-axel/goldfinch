@@ -231,13 +231,13 @@ Die Pension-Migration erfolgt in 6 Schritten, sortiert nach aufsteigender Komple
 - Wichtig: API-Zinssätze als Prozent (2.0 = 2%), Form als Dezimal (0.02) → Konvertierung in den Route-Pages (nur Insurance)
 
 **Schritt 6: ETF Pension (komplexester Typ)**
-- [ ] BasicInformationCard (ETF-Suche, Units, Kurs-Anzeige)
-- [ ] ContributionPlanCard (wiederverwendet)
-- [ ] ContributionHistoryTable (wiederverwendet)
-- [ ] OneTimeInvestmentModal
-- [ ] Wertentwicklungs-Anzeige
-- [ ] Routes: `/pension/etf/new`, `/pension/etf/[id]/edit`
-- [ ] i18n-Strings
+- [x] BasicInformationCard (ETF-Suche, Units, Kurs-Anzeige)
+- [x] ContributionPlanCard (wiederverwendet)
+- [x] ContributionHistoryTable (wiederverwendet)
+- [x] OneTimeInvestmentModal
+- [x] Wertentwicklungs-Anzeige
+- [x] Routes: `/pension/etf/new`, `/pension/etf/[id]/edit`
+- [x] i18n-Strings
 - Wichtig (Prozentwerte): API speichert Raten als Prozent (2.0 = 2%), `PercentInput` erwartet Dezimalwerte (0.02). Konvertierung `÷100` beim Laden (`hydrateForm`) und `×100` beim Speichern — immer in den Route-Pages, nie in den Komponenten. Welche Felder betroffen sind im React-Code prüfen (z.B. `expense_ratio`, `expected_return`).
 - Wichtig (Select-Höhe): Alle `<select>`-Elemente brauchen `h-9` in der CSS-Klasse, damit sie gleich hoch sind wie die `<input>`-Felder (`py-2 text-sm` = 36px, Browser rendert `<select>` sonst kürzer).
 

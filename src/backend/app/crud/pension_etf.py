@@ -384,15 +384,18 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
 
             # Calculate annual return if we have enough history
             annual_return = None
-            if pension.contribution_history:
+            if pension.contribution_history and total_invested > 0:
                 first_contribution = min(ch.contribution_date for ch in pension.contribution_history)
                 days_invested = (date.today() - first_contribution).days
-                if days_invested > 0:
-                    # Use the time-weighted return formula
-                    days_ratio = Decimal(str(365)) / Decimal(str(days_invested))
-                    value_ratio = current_value / total_invested
-                    annual_return = (value_ratio ** days_ratio - Decimal('1')) * Decimal('100')
-                    annual_return = round(annual_return, 2)
+                if days_invested >= 30:
+                    try:
+                        # Use the time-weighted return formula (requires sufficient history)
+                        days_ratio = Decimal(str(365)) / Decimal(str(days_invested))
+                        value_ratio = current_value / total_invested
+                        annual_return = (value_ratio ** days_ratio - Decimal('1')) * Decimal('100')
+                        annual_return = round(annual_return, 2)
+                    except Exception:
+                        annual_return = None
 
             # Get value history
             # For now, we'll use contribution dates as value points

@@ -6,6 +6,7 @@ import {
 	type PensionStatusUpdate,
 	type StatePensionProjection,
 	type ETFPensionList,
+	type ETFPensionStatistics,
 	type InsurancePensionList,
 	type CompanyPensionList,
 	type StatePensionList,
@@ -160,7 +161,17 @@ function buildPensionApi(client: ReturnType<typeof createApi>) {
 
 		/** Delete a company pension statement */
 		deleteCompanyPensionStatement: (pensionId: number, statementId: number) =>
-			client.delete<void>(`${PENSION_BASE}/company/${pensionId}/statements/${statementId}`)
+			client.delete<void>(`${PENSION_BASE}/company/${pensionId}/statements/${statementId}`),
+
+		/** Get ETF pension statistics (value history, contribution history, return metrics) */
+		getETFPensionStatistics: (pensionId: number) =>
+			client.get<ETFPensionStatistics>(`${PENSION_BASE}/etf/${pensionId}/statistics`),
+
+		/** Add a one-time investment to an ETF pension */
+		addETFOneTimeInvestment: (
+			pensionId: number,
+			data: { amount: number; investment_date: string; note?: string }
+		) => client.post<void>(`${PENSION_BASE}/etf/${pensionId}/one-time-investment`, data)
 	};
 }
 

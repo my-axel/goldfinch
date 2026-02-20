@@ -347,6 +347,67 @@ export type PensionListItem =
 	| (StatePensionList & { type: PensionType.STATE })
 	| (SavingsPensionList & { type: PensionType.SAVINGS });
 
+// --- ETF Pension Statistics ---
+
+export interface ETFContributionHistory {
+	contribution_date: string;
+	amount: number;
+	is_manual: boolean;
+	note?: string;
+}
+
+export interface ETFValueHistory {
+	date: string;
+	value: number;
+}
+
+export interface ETFPensionStatistics {
+	total_invested_amount: number;
+	current_value: number;
+	total_return: number;
+	annual_return?: number;
+	contribution_history: ETFContributionHistory[];
+	value_history: ETFValueHistory[];
+}
+
+// --- Projection types ---
+
+export type ScenarioType = 'pessimistic' | 'realistic' | 'optimistic';
+
+export interface ProjectionDataPoint {
+	date: Date;
+	value: number;
+	contributionAmount?: number;
+	accumulatedContributions?: number;
+	scenarioType?: ScenarioType;
+	isProjection?: boolean;
+}
+
+export interface ProjectionScenario {
+	type: ScenarioType;
+	dataPoints: ProjectionDataPoint[];
+	returnRate?: number;
+	finalValue: number;
+	totalContributions: number;
+	totalReturns: number;
+}
+
+export interface CombinedScenariosOutput {
+	scenarios: {
+		pessimistic: ProjectionScenario;
+		realistic: ProjectionScenario;
+		optimistic: ProjectionScenario;
+	};
+	metadata: {
+		totalCalculationTime: number;
+		dataPoints: number;
+		startDate: Date;
+		endDate: Date;
+		totalContributions: number;
+		initialValue: number;
+	};
+}
+
 // Route segment mapping for API calls
 export const PENSION_ROUTE_MAP: Record<PensionType, string> = {
 	[PensionType.ETF_PLAN]: 'etf',
