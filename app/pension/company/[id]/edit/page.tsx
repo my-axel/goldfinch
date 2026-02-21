@@ -8,7 +8,7 @@ import { CompanyPensionFormData } from "@/frontend/types/pension-form"
 import { PensionType, CompanyPension, ContributionFrequency } from "@/frontend/types/pension"
 import { toast } from "sonner"
 import { use } from "react"
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { getPensionListRoute } from "@/frontend/lib/routes"
 import { ErrorBoundary } from "@/frontend/components/shared/ErrorBoundary"
 import { BasicInformationCard } from "@/frontend/components/pension/company/BasicInformationCard"
@@ -43,6 +43,19 @@ interface EditCompanyPensionPageProps {
   }>
 }
 
+const DEFAULT_COMPANY_PENSION_VALUES: CompanyPensionFormData = {
+  type: PensionType.COMPANY,
+  name: "",
+  member_id: "",
+  employer: "",
+  start_date: new Date(),
+  contribution_amount: undefined,
+  contribution_frequency: ContributionFrequency.MONTHLY,
+  notes: "",
+  contribution_plan_steps: [],
+  statements: []
+}
+
 export default function EditCompanyPensionPage({ params }: EditCompanyPensionPageProps) {
   const router = useRouter()
   const resolvedParams = use(params)
@@ -60,32 +73,16 @@ export default function EditCompanyPensionPage({ params }: EditCompanyPensionPag
   const [showPauseDialog, setShowPauseDialog] = useState(false)
   const [showResumeDialog, setShowResumeDialog] = useState(false)
 
-  const defaultValues: CompanyPensionFormData = {
-    type: PensionType.COMPANY,
-    name: "",
-    member_id: "",
-    employer: "",
-    start_date: new Date(),
-    contribution_amount: undefined,
-    contribution_frequency: ContributionFrequency.MONTHLY,
-    notes: "",
-    contribution_plan_steps: [],
-    statements: []
-  }
-
-  // Extract defaultValues to a stable reference using useMemo
-  const stableDefaultValues = useMemo(() => defaultValues, [])
-
   const form = useForm<CompanyPensionFormData>({
-    defaultValues: stableDefaultValues
+    defaultValues: DEFAULT_COMPANY_PENSION_VALUES
   })
 
-  // Use the form reset hook with stable defaultValues
+  // Use the form reset hook
   useFormReset({
     data: pension,
     form,
     apiToForm: companyPensionToForm,
-    defaultValues: stableDefaultValues
+    defaultValues: DEFAULT_COMPANY_PENSION_VALUES
   })
 
   const handleSubmit = async (data: CompanyPensionFormData) => {

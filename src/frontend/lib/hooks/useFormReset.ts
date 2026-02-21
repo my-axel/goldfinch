@@ -21,6 +21,8 @@ export interface FormResetOptions<ApiType, FormType extends FieldValues> {
   onReset?: (formData: FormType) => void;
 }
 
+const EMPTY_DEPENDENCIES: unknown[] = [];
+
 /**
  * A reusable hook for handling form reset logic across the application.
  * Handles the transformation of API data to form data, including:
@@ -47,7 +49,7 @@ export function useFormReset<ApiType, FormType extends FieldValues>({
   form,
   apiToForm,
   defaultValues,
-  dependencies = [],
+  dependencies = EMPTY_DEPENDENCIES,
   onReset
 }: FormResetOptions<ApiType, FormType>) {
   useEffect(() => {
@@ -66,7 +68,7 @@ export function useFormReset<ApiType, FormType extends FieldValues>({
       // Reset with default values if data is null/undefined
       form.reset(defaultValues);
     }
-  }, [data, form, defaultValues, apiToForm, onReset, ...dependencies]);
+  }, [data, form, defaultValues, apiToForm, onReset, dependencies]);
   
   return {
     // Utility function to manually reset the form with new data

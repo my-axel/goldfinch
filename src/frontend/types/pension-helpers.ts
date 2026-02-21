@@ -44,6 +44,7 @@ export function generateActualContributions(
   existingContributions: HistoricalContribution[] = []
 ): HistoricalContribution[] {
   // This function should be removed once backend handles contributions
+  void existingContributions
   return []
 }
 
