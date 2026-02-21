@@ -86,3 +86,18 @@ test.db
 
 # Cursor
 SCRATCHPAD.md
+
+# Local developer metadata
+.idea/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.python-version
+.envrc
+.claude/settings.local.json
+.claude/*.local.json
+
+# Local runtime artifacts
+src/backend/error_log.txt
+*.sqlite3

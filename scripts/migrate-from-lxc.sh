@@ -17,15 +17,34 @@ LXC_HOST="192.168.20.110"
 LXC_PORT="5432"
 LXC_USER="goldfinch_dev"
 LXC_DB="goldfinch_dev"
-LXC_PASSWORD="rYngef-bafnib-vinro1"
 
 LOCAL_HOST="localhost"
 LOCAL_PORT="5432"
 LOCAL_USER="goldfinch_dev"
 LOCAL_DB="goldfinch_dev"
-LOCAL_PASSWORD="rYngef-bafnib-vinro1"
+
+# Credentials: never hardcode secrets in repository.
+# Preferred usage:
+#   export LXC_PASSWORD="<source-db-password>"
+#   export LOCAL_PASSWORD="<local-db-password>"   # optional
+LXC_PASSWORD="${LXC_PASSWORD:-}"
+LOCAL_PASSWORD="${LOCAL_PASSWORD:-$LXC_PASSWORD}"
 
 BACKUP_FILE="goldfinch_backup_$(date +%Y%m%d_%H%M%S).sql"
+
+# Read passwords securely if not set via environment
+if [ -z "$LXC_PASSWORD" ]; then
+    read -s -p "🔐 Enter LXC PostgreSQL password for $LXC_USER@$LXC_HOST: " LXC_PASSWORD
+    echo ""
+fi
+
+if [ -z "$LOCAL_PASSWORD" ]; then
+    read -s -p "🔐 Enter local PostgreSQL password for $LOCAL_USER@$LOCAL_HOST (press Enter to reuse LXC password): " LOCAL_PASSWORD
+    echo ""
+    if [ -z "$LOCAL_PASSWORD" ]; then
+        LOCAL_PASSWORD="$LXC_PASSWORD"
+    fi
+fi
 
 # Check if Docker is running
 echo "✅ Checking Docker..."
@@ -45,7 +64,7 @@ fi
 
 # Test LXC connection
 echo "✅ Testing connection to LXC PostgreSQL..."
-if ! PGPASSWORD=$LXC_PASSWORD psql -h $LXC_HOST -p $LXC_PORT -U $LXC_USER -d $LXC_DB -c '\q' 2>/dev/null; then
+if ! PGPASSWORD="$LXC_PASSWORD" psql -h "$LXC_HOST" -p "$LXC_PORT" -U "$LXC_USER" -d "$LXC_DB" -c '\q' 2>/dev/null; then
     echo "❌ Error: Cannot connect to LXC PostgreSQL at $LXC_HOST:$LXC_PORT"
     echo "   Please check:"
     echo "   - Is the LXC server running?"
@@ -59,7 +78,7 @@ echo ""
 echo "📦 Step 1: Dumping database from LXC server..."
 echo "   Source: $LXC_USER@$LXC_HOST:$LXC_PORT/$LXC_DB"
 echo "   Backup: $BACKUP_FILE"
-PGPASSWORD=$LXC_PASSWORD pg_dump -h $LXC_HOST -p $LXC_PORT -U $LXC_USER -d $LXC_DB \
+PGPASSWORD="$LXC_PASSWORD" pg_dump -h "$LXC_HOST" -p "$LXC_PORT" -U "$LXC_USER" -d "$LXC_DB" \
     --verbose \
     --no-owner \
     --no-acl \
@@ -77,20 +96,20 @@ echo "✅ Backup created successfully: $(du -h $BACKUP_FILE | cut -f1)"
 echo ""
 echo "🗑️  Step 2: Preparing local database..."
 echo "   Dropping existing database (if exists)..."
-docker exec -i goldfinch-postgres psql -U $LOCAL_USER -c "DROP DATABASE IF EXISTS $LOCAL_DB;" 2>&1 | grep -v '^$' || true
+docker exec -e PGPASSWORD="$LOCAL_PASSWORD" -i goldfinch-postgres psql -U "$LOCAL_USER" -c "DROP DATABASE IF EXISTS $LOCAL_DB;" 2>&1 | grep -v '^$' || true
 echo "   Creating fresh database..."
-docker exec -i goldfinch-postgres psql -U $LOCAL_USER -c "CREATE DATABASE $LOCAL_DB;" 2>&1 | grep -v '^$'
+docker exec -e PGPASSWORD="$LOCAL_PASSWORD" -i goldfinch-postgres psql -U "$LOCAL_USER" -c "CREATE DATABASE $LOCAL_DB;" 2>&1 | grep -v '^$'
 
 # Restore to local Docker
 echo ""
 echo "📥 Step 3: Restoring database to local Docker..."
 echo "   Target: $LOCAL_USER@$LOCAL_HOST:$LOCAL_PORT/$LOCAL_DB"
-docker exec -i goldfinch-postgres psql -U $LOCAL_USER -d $LOCAL_DB < "$BACKUP_FILE" 2>&1 | grep -E '(ERROR|CREATE|ALTER|COPY|INSERT)' || true
+docker exec -e PGPASSWORD="$LOCAL_PASSWORD" -i goldfinch-postgres psql -U "$LOCAL_USER" -d "$LOCAL_DB" < "$BACKUP_FILE" 2>&1 | grep -E '(ERROR|CREATE|ALTER|COPY|INSERT)' || true
 
 # Verify migration
 echo ""
 echo "✅ Step 4: Verifying migration..."
-TABLE_COUNT=$(docker exec -i goldfinch-postgres psql -U $LOCAL_USER -d $LOCAL_DB -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
+TABLE_COUNT=$(docker exec -e PGPASSWORD="$LOCAL_PASSWORD" -i goldfinch-postgres psql -U "$LOCAL_USER" -d "$LOCAL_DB" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
 echo "   Tables found: $TABLE_COUNT"
 
 if [ "$TABLE_COUNT" -gt 0 ]; then
@@ -98,7 +117,7 @@ if [ "$TABLE_COUNT" -gt 0 ]; then
     echo "🎉 Migration completed successfully!"
     echo ""
     echo "📊 Database Statistics:"
-    docker exec -i goldfinch-postgres psql -U $LOCAL_USER -d $LOCAL_DB -c "
+    docker exec -e PGPASSWORD="$LOCAL_PASSWORD" -i goldfinch-postgres psql -U "$LOCAL_USER" -d "$LOCAL_DB" -c "
         SELECT
             schemaname,
             tablename,

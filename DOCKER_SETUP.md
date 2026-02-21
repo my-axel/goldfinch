@@ -221,7 +221,7 @@ cd src/backend && uvicorn app.main:app --reload
 ### Database Connection
 Located in: `src/backend/app/core/config.py`
 ```python
-DATABASE_URL = "postgresql+psycopg2://goldfinch_dev:rYngef-bafnib-vinro1@localhost:5432/goldfinch_dev"
+DATABASE_URL = "postgresql+psycopg2://goldfinch_dev:changeme@localhost:5432/goldfinch_dev"
 ```
 
 ### Redis Connection
@@ -283,8 +283,11 @@ The migration script (`scripts/migrate-from-lxc.sh`) does the following:
 
 **Manual Migration (if script fails):**
 ```bash
+# Set password once for this shell session
+export LXC_DB_PASSWORD="<set-your-password>"
+
 # 1. Dump from LXC
-PGPASSWORD=rYngef-bafnib-vinro1 pg_dump \
+PGPASSWORD="$LXC_DB_PASSWORD" pg_dump \
   -h 192.168.20.110 \
   -U goldfinch_dev \
   -d goldfinch_dev \
