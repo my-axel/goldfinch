@@ -1,135 +1,118 @@
 # 🐦 Goldfinch
 
-Goldfinch is a sophisticated retirement planning platform that empowers individuals and families to take control of their financial future. Built with modern technology and designed for transparency, it provides comprehensive management of diverse pension types (ETF, Company, Insurance), real-time portfolio tracking, and intelligent retirement strategies. With features like multi-currency support, smart analytics, and personalized recommendations, Goldfinch transforms complex retirement planning into a structured, accessible journey for everyone.
+Goldfinch is a retirement planning platform for households. It combines pension tracking, projections, and settings-driven financial planning in one application.
 
-## 🚀 Main Features
+## 🚧 Project Status
 
-### Dashboard
-- **Portfolio Overview**: Complete view of your retirement journey
-  - Total portfolio value and growth rates
-  - Contribution tracking and investment returns
-  - Historical performance analysis
-  - Quick actions for common tasks
+Goldfinch is in active development.
 
-### Household Management
-- **Family Planning**: Manage retirement planning for the whole family
-  - Add and manage household members
-  - Track individual and combined portfolios
-  - View household-level analytics
-  - Customize settings per member
+- Core pension and household management is implemented and usable.
+- Dashboard, Compass, and Payout Strategy are available as structured UI scaffolds and are being expanded feature by feature.
+- New frontend work is centered in `src/svelte-frontend`.
 
-### Pension Plans
-- **ETF-Based Pensions**: Create and manage ETF investment portfolios
-  - Real-time ETF data integration
-  - Performance tracking and analytics
-  - Contribution planning and monitoring
-  - Multi-currency support with automatic exchange rates
-- **Company Pensions**: Track employer-provided retirement benefits
-  - Record and monitor company contributions
-  - Track vesting schedules
-  - Document benefit terms
-- **Insurance Pensions**: Manage insurance-based retirement products
-  - Track policy values and returns
-  - Monitor premium payments
-  - Document policy terms and conditions
+## ✅ Features Available Today
 
-### Compass
-- **Retirement Navigation**: Smart analysis and guidance
-  - Gap analysis tools
-  - Personalized recommendations
-  - Interactive retirement planning
-  - Risk assessment and optimization
+- Household management (create, edit, delete members)
+- Pension management for five types:
+  - State pension
+  - Company pension
+  - Insurance pension
+  - ETF pension
+  - Savings pension
+- Pension status actions (pause/resume)
+- Contribution planning and contribution history (where applicable)
+- One-time investments (ETF, company, insurance flows)
+- ETF search and ETF metrics integration
+- Settings with backend persistence:
+  - UI language
+  - Number/date locale
+  - Currency
+  - Scenario rates (pessimistic/realistic/optimistic)
+  - Inflation rate
+  - Theme mode
+- Internationalization foundation (English/German)
+- Exchange rate backend APIs (latest, historical, update flows)
 
-### Payout Strategy
-- **Retirement Income Planning**: Plan your retirement withdrawals
-  - Timeline visualization
-  - Scenario planning
-  - Withdrawal strategy optimization
-  - Tax-efficient distribution planning
+## 🧭 Coming Next
 
-## ⚙️ Core Features
+- Dashboard aggregation with portfolio KPIs and performance views
+- Compass gap analysis and recommendation workflows
+- Payout strategy simulation and withdrawal planning
+- Currency system frontend integration
+- Contribution management automation across pension types
+- Additional testing and polish for full production hardening
 
-### Currency Management
-- **Multi-Currency Support**: Comprehensive handling of international currencies with EUR as base
-- **Real-Time Exchange Rates**: Daily updates from European Central Bank (ECB)
-- **Historical Rate Data**: Access to exchange rates dating back to 1999
-- **Automatic Conversion**: Seamless currency conversion for all financial calculations
+For detailed tracking, see [PROGRESS.md](PROGRESS.md).
 
-### Data Formatting
-- **Locale-Aware Formatting**: Intelligent number and date formatting based on user locale
-- **Currency Display**: Proper currency symbol placement and formatting
-- **Percentage Handling**: Standardized percentage formatting across the application
-- **Date Standardization**: Consistent date formatting with timezone support
+## 🧱 Tech Stack
 
-### Calculation Engine
-- **Projection System**: Sophisticated retirement projection calculations with multiple scenarios
-- **Monthly Compounding**: Accurate interest calculations with monthly compounding
-- **Contribution Tracking**: Detailed tracking of regular and one-time contributions
-- **Performance Analytics**: Comprehensive performance metrics and statistics
+### 🎨 Frontend
 
-### User Experience
-- **Responsive Design**: Fully responsive interface optimized for all device sizes
-- **Real-Time Updates**: Immediate reflection of changes in calculations and projections
-- **Data Validation**: Comprehensive input validation and error handling
-- **Accessibility**: WCAG-compliant interface with full keyboard navigation
+- SvelteKit 2
+- Svelte 5
+- TypeScript
+- Tailwind CSS 4
+- Paraglide (i18n)
 
-## 💻 Tech Stack
+### ⚙️ Backend
 
-### Frontend
-- **Next.js 15** with App Router and TurboPack
-- **React 19** with Server Components
-- **TypeScript 5**
-- **Tailwind CSS 4** with PostCSS 8
-- **Radix UI** components with Shadcn UI (Canary)
-- **Recharts** for data visualization
-- **React Hook Form** with Zod validation
-- **Axios** for API communication
+- FastAPI
+- SQLAlchemy
+- Alembic
+- PostgreSQL
+- Celery + Redis
+- yfinance
 
-### Backend
-- **FastAPI** with Pydantic 2
-- **SQLAlchemy 2.0** with async support
-- **Alembic** for database migrations
-- **Celery 5.4** with RabbitMQ for task processing
-- **YFinance** for ETF data integration
-- **PostgreSQL** for data persistence
-- **Uvicorn** for ASGI server
+## 🗂️ Repository Structure
 
-## 🗺️ Roadmap
+- `src/svelte-frontend`: active frontend application
+- `src/backend`: backend API, models, services, migrations, tests
+- `docs`: architecture and migration documentation
+- `PROGRESS.md`: roadmap and implementation status
 
-> For detailed progress tracking, implementation status, and upcoming features, see [PROGRESS.md](PROGRESS.md)
+## 🛠️ Local Development
 
-### Current Focus
-- Completing core pension management features
-- Implementing the central dashboard
-- Building the currency and internationalization system
+### 📋 Prerequisites
 
-### Key Milestones
-1. Core Dashboard Implementation
-2. Complete Pension Plans Integration
-3. Compass Feature Development
-4. Payout Strategy Implementation
-
-### Long-Term Vision
-- Advanced analytics with machine learning
-- Extended asset class support
-- Enhanced automation and integrations
-- Mobile application development
-
-## 🛠️ Development
-
-### Prerequisites
 - Node.js 20+
 - Python 3.11+
-- PostgreSQL
+- Docker (for PostgreSQL + Redis)
 
-### Setup
-1. Clone the repository
-2. Install frontend dependencies: `npm install`
-3. Install backend dependencies: `pip install -r src/backend/requirements.txt`
-4. Set up environment variables
-5. Run database migrations: `alembic upgrade head`
-6. Start the development server: `npm run dev`
+### ▶️ Setup
 
-## 📝 License
+1. Copy environment files:
+   - `cp .env.example .env`
+   - `cp src/svelte-frontend/.env.example src/svelte-frontend/.env`
+2. Start infrastructure:
+   - `docker-compose up -d`
+3. Start backend:
+   - `cd src/backend`
+   - `python3 -m venv venv`
+   - `source venv/bin/activate`
+   - `pip install -r requirements.txt`
+   - `alembic upgrade head`
+   - `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+4. Optional background workers:
+   - `celery -A app.core.celery_app.celery_app worker -l info`
+   - `celery -A app.core.celery_app.celery_app beat -l info`
+5. Start frontend:
+   - `cd src/svelte-frontend`
+   - `npm install`
+   - `npm run dev`
 
-This project is open-source software licensed under the MIT license.
+### 🌐 Local URLs
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+
+## 📚 Documentation
+
+- [PROGRESS.md](PROGRESS.md)
+- [docs/frontend-overview.md](docs/frontend-overview.md)
+- [docs/svelte_migration_plan.md](docs/svelte_migration_plan.md)
+- [docs/file-map.md](docs/file-map.md)
+
+## 📄 License
+
+MIT
