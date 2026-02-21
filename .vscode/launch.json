@@ -5,7 +5,6 @@
             "name": "🚀 Full Stack (All Services)",
             "configurations": ["Frontend Dev", "Svelte Dev", "Backend", "Celery Worker", "Celery Beat"],
             "stopAll": true,
-            "preLaunchTask": "🐳 Start Docker Services"
         }
     ],
     "configurations": [
