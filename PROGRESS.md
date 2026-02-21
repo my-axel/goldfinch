@@ -1,346 +1,147 @@
-# 🎯 Retirement Planning Application - Project Progress & Plan
-Last Updated: 2025-03-31
+# 🎯 Goldfinch - Projektstatus & Plan
+Last Updated: 2026-02-21
 
-> <details>
-> <summary><strong>🤖 AI Assistant Guide</strong></summary>
->
-> ## Purpose
-> This document tracks the progress and planning of the retirement planning application. It serves as the single source of truth for project status and implementation priorities.
->
-> ## Document Structure
-> 
-> ### 1. Current Status & Next Steps
-> This section is the primary reference point and should always be checked first.
-> 
-> #### Active Development
-> - Lists tasks currently being worked on
-> - Each task should include:
->   - Brief description of what's being done
->   - Link to detailed implementation plan if available
->   - Current subtasks or progress
-> - Tasks that are fully completed (all subtasks marked with ✅) should be removed from this section
->
-> #### Ready to Implement
-> Organized in three categories by dependency status:
-> 1. **Technical Improvements** - No external dependencies
-> 2. **Core Features** - Dependencies ready
-> 3. **Cross-Cutting Features** - Partial dependencies
->
-> Each entry should include:
-> - Estimated duration (if known)
-> - Link to detailed implementation plan if available
-> - Current dependency status
->
-> #### Blocked Items
-> - Lists features that cannot be started
-> - Must include what's blocking them
->
-> ### 2. Module Dependencies
-> The mermaid graph visualizes:
-> - Module relationships (solid arrows = direct, dotted = indirect)
-> - Module status (✅ Complete, ⚠️ Partial, 📝 Not Started)
-> - Module weights for progress calculation
->
-> ### 3. Implementation Status Table
-> Shows detailed status of all modules:
-> - Status indicators (✅, ⚠️, 📝)
-> - Progress percentage
-> - Dependencies
-> - Brief notes
->
-> ### 4. Project Milestones
-> Each milestone includes:
-> - Duration estimate
-> - Current status
-> - Key deliverables
-> - Link to detailed implementation plan
->
-> ## Working with this Document
->
-> ### When Starting Work
-> 1. Check "Current Status & Next Steps"
-> 2. Review "Ready to Implement" section
-> 3. Verify dependencies in the mermaid graph
-> 4. Move selected task to "Active Development"
->
-> ### When Updating Progress
-> 1. Update relevant sections in this order:
->    - Active Development status
->    - Implementation Status table
->    - Module Dependencies graph
->    - Project Milestones
-> 2. Recalculate overall progress if needed
-> 3. Move completed tasks to appropriate sections
-> 4. Remove fully completed tasks (all subtasks marked with ✅) from Active Development
->
-> ### When Adding New Tasks
-> 1. Add detailed implementation plan in `docs/plans/`
-> 2. Add to appropriate section:
->    - `active/` for immediate work
->    - `upcoming/` for planned work
-> 3. Update "Ready to Implement" or "Blocked Items"
-> 4. Update Implementation Status table
->
-> ### Progress Calculation
-> - Each module has an assigned weight reflecting its complexity and importance
-> - Weights are calibrated to sum to 100% across all modules
-> - Module progress based on completed features (0-100%)
-> - Overall progress calculation:
->   ```
->   Overall Progress = Sum of (Module Weight × Module Progress)
->   ```
-> - Core modules with low completion percentages (Dashboard, Compass, Payout Strategy) 
->   significantly impact overall progress due to their higher weights
-> - Update progress percentages in Implementation Status table when work is completed
-> - Re-validate weights periodically to ensure they reflect current project priorities
->
-> ### Documentation Organization
-> - Active plans: `docs/plans/active/`
-> - Upcoming plans: `docs/plans/upcoming/`
-> - Technical docs: `docs/tech/`
-> - Implementation details linked from this file
-> - Completed plans should be moved to `docs/plans/done/`
->
-> ## Status Indicators
-> - ✅ Complete: Fully implemented, tested, production-ready
-> - ⚠️ Partial: Partially implemented or UI-only
-> - 📝 Not Started: In planning phase
-> - 🟡 In Progress: Currently being worked on
->
-> ## Rules & Best Practices
-> 1. Keep "Current Status & Next Steps" updated
-> 2. Always verify dependencies before starting work
-> 3. Link to detailed implementation plans
-> 4. Use consistent status indicators
-> 5. Update all affected sections when making changes
-> 6. Never modify completed (✅) modules without explicit instruction
-> 7. Remove fully completed tasks from Active Development section
-> </details>
+## Zweck
+Dieses Dokument ist die aktuelle, wartbare Statusquelle fuer Goldfinch.
+Es ersetzt die alte React/Next.js-zentrierte Planung und verlinkt nur auf vorhandene Dokumente.
 
-## 📋 Current Status & Next Steps
+## Status-Legende
+- `✅ Complete`: Implementiert und im aktuellen Code vorhanden
+- `⚠️ Partial`: Implementiert, aber funktional eingeschraenkt oder noch MVP/Scaffold
+- `🟡 In Progress`: Aktiv in Bearbeitung oder naechster Fokus
+- `📝 Planned`: Geplant, aber noch nicht umgesetzt
 
-### Active Development
-- Statement Custom Hooks Implementation (1-2 weeks) 🟡 In Progress (10%)
-  > Beginning implementation of reusable statement management hooks across pension types
-  > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
-- Savings Pension Frontend Implementation (2-3 weeks) 🟡 In Progress (85%)
-  > Implementing frontend for the security-focused savings pension type
-  > **Details**: [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
-  > - ✅ Phase 1: Types and API Client
-  > - ✅ Phase 2: React Query Hooks
-  > - ✅ Phase 3: Form and Card Components
-  > - 🟡 Phase 4: Page Components and Integration
-  >   - ✅ 4.1: New/Add Page
-  >   - ✅ 4.2: Edit Page
-  >   - ✅ 4.3: PensionList Integration
-  >   - ✅ 4.4: PensionTypeSelectionModal Integration
-  >   - ✅ 4.5: Routes and Navigation Updates
+## Aktueller Snapshot
+- SvelteKit (`src/svelte-frontend`) ist der primaere Frontend-Pfad fuer neue Arbeit.
+- Legacy-Frontend (`app/`, `src/frontend/`) ist noch vorhanden, aber nicht mehr der Zielpfad fuer Feature-Ausbau.
+- Household-Management ist implementiert (CRUD inkl. UI und API-Integration).
+- Pension-Management fuer alle 5 Typen ist implementiert (State, Company, Insurance, ETF, Savings; jeweils New/Edit-Flows).
+- Settings inkl. Locale, Currency, Szenario-Raten, Inflation und Theme sind implementiert.
+- Dashboard, Compass und Payout Strategy existieren aktuell als strukturierte MVP-Scaffolds mit "coming soon"-Anteilen.
+- Exchange-Rate-Backend-Endpunkte sind verfuegbar (latest/historical/status/update).
 
-### Ready to Implement
-Listed by priority and dependency readiness:
+## Aktiver Fokus (naechste Iterationen)
+1. MVP-Ausbau fuer Dashboard, Compass und Payout Strategy mit echten Kernmetriken.
+2. Frontend-Integration von Currency/Exchange-Rate-Flows in relevante UI-Bereiche.
+3. Konsistenz-Harmonisierung im Backend (Status-/Statement-Endpunkte, Task-Flows).
+4. Cutover-Vorbereitung: Svelte final als Standard, Legacy klar archivieren oder entfernen.
 
-1. **Technical Improvements** (No external dependencies)
+## Modulstatus
 
-2. **Core Features** (Dependencies ready)
-   - Currency System Frontend Integration (1-2 weeks)
-   > Implementation of currency exchange system in the frontend
-   > **Details**: [Currency System Plan](docs/plans/active/currency_system.md)
+| Bereich | Status | Aktueller Stand | Naechster Schritt |
+|---|---|---|---|
+| Household | ✅ Complete | CRUD-Flow im Svelte-Frontend vorhanden | UX-Polish und Tests |
+| Pension: State | ✅ Complete | New/Edit + Statements + Szenarien | Regression-Tests |
+| Pension: Savings | ✅ Complete | New/Edit + Statements + Rates + Contribution-Plan | Regression-Tests |
+| Pension: Company | ✅ Complete | New/Edit + Statements + Contribution-Flow | Regression-Tests |
+| Pension: Insurance | ✅ Complete | New/Edit + Statements + Contribution-Flow | Regression-Tests |
+| Pension: ETF | ✅ Complete | New/Edit + ETF-Suche + Charts + One-time-Investment | ETF-Flow weiter vereinfachen |
+| Settings & i18n-Basis | ✅ Complete | Locale/Currency/Rate-Settings + DE/EN-Setup | i18n-Abdeckung ausbauen |
+| Dashboard | ⚠️ Partial | Seite vorhanden, aktuell v. a. Scaffold | MVP-KPIs anbinden |
+| Compass | ⚠️ Partial | Seite vorhanden, aktuell v. a. Scaffold | Gap-Calculator MVP |
+| Payout Strategy | ⚠️ Partial | Seite vorhanden, aktuell v. a. Scaffold | Basisszenarien MVP |
+| Currency Backend | ✅ Complete | Exchange-Rate-Endpunkte + Task-Trigger vorhanden | Frontend-Nutzung konsolidieren |
+| Currency Frontend Integration | 🟡 In Progress | Settings-Basis vorhanden, End-to-end Nutzung unvollstaendig | UI-Integration in Kernseiten |
+| Contribution Management Automation | 📝 Planned | Konzept dokumentiert | Iterative Umsetzung starten |
+| Backend Task/Endpoint Consistency | 🟡 In Progress | Plaene vorhanden, Teilarbeit noetig | Harmonisierung abschliessen |
+| Testing & QA | 📝 Planned | Basis vorhanden, aber kein durchgaengiger MVP-Testkorridor | Check-/Test-Standard etablieren |
 
-3. **Cross-Cutting Features** (Partial dependencies)
-   - Internationalization Implementation (4-5 weeks)
-   > **Details**: [i18n Plan](docs/plans/active/internationalization.md)
-
-### Blocked Items
-- Contribution Management System (3-4 weeks) (Blocked by: State Pension, Savings Pension)
-  > Implement automatic realization of planned contributions across pension types
-  > **Details**: [Contribution Management Plan](docs/plans/active/contribution_management.md)
-- Dashboard Implementation (4-6 weeks) (Blocked by: State Pension, Savings Pension)
-  > **Details**: [Dashboard Implementation Plan](docs/plans/drafts/core_dashboard.md)
-- Compass Module (Blocked by: Dashboard)
-- Payout Strategy (Blocked by: Dashboard)
-- Full Settings Implementation (Blocked by: i18n)
-
-### Module Dependencies
+## Abhaengigkeiten (vereinfacht)
 ```mermaid
 graph TD
-    %% Core Modules
-    ETF[ETF Pension ✅<br/>Weight: 8%] --> D
-    CP[Company Pension ✅<br/>Weight: 8%] --> D
-    IP[Insurance Pension ✅<br/>Weight: 8%] --> D
-    SP[State Pension ✅<br/>Weight: 5%] --> D
-    SVP[Savings Pension ✅<br/>Weight: 5%] --> D
-    D[Dashboard 📝<br/>Weight: 20%] --> C
-    D --> PS
-    
-    %% Dependent Modules
-    C[Compass 📝<br/>Weight: 15%]
-    PS[Payout Strategy 📝<br/>Weight: 10%]
-    
-    %% Cross-Cutting Features
-    CS[Currency System 📝<br/>Weight: 5%] --> S
-    I18n[Internationalization 📝<br/>Weight: 5%] --> S
-    
-    %% Settings affects all modules
-    S[Settings ⚠️<br/>Weight: 5%] -.-> ETF
-    S -.-> CP
-    S -.-> IP
-    S -.-> SP
-    S -.-> SVP
+    H[Household ✅] --> P[Pension Domains ✅]
+    P --> D[Dashboard ⚠️]
+    D --> C[Compass ⚠️]
+    D --> PS[Payout Strategy ⚠️]
+
+    S[Settings & i18n ✅] -.-> P
     S -.-> D
     S -.-> C
     S -.-> PS
-    
-    %% Household integration
-    H[Household ✅<br/>Weight: 3%] -.-> ETF
-    H -.-> CP
-    H -.-> IP
-    H -.-> SP
-    H -.-> SVP
-    
-    %% Technical Improvements
-    SCH[Statement Custom Hooks 🟡<br/>Weight: 2%] -.-> ETF
-    SCH -.-> CP
-    SCH -.-> IP
-    RQ[React Query ✅<br/>Weight: 3%] -.-> D
-    RQ -.-> C
-    RQ -.-> PS
-    CM[Contribution Management 📝<br/>Weight: 3%] -.-> ETF
-    CM -.-> CP
-    CM -.-> IP
-    CM -.-> SP
-    CM -.-> SVP
-    
-    %% Dependencies for Contribution Management
-    SP --> CM
-    SVP --> CM
-    
-    %% Styling
-    classDef complete fill:#90EE90,stroke:#000
-    classDef partial fill:#FFE5B4,stroke:#000
-    classDef notStarted fill:#FFB6C6,stroke:#000
-    classDef inProgress fill:#FFFF99,stroke:#000
-    class ETF,H,CP,IP,SP,RQ,SVP complete
-    class S partial
-    class CS,I18n,D,C,PS,CM notStarted
-    class SCH inProgress
-```
-<details>
-<summary><strong>📊 Graph Legend</strong></summary>
 
-```mermaid
-graph LR
-    %% Status Legend
-    L1[Complete ✅] --> L2[Partial ⚠️]
-    L2 --> L3[Not Started 📝]
-    L3 --> L4[In Progress 🟡]
-    
-    %% Dependency Types
-    D1[Module A] --> D2[Module B]
-    D3[Module X] -.-> D4[Module Y]
-    
-    %% Styling
-    classDef complete fill:#90EE90,stroke:#000
-    classDef partial fill:#FFE5B4,stroke:#000
-    classDef notStarted fill:#FFB6C6,stroke:#000
-    classDef inProgress fill:#FFFF99,stroke:#000
-    class L1 complete
-    class L2 partial
-    class L3 notStarted
-    class L4 inProgress
-    
-    %% Legend Labels
-    style D1 fill:#fff,stroke:#000
-    style D2 fill:#fff,stroke:#000
-    style D3 fill:#fff,stroke:#000
-    style D4 fill:#fff,stroke:#000
-    
-    %% Notes
-    N1[Higher weights<br/>indicate more<br/>complexity]
-    
-    %% Labels
-    Label1[Solid Arrow:<br/>Direct Dependency]
-    Label2[Dotted Arrow:<br/>Indirect Dependency]
+    XR[Exchange Rates Backend ✅] --> CF[Currency Frontend Integration 🟡]
+    CF -.-> D
+    CF -.-> C
+    CF -.-> PS
+
+    B[Backend Consistency 🟡] -.-> P
+    B -.-> XR
 ```
 
-</details>
-<br>
+## Milestones
 
-## 📊 Implementation Status `[Overall Progress: ~55%]`
+### Milestone 1: Svelte Core Migration
+`Status: ✅ Abgeschlossen (funktional)`
 
-| Module | Status | Progress | Dependencies | Notes |
-|--------|---------|-----------|--------------|-------|
-| ETF Pension | ✅ Complete | 100% | None | Basic CRUD + charts, migrated to React Query |
-| Company Pension | ✅ Complete | 100% | None | Contribution tracking, migrated to React Query |
-| Insurance Pension | ✅ Complete | 100% | None | Premium logic, migrated to React Query |
-| State Pension | ✅ Complete | 100% | None | Implementation complete, testing and documentation finalized |
-| Savings Pension | ⚠️ Partial | 50% | None | Backend fully implemented, frontend in progress |
-| Household | ✅ Complete | 100% | None | Basic CRUD, migrated to React Query |
-| Settings | ⚠️ Partial | 65% | i18n | Config + validation, scenario rates implemented, migrated to React Query |
-| Dashboard | ⚠️ UI Only | 15% | All Pensions | Complex aggregation, template only (no React Query needed yet) |
-| Compass | ⚠️ UI Only | 10% | Dashboard | Advanced algorithms, template only (no React Query needed yet) |
-| Payout Strategy | ⚠️ UI Only | 10% | Dashboard | Financial modeling, template only (no React Query needed yet) |
-| Currency System Backend | ✅ Complete | 100% | None | Exchange rates + API |
-| Currency System Frontend | 📝 Not Started | 0% | Settings | UI integration |
-| Internationalization | 📝 Not Started | 0% | Settings | Full app coverage |
-| Statement Custom Hooks | 🟡 In Progress | 10% | None | Reusable statement management |
-| React Query | ✅ Complete | 100% | None | All modules and components migrated to React Query |
-| Contribution Management | 📝 Not Started | 0% | State & Savings Pension | Automated contribution tracking |
+Enthaelt:
+1. Svelte-Frontend-Basis
+2. Household
+3. Settings/i18n-Basis
+4. Pension-Flows fuer alle 5 Typen
 
-## 🎯 Project Milestones
+### Milestone 2: MVP Product Surfaces
+`Status: 🟡 In Progress`
 
-### Milestone 1: Core Dashboard Implementation (4-6 weeks)
-> **Status**: 🟡 Planning Phase
-> **Details**: [Dashboard Implementation Plan](docs/plans/drafts/core_dashboard.md)
+Enthaelt:
+1. Dashboard MVP mit echten Kernzahlen
+2. Compass MVP mit Gap-Logik
+3. Payout-MVP mit Basis-Szenarien
+4. Currency-Integration in sichtbare Nutzerfluesse
 
-#### Key Deliverables:
-1. Portfolio Overview
-2. Contribution Tracking
-3. Returns & Performance
-4. Quick Actions & Integration
+### Milestone 3: Backend-Harmonisierung und Cutover
+`Status: 📝 Planned`
 
-### Milestone 2: Complete Pension Plans (4-5 weeks)
-> **Status**: 🟡 In Progress
-> **Details**: [Pension Plans Implementation](docs/plans/active/pension_plans.md)
+Enthaelt:
+1. Task-/Endpoint-Konsistenz fuer langfristige Wartbarkeit
+2. Svelte als finaler Standardpfad
+3. Legacy-Bereinigung (archivieren oder entfernen)
 
-#### Key Deliverables:
-1. ✅ Company Pension Implementation
-2. ✅ State Pension Implementation (100% complete)
-3. ✅ Insurance Pension Implementation
-4. ⚠️ Savings Pension Implementation (50% complete)
-   > Backend implementation completed, frontend in progress
-   > **Details**: [Savings Pension Backend Implementation](docs/plans/active/pension_savings/savings_backend_done.md) | [Savings Pension Frontend Implementation](docs/plans/active/pension_savings/savings_frontend.md)
-5. ✅ ETF Pension Enhancements
+## Simplification Playbook Alignment
+| Phase | Status | Referenz |
+|---|---|---|
+| Phase 0: Freeze/Guardrails | 🟡 In Progress | [01_phase0_freeze_guardrails.md](docs/simplification-playbook/01_phase0_freeze_guardrails.md) |
+| Phase 1: Svelte Tech Slim | 🟡 In Progress | [02_phase1_svelte_tech_slim.md](docs/simplification-playbook/02_phase1_svelte_tech_slim.md) |
+| Phase 2: ETF Simplification | 🟡 In Progress | [03_phase2_etf_simplification.md](docs/simplification-playbook/03_phase2_etf_simplification.md) |
+| Phase 3: MVP Pages | 📝 Planned | [04_phase3_mvp_pages.md](docs/simplification-playbook/04_phase3_mvp_pages.md) |
+| Phase 4: Backend Consistency | 📝 Planned | [05_phase4_backend_tasks_consistency.md](docs/simplification-playbook/05_phase4_backend_tasks_consistency.md) |
+| Phase 5: Cutover/Cleanup | 📝 Planned | [06_phase5_cutover_cleanup.md](docs/simplification-playbook/06_phase5_cutover_cleanup.md) |
 
-### Milestone 3: Technical Improvements (2-3 months)
-> **Status**: 🟡 In Progress
+Hinweis:
+- Das formale Abschlussprotokoll der Phasen wird in [99_ABSCHLUSS.md](docs/simplification-playbook/99_ABSCHLUSS.md) gepflegt.
 
-#### Key Deliverables:
-1. 🟡 Statement Custom Hooks Implementation (10% complete)
-   > **Details**: [Statement Custom Hooks Plan](docs/plans/active/statement_custom_hooks.md)
-2. ✅ React Query Implementation (100% complete)
-   > **Details**: [React Query Implementation Plan](docs/plans/active/react_query.md)
-3. Contribution Management System
-   > **Details**: [Contribution Management Plan](docs/plans/active/contribution_management.md)
+## Blocker und Risiken
+1. Dualbetrieb (Legacy + Svelte) erhoeht Wartungsaufwand und Kontextwechsel.
+2. MVP-Seiten sind noch nicht datengetrieben genug fuer produktive Entscheidungsunterstuetzung.
+3. Task- und Endpoint-Harmonisierung im Backend ist noch nicht abgeschlossen.
+4. Automatisierte End-to-end Regression ist aktuell nicht ausreichend formalisiert.
 
-### Milestone 4: Compass Implementation (4-5 weeks)
-> **Status**: 🟡 Planning Phase
-> **Details**: [Compass Implementation Plan](docs/plans/drafts/compass.md)
+## Arbeitsregeln fuer Updates
+1. Bei jeder Feature-Lieferung: Modulstatus + Milestone + ggf. Playbook-Phase aktualisieren.
+2. Keine toten Links: nur vorhandene Dateien referenzieren.
+3. Prozentwerte nur pflegen, wenn sie messbar und regelmaessig aktualisiert werden.
+4. React/Next-spezifische Planinhalte nur noch in historischen Dokumenten halten.
 
-#### Key Deliverables:
-1. Gap Analysis
-2. Risk Assessment
-3. Planning Tools
+## Verifikation (Standardbefehle)
+Svelte-Checks:
+```bash
+cd /Users/axel/Coding/goldfinch-dev/src/svelte-frontend
+npm run check
+```
 
-### Milestone 5: Payout Strategy Implementation (4-5 weeks)
-> **Status**: 🟡 Planning Phase
-> **Details**: [Payout Strategy Plan](docs/plans/drafts/payout_strategy.md)
+Backend-Tests:
+```bash
+cd /Users/axel/Coding/goldfinch-dev/src/backend
+python3 -m pytest
+```
 
-#### Key Deliverables:
-1. Basic Framework
-2. Advanced Features
-3. Guidance System
+## Dokumentationsindex (gueltig)
+- [README.md](README.md)
+- [frontend-overview.md](docs/frontend-overview.md)
+- [file-map.md](docs/file-map.md)
+- [svelte_migration_plan.md](docs/svelte_migration_plan.md)
+- [contribution_management.md](docs/contribution_management.md)
+- [backend_refactoring_plan.md](docs/backend_refactoring_plan.md)
+- [task_monitoring_migration.md](docs/task_monitoring_migration.md)
+- [simplification-playbook/00_START.md](docs/simplification-playbook/00_START.md)
+- [simplification-playbook/99_ABSCHLUSS.md](docs/simplification-playbook/99_ABSCHLUSS.md)
 
-## 📚 Documentation Index
-- [Technical Debt & Optimization](docs/tech/debt/README.md)
-- [Testing Strategy & Status](docs/tech/testing/README.md)
-- [Future Enhancements](docs/plans/future_enhancements.md)
