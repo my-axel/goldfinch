@@ -11,7 +11,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { PensionType, ContributionFrequency, type PensionListItem } from '$lib/types/pension';
-	import { formatCurrency as fmtCurrency, formatPercent as fmtPercent } from '$lib/utils/format';
+	import { formatCurrency as fmtCurrency, formatPercent as fmtPercent, formatNumber as fmtNumber, formatDate as fmtDate } from '$lib/utils/format';
 	import { TrendingUp, Shield, Building2, Landmark, Coins, Pencil, Trash2 } from '@lucide/svelte';
 
 	let {
@@ -36,6 +36,14 @@
 		return fmtPercent(value / 100, locale, 1);
 	}
 
+	function formatNumber(value: number, decimals = 3): string {
+		return fmtNumber(value, locale, decimals);
+	}
+
+	function formatDate(value: string): string {
+		return fmtDate(value, locale);
+	}
+
 	function frequencyLabel(freq: ContributionFrequency): string {
 		switch (freq) {
 			case ContributionFrequency.MONTHLY: return m.pension_per_month();
@@ -57,7 +65,7 @@
 	let TypeIcon = $derived(typeIcons[pension.type]);
 </script>
 
-<div class="bg-card rounded-xl border border-border shadow-sm w-[270px] h-[300px] {isInactive ? 'opacity-60' : ''}">
+<div class="bg-card rounded-xl border border-border shadow-sm w-[270px] min-h-[300px] {isInactive ? 'opacity-60' : ''}">
 	<div class="flex items-center justify-between px-4 pt-4 pb-2">
 		<div class="flex items-center gap-2 min-w-0">
 			<TypeIcon class="w-4 h-4 shrink-0 text-muted-foreground" />
@@ -92,6 +100,10 @@
 					<dt class="text-muted-foreground">ETF</dt>
 					<dd>{pension.etf_name || pension.etf_id}</dd>
 				</div>
+				<div>
+					<dt class="text-muted-foreground">{m.pension_total_units()}</dt>
+					<dd>{formatNumber(pension.total_units)}</dd>
+				</div>
 				{#if pension.current_step_amount && pension.current_step_frequency}
 					<div>
 						<dt class="text-muted-foreground">{m.pension_contribution()}</dt>
@@ -107,6 +119,12 @@
 					<dt class="text-muted-foreground">{m.pension_provider()}</dt>
 					<dd>{pension.provider}</dd>
 				</div>
+				{#if pension.contract_number}
+					<div>
+						<dt class="text-muted-foreground">{m.pension_contract_number()}</dt>
+						<dd class="truncate">{pension.contract_number}</dd>
+					</div>
+				{/if}
 				{#if pension.guaranteed_interest != null}
 					<div>
 						<dt class="text-muted-foreground">{m.pension_interest_rate()}</dt>
@@ -123,14 +141,26 @@
 					<dt class="text-muted-foreground">{m.pension_value()}</dt>
 					<dd>{formatCurrency(pension.current_value)}</dd>
 				</div>
+				{#if pension.latest_statement_date}
+					<div>
+						<dt class="text-muted-foreground">{m.pension_latest_statement()}</dt>
+						<dd>{formatDate(pension.latest_statement_date)}</dd>
+					</div>
+				{/if}
 			{:else if pension.type === PensionType.COMPANY}
 				<div>
 					<dt class="text-muted-foreground">{m.pension_employer()}</dt>
 					<dd>{pension.employer}</dd>
 				</div>
+				{#if pension.contribution_amount && pension.contribution_frequency}
+					<div>
+						<dt class="text-muted-foreground">{m.pension_employer_contribution()}</dt>
+						<dd>{formatCurrency(pension.contribution_amount)} {frequencyLabel(pension.contribution_frequency)}</dd>
+					</div>
+				{/if}
 				{#if pension.current_step_amount && pension.current_step_frequency}
 					<div>
-						<dt class="text-muted-foreground">{m.pension_contribution()}</dt>
+						<dt class="text-muted-foreground">{m.pension_own_contribution()}</dt>
 						<dd>{formatCurrency(pension.current_step_amount)} {frequencyLabel(pension.current_step_frequency)}</dd>
 					</div>
 				{/if}
@@ -140,7 +170,19 @@
 						<dd>{formatCurrency(pension.latest_projections[0].monthly_payout)}</dd>
 					</div>
 				{/if}
+				{#if pension.latest_statement_date}
+					<div>
+						<dt class="text-muted-foreground">{m.pension_latest_statement()}</dt>
+						<dd>{formatDate(pension.latest_statement_date)}</dd>
+					</div>
+				{/if}
 			{:else if pension.type === PensionType.STATE}
+				{#if pension.latest_statement_date}
+					<div>
+						<dt class="text-muted-foreground">{m.pension_latest_statement()}</dt>
+						<dd>{formatDate(pension.latest_statement_date)}</dd>
+					</div>
+				{/if}
 				{#if pension.latest_monthly_amount != null}
 					<div>
 						<dt class="text-muted-foreground">{m.pension_monthly_amount()}</dt>
@@ -153,11 +195,23 @@
 						<dd>{formatCurrency(pension.latest_projected_amount)}</dd>
 					</div>
 				{/if}
+				{#if pension.latest_current_value != null}
+					<div>
+						<dt class="text-muted-foreground">{m.pension_value()}</dt>
+						<dd>{formatCurrency(pension.latest_current_value)}</dd>
+					</div>
+				{/if}
 			{:else if pension.type === PensionType.SAVINGS}
 				<div>
 					<dt class="text-muted-foreground">{m.pension_balance()}</dt>
 					<dd>{formatCurrency(pension.latest_balance ?? 0)}</dd>
 				</div>
+				{#if pension.latest_statement_date}
+					<div>
+						<dt class="text-muted-foreground">{m.pension_latest_statement()}</dt>
+						<dd>{formatDate(pension.latest_statement_date)}</dd>
+					</div>
+				{/if}
 				<div>
 					<dt class="text-muted-foreground">{m.pension_interest_rate()}</dt>
 					<dd>{formatPercent(pension.realistic_rate)}</dd>
