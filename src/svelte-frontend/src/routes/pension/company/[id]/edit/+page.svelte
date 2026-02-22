@@ -25,6 +25,7 @@
 	import BasicInformationCard from '$lib/components/pension/company/BasicInformationCard.svelte';
 	import StatementsCard from '$lib/components/pension/company/StatementsCard.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
+	import ContributionHistoryCard from '$lib/components/pension/ContributionHistoryCard.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
 	import type { PageData } from './$types';
 
@@ -310,5 +311,15 @@
 				<ContributionPlanCard bind:steps={contributionPlanSteps} />
 			</ContentSection>
 		</form>
+
+		<!-- Contribution History Section (read-only, outside form) -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.contribution_history_explanation()}</p>
+				</Explanation>
+			{/snippet}
+			<ContributionHistoryCard contributions={pension.contribution_history ?? []} />
+		</ContentSection>
 	{/if}
 </div>

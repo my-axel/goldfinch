@@ -48,6 +48,7 @@ export interface ExtraContribution {
 	pension_id: number;
 	amount: number;
 	contribution_date: string;
+	is_manual?: boolean;
 	note?: string;
 }
 
@@ -116,6 +117,7 @@ export interface InsurancePension {
 	guaranteed_interest?: number;
 	expected_return?: number;
 	contribution_plan_steps: ContributionStep[];
+	contribution_history?: ExtraContribution[];
 	status: 'ACTIVE' | 'PAUSED';
 	paused_at?: string;
 	resume_at?: string;

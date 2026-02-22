@@ -30,6 +30,7 @@
 	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import ProjectionChart from '$lib/components/pension/etf/ProjectionChart.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
+	import ContributionHistoryCard from '$lib/components/pension/ContributionHistoryCard.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
 	import OneTimeInvestmentModal from '$lib/components/pension/etf/OneTimeInvestmentModal.svelte';
 	import type { PageData } from './$types';
@@ -465,6 +466,16 @@
 					/>
 				</Card>
 			</ContentSection>
+
+		<!-- Section 5: Contribution History -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.contribution_history_explanation()}</p>
+				</Explanation>
+			{/snippet}
+			<ContributionHistoryCard contributions={statistics?.contribution_history ?? []} />
+		</ContentSection>
 
 		</form>
 	{/if}

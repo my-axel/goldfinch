@@ -247,15 +247,15 @@
 			fontSize: 11,
 			color: tc.axisLabel,
 			borderWidth: 0,
-			backgroundColor: 'transparent'
+			backgroundColor: 'transparent',
 		};
 		const markLineData: any[] = [
-			{ xAxis: today.getTime(), label: { ...refLabelStyle, formatter: 'Heute', position: 'insideStartTop' } }
+			{ xAxis: today.getTime(), label: { ...refLabelStyle, formatter: 'Heute', position: 'insideEndBottom' } }
 		];
 		if (_retirementDateObj) {
 			markLineData.push({
 				xAxis: _retirementDateObj.getTime(),
-				label: { ...refLabelStyle, formatter: 'Rente', position: 'insideStartTop' }
+				label: { ...refLabelStyle, formatter: 'Rente', position: 'insideEndTop' }
 			});
 		}
 

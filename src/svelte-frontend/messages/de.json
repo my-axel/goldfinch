@@ -201,6 +201,10 @@
 	"contribution_history_title": "Beitragshistorie",
 	"contribution_history_date": "Datum",
 	"contribution_history_note": "Notiz",
+	"contribution_history_empty": "Noch keine Beiträge erfasst.",
+	"contribution_history_year_total": "Gesamt",
+	"contribution_history_entries": "{count} Einträge",
+	"contribution_history_explanation": "Hier werden alle erfassten Beiträge für diesen Pensionsplan angezeigt. Die Jahre können einzeln auf- und zugeklappt werden. Der Jahresgesamtbetrag wird im Kopfbereich jeder Jahresgruppe angezeigt.",
 
 	"state_pension_new_title": "Neue Gesetzliche Rente",
 	"state_pension_new_description": "Füge deine gesetzlichen Rentendetails hinzu und verfolge deine Ansprüche im Laufe der Zeit.",

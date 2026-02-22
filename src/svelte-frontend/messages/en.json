@@ -201,6 +201,10 @@
 	"contribution_history_title": "Contribution History",
 	"contribution_history_date": "Date",
 	"contribution_history_note": "Note",
+	"contribution_history_empty": "No contributions recorded yet.",
+	"contribution_history_year_total": "Total",
+	"contribution_history_entries": "{count} entries",
+	"contribution_history_explanation": "This section shows all contributions that have been recorded for this pension plan. Years can be expanded or collapsed. The total amount per year is shown in the header.",
 
 	"state_pension_new_title": "New State Pension",
 	"state_pension_new_description": "Add your state pension details and track your benefits over time.",
