@@ -5,13 +5,14 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_, or_
 
 from app.crud.base import CRUDBase
-from app.models.pension_savings import PensionSavings, PensionSavingsStatement, PensionSavingsContributionPlanStep
+from app.models.pension_savings import PensionSavings, PensionSavingsStatement, PensionSavingsContributionPlanStep, PensionSavingsContributionHistory
 from app.schemas.pension_savings import (
     PensionSavingsCreate,
     PensionSavingsUpdate,
     PensionSavingsStatementCreate,
     PensionSavingsStatementUpdate,
-    ContributionPlanStepCreate
+    ContributionPlanStepCreate,
+    ContributionHistoryCreate
 )
 from app.models.enums import PensionStatus
 import logging
@@ -99,7 +100,8 @@ class CRUDPensionSavings(CRUDBase[PensionSavings, PensionSavingsCreate, PensionS
         """Get a savings pension by ID, including its statements and contribution steps."""
         return db.query(PensionSavings).options(
             joinedload(PensionSavings.statements),
-            joinedload(PensionSavings.contribution_plan_steps)
+            joinedload(PensionSavings.contribution_plan_steps),
+            joinedload(PensionSavings.contribution_history)
         ).filter(PensionSavings.id == id).first()
     
     def get_by_member(self, db: Session, member_id: int) -> List[PensionSavings]:
@@ -175,11 +177,28 @@ class CRUDPensionSavings(CRUDBase[PensionSavings, PensionSavingsCreate, PensionS
             )
         ).first()
     
+    def create_contribution_history(
+        self,
+        db: Session,
+        *,
+        pension_id: int,
+        obj_in: ContributionHistoryCreate
+    ) -> PensionSavingsContributionHistory:
+        """Record a contribution history entry for a savings pension."""
+        db_obj = PensionSavingsContributionHistory(
+            **obj_in.model_dump(),
+            pension_savings_id=pension_id
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
     def update_status(
-        self, 
-        db: Session, 
-        *, 
-        pension_id: int, 
+        self,
+        db: Session,
+        *,
+        pension_id: int,
         status: PensionStatus, 
         paused_at: Optional[date] = None, 
         resume_at: Optional[date] = None

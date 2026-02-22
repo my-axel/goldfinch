@@ -26,6 +26,8 @@
 	import InterestRatesCard from '$lib/components/pension/savings/InterestRatesCard.svelte';
 	import StatementsCard from '$lib/components/pension/savings/StatementsCard.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
+	import ContributionHistoryCard from '$lib/components/pension/ContributionHistoryCard.svelte';
+	import OneTimeInvestmentModal from '$lib/components/pension/savings/OneTimeInvestmentModal.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
 	import type { PageData } from './$types';
 
@@ -36,6 +38,7 @@
 	// Loading/error state
 	let loadError = $state('');
 	let submitting = $state(false);
+	let showOneTimeModal = $state(false);
 
 	// Pension data
 	let pension = $state<SavingsPension | null>(null);
@@ -301,5 +304,37 @@
 				<ContributionPlanCard bind:steps={contributionPlanSteps} />
 			</ContentSection>
 		</form>
+
+		<!-- Contribution History Section (read-only, outside form) -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.contribution_history_explanation()}</p>
+				</Explanation>
+			{/snippet}
+			<ContributionHistoryCard contributions={pension.contribution_history ?? []}>
+				{#snippet headerActions()}
+					<button
+						type="button"
+						onclick={() => (showOneTimeModal = true)}
+						class="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-medium transition-colors"
+					>
+						{m.savings_add_one_time_investment()}
+					</button>
+				{/snippet}
+			</ContributionHistoryCard>
+		</ContentSection>
 	{/if}
 </div>
+
+{#if pension}
+	<OneTimeInvestmentModal
+		open={showOneTimeModal}
+		pensionId={pensionId}
+		pensionName={pension.name}
+		onClose={() => (showOneTimeModal = false)}
+		onSuccess={async () => {
+			pension = await pensionApi.get<SavingsPension>(PensionType.SAVINGS, pensionId);
+		}}
+	/>
+{/if}

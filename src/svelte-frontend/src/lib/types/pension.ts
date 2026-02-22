@@ -256,6 +256,7 @@ export interface SavingsPension {
 	resume_at?: string;
 	statements?: SavingsPensionStatement[];
 	contribution_plan_steps: ContributionStep[];
+	contribution_history?: ExtraContribution[];
 }
 
 // --- Union types ---

@@ -304,18 +304,7 @@
 						<p class="text-sm text-muted-foreground">{m.etf_contribution_explanation_growth()}</p>
 					</Explanation>
 				{/snippet}
-				<div class="space-y-3">
-					<ContributionPlanCard bind:steps={contributionPlanSteps} />
-					<div class="flex justify-end">
-						<button
-							type="button"
-							onclick={() => (showOneTimeModal = true)}
-							class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-						>
-							{m.etf_add_one_time_investment()}
-						</button>
-					</div>
-				</div>
+				<ContributionPlanCard bind:steps={contributionPlanSteps} />
 			</ContentSection>
 
 			<!-- Section 3: Historical Performance -->
@@ -474,7 +463,17 @@
 					<p>{m.contribution_history_explanation()}</p>
 				</Explanation>
 			{/snippet}
-			<ContributionHistoryCard contributions={statistics?.contribution_history ?? []} />
+			<ContributionHistoryCard contributions={statistics?.contribution_history ?? []}>
+				{#snippet headerActions()}
+					<button
+						type="button"
+						onclick={() => (showOneTimeModal = true)}
+						class="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-medium transition-colors"
+					>
+						{m.etf_add_one_time_investment()}
+					</button>
+				{/snippet}
+			</ContributionHistoryCard>
 		</ContentSection>
 
 		</form>

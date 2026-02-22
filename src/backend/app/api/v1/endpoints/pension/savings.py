@@ -14,7 +14,9 @@ from app.schemas.pension_savings import (
     PensionSavingsStatementUpdate,
     PensionSavingsStatementResponse,
     PensionSavingsListSchema,
-    PensionSavingsProjection
+    PensionSavingsProjection,
+    ContributionHistoryCreate,
+    ContributionHistoryResponse
 )
 from app.schemas.pension import OneTimeInvestmentCreate
 from app.models.enums import PensionStatus
@@ -108,6 +110,25 @@ def delete_savings_pension(
     
     pension_savings.remove(db=db, id=id)
     return {"success": True}
+
+@router.post(
+    "/{id}/contribution-history",
+    response_model=ContributionHistoryResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def create_savings_contribution_history(
+    contribution_in: ContributionHistoryCreate,
+    id: int = Path(..., description="The ID of the savings pension"),
+    db: Session = Depends(get_db)
+):
+    """Record a contribution history entry for a savings pension."""
+    pension = pension_savings.get(db=db, id=id)
+    if not pension:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Savings pension with ID {id} not found"
+        )
+    return pension_savings.create_contribution_history(db=db, pension_id=id, obj_in=contribution_in)
 
 @router.post("/{id}/statements", response_model=PensionSavingsStatementResponse, status_code=status.HTTP_201_CREATED)
 def create_savings_statement(
@@ -312,11 +333,23 @@ def create_one_time_investment(
     )
 
     try:
-        return pension_savings.add_statement(
+        statement = pension_savings.add_statement(
             db=db,
             pension_id=id,
             statement_in=statement_data
         )
+        # Also record in contribution history so it appears in the history card
+        pension_savings.create_contribution_history(
+            db=db,
+            pension_id=id,
+            obj_in=ContributionHistoryCreate(
+                contribution_date=investment_in.investment_date,
+                amount=investment_in.amount,
+                is_manual=True,
+                note=investment_in.note
+            )
+        )
+        return statement
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

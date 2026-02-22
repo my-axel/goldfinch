@@ -22,6 +22,7 @@
 	"dashboard_today": "Heute",
 	"dashboard_current_position": "Aktuelle Position & Verlauf",
 	"dashboard_future_projections": "Zukunftsprognosen",
+	"dashboard_filter_all": "Gesamter Haushalt",
 
 	"household_title": "Haushalt",
 	"household_description": "Verwalte deine Haushaltsmitglieder und deren Rentenplanung.",
@@ -532,6 +533,17 @@
 	"etf_search_database_results": "Datenbankeinträge",
 	"etf_search_yfinance_results": "YFinance-Ergebnisse",
 	"etf_search_open": "ETF suchen",
+
+	"savings_add_one_time_investment": "Einmalige Einzahlung hinzufügen",
+	"savings_one_time_amount": "Betrag",
+	"savings_one_time_amount_required": "Betrag muss größer als 0 sein",
+	"savings_one_time_date": "Einzahlungsdatum",
+	"savings_one_time_date_required": "Einzahlungsdatum ist erforderlich",
+	"savings_one_time_note": "Notiz (optional)",
+	"savings_one_time_note_placeholder": "z.B. Jahresbonus, Sondereinzahlung...",
+	"savings_one_time_submit": "Einzahlung erfassen",
+	"savings_one_time_added": "Einzahlung erfolgreich erfasst",
+	"savings_one_time_failed": "Einzahlung konnte nicht erfasst werden",
 
 	"etf_add_one_time_investment": "Einmalinvestition hinzufügen",
 	"etf_one_time_amount": "Betrag",

@@ -5,6 +5,17 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict, model_valida
 
 from app.models.enums import PensionStatus, ContributionFrequency, CompoundingFrequency
 
+class ContributionHistoryCreate(BaseModel):
+    contribution_date: date
+    amount: Decimal = Field(ge=0)
+    is_manual: bool = False
+    note: Optional[str] = None
+
+class ContributionHistoryResponse(ContributionHistoryCreate):
+    id: int
+    pension_savings_id: int
+    model_config = ConfigDict(from_attributes=True)
+
 class ContributionPlanStepBase(BaseModel):
     amount: Decimal = Field(gt=0, description="Amount to contribute per period")
     frequency: ContributionFrequency = Field(description="How often contributions are made")
@@ -124,7 +135,8 @@ class PensionSavingsResponse(PensionSavingsBase):
     id: int
     contribution_plan_steps: List[ContributionPlanStepResponse]
     statements: List[PensionSavingsStatementResponse]
-    
+    contribution_history: List[ContributionHistoryResponse] = []
+
     model_config = ConfigDict(from_attributes=True)
 
 class PensionSavingsScenario(BaseModel):

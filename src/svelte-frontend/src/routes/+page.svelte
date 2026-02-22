@@ -6,16 +6,77 @@
 -->
 
 <script lang="ts">
-	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import HouseholdSwitcher from '$lib/components/dashboard/HouseholdSwitcher.svelte';
+	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { pensionStore } from '$lib/stores/pension.svelte';
+	import { dashboardStore } from '$lib/stores/dashboard.svelte';
+	import { pensionApi } from '$lib/api/pension';
+	import { PensionType, type ETFPensionStatistics } from '$lib/types/pension';
+
+	let { data } = $props();
+
+	let etfStats = $state<ETFPensionStatistics | null>(null);
+	let etfStatsLoading = $state(false);
+
+	$effect(() => {
+		pensionStore.load();
+	});
+
+	$effect(() => {
+		const etfPensions = dashboardStore.selectedPensions.filter(
+			(p) => p.type === PensionType.ETF_PLAN
+		);
+		if (etfPensions.length === 0) {
+			etfStats = null;
+			etfStatsLoading = false;
+			return;
+		}
+		etfStatsLoading = true;
+		Promise.all(etfPensions.map((p) => pensionApi.getETFPensionStatistics(p.id)))
+			.then((allStats) => {
+				if (allStats.length === 1) {
+					etfStats = allStats[0];
+					return;
+				}
+				// Merge contribution histories (chart will sort & accumulate them)
+				const contributionHistory = allStats.flatMap((s) => s.contribution_history);
+				// Merge value histories: group by date, sum values across plans
+				const valueMap = new Map<string, number>();
+				for (const s of allStats) {
+					for (const v of s.value_history) {
+						valueMap.set(v.date, (valueMap.get(v.date) ?? 0) + Number(v.value));
+					}
+				}
+				const valueHistory = Array.from(valueMap.entries())
+					.map(([date, value]) => ({ date, value }))
+					.sort((a, b) => a.date.localeCompare(b.date));
+				etfStats = {
+					total_invested_amount: allStats.reduce((s, x) => s + x.total_invested_amount, 0),
+					current_value: allStats.reduce((s, x) => s + x.current_value, 0),
+					total_return: allStats.reduce((s, x) => s + x.total_return, 0),
+					contribution_history: contributionHistory,
+					value_history: valueHistory
+				};
+			})
+			.catch(() => {
+				etfStats = null;
+			})
+			.finally(() => {
+				etfStatsLoading = false;
+			});
+	});
 </script>
 
 <div class="space-y-6">
-	<PageHeader
-		title={m.dashboard_title()}
-		description={m.dashboard_description()}
-	/>
+	<div class="flex items-end justify-between gap-4 mb-8">
+		<div>
+			<h1 class="text-3xl font-bold tracking-tight">{m.dashboard_title()}</h1>
+			<p class="text-muted-foreground mt-2">{m.dashboard_description()}</p>
+		</div>
+		<HouseholdSwitcher members={data.members} bind:selectedMemberId={dashboardStore.selectedMemberId} />
+	</div>
 
 	<!-- Main content container -->
 	<div class="grid grid-cols-1 md:grid-cols-13 gap-6">
@@ -64,20 +125,12 @@
 
 			<!-- Historical Charts -->
 			<div class="space-y-4">
-				<Card title="Contributions vs Returns" description="Growth breakdown over time">
-					<div class="h-[300px]">
-						<ul class="list-disc pl-4 space-y-2">
-							<li class="text-muted-foreground">Stacked area chart showing:</li>
-							<ul class="list-[circle] pl-4 space-y-1">
-								<li class="text-muted-foreground">Total contributions (bottom)</li>
-								<li class="text-muted-foreground">Market returns (top)</li>
-								<li class="text-muted-foreground">Monthly/yearly toggle</li>
-							</ul>
-							<li class="text-muted-foreground">Hover for detailed values</li>
-							<li class="text-muted-foreground">Highlight significant events</li>
-							<li class="text-muted-foreground">Show contribution patterns</li>
-						</ul>
-					</div>
+				<Card title="ETF — Contributions vs Returns" description="Historical performance of your ETF plan">
+					<HistoricalPerformanceChart
+						contributionHistory={etfStats?.contribution_history ?? []}
+						valueHistory={etfStats?.value_history ?? []}
+						loading={etfStatsLoading || dashboardStore.loading}
+					/>
 				</Card>
 
 				<Card title="Plan Performance Comparison" description="How each plan has performed">

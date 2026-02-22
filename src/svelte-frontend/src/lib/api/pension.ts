@@ -92,6 +92,12 @@ function buildPensionApi(client: ReturnType<typeof createApi>) {
 		updateSavingsPensionStatement: (pensionId: number, statementId: number, data: { statement_date: string; balance: number; note?: string }) =>
 			client.put<void>(`${PENSION_BASE}/savings/${pensionId}/statements/${statementId}`, data),
 
+		/** Record a one-time investment for a savings pension (creates statement + contribution history entry) */
+		addSavingsPensionOneTimeInvestment: (
+			pensionId: number,
+			data: { amount: number; investment_date: string; note?: string }
+		) => client.post<void>(`${PENSION_BASE}/savings/${pensionId}/one-time-investment`, data),
+
 		/** Add a new statement to an insurance pension (with projections inline) */
 		addInsurancePensionStatement: (
 			pensionId: number,

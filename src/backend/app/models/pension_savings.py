@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, ForeignKey, Enum as SQLEnum, Index
+from sqlalchemy import Boolean, Column, Integer, String, Numeric, Date, ForeignKey, Enum as SQLEnum, Index
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from app.models.enums import PensionStatus, ContributionFrequency, CompoundingFrequency
@@ -37,9 +37,15 @@ class PensionSavings(Base):
         order_by="desc(PensionSavingsStatement.statement_date)"
     )
     contribution_plan_steps = relationship(
-        "PensionSavingsContributionPlanStep", 
-        back_populates="pension", 
+        "PensionSavingsContributionPlanStep",
+        back_populates="pension",
         cascade="all, delete-orphan"
+    )
+    contribution_history = relationship(
+        "PensionSavingsContributionHistory",
+        back_populates="pension",
+        cascade="all, delete-orphan",
+        order_by="desc(PensionSavingsContributionHistory.contribution_date)"
     )
 
 class PensionSavingsStatement(Base):
@@ -80,4 +86,17 @@ class PensionSavingsContributionPlanStep(Base):
     note = Column(String, nullable=True)
 
     # Relationships
-    pension = relationship("PensionSavings", back_populates="contribution_plan_steps") 
+    pension = relationship("PensionSavings", back_populates="contribution_plan_steps")
+
+
+class PensionSavingsContributionHistory(Base):
+    __tablename__ = "pension_savings_contribution_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    pension_savings_id = Column(Integer, ForeignKey("pension_savings.id", ondelete="CASCADE"), nullable=False, index=True)
+    contribution_date = Column(Date, nullable=False)
+    amount = Column(Numeric(20, 2), nullable=False)
+    is_manual = Column(Boolean, nullable=False, default=False)
+    note = Column(String, nullable=True)
+
+    pension = relationship("PensionSavings", back_populates="contribution_history")

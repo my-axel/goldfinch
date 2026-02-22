@@ -22,6 +22,7 @@
 	"dashboard_today": "Today",
 	"dashboard_current_position": "Current Position & History",
 	"dashboard_future_projections": "Future Projections",
+	"dashboard_filter_all": "Entire Household",
 
 	"household_title": "Household",
 	"household_description": "Manage your household members and their retirement planning.",
@@ -532,6 +533,17 @@
 	"etf_search_database_results": "Database Results",
 	"etf_search_yfinance_results": "YFinance Results",
 	"etf_search_open": "Search ETF",
+
+	"savings_add_one_time_investment": "Add One-Time Investment",
+	"savings_one_time_amount": "Amount",
+	"savings_one_time_amount_required": "Amount must be greater than 0",
+	"savings_one_time_date": "Investment Date",
+	"savings_one_time_date_required": "Investment date is required",
+	"savings_one_time_note": "Note (optional)",
+	"savings_one_time_note_placeholder": "e.g. Year-end bonus, extra savings...",
+	"savings_one_time_submit": "Add Investment",
+	"savings_one_time_added": "Investment recorded successfully",
+	"savings_one_time_failed": "Failed to record investment",
 
 	"etf_add_one_time_investment": "Add One-Time Investment",
 	"etf_one_time_amount": "Amount",

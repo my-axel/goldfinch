@@ -5,6 +5,7 @@
 -->
 
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';
@@ -20,7 +21,13 @@
 		is_manual?: boolean;
 	}
 
-	let { contributions }: { contributions: ContributionEntry[] } = $props();
+	let {
+		contributions,
+		headerActions: headerActionsSlot
+	}: {
+		contributions: ContributionEntry[];
+		headerActions?: Snippet;
+	} = $props();
 
 	interface YearGroup {
 		year: number;
@@ -77,6 +84,9 @@
 </script>
 
 <Card title={m.contribution_history_title()}>
+	{#snippet headerActions()}
+		{@render headerActionsSlot?.()}
+	{/snippet}
 	{#if yearGroups.length === 0}
 		<p class="text-sm text-muted-foreground py-2">{m.contribution_history_empty()}</p>
 	{:else}
