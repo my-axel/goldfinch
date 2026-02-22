@@ -161,7 +161,7 @@ class PensionSavingsListSchema(BaseModel):
     status: PensionStatus
     paused_at: Optional[date] = None
     resume_at: Optional[date] = None
-    latest_balance: Optional[Decimal] = None
+    latest_balance: Optional[float] = None
     latest_statement_date: Optional[date] = None
     pessimistic_rate: Decimal
     realistic_rate: Decimal

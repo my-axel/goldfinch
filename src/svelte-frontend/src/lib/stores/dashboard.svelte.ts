@@ -1,11 +1,13 @@
 import { SvelteMap } from 'svelte/reactivity';
 import { pensionStore } from '$lib/stores/pension.svelte';
-import { PensionType, type PensionListItem } from '$lib/types/pension';
+import { PensionType, type PensionListItem, type AggregateSeriesResponse } from '$lib/types/pension';
+import { dashboardApi } from '$lib/api/dashboard';
 
 function currentValueOf(pension: PensionListItem): number {
-	if (pension.type === PensionType.STATE) return pension.latest_current_value ?? 0;
-	if (pension.type === PensionType.SAVINGS) return pension.latest_balance ?? 0;
-	return pension.current_value;
+	// API returns Decimal fields as strings; Number() coerces safely to avoid string concatenation
+	if (pension.type === PensionType.STATE) return Number(pension.latest_current_value ?? 0);
+	if (pension.type === PensionType.SAVINGS) return Number(pension.latest_balance ?? 0);
+	return Number(pension.current_value);
 }
 
 class DashboardStore {
@@ -36,6 +38,35 @@ class DashboardStore {
 		}
 		return map;
 	});
+
+	// ─── Time Series Data ─────────────────────────────────────────────────────
+
+	seriesData = $state<AggregateSeriesResponse | null>(null);
+	seriesLoading = $state(false);
+	seriesError = $state<string | null>(null);
+
+	/**
+	 * Load aggregate time series from the backend.
+	 * Automatically uses selectedMemberId if set.
+	 * Call this whenever selectedMemberId changes or on initial mount.
+	 */
+	async loadSeries(pensionType?: string) {
+		this.seriesLoading = true;
+		this.seriesError = null;
+		try {
+			this.seriesData = await dashboardApi.getAggregateSeries({
+				member_id: this.selectedMemberId,
+				pension_type: pensionType
+			});
+		} catch (e) {
+			this.seriesError = e instanceof Error ? e.message : 'Failed to load series data';
+			this.seriesData = null;
+		} finally {
+			this.seriesLoading = false;
+		}
+	}
+
+	// ─── Existing getters ─────────────────────────────────────────────────────
 
 	get hasData() {
 		return pensionStore.pensions.length > 0;

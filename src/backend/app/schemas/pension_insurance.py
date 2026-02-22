@@ -315,7 +315,7 @@ class InsurancePensionListSchema(BaseModel):
     id: int
     name: str
     member_id: int
-    current_value: Decimal
+    current_value: float
     provider: str
     contract_number: Optional[str] = None
     start_date: date

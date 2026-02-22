@@ -17,6 +17,9 @@ from app.schemas.pension_state import (
     PensionStatusUpdate
 )
 from app.services.pension_state_projection import PensionStateProjectionService, StatePensionProjection
+from app.services.pension_historical_series import PensionHistoricalSeriesService
+from app.services.pension_series_projection import PensionSeriesProjectionService
+from app.schemas.pension_series import PensionSeriesResponse
 import logging
 
 logger = logging.getLogger("app.api.v1.endpoints.pension.state")
@@ -375,4 +378,45 @@ def update_state_pension_status(
     pension = pension_state.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="State Pension not found")
-    return pension_state.update_status(db=db, db_obj=pension, obj_in=status_in) 
+    return pension_state.update_status(db=db, db_obj=pension, obj_in=status_in)
+
+
+@router.get(
+    "/{pension_id}/series",
+    response_model=PensionSeriesResponse,
+    responses={
+        200: {"description": "Time series retrieved successfully"},
+        404: {"description": "State pension not found"}
+    }
+)
+def get_state_pension_series(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+) -> PensionSeriesResponse:
+    """
+    Get historical value series and projection scenarios for a state pension.
+
+    - historical: actual statement data (current_value per statement date)
+    - projection: monthly capital-equivalent growth until planned retirement
+    - monthly_projection: monthly payout amount growth until planned retirement
+    """
+    pension = pension_state.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="State pension not found")
+
+    settings_obj = settings.get_settings(db)
+    historical_svc = PensionHistoricalSeriesService()
+    projection_svc = PensionSeriesProjectionService()
+
+    retirement_date = pension.member.retirement_date_planned if pension.member else None
+
+    return PensionSeriesResponse(
+        pension_id=pension.id,
+        pension_type="STATE",
+        name=pension.name,
+        member_id=pension.member_id,
+        historical=historical_svc.get_historical_state(pension),
+        projection=projection_svc.build_scenario_series(pension, "STATE", settings_obj, retirement_date),
+        monthly_projection=projection_svc.build_state_monthly_projection(pension, settings_obj, retirement_date),
+    )

@@ -21,6 +21,10 @@ from app.schemas.pension_savings import (
 from app.schemas.pension import OneTimeInvestmentCreate
 from app.models.enums import PensionStatus
 from app.services.pension_savings_projection import PensionSavingsProjectionService
+from app.services.pension_historical_series import PensionHistoricalSeriesService
+from app.services.pension_series_projection import PensionSeriesProjectionService
+from app.schemas.pension_series import PensionSeriesResponse
+from app.crud.settings import settings
 
 router = APIRouter()
 
@@ -500,4 +504,38 @@ def calculate_pension_scenarios(
         pension=pension,
         member=member,
         reference_date=reference_date
-    ) 
+    )
+
+
+@router.get("/{id}/series", response_model=PensionSeriesResponse)
+def get_savings_pension_series(
+    id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Get historical value series and projection scenarios for a savings pension.
+
+    - historical: actual statement data (balance per statement date)
+    - projection: monthly compound-growth scenarios until planned retirement
+    """
+    pension = pension_savings.get(db=db, id=id)
+    if not pension:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Savings pension with ID {id} not found"
+        )
+
+    settings_obj = settings.get_settings(db)
+    historical_svc = PensionHistoricalSeriesService()
+    projection_svc = PensionSeriesProjectionService()
+
+    retirement_date = pension.member.retirement_date_planned if pension.member else None
+
+    return PensionSeriesResponse(
+        pension_id=pension.id,
+        pension_type="SAVINGS",
+        name=pension.name,
+        member_id=pension.member_id,
+        historical=historical_svc.get_historical_savings(pension),
+        projection=projection_svc.build_scenario_series(pension, "SAVINGS", settings_obj, retirement_date),
+    )

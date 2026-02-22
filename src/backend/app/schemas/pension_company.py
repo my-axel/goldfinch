@@ -212,7 +212,7 @@ class CompanyPensionListSchema(BaseModel):
     id: int
     name: str
     member_id: int
-    current_value: Decimal
+    current_value: float
     employer: str
     start_date: date
     contribution_amount: Optional[Decimal] = None

@@ -115,7 +115,7 @@ class ETFPensionListSchema(BaseModel):
     id: int
     name: str
     member_id: int
-    current_value: Decimal
+    current_value: float
     total_units: Decimal
     etf_id: str
     etf_name: str  # Include ETF name for display in the list

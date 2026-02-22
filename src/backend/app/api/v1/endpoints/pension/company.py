@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.api.v1 import deps
 from app.crud.pension_company import pension_company
+from app.crud.settings import settings
 from app.schemas.pension_company import CompanyPensionListSchema
+from app.services.pension_historical_series import PensionHistoricalSeriesService
+from app.services.pension_series_projection import PensionSeriesProjectionService
+from app.schemas.pension_series import PensionSeriesResponse
 import logging
 
 # Use the app.api namespace to ensure logs go to the right place
@@ -390,4 +394,36 @@ def create_contribution_history(
     """Record a contribution history entry for a company pension."""
     return pension_company.create_contribution_history(
         db=db, pension_id=pension_id, obj_in=contribution_in
-    ) 
+    )
+
+
+@router.get("/{pension_id}/series", response_model=PensionSeriesResponse)
+def get_company_pension_series(
+    *,
+    db: Session = Depends(deps.get_db),
+    pension_id: int,
+) -> PensionSeriesResponse:
+    """
+    Get historical value series and projection scenarios for a company pension.
+
+    - historical: actual statement data (value per statement date)
+    - projection: monthly growth scenarios using global settings rates
+    """
+    pension = pension_company.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Company pension not found")
+
+    settings_obj = settings.get_settings(db)
+    historical_svc = PensionHistoricalSeriesService()
+    projection_svc = PensionSeriesProjectionService()
+
+    retirement_date = pension.member.retirement_date_planned if pension.member else None
+
+    return PensionSeriesResponse(
+        pension_id=pension.id,
+        pension_type="COMPANY",
+        name=pension.name,
+        member_id=pension.member_id,
+        historical=historical_svc.get_historical_company(pension),
+        projection=projection_svc.build_scenario_series(pension, "COMPANY", settings_obj, retirement_date),
+    )

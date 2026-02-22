@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.api.v1 import deps
 from app.crud.pension_insurance import pension_insurance
+from app.crud.settings import settings
 from app.schemas.pension_insurance import InsurancePensionListSchema
+from app.services.pension_historical_series import PensionHistoricalSeriesService
+from app.services.pension_series_projection import PensionSeriesProjectionService
+from app.schemas.pension_series import PensionSeriesResponse
 
 router = APIRouter()
 
@@ -314,4 +318,35 @@ def list_insurance_benefits(
     pension = pension_insurance.get(db=db, id=pension_id)
     if not pension:
         raise HTTPException(status_code=404, detail="Insurance Pension not found")
-    return pension.benefits 
+    return pension.benefits
+
+
+@router.get("/{pension_id}/series", response_model=PensionSeriesResponse)
+def get_insurance_pension_series(
+    pension_id: int,
+    db: Session = Depends(deps.get_db),
+) -> PensionSeriesResponse:
+    """
+    Get historical value series and projection scenarios for an insurance pension.
+
+    - historical: actual statement data (value per statement date)
+    - projection: monthly growth scenarios using guaranteed_interest / expected_return rates
+    """
+    pension = pension_insurance.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="Insurance pension not found")
+
+    settings_obj = settings.get_settings(db)
+    historical_svc = PensionHistoricalSeriesService()
+    projection_svc = PensionSeriesProjectionService()
+
+    retirement_date = pension.member.retirement_date_planned if pension.member else None
+
+    return PensionSeriesResponse(
+        pension_id=pension.id,
+        pension_type="INSURANCE",
+        name=pension.name,
+        member_id=pension.member_id,
+        historical=historical_svc.get_historical_insurance(pension),
+        projection=projection_svc.build_scenario_series(pension, "INSURANCE", settings_obj, retirement_date),
+    )

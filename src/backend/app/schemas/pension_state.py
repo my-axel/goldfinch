@@ -80,9 +80,9 @@ class StatePensionListSchema(BaseModel):
     paused_at: Optional[date] = None
     resume_at: Optional[date] = None
     latest_statement_date: Optional[date] = None
-    latest_monthly_amount: Optional[Decimal] = Field(default=None, description="Current monthly amount from latest statement (EUR)")
-    latest_projected_amount: Optional[Decimal] = Field(default=None, description="Projected monthly amount from latest statement (EUR)")
-    latest_current_value: Optional[Decimal] = Field(default=None, description="Current total value from latest statement (EUR)")
+    latest_monthly_amount: Optional[float] = Field(default=None, description="Current monthly amount from latest statement (EUR)")
+    latest_projected_amount: Optional[float] = Field(default=None, description="Projected monthly amount from latest statement (EUR)")
+    latest_current_value: Optional[float] = Field(default=None, description="Current total value from latest statement (EUR)")
     statements_count: int = Field(default=0, description="Number of statements available for this pension")
 
     model_config = ConfigDict(

@@ -4,12 +4,16 @@ from typing import List, Optional
 from app.api.v1 import deps
 from app.crud.pension_etf import pension_etf
 from app.crud.etf import etf_crud
+from app.crud.settings import settings
 from app import schemas
 from app.schemas.pension_etf import ETFPensionListSchema
 from app.schemas.task import TaskStatusResponse
 from app.tasks.etf_pension import process_new_etf_pension, calculate_etf_pension_value
 from app.models.task import TaskStatus
 from app.models.pension_etf import PensionETF
+from app.services.pension_historical_series import PensionHistoricalSeriesService
+from app.services.pension_series_projection import PensionSeriesProjectionService
+from app.schemas.pension_series import PensionSeriesResponse
 import logging
 
 logger = logging.getLogger(__name__)
@@ -232,4 +236,35 @@ def get_etf_pension_statistics(
     db: Session = Depends(deps.get_db),
 ) -> schemas.pension_etf.PensionStatistics:
     """Get statistics for an ETF pension."""
-    return pension_etf.get_statistics(db=db, pension_id=pension_id) 
+    return pension_etf.get_statistics(db=db, pension_id=pension_id)
+
+
+@router.get("/{pension_id}/series", response_model=PensionSeriesResponse)
+def get_etf_pension_series(
+    pension_id: int,
+    db: Session = Depends(deps.get_db),
+) -> PensionSeriesResponse:
+    """
+    Get historical value series and projection scenarios for an ETF pension.
+
+    - historical: month-end portfolio values from contribution history × ETF prices
+    - projection: monthly compound-growth scenarios using global settings rates
+    """
+    pension = pension_etf.get(db=db, id=pension_id)
+    if not pension:
+        raise HTTPException(status_code=404, detail="ETF pension not found")
+
+    settings_obj = settings.get_settings(db)
+    historical_svc = PensionHistoricalSeriesService()
+    projection_svc = PensionSeriesProjectionService()
+
+    retirement_date = pension.member.retirement_date_planned if pension.member else None
+
+    return PensionSeriesResponse(
+        pension_id=pension.id,
+        pension_type="ETF_PLAN",
+        name=pension.name,
+        member_id=pension.member_id,
+        historical=historical_svc.get_historical_etf(pension, db, pension_etf),
+        projection=projection_svc.build_scenario_series(pension, "ETF_PLAN", settings_obj, retirement_date),
+    )

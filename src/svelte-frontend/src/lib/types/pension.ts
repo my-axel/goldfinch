@@ -427,3 +427,63 @@ export const PENSION_ROUTE_MAP: Record<PensionType, string> = {
 	[PensionType.STATE]: 'state',
 	[PensionType.SAVINGS]: 'savings'
 };
+
+// ─── Time Series / Dashboard Types ───────────────────────────────────────────
+
+export interface HistoricalDataPoint {
+	date: string; // ISO date "YYYY-MM-DD"
+	value: number;
+	contributions_to_date?: number;
+}
+
+export interface SeriesProjectionDataPoint {
+	date: string; // ISO date "YYYY-MM-DD"
+	value: number;
+}
+
+export interface SeriesScenarios {
+	pessimistic: SeriesProjectionDataPoint[];
+	realistic: SeriesProjectionDataPoint[];
+	optimistic: SeriesProjectionDataPoint[];
+}
+
+/** Time series response for a single pension plan */
+export interface PensionSeriesResponse {
+	pension_id: number;
+	pension_type: PensionType;
+	name: string;
+	member_id: number;
+	historical: HistoricalDataPoint[];
+	projection: SeriesScenarios;
+	/** Only populated for state pensions — monthly payout projection */
+	monthly_projection?: SeriesScenarios;
+}
+
+export interface ContributionSummary {
+	total_to_date: number;
+	this_year: number;
+	total_returns: number;
+	returns_percentage?: number;
+}
+
+export interface AggregateTypeBreakdown {
+	historical: HistoricalDataPoint[];
+	projection: SeriesScenarios;
+}
+
+export interface AggregateMetadata {
+	member_id: number | null;
+	pension_count: number;
+	earliest_date: string | null;
+	retirement_date: string | null;
+	contributions: ContributionSummary;
+	rates_used: Record<string, Record<string, number>>;
+}
+
+/** Household-level or member-level aggregate time series */
+export interface AggregateSeriesResponse {
+	historical: HistoricalDataPoint[];
+	projection: SeriesScenarios;
+	by_type: Partial<Record<string, AggregateTypeBreakdown>>;
+	metadata: AggregateMetadata;
+}
