@@ -136,7 +136,7 @@
 						<!-- Add Pension Card (inline, per member) -->
 						<button
 							onclick={() => { addingForMemberId = member.id; }}
-							class="flex flex-col items-center justify-center w-[270px] min-h-[150px]
+							class="flex flex-col items-center justify-center w-[270px] min-h-[300px]
 								border-2 border-dashed border-border rounded-xl
 								hover:border-primary/50 hover:bg-accent/30 transition-colors cursor-pointer"
 						>

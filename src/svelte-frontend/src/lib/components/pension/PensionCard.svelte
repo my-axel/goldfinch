@@ -57,7 +57,7 @@
 	let TypeIcon = $derived(typeIcons[pension.type]);
 </script>
 
-<div class="bg-card rounded-xl border border-border shadow-sm w-[270px] {isInactive ? 'opacity-60' : ''}">
+<div class="bg-card rounded-xl border border-border shadow-sm w-[270px] h-[300px] {isInactive ? 'opacity-60' : ''}">
 	<div class="flex items-center justify-between px-4 pt-4 pb-2">
 		<div class="flex items-center gap-2 min-w-0">
 			<TypeIcon class="w-4 h-4 shrink-0 text-muted-foreground" />

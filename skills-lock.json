@@ -1,10 +1,20 @@
 {
   "version": 1,
   "skills": {
+    "echarts": {
+      "source": "vamseeachanta/workspace-hub",
+      "sourceType": "github",
+      "computedHash": "df8228c6460200d2b8008c8e183b7634dcdbf239df75694b6903c5acd76bbff2"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
       "computedHash": "6412eb4eb3b91595ebab937f0c69501240e7ba761b3d82510b5cf506ec5c7adc"
+    },
+    "layerchart-svelte5": {
+      "source": "spences10/svelte-skills-kit",
+      "sourceType": "github",
+      "computedHash": "118c0f8baf9615a26f761c3d59bd87a6138f505b075b464696e260fe25039f57"
     },
     "svelte-code-writer": {
       "source": "sveltejs/mcp",

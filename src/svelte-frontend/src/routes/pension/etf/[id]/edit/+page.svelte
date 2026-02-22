@@ -116,7 +116,7 @@
 
 	// Projection calculation for sidebar stats
 	const projectionData = $derived.by(() => {
-		if (!statistics || !retirementDateStr || contributionPlanSteps.length === 0) return null;
+		if (!statistics || !retirementDateStr) return null;
 
 		const { value_history, contribution_history } = statistics;
 		if (!value_history || value_history.length === 0) return null;
@@ -465,6 +465,7 @@
 					/>
 				</Card>
 			</ContentSection>
+
 		</form>
 	{/if}
 </div>

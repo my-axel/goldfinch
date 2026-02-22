@@ -25,8 +25,8 @@
 	"dependencies": {
 		"@inlang/paraglide-js": "^2.12.0",
 		"@lucide/svelte": "^0.574.0",
-		"layerchart": "^1.0.13",
-		"svelte-ux": "^1.0.10"
+		"echarts": "^5.6.0",
+		"svelte-echarts": "^1.0.0"
 	},
 	"overrides": {
 		"cookie": "^0.7.0"

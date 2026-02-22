@@ -1,18 +1,21 @@
 <!--
 @file src/lib/components/pension/etf/ProjectionChart.svelte
 @kind component
-@purpose Visualisiert Kennzahlen und Verlaeufe im Baustein 'ProjectionChart' fuer den Bereich 'pension'.
+@purpose Visualisiert historischen Wertverlauf und Zukunftsprojektion (pessimistisch/realistisch/optimistisch) für einen ETF-Pensionsplan.
 @contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
 @contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
 -->
 
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';
+	import { themeStore } from '$lib/stores/theme.svelte';
 	import { formatCurrency } from '$lib/utils/format';
 	import type { ETFPensionStatistics, ContributionStep } from '$lib/types/pension';
 	import { calculateCombinedScenarios } from '$lib/utils/projection';
-	import { LineChart, Rule } from 'layerchart';
+	import { Chart } from 'svelte-echarts';
+	import { init, graphic } from 'echarts';
 	import { Expand, Shrink } from '@lucide/svelte';
 
 	let {
@@ -39,11 +42,6 @@
 		return (v: any) => formatCurrency(Number(v), _l, _c, 0);
 	});
 
-	const dateFmt = $derived.by(() => {
-		const _l = locale;
-		return (v: any) => new Date(v).toLocaleDateString(_l, { month: 'short', year: '2-digit' });
-	});
-
 	const headerDateFmt = $derived.by(() => {
 		const _l = locale;
 		return (v: any) => new Date(v).toLocaleDateString(_l, { month: 'short', year: 'numeric' });
@@ -53,10 +51,41 @@
 		date: Date;
 		historical: number | null;
 		contributions: number;
+		contributionAmount: number;
 		realistic: number | null;
 		pessimistic: number | null;
 		optimistic: number | null;
 	}
+
+	// Theme-aware colors
+	const isDark = $derived.by(() => {
+		const t = themeStore.current;
+		if (!browser) return false;
+		if (t === 'light') return false;
+		if (t === 'dark') return true;
+		return window.matchMedia('(prefers-color-scheme: dark)').matches;
+	});
+
+	const themeColors = $derived.by(() => {
+		const dark = isDark;
+		return dark
+			? {
+					tooltipBg: 'hsl(0, 0%, 11%)',
+					tooltipBorder: 'hsl(0, 0%, 15%)',
+					tooltipText: 'hsl(210, 20%, 98%)',
+					axisLabel: 'hsl(0, 0%, 63%)',
+					splitLine: 'hsl(0, 0%, 18%)',
+					axisLine: 'hsl(0, 0%, 15%)'
+				}
+			: {
+					tooltipBg: 'hsl(0, 0%, 100%)',
+					tooltipBorder: 'hsl(0, 0%, 89%)',
+					tooltipText: 'hsl(0, 0%, 9%)',
+					axisLabel: 'hsl(0, 0%, 45%)',
+					splitLine: 'hsl(0, 0%, 89%)',
+					axisLine: 'hsl(0, 0%, 89%)'
+				};
+	});
 
 	const today = new Date();
 	const retirementDateObj = $derived(retirementDate ? new Date(retirementDate) : null);
@@ -67,43 +96,51 @@
 		const { value_history, contribution_history } = statistics;
 		if (!value_history || value_history.length === 0) return [];
 
-		// Build accumulated contributions map for historical phase
-		let historicalAccumulated = 0;
-		const contribByMonth = new Map<string, number>();
-		[...contribution_history]
-			.sort(
-				(a, b) =>
-					new Date(a.contribution_date).getTime() - new Date(b.contribution_date).getTime()
-			)
-			.forEach((c) => {
-				historicalAccumulated += Number(c.amount);
-				const key = new Date(c.contribution_date).toISOString().slice(0, 7); // yyyy-MM
-				contribByMonth.set(key, historicalAccumulated);
-			});
+		// Sort contributions by date for running accumulation
+		const sortedContribs = [...contribution_history].sort(
+			(a, b) =>
+				new Date(a.contribution_date).getTime() - new Date(b.contribution_date).getTime()
+		);
 
-		// Historical data points
+		// Per-month totals used for tooltip display only
+		const monthlyContribByMonth = new Map<string, number>();
+		sortedContribs.forEach((c) => {
+			const key = new Date(c.contribution_date).toISOString().slice(0, 7);
+			monthlyContribByMonth.set(key, (monthlyContribByMonth.get(key) ?? 0) + Number(c.amount));
+		});
+
 		const sortedHistory = [...value_history].sort(
 			(a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
 		);
 
+		// Walk contributions and value_history in parallel by timestamp so contributions
+		// made BEFORE the first available price point are still counted correctly.
+		let contribIdx = 0;
 		let runningContrib = 0;
 		const historicalPoints: CombinedChartPoint[] = sortedHistory.map((point) => {
 			const date = new Date(point.date);
+			const pointTs = date.getTime();
 			const key = date.toISOString().slice(0, 7);
-			// Find the accumulated contributions up to this month
-			const monthContrib = contribByMonth.get(key);
-			if (monthContrib !== undefined) runningContrib = monthContrib;
+			while (contribIdx < sortedContribs.length) {
+				const contribTs = new Date(sortedContribs[contribIdx].contribution_date).getTime();
+				if (contribTs <= pointTs) {
+					runningContrib += Number(sortedContribs[contribIdx].amount);
+					contribIdx++;
+				} else {
+					break;
+				}
+			}
 			return {
 				date,
 				historical: Number(Number(point.value).toFixed(2)),
 				contributions: runningContrib,
+				contributionAmount: monthlyContribByMonth.get(key) ?? 0,
 				realistic: null,
 				pessimistic: null,
 				optimistic: null
 			};
 		});
 
-		// Projection data: only if we have a retirement date and contribution steps
 		if (!retirementDateObj || retirementDateObj <= today) {
 			return historicalPoints;
 		}
@@ -134,6 +171,7 @@
 			date: rp.date,
 			historical: null,
 			contributions: rp.accumulatedContributions ?? runningContrib,
+			contributionAmount: rp.contributionAmount ?? 0,
 			realistic: rp.value,
 			pessimistic: pessimisticPts[i]?.value ?? null,
 			optimistic: optimisticPts[i]?.value ?? null
@@ -144,59 +182,214 @@
 		);
 	});
 
+	const chartColors = {
+		historical: 'hsl(263, 70%, 50%)',
+		contributions: 'hsl(173, 58%, 45%)',
+		optimistic: 'hsl(30, 80%, 55%)',
+		pessimistic: 'hsl(320, 65%, 60%)',
+		realistic: 'hsl(15, 75%, 55%)'
+	} as const;
+
 	const hasProjection = $derived(chartData.some((d) => d.realistic !== null));
 
-	const series = $derived([
-		{
-			key: 'historical',
-			label: m.etf_historical_value(),
-			color: 'var(--chart-1)'
-		},
-		{
-			key: 'contributions',
-			label: m.etf_contributions(),
-			color: 'var(--chart-2)'
-		},
+	const legendItems = $derived([
+		{ label: m.etf_historical_value(), color: chartColors.historical },
+		{ label: m.etf_contributions(), color: chartColors.contributions },
 		...(hasProjection
 			? [
-					{
-						key: 'pessimistic',
-						label: m.etf_pessimistic(),
-						color: 'var(--chart-4)',
-						props: { 'stroke-dasharray': '4 4' } as any
-					},
-					{
-						key: 'realistic',
-						label: m.etf_realistic(),
-						color: 'var(--chart-5)',
-						props: { 'stroke-dasharray': '4 4' } as any
-					},
-					{
-						key: 'optimistic',
-						label: m.etf_optimistic(),
-						color: 'var(--chart-3)',
-						props: { 'stroke-dasharray': '4 4' } as any
-					}
+					{ label: m.etf_pessimistic(), color: chartColors.pessimistic },
+					{ label: m.etf_realistic(), color: chartColors.realistic },
+					{ label: m.etf_optimistic(), color: chartColors.optimistic }
 				]
 			: [])
 	]);
+
+	const echartsOptions = $derived.by(() => {
+		const _l = locale;
+		const _fmt = currencyFmt;
+		const _headerDateFmt = headerDateFmt;
+		const _retirementDateObj = retirementDateObj;
+		const _hasProjection = hasProjection;
+		const tc = themeColors;
+
+		const historicalData = chartData
+			.filter((d) => d.historical !== null)
+			.map((d) => [d.date.getTime(), d.historical] as [number, number]);
+
+		const contributionsData = chartData.map(
+			(d) => [d.date.getTime(), d.contributions] as [number, number]
+		);
+
+		const pessimisticData = chartData
+			.filter((d) => d.pessimistic !== null)
+			.map((d) => [d.date.getTime(), d.pessimistic] as [number, number]);
+
+		const realisticData = chartData
+			.filter((d) => d.realistic !== null)
+			.map((d) => [d.date.getTime(), d.realistic] as [number, number]);
+
+		const optimisticData = chartData
+			.filter((d) => d.optimistic !== null)
+			.map((d) => [d.date.getTime(), d.optimistic] as [number, number]);
+
+		const labels = {
+			historical: m.etf_historical_value(),
+			contributions: m.etf_contributions(),
+			pessimistic: m.etf_pessimistic(),
+			realistic: m.etf_realistic(),
+			optimistic: m.etf_optimistic()
+		};
+
+		// Reference lines with labels
+		const refLineStyle = { type: 'dashed', color: tc.axisLabel, width: 1.5, opacity: 0.4 };
+		const refLabelStyle = {
+			show: true,
+			fontSize: 11,
+			color: tc.axisLabel,
+			borderWidth: 0,
+			backgroundColor: 'transparent'
+		};
+		const markLineData: any[] = [
+			{ xAxis: today.getTime(), label: { ...refLabelStyle, formatter: 'Heute', position: 'insideStartTop' } }
+		];
+		if (_retirementDateObj) {
+			markLineData.push({
+				xAxis: _retirementDateObj.getTime(),
+				label: { ...refLabelStyle, formatter: 'Rente', position: 'insideStartTop' }
+			});
+		}
+
+		// x-axis min: always include today so the "Heute" line is visible
+		const firstTs = chartData.length > 0 ? chartData[0].date.getTime() : today.getTime();
+		const xMin = Math.min(today.getTime(), firstTs);
+
+		// hsl(H, S, L) → hsla(H, S, L, alpha)
+		const withAlpha = (hsl: string, alpha: number) =>
+			hsl.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`);
+
+		// areaOpacity > 0 adds a gradient fill from that opacity down to 0
+		const makeSeries = (
+			name: string,
+			data: [number, number][],
+			color: string,
+			dashed = false,
+			areaOpacity = 0,
+			extra: Record<string, any> = {}
+		) => ({
+			name,
+			type: 'line',
+			data,
+			itemStyle: { color, borderWidth: 0 },
+			lineStyle: { width: 2, color, ...(dashed ? { type: 'dashed' } : {}) },
+			...(areaOpacity > 0
+				? {
+						areaStyle: {
+							color: new graphic.LinearGradient(0, 0, 0, 1, [
+								{ offset: 0, color: withAlpha(color, areaOpacity) },
+								{ offset: 1, color: withAlpha(color, 0) }
+							])
+						}
+					}
+				: {}),
+			showSymbol: false,
+			smooth: true,
+			...extra
+		});
+
+		const projectionSeries = _hasProjection
+			? [
+					makeSeries(labels.pessimistic, pessimisticData, chartColors.pessimistic, true, 0.08),
+					makeSeries(labels.realistic, realisticData, chartColors.realistic, true, 0.08),
+					makeSeries(labels.optimistic, optimisticData, chartColors.optimistic, true, 0.08)
+				]
+			: [];
+
+		return {
+			backgroundColor: 'transparent',
+			tooltip: {
+				trigger: 'axis',
+				axisPointer: { type: 'line' },
+				backgroundColor: tc.tooltipBg,
+				borderColor: tc.tooltipBorder,
+				textStyle: { color: tc.tooltipText },
+				formatter: (params: any[]) => {
+					if (!params || params.length === 0) return '';
+					const ts = params[0].value[0];
+					const dateStr = _headerDateFmt(new Date(ts));
+					let html = `<div style="font-weight:600;margin-bottom:6px">${dateStr}</div>`;
+					for (const p of params) {
+						if (p.value[1] == null) continue;
+						const val = _fmt(p.value[1]);
+						html += `<div style="display:flex;justify-content:space-between;gap:16px;margin-top:3px">
+							<span style="display:flex;align-items:center;gap:6px">
+								<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>
+								${p.seriesName}
+							</span>
+							<span style="font-weight:500">${val}</span>
+						</div>`;
+					}
+					return html;
+				}
+			},
+			grid: { top: 12, right: 12, bottom: 58, left: 80 },
+			xAxis: {
+				type: 'time' as const,
+				min: xMin,
+				minInterval: 60 * 24 * 3600 * 1000,
+				axisLabel: {
+					hideOverlap: true,
+					rotate: -45,
+					color: tc.axisLabel,
+					formatter: (val: number) => {
+						const d = new Date(val);
+						if (d.getMonth() === 0) {
+							return d.getFullYear().toString();
+						}
+						return d.toLocaleDateString(_l, { month: 'short' });
+					}
+				},
+				axisLine: { lineStyle: { color: tc.axisLine } },
+				splitLine: { lineStyle: { color: tc.splitLine } }
+			},
+			yAxis: {
+				type: 'value' as const,
+				axisLabel: {
+					formatter: (val: number) => _fmt(val),
+					color: tc.axisLabel
+				},
+				axisLine: { show: false },
+				splitLine: { lineStyle: { color: tc.splitLine } }
+			},
+			series: [
+				makeSeries(labels.historical, historicalData, chartColors.historical, false, 0.35, {
+					markLine: {
+						silent: true,
+						symbol: 'none',
+						lineStyle: refLineStyle,
+						data: markLineData
+					}
+				}),
+				makeSeries(labels.contributions, contributionsData, chartColors.contributions, false, 0.2),
+				...projectionSeries
+			]
+		};
+	});
 </script>
 
 <div class="space-y-2">
-	<!-- Legend + expand button -->
-	<div class="flex flex-wrap items-center justify-end gap-4">
+	<div class="flex items-center justify-between gap-2">
 		<div class="flex flex-wrap items-center gap-3">
-			{#each series as s}
+			{#each legendItems as item}
 				<div class="flex items-center gap-1.5">
-					<div class="h-3 w-3 rounded-full" style="background-color: {s.color}"></div>
-					<span class="text-xs text-muted-foreground">{s.label}</span>
+					<div class="h-3 w-3 rounded-full" style="background-color: {item.color}"></div>
+					<span class="text-xs text-muted-foreground">{item.label}</span>
 				</div>
 			{/each}
 		</div>
 		<button
 			type="button"
 			onclick={() => (isExpanded = !isExpanded)}
-			class="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+			class="h-8 w-8 shrink-0 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
 			title={isExpanded ? m.etf_chart_collapse() : m.etf_chart_expand()}
 		>
 			{#if isExpanded}
@@ -218,30 +411,7 @@
 		</div>
 	{:else}
 		<div style="height: {height}px">
-			<LineChart
-				data={chartData}
-				x="date"
-				{series}
-				legend={false}
-				height={height}
-				props={{
-					yAxis: { format: currencyFmt },
-					xAxis: { format: dateFmt },
-					tooltip: {
-						header: { format: headerDateFmt },
-						item: { format: currencyFmt }
-					}
-				}}
-			>
-				<svelte:fragment slot="belowMarks">
-					<!-- Today reference line -->
-					<Rule x={today} stroke-dasharray="4 4" />
-					<!-- Retirement reference line -->
-					{#if retirementDateObj}
-						<Rule x={retirementDateObj} stroke-dasharray="4 4" />
-					{/if}
-				</svelte:fragment>
-			</LineChart>
+			<Chart {init} options={echartsOptions as any} />
 		</div>
 	{/if}
 </div>

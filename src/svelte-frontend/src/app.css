@@ -24,6 +24,11 @@
 	--input: hsl(0 0% 89%);
 	--ring: hsl(263.4 70% 41%);
 	--radius: 0.5rem;
+	--chart-1: hsl(263.4 70% 50%);
+	--chart-2: hsl(173 58% 45%);
+	--chart-3: hsl(30 80% 55%);
+	--chart-4: hsl(320 65% 60%);
+	--chart-5: hsl(15 75% 55%);
 
 	--sidebar: hsl(0 0% 95%);
 	--sidebar-foreground: hsl(0 0% 9%);
@@ -56,6 +61,11 @@
 	--border: hsl(0 0% 15%);
 	--input: hsl(0 0% 15%);
 	--ring: hsl(263.4 70% 50%);
+	--chart-1: hsl(263.4 70% 50%);
+	--chart-2: hsl(173 58% 45%);
+	--chart-3: hsl(30 80% 55%);
+	--chart-4: hsl(320 65% 60%);
+	--chart-5: hsl(15 75% 55%);
 
 	--sidebar: hsl(0 0% 7%);
 	--sidebar-foreground: hsl(0 0% 95%);
@@ -88,6 +98,11 @@
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
@@ -107,6 +122,15 @@
 		border-color: var(--border);
 		outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
 	}
+
+	.lc-root-container {
+		--color-primary: var(--primary);
+		--color-surface-100: var(--card);
+		--color-surface-200: var(--muted);
+		--color-surface-300: color-mix(in oklab, var(--muted) 85%, var(--background));
+		--color-surface-content: var(--card-foreground);
+	}
+
 	body {
 		background-color: var(--background);
 		color: var(--foreground);

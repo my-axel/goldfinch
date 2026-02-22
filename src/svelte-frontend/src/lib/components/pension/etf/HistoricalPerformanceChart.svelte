@@ -1,17 +1,20 @@
 <!--
 @file src/lib/components/pension/etf/HistoricalPerformanceChart.svelte
 @kind component
-@purpose Visualisiert Kennzahlen und Verlaeufe im Baustein 'HistoricalPerformanceChart' fuer den Bereich 'pension'.
+@purpose Visualisiert den historischen Wertverlauf und akkumulierte Beiträge eines ETF-Pensionsplans.
 @contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
 @contains Das Template verbindet Props/Bindings mit UI-Abschnitten, Dialogen oder Datenvisualisierung.
 -->
 
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { m } from '$lib/paraglide/messages.js';
 	import { settingsStore } from '$lib/stores/settings.svelte';
+	import { themeStore } from '$lib/stores/theme.svelte';
 	import { formatCurrency } from '$lib/utils/format';
 	import type { ETFContributionHistory, ETFValueHistory } from '$lib/types/pension';
-	import { LineChart } from 'layerchart';
+	import { Chart } from 'svelte-echarts';
+	import { init, graphic } from 'echarts';
 	import { Expand, Shrink } from '@lucide/svelte';
 
 	let {
@@ -30,6 +33,17 @@
 	const locale = $derived(settingsStore.current.number_locale);
 	const currency = $derived(settingsStore.current.currency);
 
+	const currencyFmt = $derived.by(() => {
+		const _l = locale;
+		const _c = currency;
+		return (v: any) => formatCurrency(Number(v), _l, _c, 0);
+	});
+
+	const headerDateFmt = $derived.by(() => {
+		const _l = locale;
+		return (v: any) => new Date(v).toLocaleDateString(_l, { month: 'short', year: 'numeric' });
+	});
+
 	interface ChartDataPoint {
 		date: Date;
 		contributions: number;
@@ -38,87 +52,194 @@
 
 	const chartData = $derived.by((): ChartDataPoint[] => {
 		try {
-			let accumulated = 0;
-			const contributionPoints = new Map<string, number>();
+			// Sort both lists by date ascending
+			const sortedContribs = [...contributionHistory].sort(
+				(a, b) =>
+					new Date(a.contribution_date).getTime() - new Date(b.contribution_date).getTime()
+			);
+			const sortedValues = [...valueHistory].sort(
+				(a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+			);
 
-			[...contributionHistory]
-				.sort(
-					(a, b) =>
-						new Date(a.contribution_date).getTime() - new Date(b.contribution_date).getTime()
-				)
-				.forEach((c) => {
-					const amount = Number(c.amount);
-					if (!isNaN(amount)) {
-						accumulated += amount;
-						const key = new Date(c.contribution_date).toLocaleDateString(locale, {
-							month: 'short',
-							year: 'numeric'
-						});
-						contributionPoints.set(key, accumulated);
+			// Walk through value points and accumulate contributions up to each point's date
+			let contribIdx = 0;
+			let runningContribs = 0;
+
+			return sortedValues.map((point) => {
+				const date = new Date(point.date);
+				const pointTs = date.getTime();
+
+				while (contribIdx < sortedContribs.length) {
+					const contribTs = new Date(sortedContribs[contribIdx].contribution_date).getTime();
+					if (contribTs <= pointTs) {
+						const amount = Number(sortedContribs[contribIdx].amount);
+						if (!isNaN(amount)) runningContribs += amount;
+						contribIdx++;
+					} else {
+						break;
 					}
-				});
+				}
 
-			return [...valueHistory]
-				.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-				.map((point) => {
-					const date = new Date(point.date);
-					const key = date.toLocaleDateString(locale, { month: 'short', year: 'numeric' });
-					return {
-						date,
-						contributions: contributionPoints.get(key) ?? accumulated,
-						value: Number(Number(point.value).toFixed(2))
-					};
-				});
+				return {
+					date,
+					contributions: runningContribs,
+					value: Number(Number(point.value).toFixed(2))
+				};
+			});
 		} catch {
 			return [];
 		}
 	});
 
-	const series = $derived([
-		{
-			key: 'contributions',
-			label: m.etf_contributions(),
-			color: 'var(--chart-2)'
-		},
-		{
-			key: 'value',
-			label: m.etf_historical_value(),
-			color: 'var(--chart-1)'
-		}
-	]);
+	const chartColors = {
+		value: 'hsl(263, 70%, 50%)',
+		contributions: 'hsl(173, 58%, 45%)'
+	} as const;
 
-	const currencyFmt = $derived.by(() => {
-		const _l = locale;
-		const _c = currency;
-		return (v: any) => formatCurrency(Number(v), _l, _c, 0);
+	// Theme-aware colors
+	const isDark = $derived.by(() => {
+		const t = themeStore.current;
+		if (!browser) return false;
+		if (t === 'light') return false;
+		if (t === 'dark') return true;
+		return window.matchMedia('(prefers-color-scheme: dark)').matches;
 	});
 
-	const dateFmt = $derived.by(() => {
-		const _l = locale;
-		return (v: any) => new Date(v).toLocaleDateString(_l, { month: 'short', year: '2-digit' });
+	const themeColors = $derived.by(() => {
+		const dark = isDark;
+		return dark
+			? {
+					tooltipBg: 'hsl(0, 0%, 11%)',
+					tooltipBorder: 'hsl(0, 0%, 15%)',
+					tooltipText: 'hsl(210, 20%, 98%)',
+					axisLabel: 'hsl(0, 0%, 63%)',
+					splitLine: 'hsl(0, 0%, 18%)',
+					axisLine: 'hsl(0, 0%, 15%)'
+				}
+			: {
+					tooltipBg: 'hsl(0, 0%, 100%)',
+					tooltipBorder: 'hsl(0, 0%, 89%)',
+					tooltipText: 'hsl(0, 0%, 9%)',
+					axisLabel: 'hsl(0, 0%, 45%)',
+					splitLine: 'hsl(0, 0%, 89%)',
+					axisLine: 'hsl(0, 0%, 89%)'
+				};
 	});
 
-	const headerDateFmt = $derived.by(() => {
+	const echartsOptions = $derived.by(() => {
 		const _l = locale;
-		return (v: any) => new Date(v).toLocaleDateString(_l, { month: 'short', year: 'numeric' });
+		const _fmt = currencyFmt;
+		const _headerDateFmt = headerDateFmt;
+		const tc = themeColors;
+
+		const valueData = chartData.map((d) => [d.date.getTime(), d.value] as [number, number]);
+		const contributionsData = chartData.map(
+			(d) => [d.date.getTime(), d.contributions] as [number, number]
+		);
+
+		const withAlpha = (hsl: string, alpha: number) =>
+			hsl.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`);
+
+		const makeSeries = (
+			name: string,
+			data: [number, number][],
+			color: string,
+			areaOpacity: number
+		) => ({
+			name,
+			type: 'line',
+			data,
+			itemStyle: { color, borderWidth: 0 },
+			lineStyle: { width: 2, color },
+			areaStyle: {
+				color: new graphic.LinearGradient(0, 0, 0, 1, [
+					{ offset: 0, color: withAlpha(color, areaOpacity) },
+					{ offset: 1, color: withAlpha(color, 0) }
+				])
+			},
+			showSymbol: false,
+			smooth: true
+		});
+
+		return {
+			backgroundColor: 'transparent',
+			tooltip: {
+				trigger: 'axis',
+				axisPointer: { type: 'line' },
+				backgroundColor: tc.tooltipBg,
+				borderColor: tc.tooltipBorder,
+				textStyle: { color: tc.tooltipText },
+				formatter: (params: any[]) => {
+					if (!params || params.length === 0) return '';
+					const ts = params[0].value[0];
+					const dateStr = _headerDateFmt(new Date(ts));
+					let html = `<div style="font-weight:600;margin-bottom:6px">${dateStr}</div>`;
+					for (const p of params) {
+						if (p.value[1] == null) continue;
+						const val = _fmt(p.value[1]);
+						html += `<div style="display:flex;justify-content:space-between;gap:16px;margin-top:3px">
+							<span style="display:flex;align-items:center;gap:6px">
+								<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>
+								${p.seriesName}
+							</span>
+							<span style="font-weight:500">${val}</span>
+						</div>`;
+					}
+					return html;
+				}
+			},
+			grid: { top: 12, right: 12, bottom: 58, left: 80 },
+			xAxis: {
+				type: 'time' as const,
+				minInterval: 60 * 24 * 3600 * 1000,
+				axisLabel: {
+					hideOverlap: true,
+					rotate: -45,
+					color: tc.axisLabel,
+					formatter: (val: number) => {
+						const d = new Date(val);
+						if (d.getMonth() === 0) {
+							return d.getFullYear().toString();
+						}
+						return d.toLocaleDateString(_l, { month: 'short' });
+					}
+				},
+				axisLine: { lineStyle: { color: tc.axisLine } },
+				splitLine: { lineStyle: { color: tc.splitLine } }
+			},
+			yAxis: {
+				type: 'value' as const,
+				axisLabel: {
+					formatter: (val: number) => _fmt(val),
+					color: tc.axisLabel
+				},
+				axisLine: { show: false },
+				splitLine: { lineStyle: { color: tc.splitLine } }
+			},
+			series: [
+				makeSeries(m.etf_historical_value(), valueData, chartColors.value, 0.35),
+				makeSeries(m.etf_contributions(), contributionsData, chartColors.contributions, 0.2)
+			]
+		};
 	});
 </script>
 
 <div class="space-y-2">
-	<!-- Legend + expand button -->
-	<div class="flex items-center justify-end gap-4">
+	<div class="flex items-center justify-between gap-2">
 		<div class="flex items-center gap-3">
-			{#each series as s}
-				<div class="flex items-center gap-1.5">
-					<div class="h-3 w-3 rounded-full" style="background-color: {s.color}"></div>
-					<span class="text-xs text-muted-foreground">{s.label}</span>
-				</div>
-			{/each}
+			<div class="flex items-center gap-1.5">
+				<div class="h-3 w-3 rounded-full" style="background-color: {chartColors.value}"></div>
+				<span class="text-xs text-muted-foreground">{m.etf_historical_value()}</span>
+			</div>
+			<div class="flex items-center gap-1.5">
+				<div class="h-3 w-3 rounded-full" style="background-color: {chartColors.contributions}"></div>
+				<span class="text-xs text-muted-foreground">{m.etf_contributions()}</span>
+			</div>
 		</div>
 		<button
 			type="button"
 			onclick={() => (isExpanded = !isExpanded)}
-			class="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+			class="h-8 w-8 shrink-0 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
 			title={isExpanded ? m.etf_chart_collapse() : m.etf_chart_expand()}
 		>
 			{#if isExpanded}
@@ -131,7 +252,7 @@
 
 	{#if loading}
 		<div class="animate-pulse bg-muted rounded-lg" style="height: {height}px"></div>
-	{:else if chartData.length < 2}
+	{:else if chartData.length === 0}
 		<div
 			class="flex items-center justify-center text-sm text-muted-foreground"
 			style="height: {height}px"
@@ -140,21 +261,7 @@
 		</div>
 	{:else}
 		<div style="height: {height}px">
-			<LineChart
-				data={chartData}
-				x="date"
-				{series}
-				legend={false}
-				height={height}
-				props={{
-					yAxis: { format: currencyFmt },
-					xAxis: { format: dateFmt },
-					tooltip: {
-						header: { format: headerDateFmt },
-						item: { format: currencyFmt }
-					}
-				}}
-			/>
+			<Chart {init} options={echartsOptions as any} />
 		</div>
 	{/if}
 </div>
