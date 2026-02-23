@@ -625,5 +625,11 @@
 
 	"etf_pessimistic_rate": "Pessimistic Rate",
 	"etf_realistic_rate": "Realistic Rate",
-	"etf_optimistic_rate": "Optimistic Rate"
+	"etf_optimistic_rate": "Optimistic Rate",
+	"pension_scenario_rates_title": "Projection Rates",
+	"pension_scenario_rates_description": "Per-pension expected return rates (override global defaults)",
+	"pension_scenario_pessimistic_rate": "Pessimistic",
+	"pension_scenario_realistic_rate": "Realistic",
+	"pension_scenario_optimistic_rate": "Optimistic",
+	"pension_scenario_rates_explanation": "Set custom expected return rates for this pension. Pre-filled with your global defaults — adjust based on specific expectations."
 }

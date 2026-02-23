@@ -27,6 +27,8 @@
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
 	import ContributionHistoryCard from '$lib/components/pension/ContributionHistoryCard.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -68,6 +70,11 @@
 	let contributionPlanSteps = $state<ContributionStep[]>([]);
 	let errors = $state<Record<string, string>>({});
 
+	// Per-pension scenario rates — initialized in hydrateForm() from pension or global fallback
+	let pessimisticRate = $state(settingsStore.current.projection_pessimistic_rate / 100);
+	let realisticRate = $state(settingsStore.current.projection_realistic_rate / 100);
+	let optimisticRate = $state(settingsStore.current.projection_optimistic_rate / 100);
+
 	function hydrateForm(p: CompanyPension) {
 		name = p.name;
 		employer = p.employer;
@@ -89,6 +96,18 @@
 			}))
 		}));
 		contributionPlanSteps = (p.contribution_plan_steps ?? []).map((step) => ({ ...step }));
+		pessimisticRate =
+			p.pessimistic_rate != null
+				? p.pessimistic_rate / 100
+				: settingsStore.current.projection_pessimistic_rate / 100;
+		realisticRate =
+			p.realistic_rate != null
+				? p.realistic_rate / 100
+				: settingsStore.current.projection_realistic_rate / 100;
+		optimisticRate =
+			p.optimistic_rate != null
+				? p.optimistic_rate / 100
+				: settingsStore.current.projection_optimistic_rate / 100;
 	}
 
 	$effect(() => {
@@ -128,7 +147,10 @@
 					start_date: step.start_date,
 					end_date: step.end_date || undefined,
 					note: step.note || ''
-				}))
+				})),
+				pessimistic_rate: pessimisticRate * 100,
+				realistic_rate: realisticRate * 100,
+				optimistic_rate: optimisticRate * 100
 			};
 
 			await pensionApi.update(PensionType.COMPANY, pensionId, pensionData);
@@ -294,6 +316,22 @@
 					description={m.company_pension_statements_description()}
 				>
 					<StatementsCard bind:statements {pensionId} />
+				</Card>
+			</ContentSection>
+
+			<!-- Projection Rates Section -->
+			<ContentSection>
+				{#snippet aside()}
+					<Explanation>
+						<p>{m.pension_scenario_rates_explanation()}</p>
+					</Explanation>
+				{/snippet}
+				<Card title={m.pension_scenario_rates_title()}>
+					<ScenarioRatesCard
+						bind:pessimisticRate
+						bind:realisticRate
+						bind:optimisticRate
+					/>
 				</Card>
 			</ContentSection>
 

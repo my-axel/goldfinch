@@ -330,7 +330,7 @@ def get_insurance_pension_series(
     Get historical value series and projection scenarios for an insurance pension.
 
     - historical: actual statement data (value per statement date)
-    - projection: monthly growth scenarios using guaranteed_interest / expected_return rates
+    - projection: monthly growth scenarios using per-pension scenario rates
     """
     pension = pension_insurance.get(db=db, id=pension_id)
     if not pension:

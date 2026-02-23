@@ -571,8 +571,9 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
             PensionInsurance.provider,
             PensionInsurance.contract_number,
             PensionInsurance.start_date,
-            PensionInsurance.guaranteed_interest,
-            PensionInsurance.expected_return,
+            PensionInsurance.pessimistic_rate,
+            PensionInsurance.realistic_rate,
+            PensionInsurance.optimistic_rate,
             PensionInsurance.status
         )
         
@@ -591,11 +592,12 @@ class CRUDPensionInsurance(CRUDBase[PensionInsurance, PensionInsuranceCreate, Pe
                 "provider": row.provider,
                 "contract_number": row.contract_number,
                 "start_date": row.start_date,
-                "guaranteed_interest": row.guaranteed_interest,
-                "expected_return": row.expected_return,
+                "pessimistic_rate": row.pessimistic_rate,
+                "realistic_rate": row.realistic_rate,
+                "optimistic_rate": row.optimistic_rate,
                 "status": row.status,
-                "paused_at": None,  # Add as None since it's in the schema but not in the model
-                "resume_at": None   # Add as None since it's in the schema but not in the model
+                "paused_at": None,
+                "resume_at": None
             }
             for row in result
         ]

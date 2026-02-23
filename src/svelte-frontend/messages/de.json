@@ -625,5 +625,11 @@
 
 	"etf_pessimistic_rate": "Pessimistische Rate",
 	"etf_realistic_rate": "Realistische Rate",
-	"etf_optimistic_rate": "Optimistische Rate"
+	"etf_optimistic_rate": "Optimistische Rate",
+	"pension_scenario_rates_title": "Projektionsraten",
+	"pension_scenario_rates_description": "Pensionsspezifische Renditeerwartungen (überschreiben globale Standardwerte)",
+	"pension_scenario_pessimistic_rate": "Pessimistisch",
+	"pension_scenario_realistic_rate": "Realistisch",
+	"pension_scenario_optimistic_rate": "Optimistisch",
+	"pension_scenario_rates_explanation": "Eigene Renditeerwartungen für diese Pension setzen. Vorausgefüllt mit globalen Standardwerten — anpassen basierend auf spezifischen Erwartungen."
 }

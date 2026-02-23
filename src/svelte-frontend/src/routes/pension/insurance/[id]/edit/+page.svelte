@@ -27,6 +27,8 @@
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
 	import ContributionHistoryCard from '$lib/components/pension/ContributionHistoryCard.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -45,9 +47,12 @@
 	let provider = $state('');
 	let contractNumber = $state('');
 	let startDate = $state('');
-	let guaranteedInterest = $state(0); // form decimal
-	let expectedReturn = $state(0); // form decimal
 	let notes = $state('');
+
+	// Per-pension scenario rates — initialized in hydrateForm() from pension or global fallback
+	let pessimisticRate = $state(settingsStore.current.projection_pessimistic_rate / 100);
+	let realisticRate = $state(settingsStore.current.projection_realistic_rate / 100);
+	let optimisticRate = $state(settingsStore.current.projection_optimistic_rate / 100);
 
 	interface ProjectionFormData {
 		id: number;
@@ -79,10 +84,20 @@
 		provider = p.provider;
 		contractNumber = p.contract_number ?? '';
 		startDate = p.start_date;
-		// API rates are percentages (2.0 = 2%), convert to decimals for form
-		guaranteedInterest = p.guaranteed_interest != null ? p.guaranteed_interest / 100 : 0;
-		expectedReturn = p.expected_return != null ? p.expected_return / 100 : 0;
 		notes = p.notes ?? '';
+		// API rates are percentages (7.0 = 7%), convert to decimals for form
+		pessimisticRate =
+			p.pessimistic_rate != null
+				? p.pessimistic_rate / 100
+				: settingsStore.current.projection_pessimistic_rate / 100;
+		realisticRate =
+			p.realistic_rate != null
+				? p.realistic_rate / 100
+				: settingsStore.current.projection_realistic_rate / 100;
+		optimisticRate =
+			p.optimistic_rate != null
+				? p.optimistic_rate / 100
+				: settingsStore.current.projection_optimistic_rate / 100;
 		statements = (p.statements ?? []).map((s) => ({
 			...s,
 			id: s.id ?? 0,
@@ -125,10 +140,10 @@
 				start_date: startDate,
 				provider: provider.trim(),
 				contract_number: contractNumber.trim() || undefined,
-				// Convert decimals back to percentages for API
-				guaranteed_interest: guaranteedInterest ? guaranteedInterest * 100 : undefined,
-				expected_return: expectedReturn ? expectedReturn * 100 : undefined,
 				notes: notes.trim() || '',
+				pessimistic_rate: pessimisticRate * 100,
+				realistic_rate: realisticRate * 100,
+				optimistic_rate: optimisticRate * 100,
 				contribution_plan_steps: contributionPlanSteps.map((step) => ({
 					id: step.id,
 					amount: step.amount,
@@ -258,8 +273,6 @@
 							<ExplanationListItem><strong>{m.insurance_pension_provider()}:</strong> {m.insurance_pension_explanation_provider()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.insurance_pension_contract_number()}:</strong> {m.insurance_pension_explanation_contract_number()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.insurance_pension_start_date()}:</strong> {m.insurance_pension_explanation_start_date()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.insurance_pension_guaranteed_interest()}:</strong> {m.insurance_pension_explanation_guaranteed()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.insurance_pension_expected_return()}:</strong> {m.insurance_pension_explanation_expected()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.insurance_pension_notes()}:</strong> {m.insurance_pension_explanation_notes()}</ExplanationListItem>
 						</ExplanationList>
 						<ExplanationAlert>
@@ -283,8 +296,6 @@
 						bind:provider
 						bind:contractNumber
 						bind:startDate
-						bind:guaranteedInterest
-						bind:expectedReturn
 						bind:notes
 						{errors}
 					/>
@@ -313,6 +324,22 @@
 					description={m.insurance_pension_statements_description()}
 				>
 					<StatementsCard bind:statements {pensionId} />
+				</Card>
+			</ContentSection>
+
+			<!-- Projection Rates Section -->
+			<ContentSection>
+				{#snippet aside()}
+					<Explanation>
+						<p>{m.pension_scenario_rates_explanation()}</p>
+					</Explanation>
+				{/snippet}
+				<Card title={m.pension_scenario_rates_title()}>
+					<ScenarioRatesCard
+						bind:pessimisticRate
+						bind:realisticRate
+						bind:optimisticRate
+					/>
 				</Card>
 			</ContentSection>
 

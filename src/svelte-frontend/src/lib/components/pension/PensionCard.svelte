@@ -125,16 +125,10 @@
 						<dd class="truncate">{pension.contract_number}</dd>
 					</div>
 				{/if}
-				{#if pension.guaranteed_interest != null}
+				{#if pension.realistic_rate != null}
 					<div>
-						<dt class="text-muted-foreground">{m.pension_interest_rate()}</dt>
-						<dd>{formatPercent(pension.guaranteed_interest)}</dd>
-					</div>
-				{/if}
-				{#if pension.expected_return != null}
-					<div>
-						<dt class="text-muted-foreground">{m.pension_expected_return()}</dt>
-						<dd>{formatPercent(pension.expected_return)}</dd>
+						<dt class="text-muted-foreground">{m.pension_scenario_realistic_rate()}</dt>
+						<dd>{formatPercent(pension.realistic_rate)}</dd>
 					</div>
 				{/if}
 				<div>

@@ -23,6 +23,8 @@
 	import ExplanationListItem from '$lib/components/ui/ExplanationListItem.svelte';
 	import BasicInformationCard from '$lib/components/pension/state/BasicInformationCard.svelte';
 	import StatementsCard from '$lib/components/pension/state/StatementsCard.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -44,6 +46,11 @@
 	let statements = $state<StatementFormData[]>([]);
 	let errors = $state<Record<string, string>>({});
 	let submitting = $state(false);
+
+	// Per-pension scenario rates — initialized from global state settings (user can override before creating)
+	let pessimisticRate = $state(settingsStore.current.state_pension_pessimistic_rate / 100);
+	let realisticRate = $state(settingsStore.current.state_pension_realistic_rate / 100);
+	let optimisticRate = $state(settingsStore.current.state_pension_optimistic_rate / 100);
 
 	let memberId = $derived(data.memberId);
 
@@ -68,6 +75,9 @@
 				start_date: startDate,
 				notes: notes.trim() || '',
 				status: 'ACTIVE' as const,
+				pessimistic_rate: pessimisticRate * 100,
+				realistic_rate: realisticRate * 100,
+				optimistic_rate: optimisticRate * 100,
 				statements: statements.length > 0
 					? statements.map(s => ({
 							statement_date: s.statement_date,
@@ -156,6 +166,22 @@
 			{/snippet}
 			<Card title={m.state_pension_statements()} description={m.state_pension_statements_description()}>
 				<StatementsCard bind:statements />
+			</Card>
+		</ContentSection>
+
+		<!-- Projection Rates Section -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.pension_scenario_rates_explanation()}</p>
+				</Explanation>
+			{/snippet}
+			<Card title={m.pension_scenario_rates_title()}>
+				<ScenarioRatesCard
+					bind:pessimisticRate
+					bind:realisticRate
+					bind:optimisticRate
+				/>
 			</Card>
 		</ContentSection>
 	</form>

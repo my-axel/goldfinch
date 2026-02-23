@@ -20,6 +20,12 @@ class PensionState(Base):
     paused_at = Column(Date, nullable=True)
     resume_at = Column(Date, nullable=True)
 
+    # Per-pension scenario rates (nullable; falls back to settings.state_pension_*_rate when None)
+    # Stored as percentages: 1.5 = 1.5% p.a.
+    pessimistic_rate = Column(Numeric(6, 4), nullable=True)
+    realistic_rate = Column(Numeric(6, 4), nullable=True)
+    optimistic_rate = Column(Numeric(6, 4), nullable=True)
+
     # Relationships
     member = relationship("HouseholdMember", back_populates="state_pensions")
     statements = relationship("PensionStateStatement", back_populates="pension", cascade="all, delete-orphan", order_by="desc(PensionStateStatement.statement_date)")

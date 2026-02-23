@@ -167,6 +167,10 @@ class PensionCompanyBase(BaseModel):
     status: PensionStatus = PensionStatus.ACTIVE
     paused_at: Optional[date] = None
     resume_at: Optional[date] = None
+    # Per-pension scenario rates (nullable; falls back to global settings when None)
+    pessimistic_rate: Optional[Decimal] = Field(default=None, ge=0)
+    realistic_rate: Optional[Decimal] = Field(default=None, ge=0)
+    optimistic_rate: Optional[Decimal] = Field(default=None, ge=0)
 
 class PensionCompanyCreate(PensionCompanyBase):
     contribution_plan_steps: List[ContributionPlanStepCreate] = []
@@ -201,6 +205,9 @@ class PensionCompanyUpdate(BaseModel):
     status: Optional[PensionStatus] = None
     paused_at: Optional[date] = None
     resume_at: Optional[date] = None
+    pessimistic_rate: Optional[Decimal] = None
+    realistic_rate: Optional[Decimal] = None
+    optimistic_rate: Optional[Decimal] = None
 
 class PensionStatusUpdate(BaseModel):
     status: PensionStatus

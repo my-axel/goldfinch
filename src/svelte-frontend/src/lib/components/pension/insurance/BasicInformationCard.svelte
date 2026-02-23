@@ -7,15 +7,12 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
-	import PercentInput from '$lib/components/ui/PercentInput.svelte';
 
 	let {
 		name = $bindable(''),
 		provider = $bindable(''),
 		contractNumber = $bindable(''),
 		startDate = $bindable(''),
-		guaranteedInterest = $bindable(0),
-		expectedReturn = $bindable(0),
 		notes = $bindable(''),
 		errors = {}
 	}: {
@@ -23,8 +20,6 @@
 		provider: string;
 		contractNumber: string;
 		startDate: string;
-		guaranteedInterest: number;
-		expectedReturn: number;
 		notes: string;
 		errors?: { name?: string; start_date?: string; provider?: string };
 	} = $props();
@@ -79,38 +74,20 @@
 		</div>
 	</div>
 
-	<!-- Start Date, Guaranteed Interest, Expected Return -->
-	<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-		<div>
-			<label class="block text-sm font-medium mb-1.5">
-				{m.insurance_pension_start_date()}
-				<input
-					type="date"
-					bind:value={startDate}
-					class="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm
-						{errors.start_date ? 'border-destructive' : ''}"
-				/>
-			</label>
-			{#if errors.start_date}
-				<p class="text-xs text-destructive mt-1">{errors.start_date}</p>
-			{/if}
-		</div>
-
-		<div>
-			<!-- svelte-ignore a11y_label_has_associated_control -->
-			<label class="block text-sm font-medium mb-1.5">
-				{m.insurance_pension_guaranteed_interest()}
-			</label>
-			<PercentInput bind:value={guaranteedInterest} max={0.50} decimals={2} />
-		</div>
-
-		<div>
-			<!-- svelte-ignore a11y_label_has_associated_control -->
-			<label class="block text-sm font-medium mb-1.5">
-				{m.insurance_pension_expected_return()}
-			</label>
-			<PercentInput bind:value={expectedReturn} max={0.50} decimals={2} />
-		</div>
+	<!-- Start Date -->
+	<div>
+		<label class="block text-sm font-medium mb-1.5">
+			{m.insurance_pension_start_date()}
+			<input
+				type="date"
+				bind:value={startDate}
+				class="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm
+					{errors.start_date ? 'border-destructive' : ''}"
+			/>
+		</label>
+		{#if errors.start_date}
+			<p class="text-xs text-destructive mt-1">{errors.start_date}</p>
+		{/if}
 	</div>
 
 	<!-- Notes -->

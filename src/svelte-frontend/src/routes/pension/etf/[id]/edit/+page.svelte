@@ -31,6 +31,7 @@
 	import ProjectionChart from '$lib/components/pension/etf/ProjectionChart.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
 	import ContributionHistoryCard from '$lib/components/pension/ContributionHistoryCard.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
 	import OneTimeInvestmentModal from '$lib/components/pension/etf/OneTimeInvestmentModal.svelte';
 	import type { PageData } from './$types';
@@ -65,6 +66,11 @@
 	let contributionPlanSteps = $state<ContributionStep[]>([]);
 	let errors = $state<Record<string, string>>({});
 
+	// Per-pension scenario rates (decimal format for PercentInput: 0.07 = 7%)
+	let pessimisticRate = $state(0.04);
+	let realisticRate = $state(0.07);
+	let optimisticRate = $state(0.10);
+
 	// Statistics (loaded non-blocking after page load)
 	let statistics = $state<ETFPensionStatistics | null>(null);
 	let statisticsLoading = $state(false);
@@ -87,6 +93,16 @@
 		referenceDate = p.reference_date ?? '';
 		notes = p.notes ?? '';
 		contributionPlanSteps = (p.contribution_plan_steps ?? []).map((step) => ({ ...step }));
+		// Initialize rates from pension (if set) or fall back to global settings
+		pessimisticRate = p.pessimistic_rate != null
+			? p.pessimistic_rate / 100
+			: settingsStore.current.projection_pessimistic_rate / 100;
+		realisticRate = p.realistic_rate != null
+			? p.realistic_rate / 100
+			: settingsStore.current.projection_realistic_rate / 100;
+		optimisticRate = p.optimistic_rate != null
+			? p.optimistic_rate / 100
+			: settingsStore.current.projection_optimistic_rate / 100;
 	}
 
 	$effect(() => {
@@ -139,9 +155,9 @@
 				initialValue,
 				contributionSteps: contributionPlanSteps,
 				rates: {
-					pessimistic: settingsStore.current.projection_pessimistic_rate,
-					realistic: settingsStore.current.projection_realistic_rate,
-					optimistic: settingsStore.current.projection_optimistic_rate
+					pessimistic: pessimisticRate * 100,
+					realistic: realisticRate * 100,
+					optimistic: optimisticRate * 100
 				},
 				startDate: projectionStart,
 				endDate: retirementDate,
@@ -172,6 +188,9 @@
 				existing_units: existingUnits,
 				reference_date: referenceDate || undefined,
 				notes: notes.trim() || '',
+				pessimistic_rate: pessimisticRate * 100,
+				realistic_rate: realisticRate * 100,
+				optimistic_rate: optimisticRate * 100,
 				contribution_plan_steps: contributionPlanSteps.map((step) => ({
 					id: step.id,
 					amount: step.amount,
@@ -296,7 +315,23 @@
 				</Card>
 			</ContentSection>
 
-			<!-- Section 2: Contribution Plan -->
+			<!-- Section 2: Projection Rates -->
+			<ContentSection>
+				{#snippet aside()}
+					<Explanation>
+						<p>{m.pension_scenario_rates_explanation()}</p>
+					</Explanation>
+				{/snippet}
+				<Card title={m.pension_scenario_rates_title()}>
+					<ScenarioRatesCard
+						bind:pessimisticRate
+						bind:realisticRate
+						bind:optimisticRate
+					/>
+				</Card>
+			</ContentSection>
+
+			<!-- Section 3: Contribution Plan -->
 			<ContentSection>
 				{#snippet aside()}
 					<Explanation>
@@ -391,7 +426,7 @@
 										currency,
 										0
 									)}
-									subValue="{settingsStore.current.projection_pessimistic_rate}% p.a."
+									subValue="{(pessimisticRate * 100).toFixed(1)}% p.a."
 								/>
 								<ExplanationStat
 									icon={ArrowRight}
@@ -402,7 +437,7 @@
 										currency,
 										0
 									)}
-									subValue="{settingsStore.current.projection_realistic_rate}% p.a."
+									subValue="{(realisticRate * 100).toFixed(1)}% p.a."
 								/>
 								<ExplanationStat
 									icon={TrendingUp}
@@ -413,7 +448,7 @@
 										currency,
 										0
 									)}
-									subValue="{settingsStore.current.projection_optimistic_rate}% p.a."
+									subValue="{(optimisticRate * 100).toFixed(1)}% p.a."
 								/>
 							</ExplanationStats>
 							<ExplanationStats columns={2}>
@@ -452,6 +487,9 @@
 						contributionSteps={contributionPlanSteps}
 						retirementDate={retirementDateStr}
 						loading={statisticsLoading}
+						pessimisticRate={pessimisticRate * 100}
+						realisticRate={realisticRate * 100}
+						optimisticRate={optimisticRate * 100}
 					/>
 				</Card>
 			</ContentSection>

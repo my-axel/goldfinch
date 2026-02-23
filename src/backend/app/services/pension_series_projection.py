@@ -2,15 +2,14 @@
 Service for calculating forward projection time series for all pension types.
 
 Produces monthly data points from today to the member's planned retirement date.
-Each pension type uses its own rate resolution logic:
-- Savings:   pension's own pessimistic/realistic/optimistic_rate (stored as %)
-- State:     settings.state_pension_*_rate
-- Insurance: guaranteed_interest × 100 / expected_return × 100 / global optimistic
-             (NB: guaranteed_interest and expected_return are stored as raw decimals,
-             e.g. 0.025 = 2.5%, unlike Savings which stores 2.5 = 2.5%)
-- Company:   settings.projection_*_rate
-- ETF:       settings.projection_*_rate
+Each pension type uses per-pension rates with a global fallback:
+- Savings:   pension's own pessimistic/realistic/optimistic_rate (always set, stored as %)
+- State:     pension's own rates, fallback to settings.state_pension_*_rate
+- Insurance: pension's own rates, fallback to settings.projection_*_rate
+- Company:   pension's own rates, fallback to settings.projection_*_rate
+- ETF:       pension's own rates, fallback to settings.projection_*_rate
 
+All per-pension rates are stored as percentages (e.g. 7.0 = 7% p.a.).
 Contribution plan steps are evaluated month by month.
 ONE_TIME contributions are ignored in projections (they are historical events).
 """
@@ -125,7 +124,7 @@ class PensionSeriesProjectionService:
         All values are percentage points (e.g. 7.0 means 7% p.a.).
         """
         if pension_type == "SAVINGS":
-            # Savings stores rates directly as percentages (e.g. 5.0 = 5%)
+            # Savings always has its own rates (non-nullable)
             return {
                 "pessimistic": Decimal(str(pension.pessimistic_rate)),
                 "realistic":   Decimal(str(pension.realistic_rate)),
@@ -133,35 +132,24 @@ class PensionSeriesProjectionService:
             }
 
         elif pension_type == "STATE":
-            return {
-                "pessimistic": Decimal(str(settings.state_pension_pessimistic_rate)),
-                "realistic":   Decimal(str(settings.state_pension_realistic_rate)),
-                "optimistic":  Decimal(str(settings.state_pension_optimistic_rate)),
-            }
-
-        elif pension_type == "INSURANCE":
-            # guaranteed_interest and expected_return are stored as raw decimals
-            # (e.g. 0.025 = 2.5%) — multiply by 100 to get percentage form.
-            pess = (
-                Decimal(str(pension.guaranteed_interest)) * Decimal("100")
-                if pension.guaranteed_interest is not None
-                else Decimal(str(settings.projection_pessimistic_rate))
-            )
-            real = (
-                Decimal(str(pension.expected_return)) * Decimal("100")
-                if pension.expected_return is not None
-                else Decimal(str(settings.projection_realistic_rate))
-            )
-            opt = Decimal(str(settings.projection_optimistic_rate))
+            # Per-pension rates with fallback to global state_pension_*_rate
+            pess = Decimal(str(pension.pessimistic_rate)) if pension.pessimistic_rate is not None \
+                   else Decimal(str(settings.state_pension_pessimistic_rate))
+            real = Decimal(str(pension.realistic_rate)) if pension.realistic_rate is not None \
+                   else Decimal(str(settings.state_pension_realistic_rate))
+            opt  = Decimal(str(pension.optimistic_rate)) if pension.optimistic_rate is not None \
+                   else Decimal(str(settings.state_pension_optimistic_rate))
             return {"pessimistic": pess, "realistic": real, "optimistic": opt}
 
         else:
-            # COMPANY, ETF_PLAN — use global settings rates
-            return {
-                "pessimistic": Decimal(str(settings.projection_pessimistic_rate)),
-                "realistic":   Decimal(str(settings.projection_realistic_rate)),
-                "optimistic":  Decimal(str(settings.projection_optimistic_rate)),
-            }
+            # INSURANCE, COMPANY, ETF_PLAN — per-pension rates (%), fallback to projection_*_rate
+            pess = Decimal(str(pension.pessimistic_rate)) if pension.pessimistic_rate is not None \
+                   else Decimal(str(settings.projection_pessimistic_rate))
+            real = Decimal(str(pension.realistic_rate)) if pension.realistic_rate is not None \
+                   else Decimal(str(settings.projection_realistic_rate))
+            opt  = Decimal(str(pension.optimistic_rate)) if pension.optimistic_rate is not None \
+                   else Decimal(str(settings.projection_optimistic_rate))
+            return {"pessimistic": pess, "realistic": real, "optimistic": opt}
 
     def _start_value_and_steps(self, pension, pension_type: str):
         """

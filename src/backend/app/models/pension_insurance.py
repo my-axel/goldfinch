@@ -16,9 +16,13 @@ class PensionInsurance(Base):
     provider = Column(String, nullable=False)
     contract_number = Column(String, nullable=True)
     start_date = Column(Date, nullable=False)
-    guaranteed_interest = Column(Numeric(10, 4), nullable=True)
-    expected_return = Column(Numeric(10, 4), nullable=True)
     status = Column(SQLEnum(PensionStatus), nullable=False, default=PensionStatus.ACTIVE)
+
+    # Per-pension scenario rates (nullable; falls back to global settings when None)
+    # Stored as percentages: 7.0 = 7% p.a.
+    pessimistic_rate = Column(Numeric(6, 4), nullable=True)
+    realistic_rate = Column(Numeric(6, 4), nullable=True)
+    optimistic_rate = Column(Numeric(6, 4), nullable=True)
     
     # Policy term fields (all optional)
     policy_duration_years = Column(Integer, nullable=True)

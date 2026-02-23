@@ -26,6 +26,12 @@ class PensionCompany(Base):
     paused_at = Column(Date, nullable=True)
     resume_at = Column(Date, nullable=True)
 
+    # Per-pension scenario rates (nullable; falls back to global settings when None)
+    # Stored as percentages: 7.0 = 7% p.a.
+    pessimistic_rate = Column(Numeric(6, 4), nullable=True)
+    realistic_rate = Column(Numeric(6, 4), nullable=True)
+    optimistic_rate = Column(Numeric(6, 4), nullable=True)
+
     # Relationships
     member = relationship("HouseholdMember", back_populates="company_pensions")
     contribution_plan_steps = relationship("PensionCompanyContributionPlanStep", back_populates="pension", cascade="all, delete-orphan")

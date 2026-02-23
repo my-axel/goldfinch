@@ -78,6 +78,10 @@ export interface ETFPension {
 	status: 'ACTIVE' | 'PAUSED';
 	paused_at?: string;
 	resume_at?: string;
+	// Per-pension scenario rates (% format: 7.0 = 7% p.a.; null → global fallback)
+	pessimistic_rate?: number;
+	realistic_rate?: number;
+	optimistic_rate?: number;
 }
 
 // --- Insurance Pension ---
@@ -114,14 +118,16 @@ export interface InsurancePension {
 	notes?: string;
 	provider: string;
 	contract_number?: string;
-	guaranteed_interest?: number;
-	expected_return?: number;
 	contribution_plan_steps: ContributionStep[];
 	contribution_history?: ExtraContribution[];
 	status: 'ACTIVE' | 'PAUSED';
 	paused_at?: string;
 	resume_at?: string;
 	statements?: InsurancePensionStatement[];
+	// Per-pension scenario rates (% format: 7.0 = 7% p.a.; null → global fallback)
+	pessimistic_rate?: number;
+	realistic_rate?: number;
+	optimistic_rate?: number;
 }
 
 // --- Company Pension ---
@@ -160,6 +166,10 @@ export interface CompanyPension {
 	status: 'ACTIVE' | 'PAUSED';
 	paused_at?: string;
 	resume_at?: string;
+	// Per-pension scenario rates (% format: 7.0 = 7% p.a.; null → global fallback)
+	pessimistic_rate?: number;
+	realistic_rate?: number;
+	optimistic_rate?: number;
 }
 
 // --- State Pension ---
@@ -206,6 +216,10 @@ export interface StatePension {
 	paused_at?: string;
 	resume_at?: string;
 	statements?: StatePensionStatement[];
+	// Per-pension scenario rates (% format: 1.5 = 1.5% p.a.; null → global state_pension fallback)
+	pessimistic_rate?: number;
+	realistic_rate?: number;
+	optimistic_rate?: number;
 }
 
 // --- Savings Pension ---
@@ -290,8 +304,9 @@ export interface InsurancePensionList {
 	provider: string;
 	start_date: string;
 	contract_number?: string;
-	guaranteed_interest?: number;
-	expected_return?: number;
+	pessimistic_rate?: number;
+	realistic_rate?: number;
+	optimistic_rate?: number;
 	status: 'ACTIVE' | 'PAUSED';
 	paused_at?: string;
 	resume_at?: string;

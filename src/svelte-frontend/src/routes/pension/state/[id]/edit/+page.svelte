@@ -26,6 +26,8 @@
 	import StatementsCard from '$lib/components/pension/state/StatementsCard.svelte';
 	import ScenarioViewer from '$lib/components/pension/state/ScenarioViewer.svelte';
 	import PensionStatusActions from '$lib/components/pension/PensionStatusActions.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -55,6 +57,11 @@
 	let statements = $state<StatementFormData[]>([]);
 	let errors = $state<Record<string, string>>({});
 
+	// Per-pension scenario rates — initialized in hydrateForm() from pension or global state fallback
+	let pessimisticRate = $state(settingsStore.current.state_pension_pessimistic_rate / 100);
+	let realisticRate = $state(settingsStore.current.state_pension_realistic_rate / 100);
+	let optimisticRate = $state(settingsStore.current.state_pension_optimistic_rate / 100);
+
 	function hydrateForm(currentPension: StatePension) {
 		name = currentPension.name;
 		startDate = currentPension.start_date;
@@ -65,6 +72,18 @@
 			projected_monthly_amount: statement.projected_monthly_amount ?? 0,
 			current_value: statement.current_value ?? 0
 		}));
+		pessimisticRate =
+			currentPension.pessimistic_rate != null
+				? currentPension.pessimistic_rate / 100
+				: settingsStore.current.state_pension_pessimistic_rate / 100;
+		realisticRate =
+			currentPension.realistic_rate != null
+				? currentPension.realistic_rate / 100
+				: settingsStore.current.state_pension_realistic_rate / 100;
+		optimisticRate =
+			currentPension.optimistic_rate != null
+				? currentPension.optimistic_rate / 100
+				: settingsStore.current.state_pension_optimistic_rate / 100;
 	}
 
 	$effect(() => {
@@ -96,6 +115,9 @@
 				start_date: startDate,
 				notes: notes.trim() || '',
 				status: pension.status,
+				pessimistic_rate: pessimisticRate * 100,
+				realistic_rate: realisticRate * 100,
+				optimistic_rate: optimisticRate * 100,
 				statements: statements
 					.filter(s => s.statement_date)
 					.map(s => ({
@@ -228,6 +250,22 @@
 				{/snippet}
 				<Card title={m.state_pension_statements()} description={m.state_pension_statements_description()}>
 					<StatementsCard bind:statements {pensionId} />
+				</Card>
+			</ContentSection>
+
+			<!-- Projection Rates Section -->
+			<ContentSection>
+				{#snippet aside()}
+					<Explanation>
+						<p>{m.pension_scenario_rates_explanation()}</p>
+					</Explanation>
+				{/snippet}
+				<Card title={m.pension_scenario_rates_title()}>
+					<ScenarioRatesCard
+						bind:pessimisticRate
+						bind:realisticRate
+						bind:optimisticRate
+					/>
 				</Card>
 			</ContentSection>
 

@@ -62,14 +62,16 @@ class PensionStateProjectionService:
             statement=latest_statement,
             retirement_date=member.retirement_date_planned,
             retirement_age=member.retirement_age_planned,
+            pension=pension,
             settings=settings,
             reference_date=reference_date
         )
-        
+
         possible_scenarios = self._calculate_retirement_scenarios(
             statement=latest_statement,
             retirement_date=member.retirement_date_possible,
             retirement_age=member.retirement_age_possible,
+            pension=pension,
             settings=settings,
             reference_date=reference_date
         )
@@ -84,6 +86,7 @@ class PensionStateProjectionService:
         statement: PensionStateStatement,
         retirement_date: date,
         retirement_age: int,
+        pension: PensionState,
         settings: Settings,
         reference_date: date
     ) -> Dict[str, StatePensionScenario]:
@@ -94,23 +97,26 @@ class PensionStateProjectionService:
             (retirement_date.year - reference_date.year) +
             (retirement_date.month - reference_date.month) / 12
         )
-        
+
         # Convert to Decimal for calculations
         years_to_retirement_decimal = Decimal(str(years_to_retirement))
-        
+
         scenarios = {}
-        
+
         # Default growth rates in case settings is None
         default_rates = {
             "pessimistic": Decimal("1.0"),
             "realistic": Decimal("1.5"),
             "optimistic": Decimal("2.0")
         }
-        
+
         # Calculate for each scenario type
         for scenario in ['pessimistic', 'realistic', 'optimistic']:
-            # Get rate from settings or use default
-            if settings is not None and hasattr(settings, f'state_pension_{scenario}_rate'):
+            # Per-pension rate takes priority, then global settings, then hardcoded default
+            pension_rate = getattr(pension, f'{scenario}_rate', None)
+            if pension_rate is not None:
+                rate = Decimal(str(pension_rate))
+            elif settings is not None and hasattr(settings, f'state_pension_{scenario}_rate'):
                 rate = getattr(settings, f'state_pension_{scenario}_rate')
             else:
                 rate = default_rates[scenario]

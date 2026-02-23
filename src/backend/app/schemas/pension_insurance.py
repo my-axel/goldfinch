@@ -212,9 +212,11 @@ class PensionInsuranceBase(BaseModel):
     provider: str = Field(description="Insurance company name")
     contract_number: Optional[str] = Field(default=None, description="Policy or contract identification number")
     start_date: date = Field(description="Policy start date")
-    guaranteed_interest: Optional[Decimal] = Field(default=None, ge=0, description="Minimum guaranteed return rate (must be non-negative)")
-    expected_return: Optional[Decimal] = Field(default=None, ge=0, description="Expected total return rate (must be non-negative)")
     status: str = Field(default="ACTIVE", description="ACTIVE, PAUSED")
+    # Per-pension scenario rates (nullable; falls back to global settings when None)
+    pessimistic_rate: Optional[Decimal] = Field(default=None, ge=0)
+    realistic_rate: Optional[Decimal] = Field(default=None, ge=0)
+    optimistic_rate: Optional[Decimal] = Field(default=None, ge=0)
     policy_duration_years: Optional[int] = Field(default=None, description="Fixed term in years, if applicable")
     policy_end_date: Optional[date] = Field(default=None, description="Specific end date, if applicable")
     is_lifetime_policy: Optional[bool] = Field(default=None, description="Whether it's a lifetime policy")
@@ -232,14 +234,6 @@ class PensionInsuranceBase(BaseModel):
         if v is not None and v <= 0:
             raise ValueError('Policy duration years must be positive')
         return v
-    
-    @model_validator(mode='after')
-    def check_guaranteed_vs_expected_return(self):
-        if (self.guaranteed_interest is not None and 
-            self.expected_return is not None and 
-            self.guaranteed_interest > self.expected_return):
-            raise ValueError('Guaranteed interest rate must be less than or equal to expected return')
-        return self
     
     @model_validator(mode='after')
     def check_policy_term_consistency(self):
@@ -275,28 +269,15 @@ class PensionInsuranceUpdate(BaseModel):
     notes: Optional[str] = None
     provider: Optional[str] = None
     contract_number: Optional[str] = None
-    guaranteed_interest: Optional[Decimal] = None
-    expected_return: Optional[Decimal] = None
     status: Optional[str] = None
     policy_duration_years: Optional[int] = None
     policy_end_date: Optional[date] = None
     is_lifetime_policy: Optional[bool] = None
     contribution_plan_steps: Optional[List[ContributionPlanStepCreate]] = None
     benefits: Optional[List[BenefitCreate]] = None
-
-    @field_validator('guaranteed_interest')
-    @classmethod
-    def guaranteed_interest_must_be_non_negative(cls, v):
-        if v is not None and v < 0:
-            raise ValueError("Guaranteed interest must be non-negative")
-        return v
-
-    @field_validator('expected_return')
-    @classmethod
-    def expected_return_must_be_non_negative(cls, v):
-        if v is not None and v < 0:
-            raise ValueError("Expected return must be non-negative")
-        return v
+    pessimistic_rate: Optional[Decimal] = None
+    realistic_rate: Optional[Decimal] = None
+    optimistic_rate: Optional[Decimal] = None
 
     @field_validator('policy_duration_years')
     @classmethod
@@ -319,10 +300,11 @@ class InsurancePensionListSchema(BaseModel):
     provider: str
     contract_number: Optional[str] = None
     start_date: date
-    guaranteed_interest: Optional[Decimal] = None
-    expected_return: Optional[Decimal] = None
+    pessimistic_rate: Optional[Decimal] = None
+    realistic_rate: Optional[Decimal] = None
+    optimistic_rate: Optional[Decimal] = None
     status: PensionStatus
-    paused_at: Optional[date] = None  # Optional with default None since it doesn't exist in the model
-    resume_at: Optional[date] = None  # Optional with default None since it doesn't exist in the model
+    paused_at: Optional[date] = None
+    resume_at: Optional[date] = None
 
     model_config = ConfigDict(from_attributes=True) 

@@ -22,12 +22,18 @@
 		statistics,
 		contributionSteps,
 		retirementDate,
-		loading = false
+		loading = false,
+		pessimisticRate,
+		realisticRate,
+		optimisticRate
 	}: {
 		statistics: ETFPensionStatistics | null;
 		contributionSteps: ContributionStep[];
 		retirementDate: string | null;
 		loading?: boolean;
+		pessimisticRate: number;
+		realisticRate: number;
+		optimisticRate: number;
 	} = $props();
 
 	let isExpanded = $state(false);
@@ -154,9 +160,9 @@
 			initialValue,
 			contributionSteps,
 			rates: {
-				pessimistic: settingsStore.current.projection_pessimistic_rate,
-				realistic: settingsStore.current.projection_realistic_rate,
-				optimistic: settingsStore.current.projection_optimistic_rate
+				pessimistic: pessimisticRate,
+				realistic: realisticRate,
+				optimistic: optimisticRate
 			},
 			startDate: projectionStart,
 			endDate: retirementDateObj,

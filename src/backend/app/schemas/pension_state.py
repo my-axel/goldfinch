@@ -44,6 +44,10 @@ class PensionStateBase(BaseModel):
     notes: Optional[str] = Field(default=None, description="Additional notes")
     start_date: date = Field(description="When person started accumulating state pension")
     status: PensionStatus = Field(default=PensionStatus.ACTIVE, description="Current status of the pension")
+    # Per-pension scenario rates (nullable; falls back to settings.state_pension_*_rate when None)
+    pessimistic_rate: Optional[Decimal] = Field(default=None, ge=0)
+    realistic_rate: Optional[Decimal] = Field(default=None, ge=0)
+    optimistic_rate: Optional[Decimal] = Field(default=None, ge=0)
 
 # Schema for creating a new state pension
 class PensionStateCreate(PensionStateBase):
@@ -56,6 +60,9 @@ class PensionStateUpdate(BaseModel):
     start_date: Optional[date] = None
     status: Optional[PensionStatus] = None
     statements: Optional[List[dict]] = Field(default=None, description="Optional list of statements to update or create with the pension")
+    pessimistic_rate: Optional[Decimal] = None
+    realistic_rate: Optional[Decimal] = None
+    optimistic_rate: Optional[Decimal] = None
 
 # Schema for state pension response
 class PensionStateResponse(PensionStateBase):

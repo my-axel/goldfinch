@@ -25,6 +25,12 @@ class PensionETF(Base):
     paused_at = Column(Date, nullable=True)
     resume_at = Column(Date, nullable=True)
 
+    # Per-pension scenario rates (nullable; falls back to global settings when None)
+    # Stored as percentages: 7.0 = 7% p.a.
+    pessimistic_rate = Column(Numeric(6, 4), nullable=True)
+    realistic_rate = Column(Numeric(6, 4), nullable=True)
+    optimistic_rate = Column(Numeric(6, 4), nullable=True)
+
     # Relationships
     member = relationship("HouseholdMember", back_populates="etf_pensions")
     etf = relationship("ETF", back_populates="pensions")

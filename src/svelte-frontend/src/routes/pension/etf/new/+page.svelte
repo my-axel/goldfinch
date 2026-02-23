@@ -23,6 +23,8 @@
 	import ExplanationListItem from '$lib/components/ui/ExplanationListItem.svelte';
 	import BasicInformationCard from '$lib/components/pension/etf/BasicInformationCard.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 	import type { PageData } from './$types';
 	import { PlusCircle, BarChart3, History } from '@lucide/svelte';
 
@@ -44,6 +46,11 @@
 	let contributionPlanSteps = $state<ContributionStep[]>([]);
 	let errors = $state<Record<string, string>>({});
 	let submitting = $state(false);
+
+	// Per-pension scenario rates — initialized from global settings (user can override before creating)
+	let pessimisticRate = $state(settingsStore.current.projection_pessimistic_rate / 100);
+	let realisticRate = $state(settingsStore.current.projection_realistic_rate / 100);
+	let optimisticRate = $state(settingsStore.current.projection_optimistic_rate / 100);
 
 	const isExistingInvestment = $derived(initMethod === 'existing');
 
@@ -74,6 +81,9 @@
 				notes: notes.trim() || '',
 				status: 'ACTIVE' as const,
 				total_units: isExistingInvestment ? existingUnits : 0,
+				pessimistic_rate: pessimisticRate * 100,
+				realistic_rate: realisticRate * 100,
+				optimistic_rate: optimisticRate * 100,
 				contribution_plan_steps: contributionPlanSteps.map((step) => ({
 					amount: step.amount,
 					frequency: step.frequency,
@@ -232,6 +242,22 @@
 						{isExistingInvestment}
 						isEditing={false}
 						{errors}
+					/>
+				</Card>
+			</ContentSection>
+
+			<!-- Projection Rates Section -->
+			<ContentSection>
+				{#snippet aside()}
+					<Explanation>
+						<p>{m.pension_scenario_rates_explanation()}</p>
+					</Explanation>
+				{/snippet}
+				<Card title={m.pension_scenario_rates_title()}>
+					<ScenarioRatesCard
+						bind:pessimisticRate
+						bind:realisticRate
+						bind:optimisticRate
 					/>
 				</Card>
 			</ContentSection>

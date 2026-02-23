@@ -25,6 +25,8 @@
 	import BasicInformationCard from '$lib/components/pension/company/BasicInformationCard.svelte';
 	import StatementsCard from '$lib/components/pension/company/StatementsCard.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -56,6 +58,11 @@
 	let contributionPlanSteps = $state<ContributionStep[]>([]);
 	let errors = $state<Record<string, string>>({});
 	let submitting = $state(false);
+
+	// Per-pension scenario rates — initialized from global settings (user can override before creating)
+	let pessimisticRate = $state(settingsStore.current.projection_pessimistic_rate / 100);
+	let realisticRate = $state(settingsStore.current.projection_realistic_rate / 100);
+	let optimisticRate = $state(settingsStore.current.projection_optimistic_rate / 100);
 
 	let memberId = $derived(data.memberId);
 
@@ -90,7 +97,10 @@
 					start_date: step.start_date,
 					end_date: step.end_date || undefined,
 					note: step.note || ''
-				}))
+				})),
+				pessimistic_rate: pessimisticRate * 100,
+				realistic_rate: realisticRate * 100,
+				optimistic_rate: optimisticRate * 100
 			};
 
 			const created = await pensionApi.create<{ id: number }>(PensionType.COMPANY, pensionData);
@@ -205,6 +215,22 @@
 				description={m.company_pension_statements_description()}
 			>
 				<StatementsCard bind:statements />
+			</Card>
+		</ContentSection>
+
+		<!-- Projection Rates Section -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.pension_scenario_rates_explanation()}</p>
+				</Explanation>
+			{/snippet}
+			<Card title={m.pension_scenario_rates_title()}>
+				<ScenarioRatesCard
+					bind:pessimisticRate
+					bind:realisticRate
+					bind:optimisticRate
+				/>
 			</Card>
 		</ContentSection>
 
