@@ -1,79 +1,53 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-
-# testing
-/coverage
-
-# data
-/src/data
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-
-# env files
+# Environment
 .env*
 !.env.example
 
-# typescript
-*.tsbuildinfo
-
-# Virtual Environment
+# Python
 venv/
-__pycache__/
-.pytest_cache/
-exchange_rates_backup_20250222.sql
-
-# Python build artifacts
-*.egg-info/
-*.egg
-
-# Logs
-/src/backend/logs/
-*.log
-
-# Database backups
-*.sql
-*.dump
-
-# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Test cache
+*.egg-info/
+*.egg
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Celery Beat
-celerybeat-schedule*
-
-# SQLite test database
-test.db
-
-# TypeScript
-*.tsbuildinfo
-
-# Cursor
-SCRATCHPAD.md
-
-# Local developer metadata
-.idea/
 .mypy_cache/
 .ruff_cache/
 .tox/
 .nox/
 .python-version
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs & runtime artifacts
+*.log
+src/backend/logs/
+src/backend/error_log.txt
+
+# Database backups & test databases
+*.sql
+*.dump
+*.sqlite3
+test.db
+
+# Celery
+celerybeat-schedule*
+
+# Data directory
+/src/data
+
+# Misc
+.DS_Store
+*.pem
 .envrc
+
+# IDE & editor
+.idea/
+.cursor/
+
+# Claude Code
+SCRATCHPAD.md
 .claude/settings.local.json
 .claude/*.local.json
-
-# Local runtime artifacts
-src/backend/error_log.txt
-*.sqlite3
