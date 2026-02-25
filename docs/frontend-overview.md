@@ -1,7 +1,7 @@
 # Svelte Frontend Overview
 
 ## Ziel und Scope
-Dieses Dokument beschreibt die aktuelle SvelteKit-Frontend-Architektur in `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend`.
+Dieses Dokument beschreibt die aktuelle SvelteKit-Frontend-Architektur in `/Users/axel/Coding/goldfinch-dev/src/frontend`.
 Es dient als schneller Einstieg, damit du bei Erweiterungen (insbesondere ETF-Plan) sofort weisst, wo welche Verantwortung liegt.
 
 ## Einstieg in 5 Minuten

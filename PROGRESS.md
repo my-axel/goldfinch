@@ -12,8 +12,8 @@ Es ersetzt die alte React/Next.js-zentrierte Planung und verlinkt nur auf vorhan
 - `📝 Planned`: Geplant, aber noch nicht umgesetzt
 
 ## Aktueller Snapshot
-- SvelteKit (`src/svelte-frontend`) ist der primaere Frontend-Pfad fuer neue Arbeit.
-- Legacy-Frontend (`app/`, `src/frontend/`) ist noch vorhanden, aber nicht mehr der Zielpfad fuer Feature-Ausbau.
+- SvelteKit (`src/frontend`) ist der primaere und einzige Frontend-Pfad.
+- Legacy Next.js-Frontend (`app/`, ehem. `src/frontend/` React-Code) wurde vollstaendig entfernt.
 - Household-Management ist implementiert (CRUD inkl. UI und API-Integration).
 - Pension-Management fuer alle 5 Typen ist implementiert (State, Company, Insurance, ETF, Savings; jeweils New/Edit-Flows).
 - Settings inkl. Locale, Currency, Szenario-Raten, Inflation und Theme sind implementiert.
@@ -24,7 +24,6 @@ Es ersetzt die alte React/Next.js-zentrierte Planung und verlinkt nur auf vorhan
 1. MVP-Ausbau fuer Dashboard, Compass und Payout Strategy mit echten Kernmetriken.
 2. Frontend-Integration von Currency/Exchange-Rate-Flows in relevante UI-Bereiche.
 3. Konsistenz-Harmonisierung im Backend (Status-/Statement-Endpunkte, Task-Flows).
-4. Cutover-Vorbereitung: Svelte final als Standard, Legacy klar archivieren oder entfernen.
 
 ## Modulstatus
 
@@ -89,12 +88,12 @@ Enthaelt:
 4. Currency-Integration in sichtbare Nutzerfluesse
 
 ### Milestone 3: Backend-Harmonisierung und Cutover
-`Status: 📝 Planned`
+`Status: 🟡 In Progress`
 
 Enthaelt:
 1. Task-/Endpoint-Konsistenz fuer langfristige Wartbarkeit
-2. Svelte als finaler Standardpfad
-3. Legacy-Bereinigung (archivieren oder entfernen)
+2. ✅ Svelte als finaler Standardpfad (abgeschlossen)
+3. ✅ Legacy-Bereinigung (abgeschlossen — Next.js Frontend entfernt)
 
 ## Simplification Playbook Alignment
 | Phase | Status | Referenz |
@@ -110,10 +109,9 @@ Hinweis:
 - Das formale Abschlussprotokoll der Phasen wird in [99_ABSCHLUSS.md](docs/simplification-playbook/99_ABSCHLUSS.md) gepflegt.
 
 ## Blocker und Risiken
-1. Dualbetrieb (Legacy + Svelte) erhoeht Wartungsaufwand und Kontextwechsel.
-2. MVP-Seiten sind noch nicht datengetrieben genug fuer produktive Entscheidungsunterstuetzung.
-3. Task- und Endpoint-Harmonisierung im Backend ist noch nicht abgeschlossen.
-4. Automatisierte End-to-end Regression ist aktuell nicht ausreichend formalisiert.
+1. MVP-Seiten sind noch nicht datengetrieben genug fuer produktive Entscheidungsunterstuetzung.
+2. Task- und Endpoint-Harmonisierung im Backend ist noch nicht abgeschlossen.
+3. Automatisierte End-to-end Regression ist aktuell nicht ausreichend formalisiert.
 
 ## Arbeitsregeln fuer Updates
 1. Bei jeder Feature-Lieferung: Modulstatus + Milestone + ggf. Playbook-Phase aktualisieren.
@@ -124,7 +122,7 @@ Hinweis:
 ## Verifikation (Standardbefehle)
 Svelte-Checks:
 ```bash
-cd /Users/axel/Coding/goldfinch-dev/src/svelte-frontend
+cd /Users/axel/Coding/goldfinch-dev/src/frontend
 npm run check
 ```
 

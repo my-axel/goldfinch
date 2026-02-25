@@ -1,6 +1,6 @@
 # Frontend-Referenz (SvelteKit / Svelte 5)
 
-Basis-Pfad: `src/svelte-frontend/src/`
+Basis-Pfad: `src/frontend/src/`
 
 ## Routing-Struktur
 

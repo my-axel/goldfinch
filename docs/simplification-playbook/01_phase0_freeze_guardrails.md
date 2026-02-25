@@ -16,7 +16,7 @@ Abgrenzung:
 ## 2. Betroffene Dateien
 1. `/Users/axel/Coding/goldfinch-dev/README.md`
 2. `/Users/axel/Coding/goldfinch-dev/DOCKER_SETUP.md`
-3. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/lib/components/layout/Sidebar.svelte`
+3. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/lib/components/layout/Sidebar.svelte`
 
 ## 3. Exakte Aenderungen
 
@@ -35,7 +35,7 @@ Kein Flag-System notwendig — die Seiten werden in Phase 1 befuellt und dann wi
 
 ## 5. Testplan
 ```bash
-cd /Users/axel/Coding/goldfinch-dev/src/svelte-frontend
+cd /Users/axel/Coding/goldfinch-dev/src/frontend
 npm run check
 ```
 
