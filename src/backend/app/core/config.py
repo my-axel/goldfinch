@@ -6,7 +6,7 @@ from pathlib import Path
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Goldfinch"
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173"]
     DATABASE_URL: str = "postgresql+psycopg2://goldfinch_dev:changeme@localhost:5432/goldfinch_dev"
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"

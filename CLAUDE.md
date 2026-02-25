@@ -1,12 +1,12 @@
 # Goldfinch — Claude Code Guide
 
-Goldfinch ist eine Altersvorsorge-Planungsapp. **Aktives Frontend**: SvelteKit/Svelte 5 (`src/svelte-frontend/`). **Backend**: FastAPI (Python) mit PostgreSQL und Redis.
+Goldfinch ist eine Altersvorsorge-Planungsapp. **Aktives Frontend**: SvelteKit/Svelte 5 (`src/frontend/`). **Backend**: FastAPI (Python) mit PostgreSQL und Redis.
 
 ## Dev-Befehle
 
 ```bash
 # Frontend (Port 5173)
-cd src/svelte-frontend && npm run dev
+cd src/frontend && npm run dev
 
 # Backend (Port 8000) — Python venv liegt in src/backend/venv
 cd src/backend && source venv/bin/activate && uvicorn app.main:app --reload
@@ -21,7 +21,7 @@ cd src/backend && python -m pytest
 ## Kritische Verzeichnisse
 
 ```
-src/svelte-frontend/src/
+src/frontend/src/
   routes/          # Seiten (+page.svelte) und Ladedaten (+page.ts)
   lib/api/         # HTTP-Client + API-Services pro Domain
   lib/stores/      # Globale reaktive Stores (Svelte 5 runes)

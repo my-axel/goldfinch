@@ -8,7 +8,7 @@ Goldfinch is in active development.
 
 - Core pension and household management is implemented and usable.
 - Dashboard, Compass, and Payout Strategy are available as structured UI scaffolds and are being expanded feature by feature.
-- New frontend work is centered in `src/svelte-frontend`.
+- New frontend work is centered in `src/frontend`.
 
 ## ✅ Features Available Today
 
@@ -65,7 +65,7 @@ For detailed tracking, see [PROGRESS.md](PROGRESS.md).
 
 ## 🗂️ Repository Structure
 
-- `src/svelte-frontend`: active frontend application
+- `src/frontend`: active frontend application
 - `src/backend`: backend API, models, services, migrations, tests
 - `docs`: architecture and migration documentation
 - `PROGRESS.md`: roadmap and implementation status
@@ -82,7 +82,7 @@ For detailed tracking, see [PROGRESS.md](PROGRESS.md).
 
 1. Copy environment files:
    - `cp .env.example .env`
-   - `cp src/svelte-frontend/.env.example src/svelte-frontend/.env`
+   - `cp src/frontend/.env.example src/frontend/.env`
 2. Start infrastructure:
    - `docker-compose up -d`
 3. Start backend:
@@ -96,7 +96,7 @@ For detailed tracking, see [PROGRESS.md](PROGRESS.md).
    - `celery -A app.core.celery_app.celery_app worker -l info`
    - `celery -A app.core.celery_app.celery_app beat -l info`
 5. Start frontend:
-   - `cd src/svelte-frontend`
+   - `cd src/frontend`
    - `npm install`
    - `npm run dev`
 

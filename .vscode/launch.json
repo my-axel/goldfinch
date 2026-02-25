@@ -3,7 +3,7 @@
     "compounds": [
         {
             "name": "🚀 Full Stack (All Services)",
-            "configurations": ["Frontend Dev", "Svelte Dev", "Backend", "Celery Worker", "Celery Beat"],
+            "configurations": ["Svelte Dev", "Backend", "Celery Worker", "Celery Beat"],
             "stopAll": true,
         }
     ],
@@ -69,21 +69,10 @@
             }
         },
         {
-            "name": "Frontend Dev",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": ["run", "dev"],
-            "env": {
-                "NODE_ENV": "development"
-            }
-        },
-        {
             "name": "Svelte Dev",
             "type": "node",
             "request": "launch",
-            "cwd": "${workspaceFolder}/src/svelte-frontend",
+            "cwd": "${workspaceFolder}/src/frontend",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run", "dev"],
             "env": {

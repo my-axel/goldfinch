@@ -15,8 +15,8 @@ Unveraendert bleiben:
 
 ## 2. Betroffene Dateien
 Frontend:
-1. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/routes/pension/etf/new/+page.svelte`
-2. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/lib/components/pension/etf/BasicInformationCard.svelte`
+1. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/routes/pension/etf/new/+page.svelte`
+2. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/lib/components/pension/etf/BasicInformationCard.svelte`
 
 Backend:
 1. `/Users/axel/Coding/goldfinch-dev/src/backend/app/tasks/etf_pension.py`
@@ -46,7 +46,7 @@ In `etf_pension.py`:
 
 ## 5. Testplan
 ```bash
-cd /Users/axel/Coding/goldfinch-dev/src/svelte-frontend
+cd /Users/axel/Coding/goldfinch-dev/src/frontend
 npm run check
 ```
 

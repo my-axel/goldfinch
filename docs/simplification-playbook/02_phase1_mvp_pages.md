@@ -16,13 +16,13 @@ Abgrenzung:
 
 ## 2. Betroffene Dateien
 Svelte-Routen:
-1. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/routes/+page.svelte` (Dashboard)
-2. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/routes/compass/+page.svelte`
-3. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/routes/payout-strategy/+page.svelte`
+1. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/routes/+page.svelte` (Dashboard)
+2. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/routes/compass/+page.svelte`
+3. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/routes/payout-strategy/+page.svelte`
 
 Optional bei Bedarf:
-1. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/lib/api/*` (falls neue Helper noetig)
-2. `/Users/axel/Coding/goldfinch-dev/src/svelte-frontend/src/lib/utils/*`
+1. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/lib/api/*` (falls neue Helper noetig)
+2. `/Users/axel/Coding/goldfinch-dev/src/frontend/src/lib/utils/*`
 3. `/Users/axel/Coding/goldfinch-dev/src/backend/app/api/v1/endpoints/pension_summaries.py` (nur additive Felder)
 
 ## 3. Exakte Aenderungen
@@ -61,7 +61,7 @@ Nach Fertigstellung aller drei Seiten: Compass, Payout Strategy und Dashboard wi
 
 ## 6. Testplan
 ```bash
-cd /Users/axel/Coding/goldfinch-dev/src/svelte-frontend
+cd /Users/axel/Coding/goldfinch-dev/src/frontend
 npm run check
 ```
 

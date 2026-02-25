@@ -59,7 +59,7 @@ Bevor irgendetwas geloescht wird:
 
 ## 6. Testplan
 ```bash
-cd /Users/axel/Coding/goldfinch-dev/src/svelte-frontend
+cd /Users/axel/Coding/goldfinch-dev/src/frontend
 npm run check
 ```
 

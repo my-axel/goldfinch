@@ -80,11 +80,12 @@ celery -A app.core.celery_app.celery_app beat -l info
 ### 6. Start Frontend
 
 ```bash
-# New terminal, from project root
+# New terminal
+cd src/frontend
 npm run dev
 ```
 
-Frontend runs on: http://localhost:3000
+Frontend runs on: http://localhost:5173
 
 ---
 
@@ -256,7 +257,7 @@ cd src/backend && source venv/bin/activate
 celery -A app.core.celery_app.celery_app beat -l info
 
 # Terminal 4: Frontend
-npm run dev
+cd src/frontend && npm run dev
 ```
 
 ### End of Day
@@ -339,7 +340,7 @@ After successful setup:
 
 1. ✅ Verify all services are running
 2. ✅ Test backend API: http://localhost:8000/docs
-3. ✅ Test frontend: http://localhost:3000
+3. ✅ Test frontend: http://localhost:5173
 4. ✅ Trigger an ETF update to test Celery
 5. ✅ Check Celery logs for scheduled tasks
 

@@ -11,7 +11,7 @@ Leitziele:
 
 ## Scope
 In Scope:
-1. `src/svelte-frontend` als Primaer-Frontend.
+1. `src/frontend` als Primaer-Frontend.
 2. MVP-Seiten: Dashboard, Compass, Payout Strategy mit echten Daten befuellen.
 3. ETF-Flow vereinfachen (Retry-Reduktion, 2-Stufen-Erstellung).
 4. Legacy-Code-Inventur und kontrollierter Abbau.
@@ -46,7 +46,7 @@ Nicht mehr enthalten (nach Review gestrichen):
 ## Globale Test- und Qualitaetsvorgaben
 Svelte-Check (pro Phase):
 ```bash
-cd /Users/axel/Coding/goldfinch-dev/src/svelte-frontend
+cd /Users/axel/Coding/goldfinch-dev/src/frontend
 npm run check
 ```
 
