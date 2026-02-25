@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
-	import PercentInput from '$lib/components/ui/PercentInput.svelte';
+	import PercentStepperInput from '$lib/components/ui/PercentStepperInput.svelte';
 
 	let {
 		pessimisticRate = $bindable(0.04),
@@ -24,26 +24,26 @@
 	<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 		<div>
 			<!-- svelte-ignore a11y_label_has_associated_control -->
-			<label class="block text-sm font-medium mb-1.5">
+			<label class="text-muted-foreground block text-sm font-medium mb-1.5 text-center">
 				{m.pension_scenario_pessimistic_rate()}
 			</label>
-			<PercentInput bind:value={pessimisticRate} max={0.20} decimals={1} />
+			<PercentStepperInput bind:value={pessimisticRate} max={0.20} decimals={1} />
 		</div>
 
 		<div>
 			<!-- svelte-ignore a11y_label_has_associated_control -->
-			<label class="block text-sm font-medium mb-1.5">
+			<label class="text-muted-foreground block text-sm font-medium mb-1.5 text-center">
 				{m.pension_scenario_realistic_rate()}
 			</label>
-			<PercentInput bind:value={realisticRate} max={0.20} decimals={1} />
+			<PercentStepperInput bind:value={realisticRate} max={0.20} decimals={1} />
 		</div>
 
 		<div>
 			<!-- svelte-ignore a11y_label_has_associated_control -->
-			<label class="block text-sm font-medium mb-1.5">
+			<label class="text-muted-foreground block text-sm font-medium mb-1.5 text-center">
 				{m.pension_scenario_optimistic_rate()}
 			</label>
-			<PercentInput bind:value={optimisticRate} max={0.20} decimals={1} />
+			<PercentStepperInput bind:value={optimisticRate} max={0.20} decimals={1} />
 		</div>
 	</div>
 </div>

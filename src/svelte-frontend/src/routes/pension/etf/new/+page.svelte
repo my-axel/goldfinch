@@ -217,16 +217,8 @@
 						<p>{m.etf_basic_info_explanation_intro()}</p>
 						<ExplanationList>
 							<ExplanationListItem
-								><strong>{m.etf_pension_name()}:</strong>
-								{m.etf_basic_info_explanation_name()}</ExplanationListItem
-							>
-							<ExplanationListItem
 								><strong>{m.etf_pension_etf()}:</strong>
 								{m.etf_basic_info_explanation_etf()}</ExplanationListItem
-							>
-							<ExplanationListItem
-								><strong>{m.etf_pension_notes()}:</strong>
-								{m.etf_basic_info_explanation_notes()}</ExplanationListItem
 							>
 						</ExplanationList>
 					</Explanation>

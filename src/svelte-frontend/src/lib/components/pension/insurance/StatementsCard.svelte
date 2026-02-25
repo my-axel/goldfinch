@@ -13,7 +13,7 @@
 	import { pensionApi } from '$lib/api/pension';
 	import { compareIsoDate, todayIsoDate } from '$lib/utils/date-only';
 	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
-	import PercentInput from '$lib/components/ui/PercentInput.svelte';
+	import PercentStepperInput from '$lib/components/ui/PercentStepperInput.svelte';
 	import FormattedDate from '$lib/components/ui/FormattedDate.svelte';
 
 	interface ProjectionFormData {
@@ -303,7 +303,7 @@
 				<label class="block text-sm font-medium mb-1.5">
 					{m.insurance_pension_costs_percentage()}
 				</label>
-				<PercentInput bind:value={statements[index].costs_percentage} max={0.50} decimals={2} />
+				<PercentStepperInput bind:value={statements[index].costs_percentage} max={0.50} decimals={2} />
 			</div>
 		</div>
 
@@ -358,7 +358,7 @@
 						</select>
 
 						<!-- Return Rate -->
-						<PercentInput bind:value={statements[index].projections[projIndex].return_rate} max={0.50} decimals={2} />
+						<PercentStepperInput bind:value={statements[index].projections[projIndex].return_rate} max={0.50} decimals={2} />
 
 						<!-- Value at Retirement -->
 						<CurrencyInput bind:value={statements[index].projections[projIndex].value_at_retirement} min={0} />

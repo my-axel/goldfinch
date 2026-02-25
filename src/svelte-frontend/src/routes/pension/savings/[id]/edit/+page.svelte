@@ -23,7 +23,7 @@
 	import ExplanationList from '$lib/components/ui/ExplanationList.svelte';
 	import ExplanationListItem from '$lib/components/ui/ExplanationListItem.svelte';
 	import BasicInformationCard from '$lib/components/pension/savings/BasicInformationCard.svelte';
-	import InterestRatesCard from '$lib/components/pension/savings/InterestRatesCard.svelte';
+	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
 	import StatementsCard from '$lib/components/pension/savings/StatementsCard.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
 	import ContributionHistoryCard from '$lib/components/pension/ContributionHistoryCard.svelte';
@@ -224,10 +224,8 @@
 					<Explanation>
 						<p>{m.savings_pension_explanation_intro()}</p>
 						<ExplanationList>
-							<ExplanationListItem><strong>{m.savings_pension_name()}:</strong> {m.savings_pension_explanation_name()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.savings_pension_start_date()}:</strong> {m.savings_pension_explanation_start_date()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.savings_pension_compounding_frequency()}:</strong> {m.savings_pension_explanation_compounding()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.savings_pension_notes()}:</strong> {m.savings_pension_explanation_notes()}</ExplanationListItem>
 						</ExplanationList>
 						<ExplanationAlert>
 							{m.savings_pension_explanation_alert()}
@@ -252,9 +250,9 @@
 					<Explanation>
 						<p>{m.savings_pension_interest_rates_explanation_intro()}</p>
 						<ExplanationList>
-							<ExplanationListItem><strong>{m.savings_pension_pessimistic_rate()}:</strong> {m.savings_pension_interest_rates_explanation_pessimistic()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.savings_pension_realistic_rate()}:</strong> {m.savings_pension_interest_rates_explanation_realistic()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.savings_pension_optimistic_rate()}:</strong> {m.savings_pension_interest_rates_explanation_optimistic()}</ExplanationListItem>
+							<ExplanationListItem><strong>{m.pension_scenario_pessimistic_rate()}:</strong> {m.savings_pension_interest_rates_explanation_pessimistic()}</ExplanationListItem>
+							<ExplanationListItem><strong>{m.pension_scenario_realistic_rate()}:</strong> {m.savings_pension_interest_rates_explanation_realistic()}</ExplanationListItem>
+							<ExplanationListItem><strong>{m.pension_scenario_optimistic_rate()}:</strong> {m.savings_pension_interest_rates_explanation_optimistic()}</ExplanationListItem>
 						</ExplanationList>
 						<ExplanationAlert>
 							{m.savings_pension_interest_rates_explanation_alert()}
@@ -262,7 +260,7 @@
 					</Explanation>
 				{/snippet}
 				<Card title={m.savings_pension_interest_rates()} description={m.savings_pension_interest_rates_description()}>
-					<InterestRatesCard bind:pessimisticRate bind:realisticRate bind:optimisticRate />
+					<ScenarioRatesCard bind:pessimisticRate bind:realisticRate bind:optimisticRate />
 				</Card>
 			</ContentSection>
 

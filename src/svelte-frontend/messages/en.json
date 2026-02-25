@@ -235,6 +235,12 @@
 	"contribution_history_year_total": "Total",
 	"contribution_history_entries": "{count} entries",
 	"contribution_history_explanation": "This section shows all contributions that have been recorded for this pension plan. Years can be expanded or collapsed. The total amount per year is shown in the header.",
+	"contribution_plan_explanation_intro": "Define your regular contribution schedule. You can set up multiple steps to reflect changes in contribution amounts over time.",
+	"contribution_plan_explanation_amount": "The regular contribution amount for this step",
+	"contribution_plan_explanation_frequency": "How often contributions are made (monthly, quarterly, yearly, or one-time)",
+	"contribution_plan_explanation_dates": "Start and optional end date for this contribution step",
+	"contribution_plan_explanation_alert_insurance": "You can plan future changes in your contribution amount or frequency by adding additional steps.",
+	"contribution_plan_explanation_alert_company": "Adding detailed contribution steps helps you track your pension growth more accurately.",
 
 	"state_pension_new_title": "New State Pension",
 	"state_pension_new_description": "Add your state pension details and track your benefits over time.",
@@ -355,9 +361,6 @@
 
 	"savings_pension_interest_rates": "Interest Rates",
 	"savings_pension_interest_rates_description": "Configure interest rates for different scenarios",
-	"savings_pension_pessimistic_rate": "Pessimistic Rate (%)",
-	"savings_pension_realistic_rate": "Realistic Rate (%)",
-	"savings_pension_optimistic_rate": "Optimistic Rate (%)",
 
 	"savings_pension_interest_rates_explanation_intro": "Define different interest rate scenarios to model potential returns on your savings. This helps you understand the range of possible outcomes.",
 	"savings_pension_interest_rates_explanation_pessimistic": "Conservative estimate for lower market performance",
@@ -622,6 +625,7 @@
 
 	"etf_projection_explanation_intro": "These projections show potential future values of your ETF portfolio based on different growth rate assumptions.",
 	"etf_projection_explanation_scenarios": "Three scenarios are shown: pessimistic, realistic, and optimistic — based on the return rates configured in your settings",
+	"etf_projection_explanation_alert": "These projections are estimates based on consistent return rates. Actual returns will vary year to year and may differ significantly.",
 
 	"etf_pessimistic_rate": "Pessimistic Rate",
 	"etf_realistic_rate": "Realistic Rate",

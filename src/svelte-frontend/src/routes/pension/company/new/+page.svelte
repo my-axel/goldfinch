@@ -169,11 +169,9 @@
 				<Explanation>
 					<p>{m.company_pension_explanation_intro()}</p>
 					<ExplanationList>
-						<ExplanationListItem><strong>{m.company_pension_name()}:</strong> {m.company_pension_explanation_name()}</ExplanationListItem>
 						<ExplanationListItem><strong>{m.company_pension_employer()}:</strong> {m.company_pension_explanation_employer()}</ExplanationListItem>
 						<ExplanationListItem><strong>{m.company_pension_start_date()}:</strong> {m.company_pension_explanation_start_date()}</ExplanationListItem>
 						<ExplanationListItem><strong>{m.company_pension_contribution_amount()}:</strong> {m.company_pension_explanation_contribution()}</ExplanationListItem>
-						<ExplanationListItem><strong>{m.company_pension_notes()}:</strong> {m.company_pension_explanation_notes()}</ExplanationListItem>
 					</ExplanationList>
 					<ExplanationAlert>
 						{m.company_pension_explanation_alert()}
@@ -238,11 +236,15 @@
 		<ContentSection>
 			{#snippet aside()}
 				<Explanation>
+					<p>{m.contribution_plan_explanation_intro()}</p>
 					<ExplanationList>
-						<ExplanationListItem><strong>{m.contribution_amount()}:</strong> {m.contribution_amount()}</ExplanationListItem>
-						<ExplanationListItem><strong>{m.contribution_frequency()}:</strong> {m.contribution_frequency()}</ExplanationListItem>
-						<ExplanationListItem><strong>{m.contribution_start_date()} / {m.contribution_end_date()}:</strong> {m.contribution_start_date()}</ExplanationListItem>
+						<ExplanationListItem><strong>{m.contribution_amount()}:</strong> {m.contribution_plan_explanation_amount()}</ExplanationListItem>
+						<ExplanationListItem><strong>{m.contribution_frequency()}:</strong> {m.contribution_plan_explanation_frequency()}</ExplanationListItem>
+						<ExplanationListItem><strong>{m.contribution_start_date()} / {m.contribution_end_date()}:</strong> {m.contribution_plan_explanation_dates()}</ExplanationListItem>
 					</ExplanationList>
+					<ExplanationAlert>
+						{m.contribution_plan_explanation_alert_company()}
+					</ExplanationAlert>
 				</Explanation>
 			{/snippet}
 			<ContributionPlanCard bind:steps={contributionPlanSteps} />

@@ -269,11 +269,9 @@
 					<Explanation>
 						<p>{m.insurance_pension_explanation_intro()}</p>
 						<ExplanationList>
-							<ExplanationListItem><strong>{m.insurance_pension_name()}:</strong> {m.insurance_pension_explanation_name()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.insurance_pension_provider()}:</strong> {m.insurance_pension_explanation_provider()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.insurance_pension_contract_number()}:</strong> {m.insurance_pension_explanation_contract_number()}</ExplanationListItem>
 							<ExplanationListItem><strong>{m.insurance_pension_start_date()}:</strong> {m.insurance_pension_explanation_start_date()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.insurance_pension_notes()}:</strong> {m.insurance_pension_explanation_notes()}</ExplanationListItem>
 						</ExplanationList>
 						<ExplanationAlert>
 							{m.insurance_pension_explanation_alert()}
@@ -347,11 +345,15 @@
 			<ContentSection>
 				{#snippet aside()}
 					<Explanation>
+						<p>{m.contribution_plan_explanation_intro()}</p>
 						<ExplanationList>
-							<ExplanationListItem><strong>{m.contribution_amount()}:</strong> {m.contribution_amount()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.contribution_frequency()}:</strong> {m.contribution_frequency()}</ExplanationListItem>
-							<ExplanationListItem><strong>{m.contribution_start_date()} / {m.contribution_end_date()}:</strong> {m.contribution_start_date()}</ExplanationListItem>
+							<ExplanationListItem><strong>{m.contribution_amount()}:</strong> {m.contribution_plan_explanation_amount()}</ExplanationListItem>
+							<ExplanationListItem><strong>{m.contribution_frequency()}:</strong> {m.contribution_plan_explanation_frequency()}</ExplanationListItem>
+							<ExplanationListItem><strong>{m.contribution_start_date()} / {m.contribution_end_date()}:</strong> {m.contribution_plan_explanation_dates()}</ExplanationListItem>
 						</ExplanationList>
+						<ExplanationAlert>
+							{m.contribution_plan_explanation_alert_insurance()}
+						</ExplanationAlert>
 					</Explanation>
 				{/snippet}
 				<ContributionPlanCard bind:steps={contributionPlanSteps} />

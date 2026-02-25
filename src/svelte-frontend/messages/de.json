@@ -235,6 +235,12 @@
 	"contribution_history_year_total": "Gesamt",
 	"contribution_history_entries": "{count} Einträge",
 	"contribution_history_explanation": "Hier werden alle erfassten Beiträge für diesen Pensionsplan angezeigt. Die Jahre können einzeln auf- und zugeklappt werden. Der Jahresgesamtbetrag wird im Kopfbereich jeder Jahresgruppe angezeigt.",
+	"contribution_plan_explanation_intro": "Lege deinen regelmäßigen Beitragsplan fest. Du kannst mehrere Schritte einrichten, um Änderungen in den Beitragshöhen im Laufe der Zeit abzubilden.",
+	"contribution_plan_explanation_amount": "Die regelmäßige Beitragshöhe für diesen Schritt",
+	"contribution_plan_explanation_frequency": "Wie oft Beiträge geleistet werden (monatlich, vierteljährlich, jährlich oder einmalig)",
+	"contribution_plan_explanation_dates": "Start- und optionales Enddatum für diesen Beitragsschritt",
+	"contribution_plan_explanation_alert_insurance": "Durch das Hinzufügen weiterer Schritte kannst du zukünftige Änderungen in Beitragshöhe oder -häufigkeit vorausplanen.",
+	"contribution_plan_explanation_alert_company": "Detaillierte Beitragsschritte helfen dir, das Wachstum deiner Betriebsrente genauer zu verfolgen.",
 
 	"state_pension_new_title": "Neue Gesetzliche Rente",
 	"state_pension_new_description": "Füge deine gesetzlichen Rentendetails hinzu und verfolge deine Ansprüche im Laufe der Zeit.",
@@ -355,9 +361,6 @@
 
 	"savings_pension_interest_rates": "Zinssätze",
 	"savings_pension_interest_rates_description": "Konfiguriere Zinssätze für verschiedene Szenarien",
-	"savings_pension_pessimistic_rate": "Pessimistischer Zinssatz (%)",
-	"savings_pension_realistic_rate": "Realistischer Zinssatz (%)",
-	"savings_pension_optimistic_rate": "Optimistischer Zinssatz (%)",
 
 	"savings_pension_interest_rates_explanation_intro": "Definiere verschiedene Zinssatzszenarien, um potenzielle Renditen auf deine Ersparnisse zu modellieren. Dies hilft dir, die Bandbreite möglicher Ergebnisse zu verstehen.",
 	"savings_pension_interest_rates_explanation_pessimistic": "Konservative Schätzung für eine niedrigere Marktperformance",
@@ -622,6 +625,7 @@
 
 	"etf_projection_explanation_intro": "Diese Prognosen zeigen potenzielle zukünftige Werte deines ETF-Portfolios basierend auf verschiedenen Wachstumsannahmen.",
 	"etf_projection_explanation_scenarios": "Drei Szenarien werden angezeigt: pessimistisch, realistisch und optimistisch — basierend auf den in den Einstellungen konfigurierten Renditeraten",
+	"etf_projection_explanation_alert": "Diese Projektionen basieren auf konstanten Jahresrenditen. Die tatsächlichen Renditen variieren von Jahr zu Jahr und können erheblich abweichen.",
 
 	"etf_pessimistic_rate": "Pessimistische Rate",
 	"etf_realistic_rate": "Realistische Rate",

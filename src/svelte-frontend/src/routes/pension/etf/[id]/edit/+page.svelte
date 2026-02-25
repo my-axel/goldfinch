@@ -22,6 +22,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import ContentSection from '$lib/components/ui/ContentSection.svelte';
 	import Explanation from '$lib/components/ui/Explanation.svelte';
+	import ExplanationAlert from '$lib/components/ui/ExplanationAlert.svelte';
 	import ExplanationList from '$lib/components/ui/ExplanationList.svelte';
 	import ExplanationListItem from '$lib/components/ui/ExplanationListItem.svelte';
 	import ExplanationStats from '$lib/components/ui/ExplanationStats.svelte';
@@ -279,16 +280,8 @@
 						<p>{m.etf_basic_info_explanation_intro()}</p>
 						<ExplanationList>
 							<ExplanationListItem
-								><strong>{m.etf_pension_name()}:</strong>
-								{m.etf_basic_info_explanation_name()}</ExplanationListItem
-							>
-							<ExplanationListItem
 								><strong>{m.etf_pension_etf()}:</strong>
 								{m.etf_basic_info_explanation_etf()}</ExplanationListItem
-							>
-							<ExplanationListItem
-								><strong>{m.etf_pension_notes()}:</strong>
-								{m.etf_basic_info_explanation_notes()}</ExplanationListItem
 							>
 						</ExplanationList>
 					</Explanation>
@@ -473,11 +466,17 @@
 									/>
 								{/if}
 							</ExplanationStats>
+							<ExplanationAlert>
+								{m.etf_projection_explanation_alert()}
+							</ExplanationAlert>
 						</Explanation>
 					{:else}
 						<Explanation>
 							<p class="text-sm text-muted-foreground">{m.etf_projection_explanation_intro()}</p>
 							<p class="text-sm text-muted-foreground">{m.etf_projection_explanation_scenarios()}</p>
+							<ExplanationAlert>
+								{m.etf_projection_explanation_alert()}
+							</ExplanationAlert>
 						</Explanation>
 					{/if}
 				{/snippet}

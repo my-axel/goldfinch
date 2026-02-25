@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
-	import RateInput from './RateInput.svelte';
+	import RateStepperInput from './RateStepperInput.svelte';
 	import type { FrontendSettings } from '$lib/types/settings';
 	import { m } from '$lib/paraglide/messages.js';
 	import { TrendingDown, ArrowRight, TrendingUp } from '@lucide/svelte';
@@ -47,7 +47,7 @@
 				<span class="text-base font-semibold">{m.settings_inflation_rate()}</span>
 			</div>
 			<div>
-				<RateInput
+				<RateStepperInput
 					value={settings.inflation_rate}
 					onChange={(v) => onUpdate('inflation_rate', v)}
 					{disabled}
@@ -65,7 +65,7 @@
 			<!-- Header row -->
 			<div class="grid grid-cols-4 gap-6">
 				<div></div>
-				<div class="grid grid-cols-3 gap-6 col-span-3">
+				<div class="grid grid-cols-3 gap-6 col-span-3 justify-items-center">
 					<div class="flex flex-col items-center w-24">
 						<TrendingDown class="w-5 h-5 mb-2 text-yellow-500" />
 						<span class="text-sm font-medium">{m.settings_pessimistic()}</span>
@@ -89,7 +89,7 @@
 				<div class="grid grid-cols-3 gap-6 col-span-3">
 					{#each etfKeys as key}
 						<div>
-							<RateInput
+							<RateStepperInput
 								value={settings[key]}
 								onChange={(v) => onUpdate(key, v)}
 								{disabled}
@@ -110,7 +110,7 @@
 				<div class="grid grid-cols-3 gap-6 col-span-3">
 					{#each stateKeys as key}
 						<div>
-							<RateInput
+							<RateStepperInput
 								value={settings[key]}
 								onChange={(v) => onUpdate(key, v)}
 								{disabled}

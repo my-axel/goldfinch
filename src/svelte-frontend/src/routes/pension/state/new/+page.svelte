@@ -134,9 +134,7 @@
 				<Explanation>
 					<p>{m.state_pension_explanation_intro()}</p>
 					<ExplanationList>
-						<ExplanationListItem><strong>{m.state_pension_name()}:</strong> {m.state_pension_explanation_name()}</ExplanationListItem>
 						<ExplanationListItem><strong>{m.state_pension_start_date()}:</strong> {m.state_pension_explanation_start_date()}</ExplanationListItem>
-						<ExplanationListItem><strong>{m.state_pension_notes()}:</strong> {m.state_pension_explanation_notes()}</ExplanationListItem>
 					</ExplanationList>
 					<ExplanationAlert>
 						{m.state_pension_explanation_alert()}
