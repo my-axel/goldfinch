@@ -39,18 +39,30 @@ Goldfinch nutzt aktuell ausschließlich **yFinance** als Datenquelle für ETF-Ku
 | Zuverlässigkeit | ⚠️ Inoffizielle API, gelegentliche Rate Limits |
 | Status | Bereits implementiert |
 
-#### Stooq (via pandas-datareader)
+#### yFinance — Adjusted Prices Korrektur
+> **Recherche-Update:** yFinance liefert mit `auto_adjust=True` (Default seit 2024)
+> tatsächlich vollständig dividend-adjusted Close-Preise. Das ist ein wichtiger
+> Vorteil gegenüber Stooq. Allerdings nehmen Rate-Limit-Fehler (`YFRateLimitError`)
+> seit 2024/2025 drastisch zu — besonders in Cloud-/Server-Umgebungen.
+> Adjusted Prices: **✅ Ja** (mit `auto_adjust=True`)
+
+#### Stooq (direkt via HTTP — empfohlen statt pandas-datareader)
 | Eigenschaft | Details |
 |---|---|
-| Library | `pip install pandas-datareader` |
-| Ticker-Format | `VWRL.UK` (LSE), `EXS1.DE` (XETRA), `CW8.FR` (Paris), `AAPL.US` |
-| Tägliche OHLCV-Daten | ✅ Ja |
-| Historische Tiefe | 20+ Jahre (teilweise bis 1990er) |
-| Adjusted Prices | ❌ Nicht bereinigt |
+| Library | Nur `pip install requests pandas` — **kein** pandas-datareader nötig |
+| Endpunkt | `https://stooq.com/q/d/l/?s=TICKER&d1=YYYYMMDD&d2=YYYYMMDD&i=d` |
+| Ticker-Format | `VWRL.UK` (LSE), `VWCE.DE` (XETRA), `CW8.FR` (Paris), `AAPL.US` |
+| Tägliche OHLCV-Daten | ✅ Ja (Open, High, Low, Close, Volume) |
+| Historische Tiefe | 5–50+ Jahre (je nach Instrument) |
+| Adjusted Prices | ⚠️ Nur split-adjusted, **nicht** dividend-adjusted |
 | ETF-Metadaten | ❌ Nur Kursdaten |
 | Suche | ❌ Keine Search-API — Symbol muss bekannt sein |
-| Zuverlässigkeit | ✅ Generell stabil, aber manchmal tickers offline |
+| Zuverlässigkeit | ⚠️ Inoffiziell, gelegentlich blockiert — als Fallback sinnvoll |
 | Status | Neu zu implementieren |
+
+> **Hinweis:** `pandas-datareader` mit Stooq-Backend wird nicht mehr aktiv gepflegt
+> (letztes Release 2021) und hat bekannte Breakage-Issues. Der direkte CSV-Endpunkt
+> ist stabiler und braucht keine Extra-Library.
 
 **Stooq Ticker-Mapping (Yahoo → Stooq):**
 ```
@@ -66,17 +78,52 @@ Yahoo .BE  → Stooq .BE  (Belgien)
 Yahoo .JP  → Stooq .JP  (Japan)
 ```
 
-### 2.2 Quellen mit API-Key (Tier 2 — für spätere Erweiterung)
+### 2.2 Kostenlose Metadaten-/Such-Quellen (ohne API-Key)
+
+Diese Quellen liefern **keine Kursdaten**, aber wertvolle Ergänzungen:
+
+#### FinanceDatabase (JerBouma)
+| Eigenschaft | Details |
+|---|---|
+| Library | `pip install financedatabase` |
+| Was es ist | Statische DB mit 300.000+ Symbolen, wöchentlich via GitHub Actions aktualisiert |
+| ETF-Metadaten | ✅ ISIN, Name, Symbol, Währung, Börse, Fondsgröße, Kategorie, Fondsfamilie |
+| TER | ❌ Nicht enthalten |
+| Suche | ✅ Exzellent — Freitext-Suche über Name, Kategorie, Währung |
+| Zuverlässigkeit | ✅ Sehr stabil (kein Scraping, statische Datei) |
+| **Empfehlung** | **Als ETF-Such-Backend verwenden** — ersetzt `yf.Search()` |
+
+```python
+import financedatabase as fd
+etfs = fd.ETFs()
+results = etfs.search(summary="MSCI World", currency="EUR")
+# → DataFrame mit symbol, ISIN, exchange, name, total_assets, ...
+```
+
+#### justetf-scraping
+| Eigenschaft | Details |
+|---|---|
+| Library | `pip install justetf-scraping` |
+| Was es ist | Scraper für justETF.com — die europäische ETF-Datenbank |
+| ETF-Metadaten | ✅ TER, Fondsgröße, Auflagedatum, Replikationsmethode, Ausschüttungspolitik, Domizil |
+| Kursdaten | ❌ Keine historischen Tagespreise |
+| Zuverlässigkeit | ⚠️ Scraper — kann bei HTML-Änderungen brechen, ToS-Risiko |
+| **Empfehlung** | Optional für TER/UCITS-Metadaten — aber fragil, nicht als Pflicht |
+
+### 2.3 Quellen mit API-Key (Tier 2 — für spätere Erweiterung)
 
 | Quelle | Library | Free Tier | Besonderheit |
 |---|---|---|---|
-| **Tiingo** | `pandas-datareader` | Unbegrenzt historisch | Adjusted Prices, solide Doku |
+| **Tiingo** | `pandas-datareader` | Unbegrenzt historisch | Vollständig adjusted Prices |
 | **Alpha Vantage** | `alpha_vantage` | 25 req/Tag (kostenlos) | Technische Indikatoren |
 | **Finnhub** | `finnhub-python` | 60 req/min (kostenlos) | Echtzeitkurse, Fundamentaldaten |
 | **EODHD** | `eodhd` | Begrenzt kostenlos | Beste globale Abdeckung |
-| **Financial Modeling Prep** | REST API | Begrenzt kostenlos | Fundamentalanalyse |
+| **Financial Modeling Prep** | REST API | Begrenzt kostenlos | Fundamentalanalyse + Search |
 
-> **Hinweis zu Adjusted Prices:** Weder yFinance noch Stooq liefern korrekt dividend-adjusted Preise für ausschüttende ETFs. Dies ist ein bekanntes Problem und wird durch das `source`-Metadatum dokumentiert. Eine zukünftige Quelle (z.B. Tiingo) könnte echte adjusted prices liefern.
+> **Hinweis zu Adjusted Prices:** yFinance liefert mit `auto_adjust=True` korrekte
+> dividend-adjusted Close-Preise. Stooq dagegen ist nur split-adjusted. Für
+> ausschüttende ETFs ist yFinance also die genauere Quelle — Stooq dient als
+> Rate-Limit-freier Fallback für Kursdaten.
 
 ---
 
@@ -206,7 +253,24 @@ app/api/v1/endpoints/
   data_sources.py        # Neue API-Endpoints
 ```
 
-### 5.2 base.py — DataSource Interface
+### 5.2 Besondere Rolle: FinanceDatabase als Such-Layer
+
+`FinanceDatabase` passt nicht perfekt ins `DataSourceBase`-Interface (keine Kurse),
+wird aber als **dediziertes Such-Backend** integriert. Die ETF-Suche läuft zweistufig:
+
+```
+1. Suche via FinanceDatabase → liefert Symbole + Metadaten
+2. Pro aktivierter Preis-Quelle: Symbol-Validierung (hat diese Quelle Daten für den Ticker?)
+3. Ergebnis: Liste von SearchResult, je eines pro Quelle + Symbol-Kombination
+```
+
+Die bestehende `yf.Search()`-Funktionalität wird für Metadaten durch
+`FinanceDatabase` ergänzt oder ersetzt. Für TER-Daten bleibt yFinance primär
+(FinanceDatabase enthält kein TER), mit optionalem justetf-Scraping als Ergänzung.
+
+**Neue Dependency:** `pip install financedatabase`
+
+### 5.3 base.py — DataSource Interface
 
 ```python
 from abc import ABC, abstractmethod
@@ -329,7 +393,14 @@ def get_registry() -> DataSourceRegistry:
 **Besonderheit:** Stooq hat keine Search-API. Der Adapter implementiert eine
 Heuristik, die aus einem Yahoo-Finance-Symbol ein Stooq-Symbol ableitet.
 
+Der direkte HTTP-Endpunkt wird genutzt (nicht `pandas-datareader`):
+`https://stooq.com/q/d/l/?s=TICKER&d1=YYYYMMDD&d2=YYYYMMDD&i=d`
+
 ```python
+import requests
+import pandas as pd
+from io import StringIO
+
 YAHOO_TO_STOOQ_SUFFIX = {
     ".L":  ".UK",   # London Stock Exchange
     ".PA": ".FR",   # Euronext Paris
@@ -341,12 +412,14 @@ YAHOO_TO_STOOQ_SUFFIX = {
     ".JP": ".JP",   # Japan
 }
 
+STOOQ_CSV_URL = "https://stooq.com/q/d/l/"
+
 class StooqDataSource(DataSourceBase):
     source_id = "stooq"
     name = "Stooq"
     supports_search = False       # Keine Search-API
     supports_metadata = False     # Nur Kursdaten
-    supports_adjusted_prices = False
+    supports_adjusted_prices = False  # Nur split-adjusted, nicht dividend-adjusted
 
     def yahoo_to_stooq_symbol(self, yahoo_symbol: str) -> str:
         """Konvertiert Yahoo Finance Ticker in Stooq-Format."""
@@ -360,11 +433,22 @@ class StooqDataSource(DataSourceBase):
         return yahoo_symbol  # Unbekanntes Suffix — unverändert übergeben
 
     def fetch_prices(self, symbol: str, start: date, end: date) -> list[PriceData]:
-        import pandas_datareader.data as web
-        df = web.DataReader(symbol, "stooq", start.isoformat(), end.isoformat())
-        if df.empty:
+        """Holt Kurse direkt vom Stooq CSV-Endpunkt (ohne pandas-datareader)."""
+        params = {
+            "s": symbol.lower(),
+            "d1": start.strftime("%Y%m%d"),
+            "d2": end.strftime("%Y%m%d"),
+            "i": "d",  # daily
+        }
+        headers = {"User-Agent": "Mozilla/5.0"}
+        resp = requests.get(STOOQ_CSV_URL, params=params, headers=headers, timeout=15)
+        resp.raise_for_status()
+
+        df = pd.read_csv(StringIO(resp.text), parse_dates=["Date"], index_col="Date")
+        if df.empty or "No data" in resp.text:
             return []
-        # Stooq gibt Spalten: Open, High, Low, Close, Volume
+
+        df = df.sort_index(ascending=True)
         result = []
         for idx, row in df.iterrows():
             result.append(PriceData(
@@ -372,17 +456,20 @@ class StooqDataSource(DataSourceBase):
                 price=float(row["Close"]),
                 currency="?",    # Stooq liefert keine Währung — aus ETF-Metadaten holen
                 source=self.source_id,
-                is_adjusted=False,
-                open=float(row["Open"]),
-                high=float(row["High"]),
-                low=float(row["Low"]),
-                volume=float(row["Volume"]) if row["Volume"] else None,
+                is_adjusted=False,  # Stooq: nur split-adjusted
+                open=float(row["Open"]) if pd.notna(row["Open"]) else None,
+                high=float(row["High"]) if pd.notna(row["High"]) else None,
+                low=float(row["Low"]) if pd.notna(row["Low"]) else None,
+                volume=float(row["Volume"]) if pd.notna(row.get("Volume")) else None,
             ))
         return result
 ```
 
 **Wichtig:** Stooq liefert keine Währungsinformation. Das ETF-Modell speichert
 die Währung — der Adapter liest sie vom ETF-Datensatz wenn nötig.
+
+**Keine Extra-Dependency:** Stooq benötigt nur `requests` + `pandas` — beides
+bereits im Projekt vorhanden.
 
 ### 5.5 Anpassungen etf_service.py
 
@@ -539,49 +626,53 @@ Neue Schlüssel:
    - Bestehenden Code aus `services/yfinance.py` in neue Klasse migrieren
 
 9. **StooqDataSource** (`app/services/data_sources/stooq_source.py`)
-   - `pandas-datareader` installieren
+   - Direkt via HTTP-Endpunkt (kein pandas-datareader)
    - Yahoo→Stooq Symbol-Mapping implementieren
    - Validierungslogik
 
-10. **DataSourceRegistry** (`app/services/data_sources/registry.py`)
+10. **FinanceDatabaseSearch** (`app/services/data_sources/finance_db.py`)
+    - `pip install financedatabase`
+    - Nur für Such-Requests — kein `DataSourceBase` sondern separater Such-Adapter
+
+11. **DataSourceRegistry** (`app/services/data_sources/registry.py`)
 
 ### Phase 3: ETF-Service Refactoring
 
-11. **`etf_service.py` anpassen**
+12. **`etf_service.py` anpassen**
     - `update_etf_data()` / `update_latest_prices()` nutzen Registry
     - Symbol-Auflösung über `etf_source_symbols`
     - Multi-Quellen-Preis-Speicherung
 
-12. **Such-Logik erweitern** (`endpoints/etf.py`)
-    - Alle aktiven Quellen befragen
-    - Symbol-Validierung für Such-unsupported Quellen
+13. **Such-Logik erweitern** (`endpoints/etf.py`)
+    - FinanceDatabase als primäre Suchquelle
+    - Stooq-Symbol automatisch ableiten (Yahoo→Stooq Mapping) + validieren
     - Response mit `source`-Attribut
 
-13. **Neue API-Endpoints** (`endpoints/data_sources.py`)
+14. **Neue API-Endpoints** (`endpoints/data_sources.py`)
     - CRUD für DataSourceConfig
     - Test-Endpoint
 
 ### Phase 4: Frontend
 
-14. **API-Service** (`src/lib/api/data_sources.ts`)
+15. **API-Service** (`src/lib/api/data_sources.ts`)
     - TypeScript-Types für DataSourceConfig
     - API-Methoden
 
-15. **Settings-Komponente** (`src/lib/components/settings/DataSourceSettings.svelte`)
+16. **Settings-Komponente** (`src/lib/components/settings/DataSourceSettings.svelte`)
 
-16. **ETF-Suche aktualisieren** (`ETFSearchInput.svelte`)
+17. **ETF-Suche aktualisieren** (`ETFSearchInput.svelte`)
     - Quell-Badge in Ergebnissen
     - Multi-Quellen-Handling
 
-17. **i18n-Keys** + Paraglide kompilieren
+18. **i18n-Keys** + Paraglide kompilieren
 
-18. **Settings-Seite** (`src/routes/settings/+page.svelte`) — neue Sektion einbinden
+19. **Settings-Seite** (`src/routes/settings/+page.svelte`) — neue Sektion einbinden
 
 ### Phase 5: Qualitätssicherung
 
-19. **Backend-Tests** — DataSource-Adapter und Registry
-20. **Manuelle Tests** — Stooq-Daten für bekannte ETFs prüfen
-21. **Alembic Migration** auf Production-Schema anwenden
+20. **Backend-Tests** — DataSource-Adapter und Registry
+21. **Manuelle Tests** — Stooq-Daten für bekannte UCITS-ETFs prüfen (VWRL.UK, VWCE.DE)
+22. **Alembic Migration** auf Production-Schema anwenden
 
 ---
 
@@ -665,4 +756,4 @@ src/frontend/src/
 
 ---
 
-*Quellen: [pandas-datareader Stooq Docs](https://pandas-datareader.readthedocs.io/en/latest/readers/stooq.html) | [QuantStart: Stooq Data](https://www.quantstart.com/articles/an-introduction-to-stooq-pricing-data/) | [yFinance alternatives 2025](https://medium.com/@craakash/how-to-get-stock-data-without-yfinance-code-examples-2025-edition-data-pipeline-b51f1ecc906d)*
+*Quellen: [pandas-datareader Stooq Docs](https://pandas-datareader.readthedocs.io/en/latest/readers/stooq.html) | [QuantStart: Stooq Data](https://www.quantstart.com/articles/an-introduction-to-stooq-pricing-data/) | [yFinance alternatives 2025](https://medium.com/@craakash/how-to-get-stock-data-without-yfinance-code-examples-2025-edition-data-pipeline-b51f1ecc906d) | [FinanceDatabase GitHub](https://github.com/JerBouma/FinanceDatabase) | [yFinance Rate Limit Issues](https://github.com/ranaroussi/yfinance/issues/2422) | [justetf-scraping](https://github.com/druzsan/justetf-scraping)*
