@@ -502,9 +502,11 @@ def update_latest_prices(db, etf_id: str):
 ### 5.6 Neue API-Endpoints
 
 ```
-GET    /api/v1/data-sources          # Alle Quellen (mit Status)
-PUT    /api/v1/data-sources/{id}     # Aktivieren/Deaktivieren, API-Key setzen
-GET    /api/v1/data-sources/{id}/test # Verbindungstest für eine Quelle
+GET    /api/v1/data-sources                   # Alle Quellen, sortiert nach Priorität
+PUT    /api/v1/data-sources/{id}              # Aktivieren/Deaktivieren, API-Key setzen
+PUT    /api/v1/data-sources/priorities        # Prioritäten neu setzen (nach Drag & Drop)
+                                              # Body: [{"source_id": "yfinance", "priority": 1}, ...]
+GET    /api/v1/data-sources/{id}/test         # Verbindungstest für eine Quelle
 
 # ETF-spezifische Source-Symbole
 GET    /api/v1/etf/{etf_id}/sources              # Symbole pro Quelle
@@ -537,16 +539,22 @@ Einstellungen und dem Endes der Seite):
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ Datenquellen                                             │
+│ Reihenfolge bestimmt, welche Quelle bei Preiskonflikten  │
+│ Vorrang hat (Drag & Drop zum Umsortieren)                │
 ├─────────────────────────────────────────────────────────┤
-│ [✓] Yahoo Finance (yFinance)  Priorität: 1  Kein Key nötig  [Testen] │
-│ [✓] Stooq                    Priorität: 2  Kein Key nötig  [Testen] │
-│ [ ] Tiingo                   Priorität: 3  API-Key: [________]  [Testen] │
-│ [ ] Alpha Vantage            Priorität: 4  API-Key: [________]  [Testen] │
+│ ⠿  [✓] Yahoo Finance (yFinance)  Kein Key nötig  [Testen] │
+│ ⠿  [✓] Stooq                    Kein Key nötig  [Testen] │
+│ ⠿  [ ] Tiingo                   API-Key: [________]  [Testen] │
+│ ⠿  [ ] Alpha Vantage            API-Key: [________]  [Testen] │
 │                                                          │
 │ ⚠ Quellen ohne Search-Support (Stooq) werden automatisch│
 │   als Fallback für bekannte ETFs genutzt.                │
 └─────────────────────────────────────────────────────────┘
 ```
+
+Die Reihenfolge in der Liste entspricht der `priority`-Spalte in der DB (1 = höchste
+Priorität). Der Nutzer kann per Drag & Drop umsortieren — der PUT-Endpoint schreibt
+alle Prioritäten neu.
 
 **Neue Komponente:** `src/lib/components/settings/DataSourceSettings.svelte`
 
@@ -681,11 +689,10 @@ Neue Schlüssel:
 ### Jetzt offen
 - **Stooq-Coverage prüfen:** Nicht alle europäischen ETFs sind auf Stooq verfügbar.
   Für ETFs ohne Stooq-Entsprechung: Quelle still überspringen, kein Fehler.
-- **Konflikt-Strategie für Preise:** Wenn yFinance und Stooq am gleichen Tag
-  verschiedene Close-Preise liefern — welcher wird für Projektionsberechnungen genutzt?
-  Vorschlag: Priorität-basiert (konfiguriert über `priority`-Feld).
-- **`pandas-datareader` Aktualität:** Die Library ist nicht sehr aktiv gepflegt.
-  Stooq direkt via HTTP zu fetchen (ohne pandas-datareader) wäre robuster.
+- **Konflikt-Strategie für Preise:** ✅ Entschieden — Priorität-basiert. Die Quelle
+  mit dem niedrigsten `priority`-Wert gewinnt. Der Nutzer kann die Reihenfolge per
+  Drag & Drop in den Einstellungen festlegen. PUT-Endpoint schreibt alle Prioritäten
+  einer Neu-Sortierung in einem Request.
 
 ### Für später (nicht jetzt)
 - **Tiingo-Adapter:** Hätte echte adjusted prices — wertvoll für ausschüttende ETFs
