@@ -8,6 +8,7 @@
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
 	import HouseholdSwitcher from '$lib/components/dashboard/HouseholdSwitcher.svelte';
+	import RetirementGapCard from '$lib/components/dashboard/RetirementGapCard.svelte';
 	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionStore } from '$lib/stores/pension.svelte';
@@ -293,19 +294,7 @@
 			<h2 class="text-2xl font-bold tracking-tight text-right">{m.dashboard_future_projections()}</h2>
 
 			<div class="space-y-4">
-				<Card title="Retirement Goal Progress" description="Track your journey to retirement">
-					<ul class="list-disc pl-4 space-y-2">
-						<li class="text-muted-foreground">Visual progress gauge showing:</li>
-						<ul class="list-[circle] pl-4 space-y-1">
-							<li class="font-bold">Current vs target amount</li>
-							<li class="font-bold">Projected completion date</li>
-							<li class="font-bold">Monthly target to stay on track</li>
-						</ul>
-						<li class="text-muted-foreground">Integration with Pension Health</li>
-						<li class="text-muted-foreground">Adjustable goal settings</li>
-						<li class="text-muted-foreground">Quick action recommendations</li>
-					</ul>
-				</Card>
+				<RetirementGapCard />
 
 				<Card title="Scenario Analysis" description="Explore possible futures">
 					<ul class="list-disc pl-4 space-y-2">

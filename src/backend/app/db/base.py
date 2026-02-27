@@ -12,6 +12,7 @@ from app.models.task import TaskStatus  # noqa
 from app.models.settings import Settings  # noqa
 from app.models.exchange_rate import ExchangeRate  # noqa
 from app.models.update_tracking import DailyUpdateTracking  # noqa
+from app.models.retirement_gap import RetirementGapConfig  # noqa
 # Import any other models here
 
 # They need to be imported for SQLAlchemy to recognize them during Base.metadata.create_all() 

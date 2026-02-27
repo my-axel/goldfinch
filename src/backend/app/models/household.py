@@ -17,6 +17,9 @@ class HouseholdMember(Base):
     retirement_date_planned = Column(Date, nullable=False)
     retirement_date_possible = Column(Date, nullable=False)
     
+    # Gap analysis config
+    gap_config = relationship("RetirementGapConfig", back_populates="member", uselist=False, cascade="all, delete-orphan")
+
     # Pension relationships
     etf_pensions = relationship("PensionETF", back_populates="member", cascade="all, delete-orphan")
     insurance_pensions = relationship("PensionInsurance", back_populates="member", cascade="all, delete-orphan")
