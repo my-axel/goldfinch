@@ -9,6 +9,9 @@ from decimal import Decimal
 import pandas as pd
 import logging
 from typing import Dict, Any, Optional
+from app.services.data_sources import get_registry
+from app.services.data_sources.base import PriceData
+from app.services.data_sources.stooq_source import StooqDataSource
 
 logger = logging.getLogger(__name__)
 
@@ -153,16 +156,18 @@ def process_price_chunk(
     etf_id: str,
     hist_chunk: 'pd.DataFrame',
     currency: str,
-    missing_dates: list
+    missing_dates: list,
+    source: str = "yfinance",
 ) -> None:
-    """Process a chunk of historical prices."""
-    logger.info(f"Processing price chunk for ETF {etf_id}: {len(hist_chunk)} prices")
-    
-    # Get existing prices for this date range to avoid duplicates
+    """Process a chunk of historical prices (yfinance DataFrame format)."""
+    logger.info(f"Processing price chunk for ETF {etf_id} ({source}): {len(hist_chunk)} prices")
+
+    # Get existing prices for this date range and source to avoid duplicates
     dates = [idx.date() for idx in hist_chunk.index]
     existing_prices = {
         p.date: p for p in db.query(ETFPrice).filter(
             ETFPrice.etf_id == etf_id,
+            ETFPrice.source == source,
             ETFPrice.date.in_(dates)
         ).all()
     }
@@ -205,32 +210,34 @@ def process_price_chunk(
                     price=price,
                     volume=validate_number(row.get("Volume", 0)),
                     high=etf_crud._convert_field_to_eur(
-                        db, 
-                        validate_price(row.get("High", row["Close"])), 
-                        currency, 
+                        db,
+                        validate_price(row.get("High", row["Close"])),
+                        currency,
                         date_val
                     ),
                     low=etf_crud._convert_field_to_eur(
-                        db, 
-                        validate_price(row.get("Low", row["Close"])), 
-                        currency, 
+                        db,
+                        validate_price(row.get("Low", row["Close"])),
+                        currency,
                         date_val
                     ),
                     open=etf_crud._convert_field_to_eur(
-                        db, 
-                        validate_price(row.get("Open", row["Close"])), 
-                        currency, 
+                        db,
+                        validate_price(row.get("Open", row["Close"])),
+                        currency,
                         date_val
                     ),
                     dividends=etf_crud._convert_field_to_eur(
-                        db, 
-                        validate_number(row.get("Dividends", 0)), 
-                        currency, 
+                        db,
+                        validate_number(row.get("Dividends", 0)),
+                        currency,
                         date_val
                     ),
                     stock_splits=validate_number(row.get("Stock Splits", 0)),
                     currency="EUR",
-                    original_currency=currency
+                    original_currency=currency,
+                    source=source,
+                    is_adjusted=(source == "yfinance"),  # yfinance auto_adjust=True
                 )
                 db.add(price_obj)
                 new_prices += 1
@@ -267,6 +274,155 @@ def validate_price(value: Optional[float]) -> Optional[float]:
         return float_value
     except (TypeError, ValueError):
         return None
+
+def _get_or_create_source_symbol(db: Session, etf_id: str, source_instance) -> str | None:
+    """
+    Resolve the symbol for a given data source and ETF.
+    - For yfinance: uses the ETF's primary symbol (etf_id)
+    - For stooq: derives Yahoo→Stooq symbol via mapping heuristic
+    Returns the symbol string, or None if no mapping is possible.
+    """
+    from app.crud.data_source import get_source_symbol, upsert_source_symbol
+
+    existing = get_source_symbol(db, etf_id, source_instance.source_id)
+    if existing:
+        return existing.symbol
+
+    etf = db.query(ETF).filter(ETF.id == etf_id).first()
+    if not etf:
+        return None
+
+    if source_instance.source_id == "yfinance":
+        symbol = etf.symbol or etf_id
+        upsert_source_symbol(db, etf_id, "yfinance", symbol, verified=True)
+        return symbol
+
+    if isinstance(source_instance, StooqDataSource):
+        yahoo_symbol = etf.symbol or etf_id
+        stooq_symbol = source_instance.yahoo_to_stooq_symbol(yahoo_symbol)
+        if stooq_symbol is None:
+            return None  # Exchange not supported by Stooq — skip
+        upsert_source_symbol(db, etf_id, "stooq", stooq_symbol, verified=False)
+        return stooq_symbol
+
+    return None
+
+
+def _store_prices_from_source(
+    db: Session,
+    etf_id: str,
+    prices: list[PriceData],
+    etf_currency: str,
+    missing_dates: list,
+    source: str,
+) -> int:
+    """
+    Store a list[PriceData] for a given source.
+    Converts prices to EUR, skips already-existing (etf_id, date, source) entries.
+    Returns count of newly stored prices.
+    """
+    if not prices:
+        return 0
+
+    dates = [p.date for p in prices]
+    existing_set = {
+        p.date for p in db.query(ETFPrice.date).filter(
+            ETFPrice.etf_id == etf_id,
+            ETFPrice.source == source,
+            ETFPrice.date.in_(dates),
+        ).all()
+    }
+
+    new_count = 0
+    currency = etf_currency  # use ETF-level currency (stooq doesn't provide it)
+
+    for price_data in prices:
+        try:
+            if price_data.date < EARLIEST_DATA_DATE:
+                continue
+            if price_data.date in existing_set:
+                continue
+
+            # Use price_data.currency if available (yfinance), else fall back to ETF currency
+            effective_currency = price_data.currency if price_data.currency else currency
+
+            converted_price = etf_crud._convert_field_to_eur(
+                db, price_data.price, effective_currency, price_data.date
+            )
+
+            price_obj = ETFPrice(
+                etf_id=etf_id,
+                date=price_data.date,
+                price=converted_price,
+                currency="EUR",
+                original_currency=effective_currency,
+                source=source,
+                is_adjusted=price_data.is_adjusted,
+                volume=validate_number(price_data.volume),
+                high=etf_crud._convert_field_to_eur(db, price_data.high, effective_currency, price_data.date) if price_data.high else None,
+                low=etf_crud._convert_field_to_eur(db, price_data.low, effective_currency, price_data.date) if price_data.low else None,
+                open=etf_crud._convert_field_to_eur(db, price_data.open, effective_currency, price_data.date) if price_data.open else None,
+                dividends=etf_crud._convert_field_to_eur(db, price_data.dividends, effective_currency, price_data.date) if price_data.dividends else None,
+                stock_splits=validate_number(price_data.stock_splits),
+            )
+            db.add(price_obj)
+            new_count += 1
+        except Exception as e:
+            missing_dates.append(price_data.date)
+            logger.error(f"Error storing price for {etf_id} from {source} on {price_data.date}: {e}")
+
+    try:
+        db.commit()
+    except Exception as e:
+        logger.error(f"Error committing prices for {etf_id} ({source}): {e}")
+        db.rollback()
+        missing_dates.extend(dates)
+
+    return new_count
+
+
+def _fetch_from_additional_sources(
+    db: Session,
+    etf_id: str,
+    start_date: date,
+    end_date: date,
+    missing_dates: list,
+) -> None:
+    """
+    Fetch prices from all active sources except yfinance and store them.
+    Called after the primary yfinance update to fill in Stooq (and future) sources.
+    """
+    etf = db.query(ETF).filter(ETF.id == etf_id).first()
+    if not etf:
+        return
+
+    registry = get_registry()
+    active_sources = registry.get_active_sources(db)
+
+    for source_instance in active_sources:
+        if source_instance.source_id == "yfinance":
+            continue  # Already handled by main flow
+
+        symbol = _get_or_create_source_symbol(db, etf_id, source_instance)
+        if not symbol:
+            logger.info(f"No symbol mapping for ETF {etf_id} on {source_instance.source_id}, skipping")
+            continue
+
+        try:
+            prices = source_instance.fetch_prices(symbol, start_date, end_date)
+            if prices:
+                stored = _store_prices_from_source(
+                    db, etf_id, prices, etf.currency, missing_dates, source_instance.source_id
+                )
+                # Mark symbol as verified if we got data
+                from app.crud.data_source import upsert_source_symbol
+                upsert_source_symbol(db, etf_id, source_instance.source_id, symbol, verified=True)
+                logger.info(f"Stored {stored} prices for {etf_id} from {source_instance.source_id}")
+            else:
+                logger.info(f"No prices returned for {etf_id} from {source_instance.source_id} ({symbol})")
+        except Exception as e:
+            logger.warning(f"Failed to fetch prices for {etf_id} from {source_instance.source_id}: {e}")
+
 
 def update_etf_data(db: Session, etf_id: str) -> None:
     """Update complete ETF data and historical prices."""
@@ -343,6 +499,12 @@ def update_etf_data(db: Session, etf_id: str) -> None:
             )
             etf.last_update = last_date
             db.add(etf)
+
+        # Ensure yfinance symbol is recorded
+        _get_or_create_source_symbol(db, etf_id, get_registry().get_source("yfinance"))
+
+        # Fetch from additional sources (e.g. Stooq)
+        _fetch_from_additional_sources(db, etf_id, EARLIEST_DATA_DATE, date.today(), missing_dates)
 
         # Update task status
         if missing_dates:
@@ -468,6 +630,9 @@ def update_latest_prices(db: Session, etf_id: str) -> None:
             )
             etf.last_update = last_date
             db.add(etf)
+
+        # Fetch from additional sources (e.g. Stooq) for the same date range
+        _fetch_from_additional_sources(db, etf_id, start_date, today, missing_dates)
 
         # Update task status
         if missing_dates:

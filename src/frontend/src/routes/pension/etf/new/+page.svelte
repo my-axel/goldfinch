@@ -221,6 +221,21 @@
 								{m.etf_basic_info_explanation_etf()}</ExplanationListItem
 							>
 						</ExplanationList>
+						<p class="text-sm font-medium mt-3">{m.etf_basic_info_explanation_search_intro()}</p>
+						<ExplanationList>
+							<ExplanationListItem>
+								<strong>Name:</strong>
+								{m.etf_basic_info_explanation_search_by_name()}
+							</ExplanationListItem>
+							<ExplanationListItem>
+								<strong>ISIN:</strong>
+								{m.etf_basic_info_explanation_search_by_isin()}
+							</ExplanationListItem>
+							<ExplanationListItem>
+								<strong>Symbol:</strong>
+								{m.etf_basic_info_explanation_search_by_symbol()}
+							</ExplanationListItem>
+						</ExplanationList>
 					</Explanation>
 				{/snippet}
 				<Card title={m.etf_pension_new_title()}>

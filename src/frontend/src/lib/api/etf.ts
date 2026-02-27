@@ -6,6 +6,7 @@
 
 import { api } from './client';
 import type { ETFSearchResult, ETFYFinanceResult } from '$lib/types/etf';
+import type { ETFSearchResultWithSource } from '$lib/types/data_source';
 
 const ETF_BASE = '/api/v1/etf';
 
@@ -14,7 +15,11 @@ export const etfApi = {
 	search: (query: string) =>
 		api.get<ETFSearchResult[]>(`${ETF_BASE}?query=${encodeURIComponent(query)}`),
 
-	/** Search ETFs via YFinance (symbol lookup) */
+	/** Search ETFs via FinanceDatabase (multi-source, returns source-annotated results) */
+	searchExternal: (query: string) =>
+		api.get<ETFSearchResultWithSource[]>(`${ETF_BASE}/search?query=${encodeURIComponent(query)}`),
+
+	/** @deprecated Use searchExternal instead */
 	searchYFinance: (query: string) =>
 		api.get<ETFYFinanceResult[]>(`${ETF_BASE}/search?query=${encodeURIComponent(query)}`),
 

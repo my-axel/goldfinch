@@ -28,11 +28,21 @@
 	import ScenarioRatesGrid from '$lib/components/settings/ScenarioRatesGrid.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { Sun, Moon, Monitor } from '@lucide/svelte';
+	import DataSourceSettings from '$lib/components/settings/DataSourceSettings.svelte';
+	import { dataSourcesApi } from '$lib/api/data_sources';
+	import type { DataSourceConfig } from '$lib/types/data_source';
 
 	// Bind to the global settings store
 	let settings = $derived(settingsStore.current);
 	let loading = $derived(!settingsStore.loaded);
 	let rateErrors = $state<Record<string, string>>({});
+	let dataSources = $state<DataSourceConfig[]>([]);
+
+	$effect(() => {
+		dataSourcesApi.getAll().then((sources) => {
+			dataSources = sources;
+		});
+	});
 
 
 	// Update a setting via the global store
@@ -230,5 +240,10 @@
 				{/each}
 			</div>
 		</Card>
+	</ContentSection>
+
+	<!-- Data Source Settings -->
+	<ContentSection>
+		<DataSourceSettings bind:sources={dataSources} />
 	</ContentSection>
 </div>

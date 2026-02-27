@@ -4,6 +4,7 @@ from app.db.session import SessionLocal
 from app.models.exchange_rate import ExchangeRate
 from app.models.etf import ETF, ETFPrice
 from app.models.pension_etf import PensionETF
+from app.models.data_source import DataSourceConfig
 from app.tasks.exchange_rates import update_exchange_rates
 from app.tasks.etf import update_etf_latest_prices
 from app.tasks.etf_pension import retry_pending_calculations
@@ -12,6 +13,38 @@ from app.crud.pension_etf import needs_value_calculation
 import logging
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_DATA_SOURCES = [
+    {
+        "source_id": "yfinance",
+        "name": "Yahoo Finance (yFinance)",
+        "enabled": True,
+        "priority": 10,
+        "requires_api_key": False,
+        "supports_search": False,  # Search handled by FinanceDatabase
+    },
+    {
+        "source_id": "stooq",
+        "name": "Stooq",
+        "enabled": True,
+        "priority": 20,
+        "requires_api_key": False,
+        "supports_search": False,
+    },
+]
+
+
+def ensure_default_data_sources(db: Session):
+    """Ensure built-in data sources exist in data_source_configs table."""
+    for defaults in DEFAULT_DATA_SOURCES:
+        existing = db.query(DataSourceConfig).filter(
+            DataSourceConfig.source_id == defaults["source_id"]
+        ).first()
+        if not existing:
+            db.add(DataSourceConfig(**defaults))
+            logger.info(f"Created default data source config: {defaults['source_id']}")
+    db.commit()
+
 
 def check_and_trigger_updates():
     """
@@ -22,6 +55,9 @@ def check_and_trigger_updates():
     logger.info("Running startup checks for missing updates...")
     db = SessionLocal()
     try:
+        # Ensure default data sources exist
+        ensure_default_data_sources(db)
+
         # Check exchange rates
         check_exchange_rates(db)
         

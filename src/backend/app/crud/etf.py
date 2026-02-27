@@ -1,10 +1,11 @@
 from typing import List, Optional, Any, Dict
 from datetime import date, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, desc, asc
+from sqlalchemy import or_, desc, asc, func
 from fastapi.encoders import jsonable_encoder
 from app.crud.base import CRUDBase
 from app.models.etf import ETF, ETFPrice
+from app.models.data_source import DataSourceConfig
 from app.models.exchange_rate import ExchangeRate, ExchangeRateError
 from app.schemas.etf import ETFCreate, ETFUpdate, ETFPriceCreate
 from app.services.exchange_rate import ExchangeRateService, ExchangeRateNotFoundError
@@ -262,15 +263,20 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         self, db: Session, *, etf_id: str, date: Optional[date] = None
     ) -> Optional[ETFPrice]:
         """Get the ETF price for a specific date.
-        If no date is provided or no price is found for the exact date,
-        returns the most recent price before that date.
+        If multiple sources exist for a date, returns the one from the highest-priority
+        (lowest priority number) enabled source. Falls back to most recent before date.
         """
-        query = db.query(ETFPrice).filter(ETFPrice.etf_id == etf_id)
-        
+        query = (
+            db.query(ETFPrice)
+            .outerjoin(DataSourceConfig, ETFPrice.source == DataSourceConfig.source_id)
+            .filter(ETFPrice.etf_id == etf_id)
+        )
         if date is not None:
             query = query.filter(ETFPrice.date <= date)
-            
-        return query.order_by(ETFPrice.date.desc()).first()
+        return query.order_by(
+            ETFPrice.date.desc(),
+            func.coalesce(DataSourceConfig.priority, 999).asc(),
+        ).first()
 
     def get_latest_price(
         self, db: Session, *, etf_id: str
@@ -395,11 +401,42 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         return etf
 
     def get_prices_between_dates(self, db: Session, etf_id: str, start_date: date, end_date: date) -> List[ETFPrice]:
-        """Get all ETF prices between two dates, inclusive"""
-        return db.query(ETFPrice).filter(
-            ETFPrice.etf_id == etf_id,
-            ETFPrice.date >= start_date,
-            ETFPrice.date <= end_date
-        ).order_by(asc(ETFPrice.date)).all()
+        """
+        Get ETF prices between two dates, inclusive.
+        When multiple sources exist for the same date, returns one price per date
+        from the highest-priority (lowest priority number) enabled source.
+        """
+        # Subquery: for each date, find the minimum (best) source priority
+        priority_subq = (
+            db.query(
+                ETFPrice.date.label("p_date"),
+                func.min(func.coalesce(DataSourceConfig.priority, 999)).label("min_priority"),
+            )
+            .outerjoin(DataSourceConfig, ETFPrice.source == DataSourceConfig.source_id)
+            .filter(
+                ETFPrice.etf_id == etf_id,
+                ETFPrice.date >= start_date,
+                ETFPrice.date <= end_date,
+            )
+            .group_by(ETFPrice.date)
+            .subquery()
+        )
+
+        return (
+            db.query(ETFPrice)
+            .outerjoin(DataSourceConfig, ETFPrice.source == DataSourceConfig.source_id)
+            .join(
+                priority_subq,
+                (ETFPrice.date == priority_subq.c.p_date)
+                & (func.coalesce(DataSourceConfig.priority, 999) == priority_subq.c.min_priority),
+            )
+            .filter(
+                ETFPrice.etf_id == etf_id,
+                ETFPrice.date >= start_date,
+                ETFPrice.date <= end_date,
+            )
+            .order_by(asc(ETFPrice.date))
+            .all()
+        )
 
 etf_crud = CRUDETF(ETF) 

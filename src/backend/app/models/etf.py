@@ -29,6 +29,7 @@ class ETF(Base):
     historical_prices = relationship("ETFPrice", back_populates="etf", cascade="all, delete-orphan")
     updates = relationship("ETFUpdate", back_populates="etf", cascade="all, delete-orphan")
     errors = relationship("ETFError", back_populates="etf", cascade="all, delete-orphan")
+    source_symbols = relationship("ETFSourceSymbol", back_populates="etf", cascade="all, delete-orphan")
 
 class ETFPrice(Base):
     __tablename__ = "etf_prices"
@@ -52,10 +53,12 @@ class ETFPrice(Base):
     
     # Metadata
     original_currency = Column(String, nullable=True)  # The currency the price was in before conversion to EUR
-    
+    source = Column(String, nullable=False, default='yfinance')  # Data source identifier
+    is_adjusted = Column(Boolean, nullable=False, default=False)  # Dividend-adjusted price?
+
     __table_args__ = (
-        # Ensure we don't have duplicate prices for the same ETF and date
-        UniqueConstraint('etf_id', 'date', name='uix_etf_price_date'),
+        # Unique price per ETF, date, and source (allows multiple sources for the same date)
+        UniqueConstraint('etf_id', 'date', 'source', name='uix_etf_price_date_source'),
     )
 
     # Relationship

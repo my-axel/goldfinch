@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import household, etf, exchange_rates, settings, compass
+from app.api.v1.endpoints import household, etf, exchange_rates, settings, compass, data_sources
 from app.api.v1.endpoints.pension import router as pension_router
 from app.api.v1.endpoints.pension_summaries import router as pension_summaries_router
 from app.api.v1.endpoints.dashboard import router as dashboard_router
@@ -43,4 +43,9 @@ api_router.include_router(
     settings.router,
     prefix="/settings",
     tags=["settings"]
+)
+api_router.include_router(
+    data_sources.router,
+    prefix="/data-sources",
+    tags=["data-sources"]
 )

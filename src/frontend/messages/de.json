@@ -613,7 +613,11 @@
 
 	"etf_basic_info_explanation_intro": "Gib die Basisinformationen zu deiner ETF-Rente ein. Der gewählte ETF bestimmt, wie die Portfolioperformance verfolgt wird.",
 	"etf_basic_info_explanation_name": "Ein beschreibender Name für deinen ETF-Rentenplan (z.B. \"Welt-ETF-Portfolio\")",
-	"etf_basic_info_explanation_etf": "Der in dieser Rente verfolgte ETF. Suche nach Name, ISIN oder Symbol. Kann nach der Erstellung nicht mehr geändert werden.",
+	"etf_basic_info_explanation_etf": "Der in dieser Rente verfolgte ETF. Kann nach der Erstellung nicht mehr geändert werden.",
+	"etf_basic_info_explanation_search_intro": "So findest du deinen ETF:",
+	"etf_basic_info_explanation_search_by_name": "Name: Kurzform eingeben, nicht den vollständigen Broker-Namen — z.B. \"Amundi MSCI World\" statt \"Amundi Core MSCI World Swap - USD DIS\"",
+	"etf_basic_info_explanation_search_by_isin": "ISIN: 12-stellige internationale Kennung, wie sie dein Broker anzeigt — z.B. IE00B4L5Y983 oder LU0392494562",
+	"etf_basic_info_explanation_search_by_symbol": "Symbol: Ticker mit oder ohne Börse — z.B. VWCE.DE (XETRA), IWDA.L (London) oder einfach VWCE (Börse wird automatisch erkannt)",
 	"etf_basic_info_explanation_notes": "Zusätzliche Notizen oder Erinnerungen zu dieser ETF-Rente",
 
 	"etf_contribution_explanation_intro": "Lege deinen regelmäßigen Beitragsplan fest. Du kannst mehrere Schritte hinzufügen, um Änderungen bei den Beiträgen abzubilden.",
@@ -687,5 +691,22 @@
 	"dashboard_retirement_gap_shortfall": "Lücke",
 	"dashboard_retirement_gap_surplus": "Überschuss",
 	"dashboard_retirement_gap_range": "Bandbreite: {pessimistic} – {optimistic}",
-	"dashboard_retirement_gap_view_details": "Details anzeigen →"
+	"dashboard_retirement_gap_view_details": "Details anzeigen →",
+
+	"settings_data_sources_title": "Datenquellen",
+	"settings_data_sources_description": "Verwalte Quellen für Kurs- und ETF-Daten. Die Reihenfolge bestimmt, welche Quelle bei Preiskonflikten Vorrang hat.",
+	"data_source_enabled": "Aktiviert",
+	"data_source_disabled": "Deaktiviert",
+	"data_source_api_key": "API-Key",
+	"data_source_api_key_placeholder": "API-Key eingeben",
+	"data_source_priority": "Priorität",
+	"data_source_test": "Verbindung testen",
+	"data_source_test_success": "Verbindung erfolgreich",
+	"data_source_test_failed": "Verbindung fehlgeschlagen",
+	"data_source_no_key_required": "Kein API-Key erforderlich",
+	"data_source_search_not_supported": "Keine Suche — Symbol wird automatisch abgeleitet",
+	"data_source_drag_hint": "Ziehen zum Umsortieren",
+	"etf_search_source_yfinance": "Yahoo Finance",
+	"etf_search_source_stooq": "Stooq",
+	"etf_search_symbol_derived": "Symbol automatisch abgeleitet — wird beim ersten Update validiert"
 }
