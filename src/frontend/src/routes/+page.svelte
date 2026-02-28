@@ -16,7 +16,7 @@
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { pensionApi } from '$lib/api/pension';
 	import { PensionType, type ETFPensionStatistics } from '$lib/types/pension';
-	import { formatCurrency } from '$lib/utils/format';
+	import { formatCurrency, formatNumber } from '$lib/utils/format';
 
 	let { data } = $props();
 
@@ -179,12 +179,12 @@
 						<div class="mt-3 space-y-1 text-sm">
 							{#if portfolioGrowth.mom !== null}
 								<p class={portfolioGrowth.mom >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-									{portfolioGrowth.mom >= 0 ? '+' : ''}{portfolioGrowth.mom.toFixed(1)}% {m.dashboard_portfolio_vs_last_month()}
+									{portfolioGrowth.mom >= 0 ? '+' : ''}{formatNumber(portfolioGrowth.mom, settingsStore.current.number_locale, 1)}% {m.dashboard_portfolio_vs_last_month()}
 								</p>
 							{/if}
 							{#if portfolioGrowth.yoy !== null}
 								<p class={portfolioGrowth.yoy >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-									{portfolioGrowth.yoy >= 0 ? '+' : ''}{portfolioGrowth.yoy.toFixed(1)}% {m.dashboard_portfolio_vs_last_year()}
+									{portfolioGrowth.yoy >= 0 ? '+' : ''}{formatNumber(portfolioGrowth.yoy, settingsStore.current.number_locale, 1)}% {m.dashboard_portfolio_vs_last_year()}
 								</p>
 							{:else if portfolioGrowth.mom === null}
 								<p class="text-muted-foreground text-xs">{m.dashboard_portfolio_add_statements()}</p>
@@ -199,7 +199,7 @@
 									{Number(c.total_returns) >= 0 ? '+' : ''}{formatCurrency(Number(c.total_returns), settingsStore.current.number_locale, settingsStore.current.currency, 0)}
 									{#if c.returns_percentage != null}
 										<span class="text-xs font-normal opacity-80">
-											({Number(c.returns_percentage) >= 0 ? '+' : ''}{Number(c.returns_percentage).toFixed(1)}%)
+											({Number(c.returns_percentage) >= 0 ? '+' : ''}{formatNumber(Number(c.returns_percentage), settingsStore.current.number_locale, 1)}%)
 										</span>
 									{/if}
 								</p>

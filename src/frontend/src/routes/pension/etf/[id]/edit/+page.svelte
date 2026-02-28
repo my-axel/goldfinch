@@ -17,7 +17,7 @@
 	import { PensionType } from '$lib/types/pension';
 	import type { ETFPension, ContributionStep, ETFPensionStatistics } from '$lib/types/pension';
 	import { calculateCombinedScenarios } from '$lib/utils/projection';
-	import { formatCurrency, formatPercent, formatDate } from '$lib/utils/format';
+	import { formatCurrency, formatPercent, formatDate, formatNumber } from '$lib/utils/format';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import ContentSection from '$lib/components/ui/ContentSection.svelte';
@@ -332,7 +332,9 @@
 						<div class="grid grid-cols-2 gap-4 text-sm">
 							<div>
 								<p class="text-muted-foreground">{m.etf_pension_current_units()}</p>
-								<p class="font-medium">{pension.existing_units ?? '—'}</p>
+								<p class="font-medium">
+									{pension.existing_units != null ? formatNumber(pension.existing_units, locale, 4) : '—'}
+								</p>
 							</div>
 							<div>
 								<p class="text-muted-foreground">{m.etf_pension_reference_date()}</p>
@@ -461,7 +463,7 @@
 										currency,
 										0
 									)}
-									subValue="{(pessimisticRate * 100).toFixed(1)}% p.a."
+									subValue={`${formatNumber(pessimisticRate * 100, locale, 1)}% p.a.`}
 								/>
 								<ExplanationStat
 									icon={ArrowRight}
@@ -472,7 +474,7 @@
 										currency,
 										0
 									)}
-									subValue="{(realisticRate * 100).toFixed(1)}% p.a."
+									subValue={`${formatNumber(realisticRate * 100, locale, 1)}% p.a.`}
 								/>
 								<ExplanationStat
 									icon={TrendingUp}
@@ -483,7 +485,7 @@
 										currency,
 										0
 									)}
-									subValue="{(optimisticRate * 100).toFixed(1)}% p.a."
+									subValue={`${formatNumber(optimisticRate * 100, locale, 1)}% p.a.`}
 								/>
 							</ExplanationStats>
 							<ExplanationStats columns={2}>

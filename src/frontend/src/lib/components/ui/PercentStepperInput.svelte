@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
-	import { getDecimalSeparator, parseNumber, formatNumberInput } from '$lib/utils/format';
+	import { getDecimalSeparator, parseNumber, formatNumberInput, removeGroupingSeparators } from '$lib/utils/format';
 
 	let {
 		value = $bindable(0),
@@ -48,7 +48,7 @@
 	// Sync display when value changes externally (not while user is typing)
 	$effect(() => {
 		if (!focused) {
-			inputText = formatNumberInput(value * 100, locale, decimals);
+			inputText = formatNumberInput(value * 100, locale, decimals, true);
 		}
 	});
 
@@ -65,6 +65,7 @@
 
 	function handleFocus() {
 		focused = true;
+		inputText = removeGroupingSeparators(inputText, locale);
 		requestAnimationFrame(() => inputEl?.select());
 	}
 
@@ -72,7 +73,7 @@
 		focused = false;
 		if (min !== undefined && value < min) value = min;
 		if (max !== undefined && value > max) value = max;
-		inputText = formatNumberInput(value * 100, locale, decimals);
+		inputText = formatNumberInput(value * 100, locale, decimals, true);
 	}
 
 	function roundTo(n: number): number {
@@ -87,7 +88,7 @@
 		const minDisplay = min !== undefined ? min * 100 : undefined;
 		const newDisplay = minDisplay !== undefined ? Math.max(minDisplay, next) : next;
 		value = newDisplay / 100;
-		inputText = formatNumberInput(newDisplay, locale, decimals);
+		inputText = formatNumberInput(newDisplay, locale, decimals, true);
 	}
 
 	function increment() {
@@ -96,7 +97,7 @@
 		const maxDisplay = max !== undefined ? max * 100 : undefined;
 		const newDisplay = maxDisplay !== undefined ? Math.min(maxDisplay, next) : next;
 		value = newDisplay / 100;
-		inputText = formatNumberInput(newDisplay, locale, decimals);
+		inputText = formatNumberInput(newDisplay, locale, decimals, true);
 	}
 </script>
 

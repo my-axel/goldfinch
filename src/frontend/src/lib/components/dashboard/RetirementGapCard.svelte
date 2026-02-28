@@ -8,8 +8,10 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import FormattedCurrency from '$lib/components/ui/FormattedCurrency.svelte';
 	import { dashboardStore } from '$lib/stores/dashboard.svelte';
+	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { compassApi } from '$lib/api/compass';
 	import type { GapAnalysisResult } from '$lib/types/compass';
+	import { formatNumber } from '$lib/utils/format';
 
 	let analysis = $state<GapAnalysisResult | null>(null);
 	let loading = $state(false);
@@ -67,8 +69,8 @@
 
 			<p class="text-xs text-muted-foreground">
 				{m.dashboard_retirement_gap_range({
-					pessimistic: analysis.gap.pessimistic.toLocaleString(undefined, { maximumFractionDigits: 0 }),
-					optimistic: analysis.gap.optimistic.toLocaleString(undefined, { maximumFractionDigits: 0 })
+					pessimistic: formatNumber(analysis.gap.pessimistic, settingsStore.current.number_locale, 0),
+					optimistic: formatNumber(analysis.gap.optimistic, settingsStore.current.number_locale, 0)
 				})}
 			</p>
 

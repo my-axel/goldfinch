@@ -27,6 +27,10 @@ export function getThousandsSeparator(locale: string): string {
 	return Intl.NumberFormat(locale).format(1000).replace(/\d/g, '');
 }
 
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function getCurrencySymbol(locale: string, currency: string): string {
 	try {
 		return (0)
@@ -112,17 +116,37 @@ export function formatDate(
 export function formatNumberInput(
 	value: number | null | undefined,
 	locale: string,
-	decimals?: number
+	decimals?: number,
+	useGrouping = false
 ): string {
 	if (value === null || value === undefined) return '';
 	if (decimals !== undefined) {
 		return new Intl.NumberFormat(locale, {
 			minimumFractionDigits: decimals,
 			maximumFractionDigits: decimals,
-			useGrouping: false
+			useGrouping
+		}).format(value);
+	}
+	if (useGrouping) {
+		const valueText = value.toString();
+		const fractionDigits = valueText.includes('.') ? Math.min(valueText.split('.')[1].length, 20) : 0;
+		return new Intl.NumberFormat(locale, {
+			minimumFractionDigits: fractionDigits,
+			maximumFractionDigits: fractionDigits,
+			useGrouping: true
 		}).format(value);
 	}
 	return value.toString().replace('.', getDecimalSeparator(locale));
+}
+
+export function removeGroupingSeparators(input: string, locale: string): string {
+	if (!input) return input;
+	const separator = getThousandsSeparator(locale);
+	if (!separator) return input;
+	if (separator.trim() === '') {
+		return input.replace(/\s+/g, '');
+	}
+	return input.replace(new RegExp(escapeRegExp(separator), 'g'), '');
 }
 
 export function parseNumber(input: string, locale: string): number {

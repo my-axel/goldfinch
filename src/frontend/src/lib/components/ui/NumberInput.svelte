@@ -9,7 +9,7 @@
 
 <script lang="ts">
 	import { settingsStore } from '$lib/stores/settings.svelte';
-	import { getDecimalSeparator, parseNumber, formatNumberInput } from '$lib/utils/format';
+	import { getDecimalSeparator, parseNumber, formatNumberInput, removeGroupingSeparators } from '$lib/utils/format';
 
 	let {
 		value = $bindable(0),
@@ -38,7 +38,7 @@
 	// Sync display when value changes externally (not while user is typing)
 	$effect(() => {
 		if (!focused) {
-			displayValue = formatNumberInput(value, locale, decimals);
+			displayValue = formatNumberInput(value, locale, decimals, true);
 		}
 	});
 
@@ -53,6 +53,7 @@
 
 	function handleFocus() {
 		focused = true;
+		displayValue = removeGroupingSeparators(displayValue, locale);
 		// Select all on focus for easy replacement
 		requestAnimationFrame(() => inputEl?.select());
 	}
@@ -62,7 +63,7 @@
 		// Clamp to min/max
 		if (min !== undefined && value < min) value = min;
 		if (max !== undefined && value > max) value = max;
-		displayValue = formatNumberInput(value, locale, decimals);
+		displayValue = formatNumberInput(value, locale, decimals, true);
 	}
 </script>
 
