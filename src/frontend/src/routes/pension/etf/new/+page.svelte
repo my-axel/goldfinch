@@ -2,7 +2,7 @@
 @file src/routes/pension/etf/new/+page.svelte
 @kind route
 @purpose Rendert die Route 'pension/etf/new' und verbindet Seitenzustand, Nutzeraktionen und Unterkomponenten.
-@contains Reaktiver Seitenzustand wird ueber `\$state`, `\$derived` und `\$effect` organisiert.
+@contains Reaktiver Seitenzustand wird ueber `$state`, `$derived` und `$effect` organisiert.
 @contains Kernfunktionen `validate()`, `handleSubmit()` steuern Laden, Aktionen und Fehlerpfade.
 @contains Das Markup verdrahtet Sektionen, Dialoge und Aktionen fuer den Route-Workflow.
 -->
@@ -24,41 +24,43 @@
 	import BasicInformationCard from '$lib/components/pension/etf/BasicInformationCard.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
 	import ScenarioRatesCard from '$lib/components/pension/ScenarioRatesCard.svelte';
+	import NumberInput from '$lib/components/ui/NumberInput.svelte';
+	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import type { PageData } from './$types';
-	import { PlusCircle, BarChart3, History } from '@lucide/svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let memberId = $derived(data.memberId);
 
-	// Initialization method
-	type InitMethod = 'new' | 'existing' | 'historical';
-	let initMethod = $state<InitMethod | null>(null);
+	// --- Section toggles ---
+	let hasExistingUnits = $state(false);
+	let hasPlan = $state(false);
+	let realizeHistorical = $state(false);
 
-	// Form state
+	// --- Form state ---
 	let name = $state('');
 	let etfId = $state('');
 	let etfDisplayName = $state('');
+	// Existing holdings
 	let existingUnits = $state(0);
 	let referenceDate = $state(todayIsoDate());
+	let investedAmount = $state(0);
+	// General
 	let notes = $state('');
 	let contributionPlanSteps = $state<ContributionStep[]>([]);
 	let errors = $state<Record<string, string>>({});
 	let submitting = $state(false);
 
-	// Per-pension scenario rates — initialized from global settings (user can override before creating)
+	// Per-pension scenario rates — initialized from global settings
 	let pessimisticRate = $state(settingsStore.current.projection_pessimistic_rate / 100);
 	let realisticRate = $state(settingsStore.current.projection_realistic_rate / 100);
 	let optimisticRate = $state(settingsStore.current.projection_optimistic_rate / 100);
-
-	const isExistingInvestment = $derived(initMethod === 'existing');
 
 	function validate(): boolean {
 		const newErrors: Record<string, string> = {};
 		if (!name.trim()) newErrors.name = 'Name is required';
 		if (!etfId) newErrors.etf_id = 'ETF is required';
-		if (!initMethod) newErrors.init_method = 'Please select an initialization method';
 		errors = newErrors;
 		return Object.keys(newErrors).length === 0;
 	}
@@ -74,28 +76,31 @@
 				name: name.trim(),
 				member_id: memberId,
 				etf_id: etfId,
-				is_existing_investment: isExistingInvestment,
-				existing_units: isExistingInvestment ? existingUnits : 0,
-				reference_date: isExistingInvestment ? referenceDate : undefined,
-				realize_historical_contributions: initMethod === 'historical',
+				is_existing_investment: hasExistingUnits,
+				existing_units: hasExistingUnits ? existingUnits : 0,
+				reference_date: hasExistingUnits ? referenceDate : undefined,
+				invested_amount: hasExistingUnits && investedAmount > 0 ? investedAmount : undefined,
+				realize_historical_contributions: hasPlan && realizeHistorical,
 				notes: notes.trim() || '',
 				status: 'ACTIVE' as const,
-				total_units: isExistingInvestment ? existingUnits : 0,
+				total_units: hasExistingUnits ? existingUnits : 0,
 				pessimistic_rate: pessimisticRate * 100,
 				realistic_rate: realisticRate * 100,
 				optimistic_rate: optimisticRate * 100,
-				contribution_plan_steps: contributionPlanSteps.map((step) => ({
-					amount: step.amount,
-					frequency: step.frequency,
-					start_date: step.start_date,
-					end_date: step.end_date || undefined,
-					note: step.note || ''
-				}))
+				contribution_plan_steps: hasPlan
+					? contributionPlanSteps.map((step) => ({
+							amount: step.amount,
+							frequency: step.frequency,
+							start_date: step.start_date,
+							end_date: step.end_date || undefined,
+							note: step.note || ''
+						}))
+					: []
 			};
 
 			await pensionApi.create(PensionType.ETF_PLAN, pensionData);
 
-			if (isExistingInvestment && existingUnits > 0) {
+			if (hasExistingUnits && existingUnits > 0) {
 				toastStore.success(m.etf_pension_initialized_toast());
 			} else {
 				toastStore.success(m.etf_pension_created());
@@ -125,7 +130,7 @@
 			<button
 				type="submit"
 				form="etf-pension-form"
-				disabled={submitting || !initMethod}
+				disabled={submitting}
 				class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
 			>
 				{m.etf_pension_create()}
@@ -134,151 +139,165 @@
 	</div>
 
 	<form id="etf-pension-form" onsubmit={handleSubmit} class="space-y-8">
-		<!-- Initialization Method Section -->
+		<!-- Section 1: Basic Information -->
 		<ContentSection>
 			{#snippet aside()}
 				<Explanation>
-					<p>{m.etf_init_method_title()}</p>
+					<p>{m.etf_basic_info_explanation_intro()}</p>
+					<ExplanationList>
+						<ExplanationListItem
+							><strong>{m.etf_pension_etf()}:</strong>
+							{m.etf_basic_info_explanation_etf()}</ExplanationListItem
+						>
+					</ExplanationList>
+					<p class="text-sm font-medium mt-3">{m.etf_basic_info_explanation_search_intro()}</p>
+					<ExplanationList>
+						<ExplanationListItem>
+							<strong>Name:</strong>
+							{m.etf_basic_info_explanation_search_by_name()}
+						</ExplanationListItem>
+						<ExplanationListItem>
+							<strong>ISIN:</strong>
+							{m.etf_basic_info_explanation_search_by_isin()}
+						</ExplanationListItem>
+						<ExplanationListItem>
+							<strong>Symbol:</strong>
+							{m.etf_basic_info_explanation_search_by_symbol()}
+						</ExplanationListItem>
+					</ExplanationList>
 				</Explanation>
 			{/snippet}
-			<Card title={m.etf_init_method_title()}>
-				<div class="space-y-3">
-					<!-- New Investment -->
-					<label
-						class="rounded-lg border p-4 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer block group transition-colors {initMethod === 'new' ? 'border-primary bg-primary/5' : ''}"
-					>
-						<div class="space-y-2">
-							<div class="flex items-center space-x-4">
-								<input
-									type="radio"
-									name="init_method"
-									value="new"
-									checked={initMethod === 'new'}
-									onchange={() => (initMethod = 'new')}
-									class="accent-primary"
-								/>
-								<PlusCircle class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" />
-								<span class="font-medium">{m.etf_init_new()}</span>
-							</div>
-							<p class="text-sm text-muted-foreground pl-9">{m.etf_init_new_desc()}</p>
-						</div>
+			<Card title={m.etf_pension_new_title()}>
+				<BasicInformationCard
+					bind:name
+					bind:etfId
+					bind:etfDisplayName
+					bind:notes
+					isEditing={false}
+					{errors}
+				/>
+			</Card>
+		</ContentSection>
+
+		<!-- Section 2: Existing Holdings (optional toggle) -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.etf_existing_units_section_description()}</p>
+				</Explanation>
+			{/snippet}
+			<Card title={m.etf_existing_units_section_title()}>
+				<div class="space-y-4">
+					<!-- Toggle -->
+					<label class="flex items-center gap-3 cursor-pointer">
+						<input
+							type="checkbox"
+							bind:checked={hasExistingUnits}
+							class="h-4 w-4 rounded border-border accent-primary"
+						/>
+						<span class="text-sm font-medium">{m.etf_existing_units_toggle()}</span>
 					</label>
 
-					<!-- Existing Investment -->
-					<label
-						class="rounded-lg border p-4 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer block group transition-colors {initMethod === 'existing' ? 'border-primary bg-primary/5' : ''}"
-					>
-						<div class="space-y-2">
-							<div class="flex items-center space-x-4">
-								<input
-									type="radio"
-									name="init_method"
-									value="existing"
-									checked={initMethod === 'existing'}
-									onchange={() => (initMethod = 'existing')}
-									class="accent-primary"
+					{#if hasExistingUnits}
+						<div class="grid grid-cols-2 gap-4 pt-2 border-t border-border">
+							<!-- Existing Units -->
+							<div class="space-y-1">
+								<label for="existing-units" class="text-sm font-medium">
+									{m.etf_pension_current_units()}
+								</label>
+								<NumberInput
+									bind:value={existingUnits}
+									decimals={6}
+									placeholder="0.000000"
+									min={0}
 								/>
-								<BarChart3 class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" />
-								<span class="font-medium">{m.etf_init_existing()}</span>
 							</div>
-							<p class="text-sm text-muted-foreground pl-9">{m.etf_init_existing_desc()}</p>
-						</div>
-					</label>
 
-					<!-- Historical Contributions -->
-					<label
-						class="rounded-lg border p-4 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer block group transition-colors {initMethod === 'historical' ? 'border-primary bg-primary/5' : ''}"
-					>
-						<div class="space-y-2">
-							<div class="flex items-center space-x-4">
+							<!-- Reference Date -->
+							<div class="space-y-1">
+								<label for="reference-date" class="text-sm font-medium">
+									{m.etf_pension_reference_date()}
+								</label>
 								<input
-									type="radio"
-									name="init_method"
-									value="historical"
-									checked={initMethod === 'historical'}
-									onchange={() => (initMethod = 'historical')}
-									class="accent-primary"
+									id="reference-date"
+									type="date"
+									bind:value={referenceDate}
+									class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm h-9 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
 								/>
-								<History class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" />
-								<span class="font-medium">{m.etf_init_historical()}</span>
 							</div>
-							<p class="text-sm text-muted-foreground pl-9">{m.etf_init_historical_desc()}</p>
+
+							<!-- Invested Amount (optional) -->
+							<div class="col-span-2 space-y-1">
+								<p class="text-sm font-medium">{m.etf_invested_amount_label()}</p>
+								<CurrencyInput bind:value={investedAmount} />
+								<p class="text-xs text-muted-foreground">{m.etf_invested_amount_hint()}</p>
+							</div>
 						</div>
-					</label>
+					{/if}
 				</div>
 			</Card>
 		</ContentSection>
 
-		{#if initMethod}
-			<!-- Basic Information Section -->
-			<ContentSection>
-				{#snippet aside()}
-					<Explanation>
-						<p>{m.etf_basic_info_explanation_intro()}</p>
-						<ExplanationList>
-							<ExplanationListItem
-								><strong>{m.etf_pension_etf()}:</strong>
-								{m.etf_basic_info_explanation_etf()}</ExplanationListItem
-							>
-						</ExplanationList>
-						<p class="text-sm font-medium mt-3">{m.etf_basic_info_explanation_search_intro()}</p>
-						<ExplanationList>
-							<ExplanationListItem>
-								<strong>Name:</strong>
-								{m.etf_basic_info_explanation_search_by_name()}
-							</ExplanationListItem>
-							<ExplanationListItem>
-								<strong>ISIN:</strong>
-								{m.etf_basic_info_explanation_search_by_isin()}
-							</ExplanationListItem>
-							<ExplanationListItem>
-								<strong>Symbol:</strong>
-								{m.etf_basic_info_explanation_search_by_symbol()}
-							</ExplanationListItem>
-						</ExplanationList>
-					</Explanation>
-				{/snippet}
-				<Card title={m.etf_pension_new_title()}>
-					<BasicInformationCard
-						bind:name
-						bind:etfId
-						bind:etfDisplayName
-						bind:existingUnits
-						bind:referenceDate
-						bind:notes
-						{isExistingInvestment}
-						isEditing={false}
-						{errors}
-					/>
-				</Card>
-			</ContentSection>
+		<!-- Section 3: Contribution Plan (optional toggle) -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.etf_contribution_plan_section_description()}</p>
+					{#if hasPlan}
+						<p class="text-sm text-muted-foreground mt-2">{m.etf_contribution_explanation_growth()}</p>
+					{/if}
+				</Explanation>
+			{/snippet}
+			<Card title={m.etf_contribution_plan_section_title()}>
+				<div class="space-y-4">
+					<!-- Toggle -->
+					<label class="flex items-center gap-3 cursor-pointer">
+						<input
+							type="checkbox"
+							bind:checked={hasPlan}
+							class="h-4 w-4 rounded border-border accent-primary"
+						/>
+						<span class="text-sm font-medium">{m.etf_contribution_plan_toggle()}</span>
+					</label>
 
-			<!-- Projection Rates Section -->
-			<ContentSection>
-				{#snippet aside()}
-					<Explanation>
-						<p>{m.pension_scenario_rates_explanation()}</p>
-					</Explanation>
-				{/snippet}
-				<Card title={m.pension_scenario_rates_title()}>
-					<ScenarioRatesCard
-						bind:pessimisticRate
-						bind:realisticRate
-						bind:optimisticRate
-					/>
-				</Card>
-			</ContentSection>
+					{#if hasPlan}
+						<div class="space-y-4 pt-2 border-t border-border">
+							<ContributionPlanCard bind:steps={contributionPlanSteps} />
 
-			<!-- Contribution Plan Section -->
-			<ContentSection>
-				{#snippet aside()}
-					<Explanation>
-						<p>{m.etf_contribution_explanation_intro()}</p>
-						<p class="text-sm text-muted-foreground">{m.etf_contribution_explanation_growth()}</p>
-					</Explanation>
-				{/snippet}
-				<ContributionPlanCard bind:steps={contributionPlanSteps} />
-			</ContentSection>
-		{/if}
+							<!-- Historical realization checkbox -->
+							<div class="rounded-lg border border-border p-4 bg-muted space-y-2">
+								<label class="flex items-start gap-3 cursor-pointer">
+									<input
+										type="checkbox"
+										bind:checked={realizeHistorical}
+										class="h-4 w-4 rounded border-border accent-primary mt-0.5 shrink-0"
+									/>
+									<div>
+										<span class="text-sm font-medium">{m.etf_realize_historical_checkbox()}</span>
+										<p class="text-xs text-muted-foreground mt-1">{m.etf_realize_historical_hint()}</p>
+									</div>
+								</label>
+							</div>
+						</div>
+					{/if}
+				</div>
+			</Card>
+		</ContentSection>
+
+		<!-- Section 4: Scenario Rates -->
+		<ContentSection>
+			{#snippet aside()}
+				<Explanation>
+					<p>{m.pension_scenario_rates_explanation()}</p>
+				</Explanation>
+			{/snippet}
+			<Card title={m.pension_scenario_rates_title()}>
+				<ScenarioRatesCard
+					bind:pessimisticRate
+					bind:realisticRate
+					bind:optimisticRate
+				/>
+			</Card>
+		</ContentSection>
 	</form>
 </div>

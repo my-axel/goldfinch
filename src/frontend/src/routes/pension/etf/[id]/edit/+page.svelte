@@ -28,6 +28,7 @@
 	import ExplanationStats from '$lib/components/ui/ExplanationStats.svelte';
 	import ExplanationStat from '$lib/components/ui/ExplanationStat.svelte';
 	import BasicInformationCard from '$lib/components/pension/etf/BasicInformationCard.svelte';
+	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
 	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import ProjectionChart from '$lib/components/pension/etf/ProjectionChart.svelte';
 	import ContributionPlanCard from '$lib/components/pension/ContributionPlanCard.svelte';
@@ -61,9 +62,8 @@
 	let name = $state('');
 	let etfId = $state('');
 	let etfDisplayName = $state('');
-	let existingUnits = $state(0);
-	let referenceDate = $state('');
 	let notes = $state('');
+	let investedAmount = $state(0);
 	let contributionPlanSteps = $state<ContributionStep[]>([]);
 	let errors = $state<Record<string, string>>({});
 
@@ -90,9 +90,8 @@
 		name = p.name;
 		etfId = p.etf_id;
 		etfDisplayName = p.etf ? `${p.etf.symbol} - ${p.etf.name}` : p.etf_id;
-		existingUnits = p.existing_units ?? 0;
-		referenceDate = p.reference_date ?? '';
 		notes = p.notes ?? '';
+		investedAmount = p.invested_amount ?? 0;
 		contributionPlanSteps = (p.contribution_plan_steps ?? []).map((step) => ({ ...step }));
 		// Initialize rates from pension (if set) or fall back to global settings
 		pessimisticRate = p.pessimistic_rate != null
@@ -184,11 +183,10 @@
 		try {
 			const pensionData = {
 				name: name.trim(),
-				etf_id: etfId,
-				is_existing_investment: pension.is_existing_investment,
-				existing_units: existingUnits,
-				reference_date: referenceDate || undefined,
 				notes: notes.trim() || '',
+				invested_amount: pension.is_existing_investment && investedAmount > 0
+					? investedAmount
+					: undefined,
 				pessimistic_rate: pessimisticRate * 100,
 				realistic_rate: realisticRate * 100,
 				optimistic_rate: optimisticRate * 100,
@@ -313,17 +311,46 @@
 						bind:name
 						bind:etfId
 						bind:etfDisplayName
-						bind:existingUnits
-						bind:referenceDate
 						bind:notes
-						isExistingInvestment={pension.is_existing_investment}
 						isEditing={true}
 						{errors}
 					/>
 				</Card>
 			</ContentSection>
 
-			<!-- Section 2: Projection Rates -->
+		<!-- Section 2: Existing Holdings (if applicable) -->
+		{#if pension.is_existing_investment}
+			<ContentSection>
+				{#snippet aside()}
+					<Explanation>
+						<p>{m.etf_existing_units_section_description()}</p>
+					</Explanation>
+				{/snippet}
+				<Card title={m.etf_existing_units_section_title()}>
+					<div class="space-y-4">
+						<!-- Read-only existing units info -->
+						<div class="grid grid-cols-2 gap-4 text-sm">
+							<div>
+								<p class="text-muted-foreground">{m.etf_pension_current_units()}</p>
+								<p class="font-medium">{pension.existing_units ?? '—'}</p>
+							</div>
+							<div>
+								<p class="text-muted-foreground">{m.etf_pension_reference_date()}</p>
+								<p class="font-medium">{pension.reference_date ? formatDate(pension.reference_date, locale, { month: 'short', year: 'numeric', day: 'numeric' }) : '—'}</p>
+							</div>
+						</div>
+						<!-- Editable invested amount -->
+						<div class="space-y-1 border-t border-border pt-4">
+							<p class="text-sm font-medium">{m.etf_invested_amount_label()}</p>
+							<CurrencyInput bind:value={investedAmount} />
+							<p class="text-xs text-muted-foreground">{m.etf_invested_amount_hint()}</p>
+						</div>
+					</div>
+				</Card>
+			</ContentSection>
+		{/if}
+
+			<!-- Section 3: Projection Rates -->
 			<ContentSection>
 				{#snippet aside()}
 					<Explanation>

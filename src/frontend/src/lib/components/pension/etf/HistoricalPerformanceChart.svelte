@@ -252,7 +252,7 @@
 
 	{#if loading}
 		<div class="animate-pulse bg-muted rounded-lg" style="height: {height}px"></div>
-	{:else if chartData.length === 0}
+	{:else if chartData.length === 0 || (valueHistory.length <= 1 && contributionHistory.length === 0)}
 		<div
 			class="flex items-center justify-center text-sm text-muted-foreground"
 			style="height: {height}px"

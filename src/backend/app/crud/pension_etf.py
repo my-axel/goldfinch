@@ -520,12 +520,28 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             #   4. Append a final point for today using pension.current_value so the chart
             #      end always matches the sidebar "current value".
             value_history = []
-            if pension.contribution_history:
+            today = date.today()
+            if not pension.contribution_history and pension.existing_units and pension.existing_units > 0:
+                # Existing-only ETF: no historical reconstruction — chart starts from today.
+                # The invested_amount field (if set) provides the cost basis for statistics.
+                if pension.current_value > 0:
+                    value_history = [{"date": today.isoformat(), "value": str(pension.current_value)}]
+                if pension.invested_amount:
+                    total_invested = Decimal(str(pension.invested_amount))
+                total_return = current_value - total_invested
+                return PensionStatistics(
+                    total_invested_amount=total_invested,
+                    current_value=current_value,
+                    total_return=total_return,
+                    annual_return=None,
+                    contribution_history=[],
+                    value_history=value_history
+                )
+            elif pension.contribution_history:
                 sorted_contributions = sorted(
                     pension.contribution_history, key=lambda x: x.contribution_date
                 )
                 first_date = sorted_contributions[0].contribution_date
-                today = date.today()
 
                 # --- Fetch all prices in one DB round-trip ---
                 all_prices = etf_crud.get_prices_between_dates(

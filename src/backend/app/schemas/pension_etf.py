@@ -66,6 +66,7 @@ class PensionETFBase(BaseModel):
     etf_id: str
     existing_units: Optional[float] = None
     reference_date: Optional[date] = None
+    invested_amount: Optional[Decimal] = None  # Optional user-entered cost basis for existing units
     status: PensionStatus = PensionStatus.ACTIVE
     paused_at: Optional[date] = None
     resume_at: Optional[date] = None
@@ -91,6 +92,7 @@ class PensionETFResponse(PensionETFBase):
 class PensionETFUpdate(BaseModel):
     name: Optional[str] = None
     notes: Optional[str] = None
+    invested_amount: Optional[Decimal] = None
     contribution_plan_steps: Optional[List[ContributionPlanStepCreate]] = None
     status: Optional[PensionStatus] = None
     paused_at: Optional[date] = None

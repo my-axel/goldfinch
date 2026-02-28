@@ -3,7 +3,7 @@ from app.db.session import SessionLocal
 from app.crud.pension_etf import pension_etf, needs_value_calculation
 from app.crud.etf import etf_crud
 from app.models.task import TaskStatus
-from app.models.pension_etf import PensionETF, PensionETFContributionHistory
+from app.models.pension_etf import PensionETF
 from app.models.etf import ETFPrice
 from celery.exceptions import Retry
 import logging
@@ -73,20 +73,6 @@ def calculate_etf_pension_value(self, pension_id: int):
             # Price available: calculate current value
             pension.current_value = pension.existing_units * price.price
             logger.info(f"Calculated value for pension {pension_id}: {pension.current_value}")
-
-            # Create the initial contribution history entry if it doesn't exist yet
-            has_initial_entry = db.query(PensionETFContributionHistory).filter(
-                PensionETFContributionHistory.pension_etf_id == pension_id,
-                PensionETFContributionHistory.is_manual == True  # noqa: E712
-            ).first()
-            if not has_initial_entry:
-                db.add(PensionETFContributionHistory(
-                    pension_etf_id=pension_id,
-                    contribution_date=pension.reference_date,
-                    amount=pension.current_value,
-                    is_manual=True,
-                    note=f"Initial investment (price from {price.date})"
-                ))
 
         # Step 2: Realize historical contributions if the task requested it
         if task_record:

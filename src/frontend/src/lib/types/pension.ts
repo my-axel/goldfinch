@@ -73,6 +73,7 @@ export interface ETFPension {
 	is_existing_investment: boolean;
 	existing_units?: number;
 	reference_date?: string;
+	invested_amount?: number;
 	realize_historical_contributions?: boolean;
 	contribution_plan_steps: ContributionStep[];
 	status: 'ACTIVE' | 'PAUSED';

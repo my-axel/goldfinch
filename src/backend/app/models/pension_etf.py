@@ -19,6 +19,7 @@ class PensionETF(Base):
     # Investment initialization
     existing_units = Column(Numeric(20, 6), nullable=True)
     reference_date = Column(Date, nullable=True)
+    invested_amount = Column(Numeric(20, 2), nullable=True)  # Optional user-entered cost basis
 
     # Status management
     status = Column(SQLEnum(PensionStatus), nullable=False, default=PensionStatus.ACTIVE)

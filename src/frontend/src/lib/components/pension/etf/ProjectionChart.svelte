@@ -97,9 +97,18 @@
 	const retirementDateObj = $derived(retirementDate ? new Date(retirementDate) : null);
 
 	const chartData = $derived.by((): CombinedChartPoint[] => {
+		try {
 		if (!statistics) return [];
 
-		const { value_history, contribution_history } = statistics;
+		const { contribution_history } = statistics;
+
+		// Build effective value_history: use what the API returns, or fall back to a
+		// synthetic today-point from current_value so projections can still be shown
+		// even before the async price-fetch task has built full history.
+		let value_history = statistics.value_history;
+		if ((!value_history || value_history.length === 0) && statistics.current_value > 0) {
+			value_history = [{ date: today.toISOString().slice(0, 10), value: statistics.current_value }];
+		}
 		if (!value_history || value_history.length === 0) return [];
 
 		// Sort contributions by date for running accumulation
@@ -147,7 +156,16 @@
 			};
 		});
 
-		if (!retirementDateObj || retirementDateObj <= today) {
+		// Determine projection end: use retirement date if set and in future,
+		// otherwise fall back to 30 years from today when contribution steps exist.
+		const projectionEnd =
+			retirementDateObj && retirementDateObj > today
+				? retirementDateObj
+				: contributionSteps.length > 0
+					? new Date(today.getFullYear() + 30, today.getMonth(), today.getDate())
+					: null;
+
+		if (!projectionEnd) {
 			return historicalPoints;
 		}
 
@@ -165,7 +183,7 @@
 				optimistic: optimisticRate
 			},
 			startDate: projectionStart,
-			endDate: retirementDateObj,
+			endDate: projectionEnd,
 			historicalContributions: contribution_history
 		});
 
@@ -186,6 +204,9 @@
 		return [...historicalPoints, ...projectionPoints].sort(
 			(a, b) => a.date.getTime() - b.date.getTime()
 		);
+		} catch {
+			return [];
+		}
 	});
 
 	const chartColors = {
