@@ -55,47 +55,47 @@
 			</div>
 
 			<!-- Projected Capital Breakdown -->
-			<div>
-				<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-					{m.compass_gap_breakdown_projected_capital()}
-				</p>
-				<div class="space-y-2">
-					<div>
-						<p class="text-sm text-muted-foreground mb-1">{m.compass_gap_breakdown_etf()}</p>
-						<div class="grid grid-cols-3 gap-2 text-xs">
-							<div class="text-center">
-								<p class="text-muted-foreground">Pessimistic</p>
-								<p class="font-medium"><FormattedCurrency value={result.breakdown.etf_projected.pessimistic} decimals={0} /></p>
-							</div>
-							<div class="text-center">
-								<p class="text-muted-foreground">Realistic</p>
-								<p class="font-medium"><FormattedCurrency value={result.breakdown.etf_projected.realistic} decimals={0} /></p>
-							</div>
-							<div class="text-center">
-								<p class="text-muted-foreground">Optimistic</p>
-								<p class="font-medium"><FormattedCurrency value={result.breakdown.etf_projected.optimistic} decimals={0} /></p>
+				<div>
+					<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+						{m.compass_gap_breakdown_projected_capital()}
+					</p>
+					<div class="space-y-2">
+						<div>
+							<p class="text-sm text-muted-foreground mb-1">{m.compass_gap_breakdown_etf()}</p>
+							<div class="grid grid-cols-3 gap-2 text-xs">
+								<div class="text-center">
+									<p class="text-muted-foreground">{m.settings_pessimistic()}</p>
+									<p class="font-medium"><FormattedCurrency value={result.breakdown.etf_projected.pessimistic} decimals={0} /></p>
+								</div>
+								<div class="text-center">
+									<p class="text-muted-foreground">{m.settings_realistic()}</p>
+									<p class="font-medium"><FormattedCurrency value={result.breakdown.etf_projected.realistic} decimals={0} /></p>
+								</div>
+								<div class="text-center">
+									<p class="text-muted-foreground">{m.settings_optimistic()}</p>
+									<p class="font-medium"><FormattedCurrency value={result.breakdown.etf_projected.optimistic} decimals={0} /></p>
+								</div>
 							</div>
 						</div>
-					</div>
-					<div>
-						<p class="text-sm text-muted-foreground mb-1">{m.compass_gap_breakdown_savings()}</p>
-						<div class="grid grid-cols-3 gap-2 text-xs">
-							<div class="text-center">
-								<p class="text-muted-foreground">Pessimistic</p>
-								<p class="font-medium"><FormattedCurrency value={result.breakdown.savings_projected.pessimistic} decimals={0} /></p>
-							</div>
-							<div class="text-center">
-								<p class="text-muted-foreground">Realistic</p>
-								<p class="font-medium"><FormattedCurrency value={result.breakdown.savings_projected.realistic} decimals={0} /></p>
-							</div>
-							<div class="text-center">
-								<p class="text-muted-foreground">Optimistic</p>
-								<p class="font-medium"><FormattedCurrency value={result.breakdown.savings_projected.optimistic} decimals={0} /></p>
+						<div>
+							<p class="text-sm text-muted-foreground mb-1">{m.compass_gap_breakdown_savings()}</p>
+							<div class="grid grid-cols-3 gap-2 text-xs">
+								<div class="text-center">
+									<p class="text-muted-foreground">{m.settings_pessimistic()}</p>
+									<p class="font-medium"><FormattedCurrency value={result.breakdown.savings_projected.pessimistic} decimals={0} /></p>
+								</div>
+								<div class="text-center">
+									<p class="text-muted-foreground">{m.settings_realistic()}</p>
+									<p class="font-medium"><FormattedCurrency value={result.breakdown.savings_projected.realistic} decimals={0} /></p>
+								</div>
+								<div class="text-center">
+									<p class="text-muted-foreground">{m.settings_optimistic()}</p>
+									<p class="font-medium"><FormattedCurrency value={result.breakdown.savings_projected.optimistic} decimals={0} /></p>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-	{/if}
+		{/if}
 </div>

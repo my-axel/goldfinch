@@ -661,6 +661,7 @@
 	"compass_gap_uses_override": "Manuelles Rentenziel aktiv",
 	"compass_gap_pension_income": "Monatliche Renteneinkünfte",
 	"compass_gap_monthly_gap": "Monatliche Lücke",
+	"compass_gap_monthly_balance": "Monatliche Differenz",
 	"compass_gap_required_capital": "Benötigtes Kapital (heute)",
 	"compass_gap_required_capital_adjusted": "Benötigtes Kapital (bei Renteneintritt)",
 	"compass_gap_years_to_retirement": "Jahre bis zur Rente",
@@ -694,6 +695,7 @@
 	"dashboard_retirement_gap_shortfall": "Lücke",
 	"dashboard_retirement_gap_surplus": "Überschuss",
 	"dashboard_retirement_gap_range": "Bandbreite: {pessimistic} – {optimistic}",
+	"dashboard_retirement_gap_horizon": "Alle Werte beziehen sich auf den Zeitpunkt des Renteneintritts.",
 	"dashboard_retirement_gap_view_details": "Details anzeigen →",
 
 	"settings_data_sources_title": "Datenquellen",

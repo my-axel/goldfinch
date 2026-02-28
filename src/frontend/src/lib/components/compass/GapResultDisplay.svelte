@@ -8,14 +8,15 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import FormattedCurrency from '$lib/components/ui/FormattedCurrency.svelte';
 	import type { GapAnalysisResult } from '$lib/types/compass';
+	import { gapStatusFor, toGapDisplayValue } from '$lib/utils/retirement-gap';
 
 	let { result }: { result: GapAnalysisResult } = $props();
 
 	/** Color class based on gap relative to required capital */
 	function gapColorClass(gap: number): string {
-		if (gap <= 0) return 'text-green-600 dark:text-green-400';
-		const required = result.required_capital_adjusted;
-		if (required > 0 && gap <= required * 0.25) return 'text-yellow-600 dark:text-yellow-400';
+		const status = gapStatusFor(gap, result.required_capital_adjusted);
+		if (status === 'on_track') return 'text-green-600 dark:text-green-400';
+		if (status === 'needs_attention') return 'text-yellow-600 dark:text-yellow-400';
 		return 'text-red-600 dark:text-red-400';
 	}
 
@@ -23,10 +24,26 @@
 		return gap <= 0 ? m.compass_gap_surplus() : m.compass_gap_shortfall();
 	}
 
+	const monthlyGap = $derived(toGapDisplayValue(result.remaining_monthly_gap));
 	const scenarios = $derived([
-		{ label: 'Pessimistic', gap: result.gap.pessimistic, projected: result.projected_capital.pessimistic },
-		{ label: 'Realistic', gap: result.gap.realistic, projected: result.projected_capital.realistic },
-		{ label: 'Optimistic', gap: result.gap.optimistic, projected: result.projected_capital.optimistic }
+		{
+			label: m.settings_pessimistic(),
+			gap: Number(result.gap.pessimistic),
+			projected: Number(result.projected_capital.pessimistic),
+			display: toGapDisplayValue(result.gap.pessimistic)
+		},
+		{
+			label: m.settings_realistic(),
+			gap: Number(result.gap.realistic),
+			projected: Number(result.projected_capital.realistic),
+			display: toGapDisplayValue(result.gap.realistic)
+		},
+		{
+			label: m.settings_optimistic(),
+			gap: Number(result.gap.optimistic),
+			projected: Number(result.projected_capital.optimistic),
+			display: toGapDisplayValue(result.gap.optimistic)
+		}
 	]);
 </script>
 
@@ -57,10 +74,15 @@
 		</div>
 
 		<div class="space-y-0.5">
-			<p class="text-xs text-muted-foreground">{m.compass_gap_monthly_gap()}</p>
-			<p class="text-base font-semibold {result.remaining_monthly_gap <= 0 ? 'text-green-600 dark:text-green-400' : ''}">
-				<FormattedCurrency value={result.remaining_monthly_gap} decimals={0} />
-			</p>
+			<p class="text-xs text-muted-foreground">{m.compass_gap_monthly_balance()}</p>
+			{#if monthlyGap}
+				<p class="text-base font-semibold {monthlyGap.isSurplus ? 'text-green-600 dark:text-green-400' : ''}">
+					{#if monthlyGap.isSurplus}+{/if}<FormattedCurrency value={monthlyGap.absolute} decimals={0} />
+					<span class="ml-2 text-xs font-normal">
+						{monthlyGap.isSurplus ? m.compass_gap_surplus() : m.compass_gap_shortfall()}
+					</span>
+				</p>
+			{/if}
 		</div>
 
 		<div class="space-y-0.5">
@@ -90,11 +112,16 @@
 			{#each scenarios as scenario (scenario.label)}
 				<div class="rounded-lg border border-border bg-muted/30 p-3 space-y-1 text-center">
 					<p class="text-xs text-muted-foreground">{scenario.label}</p>
-					<p class="text-xs text-muted-foreground">{m.compass_gap_projected_capital()}: <FormattedCurrency value={scenario.projected} decimals={0} /></p>
-					<p class="text-sm font-bold {gapColorClass(scenario.gap)}">
-						<FormattedCurrency value={Math.abs(scenario.gap)} decimals={0} />
+					<p class="text-xs text-muted-foreground">
+						{m.compass_gap_projected_capital()}:
+						<FormattedCurrency value={scenario.projected} decimals={0} />
 					</p>
-					<p class="text-xs {gapColorClass(scenario.gap)}">{gapLabel(scenario.gap)}</p>
+					{#if scenario.display}
+						<p class="text-sm font-bold {gapColorClass(scenario.display.raw)}">
+							{#if scenario.display.isSurplus}+{/if}<FormattedCurrency value={scenario.display.absolute} decimals={0} />
+						</p>
+						<p class="text-xs {gapColorClass(scenario.display.raw)}">{gapLabel(scenario.display.raw)}</p>
+					{/if}
 				</div>
 			{/each}
 		</div>

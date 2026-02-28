@@ -8,7 +8,7 @@
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
 	import HouseholdSwitcher from '$lib/components/dashboard/HouseholdSwitcher.svelte';
-	import RetirementGapCard from '$lib/components/dashboard/RetirementGapCard.svelte';
+	import RetirementGapChartCard from '$lib/components/dashboard/RetirementGapChartCard.svelte';
 	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionStore } from '$lib/stores/pension.svelte';
@@ -294,7 +294,7 @@
 			<h2 class="text-2xl font-bold tracking-tight text-right">{m.dashboard_future_projections()}</h2>
 
 			<div class="space-y-4">
-				<RetirementGapCard />
+				<RetirementGapChartCard />
 
 				<Card title="Scenario Analysis" description="Explore possible futures">
 					<ul class="list-disc pl-4 space-y-2">

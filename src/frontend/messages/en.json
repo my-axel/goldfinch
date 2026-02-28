@@ -661,6 +661,7 @@
 	"compass_gap_uses_override": "Using manual pension target",
 	"compass_gap_pension_income": "Monthly Pension Income",
 	"compass_gap_monthly_gap": "Monthly Gap",
+	"compass_gap_monthly_balance": "Monthly Balance",
 	"compass_gap_required_capital": "Required Capital (today)",
 	"compass_gap_required_capital_adjusted": "Required Capital (at retirement)",
 	"compass_gap_years_to_retirement": "Years to Retirement",
@@ -694,6 +695,7 @@
 	"dashboard_retirement_gap_shortfall": "Shortfall",
 	"dashboard_retirement_gap_surplus": "Surplus",
 	"dashboard_retirement_gap_range": "Range: {pessimistic} – {optimistic}",
+	"dashboard_retirement_gap_horizon": "All values are shown at the retirement date.",
 	"dashboard_retirement_gap_view_details": "View details →",
 
 	"settings_data_sources_title": "Data Sources",

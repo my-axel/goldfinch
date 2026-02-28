@@ -12,6 +12,7 @@
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { themeStore } from '$lib/stores/theme.svelte';
 	import { formatCurrency } from '$lib/utils/format';
+	import { scenarioColors } from '$lib/utils/scenario-colors';
 	import type { ETFPensionStatistics, ContributionStep } from '$lib/types/pension';
 	import { calculateCombinedScenarios } from '$lib/utils/projection';
 	import { Chart } from 'svelte-echarts';
@@ -212,9 +213,7 @@
 	const chartColors = {
 		historical: 'hsl(263, 70%, 50%)',
 		contributions: 'hsl(173, 58%, 45%)',
-		optimistic: 'hsl(30, 80%, 55%)',
-		pessimistic: 'hsl(320, 65%, 60%)',
-		realistic: 'hsl(15, 75%, 55%)'
+		...scenarioColors
 	} as const;
 
 	const hasProjection = $derived(chartData.some((d) => d.realistic !== null));

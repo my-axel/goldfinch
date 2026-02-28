@@ -12,6 +12,7 @@
 	import GapBreakdown from './GapBreakdown.svelte';
 	import type { HouseholdMember } from '$lib/types/household';
 	import type { RetirementGapConfig, GapAnalysisResult } from '$lib/types/compass';
+	import { gapStatusFor } from '$lib/utils/retirement-gap';
 
 	let {
 		member,
@@ -27,7 +28,7 @@
 	// This is intentional: config/analysis are local state managed by user actions after mount.
 	let config = $state<RetirementGapConfig | null>(untrack(() => initialConfig));
 	let analysis = $state<GapAnalysisResult | null>(untrack(() => initialAnalysis));
-	let open = $state(true); // expanded by default
+	let open = $state(false); // collapsed by default
 
 	function handleSave(savedConfig: RetirementGapConfig, result: GapAnalysisResult) {
 		config = savedConfig;
@@ -42,10 +43,9 @@
 	// Derive status badge
 	const statusLabel = $derived.by(() => {
 		if (!analysis) return null;
-		const gap = analysis.gap.realistic;
-		const required = analysis.required_capital_adjusted;
-		if (gap <= 0) return { label: m.compass_gap_on_track(), cls: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' };
-		if (required > 0 && gap <= required * 0.25) return { label: m.compass_gap_needs_attention(), cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' };
+		const status = gapStatusFor(analysis.gap.realistic, analysis.required_capital_adjusted);
+		if (status === 'on_track') return { label: m.compass_gap_on_track(), cls: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' };
+		if (status === 'needs_attention') return { label: m.compass_gap_needs_attention(), cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' };
 		return { label: m.compass_gap_critical(), cls: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' };
 	});
 </script>
