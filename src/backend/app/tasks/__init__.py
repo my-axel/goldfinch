@@ -1,4 +1,5 @@
 from app.core.celery_app import celery_app
+import app.db.base  # noqa: F401 — ensures all models are registered with SQLAlchemy
 
 # Import all task modules here
 from . import etf

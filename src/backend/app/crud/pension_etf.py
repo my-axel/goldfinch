@@ -336,6 +336,86 @@ class CRUDPensionETF(CRUDBase[PensionETF, PensionETFCreate, PensionETFUpdate]):
             logger.error(f"Failed to realize historical contributions: {str(e)}")
             raise
 
+    def add_due_contributions(
+        self,
+        db: Session,
+        *,
+        pension_id: int
+    ) -> int:
+        """
+        Incrementally add newly due contribution entries for a pension.
+
+        Unlike realize_historical_contributions (which resets and rebuilds everything),
+        this method ONLY adds entries for dates that have become due since the last run.
+        It never resets total_units, so manual one-time investments are preserved.
+
+        Returns the number of new entries added.
+        """
+        pension = self.get(db=db, id=pension_id)
+        if not pension:
+            raise ValueError(f"ETF Pension {pension_id} not found")
+
+        if not pension.contribution_plan_steps:
+            return 0
+
+        today = date.today()
+        realized_dates = set(ch.contribution_date for ch in pension.contribution_history)
+        new_count = 0
+
+        try:
+            for step in pension.contribution_plan_steps:
+                if step.start_date > today:
+                    continue
+
+                dates = self._calculate_contribution_dates(
+                    start_date=step.start_date,
+                    end_date=min(step.end_date or today, today),
+                    frequency=step.frequency
+                )
+
+                for contribution_date in dates:
+                    if contribution_date in realized_dates:
+                        continue
+                    if self._should_skip_contribution(pension, contribution_date):
+                        continue
+
+                    price = etf_crud.get_price_for_date(
+                        db=db, etf_id=pension.etf_id, date=contribution_date
+                    )
+                    if not price:
+                        price = etf_crud.get_next_available_price(
+                            db=db, etf_id=pension.etf_id, after_date=contribution_date
+                        )
+                    if not price:
+                        logger.warning(f"No price for ETF {pension.etf_id} on or after {contribution_date}, skipping")
+                        continue
+
+                    units = Decimal(str(step.amount)) / Decimal(str(price.price))
+                    db.add(PensionETFContributionHistory(
+                        pension_etf_id=pension_id,
+                        contribution_date=contribution_date,
+                        amount=step.amount,
+                        is_manual=False,
+                        note=f"Using ETF price from {price.date}" if price.date != contribution_date else None
+                    ))
+                    pension.total_units += units
+                    realized_dates.add(contribution_date)
+                    new_count += 1
+
+            if new_count > 0:
+                latest_price = etf_crud.get_latest_price(db=db, etf_id=pension.etf_id)
+                if latest_price:
+                    pension.current_value = pension.total_units * latest_price.price
+                db.commit()
+                logger.info(f"Added {new_count} new contributions for pension {pension_id}")
+
+            return new_count
+
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to add due contributions for pension {pension_id}: {str(e)}")
+            raise
+
     def _calculate_contribution_dates(
         self,
         *,

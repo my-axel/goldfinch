@@ -3,7 +3,9 @@ from app.db.session import SessionLocal
 from app.crud.pension_etf import pension_etf, needs_value_calculation
 from app.crud.etf import etf_crud
 from app.models.task import TaskStatus
-from app.models.pension_etf import PensionETF
+from app.models.pension_etf import PensionETF, PensionETFContributionHistory
+from app.models.etf import ETFPrice
+from celery.exceptions import Retry
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,163 +13,154 @@ logger = logging.getLogger(__name__)
 @celery_app.task(bind=True, max_retries=20)
 def calculate_etf_pension_value(self, pension_id: int):
     """
-    Calculate the current value of an ETF pension based on existing units and reference date.
-    Will retry if price data is not available yet.
+    Unified task: ensures ETF price data is available, realizes historical
+    contributions if requested, then calculates the pension's current value.
+
+    Entry point for all scenarios: creation, startup, periodic retry.
+    Decides automatically whether a full fetch or an incremental update is needed.
     """
-    logger.info(f"Calculating value for ETF pension {pension_id}")
+    logger.info(f"Processing ETF pension {pension_id}")
     db = SessionLocal()
-    
+
     try:
-        # Get the pension record
         pension = db.query(PensionETF).filter(PensionETF.id == pension_id).first()
-        
         if not pension:
             logger.error(f"ETF pension {pension_id} not found")
             return
-            
-        # Skip if calculation not needed
-        if not needs_value_calculation(pension):
-            logger.info(f"ETF pension {pension_id} does not need value calculation")
-            return
-            
-        # Attempt to fetch price data and calculate value
-        price = etf_crud.get_price_for_date(db=db, etf_id=pension.etf_id, date=pension.reference_date)
-        
-        if not price:
-            retry_count = self.request.retries
-            
-            # Determine retry delay based on retry count
-            if retry_count < 5:
-                delay = 20  # 20 seconds
-            elif retry_count < 15:
-                delay = 60  # 1 minute
-            else:
-                delay = 300  # 5 minutes
-                
-            logger.info(f"No price data available for ETF {pension.etf_id} on {pension.reference_date}. "
-                        f"Retry {retry_count+1}/20 scheduled in {delay} seconds")
-            
-            # Schedule retry
-            raise self.retry(exc=ValueError(f"No price data available for ETF {pension.etf_id}"), countdown=delay)
-        
-        # Calculate current value
-        current_value = pension.existing_units * price.price
-        
-        # Update pension record
-        pension.current_value = current_value
+
+        # Find the associated task status for metadata and progress tracking
+        task_record = db.query(TaskStatus).filter(
+            TaskStatus.task_type == "etf_pension_processing",
+            TaskStatus.resource_id == pension_id,
+            TaskStatus.status.in_(["pending", "processing"])
+        ).order_by(TaskStatus.created_at.desc()).first()
+
+        # Step 1: If the pension has an existing investment, ensure a price is available
+        if needs_value_calculation(pension):
+            price = etf_crud.get_price_for_date(
+                db=db, etf_id=pension.etf_id, date=pension.reference_date
+            )
+
+            if not price:
+                retry_count = self.request.retries
+                delay = 20 if retry_count < 5 else (60 if retry_count < 15 else 300)
+
+                logger.info(
+                    f"No price for ETF {pension.etf_id} on {pension.reference_date}. "
+                    f"Retry {retry_count + 1}/20 in {delay}s"
+                )
+
+                # Every 5 retries trigger a fresh price fetch so we never get stuck
+                # if the original fetch task failed.
+                if retry_count % 5 == 0:
+                    any_price = db.query(ETFPrice).filter(
+                        ETFPrice.etf_id == pension.etf_id
+                    ).first()
+                    if any_price:
+                        from app.tasks.etf import update_etf_latest_prices
+                        logger.info(f"Triggering incremental price update for ETF {pension.etf_id}")
+                        update_etf_latest_prices.delay(pension.etf_id)
+                    else:
+                        from app.tasks.etf import fetch_etf_data
+                        logger.info(f"No price history found — triggering full data fetch for ETF {pension.etf_id}")
+                        fetch_etf_data.delay(pension.etf_id)
+
+                raise self.retry(
+                    exc=ValueError(f"No price data for ETF {pension.etf_id} on {pension.reference_date}"),
+                    countdown=delay
+                )
+
+            # Price available: calculate current value
+            pension.current_value = pension.existing_units * price.price
+            logger.info(f"Calculated value for pension {pension_id}: {pension.current_value}")
+
+            # Create the initial contribution history entry if it doesn't exist yet
+            has_initial_entry = db.query(PensionETFContributionHistory).filter(
+                PensionETFContributionHistory.pension_etf_id == pension_id,
+                PensionETFContributionHistory.is_manual == True  # noqa: E712
+            ).first()
+            if not has_initial_entry:
+                db.add(PensionETFContributionHistory(
+                    pension_etf_id=pension_id,
+                    contribution_date=pension.reference_date,
+                    amount=pension.current_value,
+                    is_manual=True,
+                    note=f"Initial investment (price from {price.date})"
+                ))
+
+        # Step 2: Realize historical contributions if the task requested it
+        if task_record:
+            task_record.status = "processing"
+            db.commit()
+
+            should_realize = (
+                task_record.task_metadata
+                and task_record.task_metadata.get("realize_historical_contributions")
+            )
+            if should_realize:
+                logger.info(f"Realizing historical contributions for pension {pension_id}")
+                pension_etf.realize_historical_contributions(db=db, pension_id=pension_id)
+                logger.info(f"Historical contributions realized for pension {pension_id}")
+
+        # Step 3: Mark task as complete
+        if task_record:
+            task_record.status = "completed"
         db.commit()
-        
-        logger.info(f"Successfully calculated value for ETF pension {pension_id}: {current_value}")
-        
+        logger.info(f"Successfully processed ETF pension {pension_id}")
+
     except Exception as e:
-        logger.error(f"Error calculating ETF pension value: {str(e)}")
         db.rollback()
+        if not isinstance(e, Retry):
+            logger.error(f"Error processing ETF pension {pension_id}: {str(e)}")
         raise
     finally:
         db.close()
 
+
 @celery_app.task
 def retry_pending_calculations():
-    """Retry calculations for ETF pensions with pending values"""
+    """Retry calculations for ETF pensions with pending values."""
     logger.info("Checking for ETF pensions with pending value calculations")
     db = SessionLocal()
-    
+
     try:
-        # Find all ETF pensions
-        pending_pensions = db.query(PensionETF).all()
-        pending_pensions = [p for p in pending_pensions if needs_value_calculation(p)]
-        
-        logger.info(f"Found {len(pending_pensions)} ETF pensions with pending calculations")
-        
-        for pension in pending_pensions:
-            # Schedule calculation task
-            calculate_etf_pension_value.delay(pension.id)
-            
+        pending = [p for p in db.query(PensionETF).all() if needs_value_calculation(p)]
+        logger.info(f"Found {len(pending)} ETF pensions with pending calculations")
+        for p in pending:
+            calculate_etf_pension_value.delay(p.id)
     except Exception as e:
         logger.error(f"Error retrying pending ETF pension calculations: {str(e)}")
     finally:
         db.close()
 
-@celery_app.task(bind=True, max_retries=3)
-def process_new_etf_pension(self, pension_id: int) -> None:
+
+@celery_app.task
+def add_all_due_contributions() -> None:
     """
-    Celery task to process a newly created ETF pension.
-    This includes:
-    1. Fetching historical ETF prices
-    2. Realizing historical contributions if requested
+    Daily task: incrementally adds newly due contribution entries for all active pensions.
+
+    Runs after ETF prices are updated (20:00 UTC) so that prices are available
+    for contribution dates. Uses add_due_contributions which is safe for repeated
+    execution — it never resets total_units, preserving manual one-time investments.
     """
-    logger.info(f"Starting processing of new ETF pension {pension_id}")
+    logger.info("Starting daily contribution realization")
     db = SessionLocal()
-    task = None
     try:
-        # Get the original task to get its metadata
-        original_task = db.query(TaskStatus).filter(
-            TaskStatus.task_type == "etf_pension_processing",
-            TaskStatus.resource_id == pension_id,
-            TaskStatus.status == "pending"
-        ).first()
-
-        if not original_task:
-            logger.error(f"No pending task found for pension {pension_id}")
-            return
-
-        logger.info(f"Found original task with metadata: {original_task.task_metadata}")
-
-        # Create processing task status with metadata from original task
-        task = TaskStatus(
-            task_type="etf_pension_processing",
-            status="processing",
-            resource_id=pension_id,
-            task_metadata=original_task.task_metadata
+        pensions = (
+            db.query(PensionETF)
+            .join(PensionETF.contribution_plan_steps)
+            .distinct()
+            .all()
         )
-        db.add(task)
-        db.commit()
-        db.refresh(task)
-        logger.info(f"Created processing task status for pension {pension_id}")
-
-        # Get the pension
-        pension = pension_etf.get(db=db, id=pension_id)
-        if not pension:
-            raise ValueError(f"ETF Pension {pension_id} not found")
-
-        # Get the ETF
-        etf = etf_crud.get(db=db, id=pension.etf_id)
-        if not etf:
-            raise ValueError(f"ETF {pension.etf_id} not found")
-
-        # Update only the latest prices - no need for full history refresh
-        logger.info(f"Updating latest prices for ETF {etf.id}")
-        etf_crud.update_latest_prices(db=db, etf_id=etf.id)
-        logger.info(f"Successfully updated prices for ETF {etf.id}")
-
-        # Check if we should realize historical contributions
-        should_realize = task.task_metadata and task.task_metadata.get("realize_historical_contributions")
-        logger.info(f"Should realize historical contributions: {should_realize}")
-
-        if should_realize:
-            logger.info(f"Starting to realize historical contributions for pension {pension_id}")
-            pension_etf.realize_historical_contributions(db=db, pension_id=pension_id)
-            logger.info(f"Successfully realized historical contributions for pension {pension_id}")
-
-        # Update task status to completed
-        task.status = "completed"
-        db.commit()
-        logger.info(f"Successfully completed processing of ETF pension {pension_id}")
-
-    except Exception as exc:
-        db.rollback()
-        error_msg = str(exc)
-        logger.error(f"Failed to process ETF pension {pension_id}: {error_msg}")
-        
-        # Update task status to failed
-        if task:
-            task.status = "failed"
-            task.error = error_msg
-            db.add(task)
-            db.commit()
-            logger.info(f"Updated task status to failed for pension {pension_id}")
-        
-        # Retry the task with exponential backoff
-        self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
+        logger.info(f"Checking {len(pensions)} pensions with contribution plans")
+        total_new = 0
+        for p in pensions:
+            try:
+                total_new += pension_etf.add_due_contributions(db=db, pension_id=p.id)
+            except Exception as e:
+                logger.error(f"Failed to add contributions for pension {p.id}: {str(e)}")
+        logger.info(f"Daily contribution realization done — {total_new} new entries added")
+    except Exception as e:
+        logger.error(f"Failed to run daily contribution realization: {str(e)}")
     finally:
-        db.close() 
+        db.close()

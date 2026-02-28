@@ -474,15 +474,18 @@ def update_etf_data(db: Session, etf_id: str) -> None:
         
         logger.info(f"Processing {total_chunks} chunks of {chunk_size} prices each")
         
-        for chunk_start in range(0, len(hist), chunk_size):
+        for chunk_num, chunk_start in enumerate(range(0, len(hist), chunk_size), 1):
             chunk_end = min(chunk_start + chunk_size, len(hist))
             hist_chunk = hist.iloc[chunk_start:chunk_end]
-            
+            chunk_start_date = hist_chunk.index[0].date() if not hist_chunk.empty else "?"
+            chunk_end_date = hist_chunk.index[-1].date() if not hist_chunk.empty else "?"
+            logger.info(f"Processing chunk {chunk_num}/{total_chunks}: {chunk_start_date} → {chunk_end_date} ({len(hist_chunk)} prices)")
+
             try:
                 process_price_chunk(db, etf_id, hist_chunk, currency, missing_dates)
                 db.commit()
             except Exception as e:
-                logger.error(f"Failed to process chunk {chunk_start}-{chunk_end}: {str(e)}")
+                logger.error(f"Failed to process chunk {chunk_num}/{total_chunks} ({chunk_start_date} → {chunk_end_date}): {str(e)}")
                 db.rollback()
                 for date_idx in hist_chunk.index:
                     missing_dates.append(date_idx.date())

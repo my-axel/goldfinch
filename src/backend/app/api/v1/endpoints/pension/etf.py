@@ -8,7 +8,7 @@ from app.crud.settings import settings
 from app import schemas
 from app.schemas.pension_etf import ETFPensionListSchema
 from app.schemas.task import TaskStatusResponse
-from app.tasks.etf_pension import process_new_etf_pension, calculate_etf_pension_value
+from app.tasks.etf_pension import calculate_etf_pension_value
 from app.models.task import TaskStatus
 from app.models.pension_etf import PensionETF
 from app.services.pension_historical_series import PensionHistoricalSeriesService
@@ -41,60 +41,26 @@ def create_etf_pension(
 ) -> schemas.pension_etf.PensionETFResponse:
     """Create a new ETF pension."""
     logger.info(f"Creating ETF pension with realize_historical_contributions={pension_in.realize_historical_contributions}")
-    
-    # Get or create the ETF with minimal data
-    etf = etf_crud.get_or_create(db=db, id=pension_in.etf_id)
-    
-    try:
-        # Attempt to create pension normally
-        pension = pension_etf.create(db=db, obj_in=pension_in)
-        logger.info(f"Created pension with ID {pension.id}")
-        
-        # Create initial task status
-        task_metadata = {"realize_historical_contributions": pension_in.realize_historical_contributions}
-        task = TaskStatus(
-            task_type="etf_pension_processing",
-            status="pending",
-            resource_id=pension.id,
-            task_metadata=task_metadata
-        )
-        db.add(task)
-        db.commit()
-        logger.info(f"Created task with metadata: {task_metadata}")
-        
-        # Queue the Celery task
-        process_new_etf_pension.delay(pension.id)
-        
-        return pension
-    except ValueError as e:
-        error_msg = str(e)
-        if "No price data available for ETF" in error_msg and pension_in.existing_units and pension_in.existing_units > 0:
-            logger.info(f"Creating ETF pension with pending value calculation: {error_msg}")
-            
-            # Create pension with current_value = 0
-            pension = pension_etf.create_with_zero_value(db=db, obj_in=pension_in)
-            
-            # Create initial task status
-            task_metadata = {"realize_historical_contributions": pension_in.realize_historical_contributions}
-            task = TaskStatus(
-                task_type="etf_pension_processing",
-                status="pending",
-                resource_id=pension.id,
-                task_metadata=task_metadata
-            )
-            db.add(task)
-            db.commit()
-            
-            # Schedule calculation task
-            calculate_etf_pension_value.delay(pension.id)
-            
-            # Also queue the normal processing task
-            process_new_etf_pension.delay(pension.id)
-            
-            return pension
-        else:
-            # Re-raise other errors
-            raise
+
+    # Ensure the ETF record exists (creates with minimal metadata if new)
+    etf_crud.get_or_create(db=db, id=pension_in.etf_id)
+
+    # Always create with zero value — calculate_etf_pension_value handles everything async
+    pension = pension_etf.create_with_zero_value(db=db, obj_in=pension_in)
+    logger.info(f"Created pension with ID {pension.id}")
+
+    task = TaskStatus(
+        task_type="etf_pension_processing",
+        status="pending",
+        resource_id=pension.id,
+        task_metadata={"realize_historical_contributions": pension_in.realize_historical_contributions}
+    )
+    db.add(task)
+    db.commit()
+
+    calculate_etf_pension_value.delay(pension.id)
+
+    return pension
 
 @router.get("/{pension_id}", response_model=schemas.pension_etf.PensionETFResponse)
 def get_etf_pension(

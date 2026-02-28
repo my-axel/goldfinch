@@ -363,15 +363,15 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
         update_etf_latest_prices.delay(etf_id)
 
     def get_or_create(self, db: Session, *, id: str) -> ETF:
-        """Get an ETF by ID, or create it with minimal data if it doesn't exist."""
+        """Get an ETF by ID, or create it with minimal metadata if it doesn't exist.
+        Price fetching is handled by calculate_etf_pension_value."""
         etf = super().get(db, id)
         if not etf:
             # Try to get basic info from YFinance without historical data
             try:
                 ticker = yf.Ticker(id)
                 info = ticker.fast_info
-                
-                # Create ETF with minimal data
+
                 etf = self.create(db, obj_in=ETFCreate(
                     id=id,
                     symbol=id,
@@ -380,8 +380,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                     is_active=True
                 ))
             except Exception as e:
-                logger.error(f"Error getting YFinance data: {e}")
-                # If YFinance fails, create with minimal data
+                logger.error(f"Error getting YFinance data for {id}: {e}")
                 etf = self.create(db, obj_in=ETFCreate(
                     id=id,
                     symbol=id,
@@ -389,15 +388,7 @@ class CRUDETF(CRUDBase[ETF, ETFCreate, ETFUpdate]):
                     currency='EUR',
                     is_active=True
                 ))
-            
-            # Import here to avoid circular dependency
-            from app.tasks.etf import fetch_etf_data
-            # Queue full data fetch for new ETF
-            fetch_etf_data.delay(id)
-        else:
-            # For existing ETFs, just update latest prices
-            self.update_latest_prices(db, id)
-        
+
         return etf
 
     def get_prices_between_dates(self, db: Session, etf_id: str, start_date: date, end_date: date) -> List[ETFPrice]:

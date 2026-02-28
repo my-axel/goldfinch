@@ -2,12 +2,13 @@ from app.core.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.services import etf_service
 from app.crud.etf_update import etf_update
-from app.models.etf import ETFUpdate
+from app.models.etf import ETF, ETFPrice, ETFUpdate
 from datetime import date, timedelta
 import logging
 from celery.exceptions import MaxRetriesExceededError
 from celery.utils.log import get_task_logger
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 
 logger = get_task_logger(__name__)
 
@@ -17,7 +18,7 @@ def handle_task_error(task, exc, etf_id: str, task_type: str):
         # Test database connection
         try:
             db = SessionLocal()
-            db.execute("SELECT 1")
+            db.execute(text("SELECT 1"))
             logger.info(f"Database connection test successful for {task_type} task")
         except Exception as db_exc:
             logger.error(f"Database connection test failed: {str(db_exc)}")
@@ -125,6 +126,43 @@ def refresh_etf_prices(self, etf_id: str) -> None:
         handle_task_error(self, exc, etf_id, "price refresh")
     finally:
         db.close()
+
+@celery_app.task
+def update_all_etf_prices() -> None:
+    """
+    Daily task to update prices for all active ETFs.
+    Uses DailyUpdateTracking to skip ETFs that were already updated today,
+    and to skip weekends when markets are closed and data is still fresh.
+    Mirrors how exchange rates are updated at 16:30 UTC.
+    """
+    from app.crud.update_tracking import update_tracking
+    logger.info("Starting daily ETF price update")
+    db = SessionLocal()
+    try:
+        etfs = db.query(ETF).filter(ETF.is_active == True).all()  # noqa: E712
+        logger.info(f"Checking prices for {len(etfs)} active ETFs")
+        triggered = 0
+        for etf in etfs:
+            tracking_key = f"etf_prices_{etf.id}"
+            latest_price = (
+                db.query(ETFPrice)
+                .filter(ETFPrice.etf_id == etf.id)
+                .order_by(ETFPrice.date.desc())
+                .first()
+            )
+            latest_date = latest_price.date if latest_price else None
+            if update_tracking.should_attempt_update(db, tracking_key, latest_date):
+                update_etf_latest_prices.delay(etf.id)
+                tracking = update_tracking.get_or_create_tracking(db, date.today(), tracking_key)
+                update_tracking.mark_update_attempted(db, tracking, data_found=latest_date is not None)
+                triggered += 1
+        logger.info(f"Triggered price updates for {triggered}/{len(etfs)} ETFs")
+    except Exception as exc:
+        logger.error(f"Failed to run daily ETF price update: {str(exc)}")
+        raise
+    finally:
+        db.close()
+
 
 @celery_app.task
 def cleanup_old_updates() -> None:

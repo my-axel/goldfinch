@@ -60,6 +60,14 @@ celery_app.conf.beat_schedule = {
         'schedule': crontab(hour=16, minute=30),  # 16:30 UTC (after ECB update)
         'args': ('daily',)
     },
+    'update-daily-etf-prices': {
+        'task': 'app.tasks.etf.update_all_etf_prices',
+        'schedule': crontab(hour=20, minute=0),  # 20:00 UTC, after EU markets + exchange rates
+    },
+    'add-daily-contributions': {
+        'task': 'app.tasks.etf_pension.add_all_due_contributions',
+        'schedule': crontab(hour=21, minute=0),  # 21:00 UTC, after ETF prices are updated
+    },
     'cleanup-old-updates': {
         'task': 'app.tasks.exchange_rates.cleanup_old_updates',
         'schedule': crontab(hour=0, minute=0),  # Daily at midnight UTC
