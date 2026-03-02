@@ -7,7 +7,7 @@
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
-	import GapHouseholdSummary from '$lib/components/compass/GapHouseholdSummary.svelte';
+	import GapOverviewPanel from '$lib/components/compass/GapOverviewPanel.svelte';
 	import GapMemberSection from '$lib/components/compass/GapMemberSection.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -28,11 +28,11 @@
 	{#if data.members.length === 0}
 		<p class="text-muted-foreground text-sm">{m.compass_gap_no_members()}</p>
 	{:else}
-		<!-- Household Summary (only shown when at least one member has analysis) -->
-		<GapHouseholdSummary analyses={data.analyses} />
+		<!-- Household Overview (only shown when at least one member has analysis) -->
+		<GapOverviewPanel analyses={data.analyses} members={data.members} />
 
-		<!-- Per-member sections -->
-		<div class="space-y-4">
+		<!-- Per-member sections — accordion container -->
+		<div class="rounded-xl border border-border divide-y divide-border overflow-hidden">
 			{#each data.members as member, i (member.id)}
 				<GapMemberSection
 					{member}

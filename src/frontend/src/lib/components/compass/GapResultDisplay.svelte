@@ -89,20 +89,6 @@
 			<p class="text-xs text-muted-foreground">{m.compass_gap_years_to_retirement()}</p>
 			<p class="text-base font-semibold">{Math.max(0, Math.round(result.years_to_retirement))} yrs</p>
 		</div>
-
-		<div class="space-y-0.5">
-			<p class="text-xs text-muted-foreground">{m.compass_gap_required_capital()}</p>
-			<p class="text-base font-semibold">
-				<FormattedCurrency value={result.required_capital} decimals={0} />
-			</p>
-		</div>
-
-		<div class="space-y-0.5">
-			<p class="text-xs text-muted-foreground">{m.compass_gap_required_capital_adjusted()}</p>
-			<p class="text-base font-semibold">
-				<FormattedCurrency value={result.required_capital_adjusted} decimals={0} />
-			</p>
-		</div>
 	</div>
 
 	<!-- Scenario Results -->
@@ -125,5 +111,11 @@
 				</div>
 			{/each}
 		</div>
+		<p class="text-xs text-muted-foreground mt-3">
+			{m.compass_gap_required_capital_adjusted()}:
+			<span class="font-medium text-foreground">
+				<FormattedCurrency value={result.required_capital_adjusted} decimals={0} />
+			</span>
+		</p>
 	</div>
 </div>

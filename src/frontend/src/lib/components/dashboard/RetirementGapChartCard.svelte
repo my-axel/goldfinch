@@ -37,7 +37,6 @@
 		axisOptimistic: number;
 		rangeMin: number;
 		rangeMax: number;
-		realisticLabelPct: number;
 	};
 
 	let summary = $state<GapCardSummary | null>(null);
@@ -154,187 +153,132 @@
 			1
 		);
 
-		const toPercent = (value: number, padding = 12): number => {
-			const raw = ((value + maxAbs) / (maxAbs * 2)) * 100;
-			return Math.min(100 - padding, Math.max(padding, raw));
-		};
-
 		return {
 			maxAbs,
 			axisPessimistic,
 			axisRealistic,
 			axisOptimistic,
 			rangeMin: Math.min(axisPessimistic, axisOptimistic),
-			rangeMax: Math.max(axisPessimistic, axisOptimistic),
-			realisticLabelPct: toPercent(axisRealistic, 18)
+			rangeMax: Math.max(axisPessimistic, axisOptimistic)
 		};
+	});
+
+	// CSS left-position for the realistic label (18% padding keeps it within card bounds).
+	const realisticLabelPct = $derived.by((): number => {
+		if (!scale) return 50;
+		const raw = ((scale.axisRealistic + scale.maxAbs) / (scale.maxAbs * 2)) * 100;
+		return Math.min(82, Math.max(18, raw));
 	});
 
 	function gapTooltipData(label: string, gapValue: number) {
 		const display = toGapDisplayValue(gapValue);
-		if (!display) {
-			return {
-				label,
-				signedAmount: label,
-				meaning: ''
-			};
-		}
+		if (!display) return null;
 		const formatted = formatCurrency(
 			display.absolute,
 			settingsStore.current.number_locale,
 			settingsStore.current.currency,
 			0
 		);
-		const signed = display.isSurplus ? `+${formatted}` : formatted;
-		const meaning = display.isSurplus
-			? m.dashboard_retirement_gap_surplus()
-			: m.dashboard_retirement_gap_shortfall();
 		return {
 			label,
-			signedAmount: signed,
-			meaning,
+			signedAmount: display.isSurplus ? `+${formatted}` : formatted,
+			meaning: display.isSurplus
+				? m.dashboard_retirement_gap_surplus()
+				: m.dashboard_retirement_gap_shortfall(),
 			isSurplus: display.isSurplus
 		};
 	}
 
-	const chartOptions = $derived.by(() => {
-		if (!summary || !scale) return {};
+	// Align chart geometry with the HTML baseline bar at top 16px (center ~20px in a 54px chart box).
+	const CHART_Y = 0.68;
 
-		// Align chart geometry with the HTML baseline bar at top 16px (center ~20px in a 54px chart box).
-		const y = 0.68;
-		const theme = chartTheme;
-		const pointData = [
-			{
-				name: m.settings_pessimistic(),
-				value: [scale.axisPessimistic, y],
-				rawGap: summary.pessimistic,
-				color: scenarioColors.pessimistic,
-				size: 14
-			},
-			{
-				name: m.settings_realistic(),
-				value: [scale.axisRealistic, y],
-				rawGap: summary.realistic,
-				color: scenarioColors.realistic,
-				size: 18
-			},
-			{
-				name: m.settings_optimistic(),
-				value: [scale.axisOptimistic, y],
-				rawGap: summary.optimistic,
-				color: scenarioColors.optimistic,
-				size: 14
-			}
+	const pointData = $derived.by(() => {
+		if (!summary || !scale) return [];
+		return [
+			{ name: m.settings_pessimistic(), value: [scale.axisPessimistic, CHART_Y], rawGap: summary.pessimistic, color: scenarioColors.pessimistic, size: 14 },
+			{ name: m.settings_realistic(),   value: [scale.axisRealistic,   CHART_Y], rawGap: summary.realistic,   color: scenarioColors.realistic,   size: 18 },
+			{ name: m.settings_optimistic(),  value: [scale.axisOptimistic,  CHART_Y], rawGap: summary.optimistic,  color: scenarioColors.optimistic,  size: 14 }
 		];
+	});
 
+	function renderTickItem(_params: any, api: any) {
+		const x = api.coord([0, CHART_Y])[0];
+		return {
+			type: 'line',
+			shape: { x1: x, y1: api.coord([0, CHART_Y + 0.14])[1], x2: x, y2: api.coord([0, CHART_Y - 0.14])[1] },
+			style: { stroke: chartTheme.tick, lineWidth: 1.5 }
+		};
+	}
+
+	function renderRangeItem(_params: any, api: any) {
+		const yTop = api.coord([0, CHART_Y + 0.045])[1];
+		const yBottom = api.coord([0, CHART_Y - 0.045])[1];
+		const xStart = api.coord([api.value(0), CHART_Y])[0];
+		const xEnd = api.coord([api.value(1), CHART_Y])[0];
+		return {
+			type: 'rect',
+			shape: {
+				x: Math.min(xStart, xEnd),
+				y: Math.min(yTop, yBottom),
+				width: Math.max(2, Math.abs(xEnd - xStart)),
+				height: Math.abs(yBottom - yTop),
+				r: 4
+			},
+			style: { fill: chartTheme.rangeFill, stroke: chartTheme.rangeStroke, lineWidth: 4 }
+		};
+	}
+
+	const chartOptions = $derived.by(() => {
+		if (!scale) return {};
+		const theme = chartTheme;
 		return {
 			animationDuration: 300,
 			grid: { left: 6, right: 6, top: 8, bottom: 8 },
-			xAxis: {
-				type: 'value' as const,
-				min: -scale.maxAbs,
-				max: scale.maxAbs,
-				show: false
-			},
-			yAxis: {
-				type: 'value' as const,
-				min: 0,
-				max: 1,
-				show: false
-			},
-				tooltip: {
-					trigger: 'item' as const,
-					backgroundColor: theme.tooltipBg,
-					borderColor: theme.tooltipBorder,
-					borderWidth: 1,
-					textStyle: { color: theme.tooltipText },
-					padding: [10, 12],
-					formatter: (params: any) => {
-						const data = params?.data;
-						if (!data) return '';
-						const model = gapTooltipData(data.name, Number(data.rawGap));
-						const valueColor = model.isSurplus ? 'hsl(142 71% 45%)' : 'hsl(0 72% 51%)';
-						return `
-							<div style="min-width: 170px">
-								<div style="display:flex;align-items:center;gap:8px;font-size:12px;line-height:1.2;">
-									<span style="display:inline-block;width:8px;height:8px;border-radius:9999px;background:${data.color};"></span>
-									<span style="font-weight:600;">${model.label}</span>
-								</div>
-								<div style="margin-top:8px;font-size:24px;line-height:1.05;font-weight:700;color:${valueColor};">
-									${model.signedAmount}
-								</div>
-								<div style="margin-top:4px;font-size:12px;opacity:0.9;">
-									${model.meaning}
-								</div>
+			xAxis: { type: 'value' as const, min: -scale.maxAbs, max: scale.maxAbs, show: false },
+			yAxis: { type: 'value' as const, min: 0, max: 1, show: false },
+			tooltip: {
+				trigger: 'item' as const,
+				backgroundColor: theme.tooltipBg,
+				borderColor: theme.tooltipBorder,
+				borderWidth: 1,
+				textStyle: { color: theme.tooltipText },
+				padding: [10, 12],
+				formatter: (params: any) => {
+					const data = params?.data;
+					if (!data) return '';
+					const model = gapTooltipData(data.name, Number(data.rawGap));
+					if (!model) return '';
+					const valueColor = model.isSurplus ? 'hsl(142 71% 45%)' : 'hsl(0 72% 51%)';
+					return `
+						<div style="min-width: 170px">
+							<div style="display:flex;align-items:center;gap:8px;font-size:12px;line-height:1.2;">
+								<span style="display:inline-block;width:8px;height:8px;border-radius:9999px;background:${data.color};"></span>
+								<span style="font-weight:600;">${model.label}</span>
 							</div>
-						`;
-					}
-				},
+							<div style="margin-top:8px;font-size:24px;line-height:1.05;font-weight:700;color:${valueColor};">
+								${model.signedAmount}
+							</div>
+							<div style="margin-top:4px;font-size:12px;opacity:0.9;">
+								${model.meaning}
+							</div>
+						</div>
+					`;
+				}
+			},
 			series: [
-				{
-					type: 'custom',
-					silent: true,
-					z: 2,
-					data: [0],
-					renderItem: (params: any, api: any) => {
-						const x = api.coord([0, y])[0];
-						const yTop = api.coord([0, y + 0.14])[1];
-						const yBottom = api.coord([0, y - 0.14])[1];
-						return {
-							type: 'line',
-							shape: {
-								x1: x,
-								y1: yTop,
-								x2: x,
-								y2: yBottom
-							},
-							style: {
-								stroke: theme.tick,
-								lineWidth: 1.5
-							}
-						};
-					}
-				},
-				{
-					type: 'custom',
-					silent: true,
-					z: 1,
-					data: [[scale.rangeMin, scale.rangeMax]],
-					renderItem: (params: any, api: any) => {
-						const yTop = api.coord([0, y + 0.045])[1];
-						const yBottom = api.coord([0, y - 0.045])[1];
-						const xStart = api.coord([api.value(0), y])[0];
-						const xEnd = api.coord([api.value(1), y])[0];
-						return {
-							type: 'rect',
-							shape: {
-								x: Math.min(xStart, xEnd),
-								y: Math.min(yTop, yBottom),
-								width: Math.max(2, Math.abs(xEnd - xStart)),
-								height: Math.abs(yBottom - yTop),
-								r: 4
-							},
-							style: {
-								fill: theme.rangeFill,
-								stroke: theme.rangeStroke,
-								lineWidth: 4
-							}
-						};
-					}
-				},
+				{ type: 'custom', silent: true, z: 2, data: [0], renderItem: renderTickItem },
+				{ type: 'custom', silent: true, z: 1, data: [[scale.rangeMin, scale.rangeMax]], renderItem: renderRangeItem },
 				{
 					type: 'scatter',
 					z: 3,
 					data: pointData,
-					symbolSize: (value: any, params: any) => params?.data?.size ?? 9,
+					symbolSize: (_value: any, params: any) => params?.data?.size ?? 9,
 					itemStyle: {
 						color: (params: any) => params?.data?.color,
 						borderColor: isDark ? 'hsl(0, 0%, 11%)' : 'hsl(0, 0%, 100%)',
 						borderWidth: 2
 					},
-					emphasis: {
-						scale: 1.1
-					}
+					emphasis: { scale: 1.1 }
 				}
 			]
 		};
@@ -366,7 +310,7 @@
 
 				<div
 					class="absolute top-[34px] -translate-x-1/2 text-center"
-					style="left: {scale.realisticLabelPct}%"
+					style="left: {realisticLabelPct}%"
 				>
 					<p class="text-xs text-muted-foreground">{m.settings_realistic()}</p>
 					<p class="text-xl font-semibold {gapColorClass}">
