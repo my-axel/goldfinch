@@ -55,7 +55,7 @@ export function normalizeGapAnalysis(
 	const realistic = toFiniteNumber((analysis as { gap?: { realistic?: unknown } }).gap?.realistic);
 	const optimistic = toFiniteNumber((analysis as { gap?: { optimistic?: unknown } }).gap?.optimistic);
 	const requiredCapitalAdjusted = toFiniteNumber(
-		(analysis as { required_capital_adjusted?: unknown }).required_capital_adjusted
+		(analysis as { required_capital_adjusted?: { realistic?: unknown } }).required_capital_adjusted?.realistic
 	);
 
 	if (

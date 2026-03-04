@@ -657,7 +657,8 @@
 	"compass_gap_setup_description": "Enter your income details to calculate your personal retirement gap.",
 	"compass_gap_no_config": "No configuration yet.",
 	"compass_gap_no_config_cta": "Enter your income details above to see your retirement gap.",
-	"compass_gap_needed_monthly": "Required Monthly Income",
+	"compass_gap_needed_monthly": "Required Monthly Income at Retirement",
+	"compass_gap_needed_monthly_today": "today",
 	"compass_gap_uses_override": "Using manual pension target",
 	"compass_gap_pension_income": "Monthly Pension Income",
 	"compass_gap_monthly_gap": "Monthly Gap",
@@ -712,6 +713,13 @@
 	"dashboard_retirement_gap_range": "Range: {pessimistic} – {optimistic}",
 	"dashboard_retirement_gap_horizon": "All values are shown at the retirement date.",
 	"dashboard_retirement_gap_view_details": "View details →",
+
+	"dashboard_scenario_projection_title": "Scenario Projection",
+	"dashboard_scenario_projection_description": "Projected portfolio value across three scenarios",
+	"dashboard_scenario_projection_no_data": "No projection data yet",
+	"dashboard_scenario_projection_historical": "Historical Value",
+	"dashboard_scenario_projection_today": "Today",
+	"dashboard_scenario_projection_retirement_label": "Retirement {name}",
 
 	"settings_data_sources_title": "Data Sources",
 	"settings_data_sources_description": "Manage sources for price and ETF data. The order determines which source takes priority when prices conflict.",

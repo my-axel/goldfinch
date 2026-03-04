@@ -38,10 +38,23 @@
 				<p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
 					{m.compass_gap_breakdown_monthly_income()}
 				</p>
-				<div class="space-y-1.5">
-					<div class="flex justify-between text-sm">
-						<span class="text-muted-foreground">{m.compass_gap_breakdown_state()}</span>
-						<span class="font-medium"><FormattedCurrency value={result.breakdown.state_monthly} decimals={0} /></span>
+				<div class="space-y-3">
+					<div>
+						<p class="text-sm text-muted-foreground mb-1">{m.compass_gap_breakdown_state()}</p>
+						<div class="grid grid-cols-3 gap-2 text-xs">
+							<div class="text-center">
+								<p class="text-muted-foreground">{m.settings_pessimistic()}</p>
+								<p class="font-medium"><FormattedCurrency value={result.breakdown.state_monthly.pessimistic} decimals={0} /></p>
+							</div>
+							<div class="text-center">
+								<p class="text-muted-foreground">{m.settings_realistic()}</p>
+								<p class="font-medium"><FormattedCurrency value={result.breakdown.state_monthly.realistic} decimals={0} /></p>
+							</div>
+							<div class="text-center">
+								<p class="text-muted-foreground">{m.settings_optimistic()}</p>
+								<p class="font-medium"><FormattedCurrency value={result.breakdown.state_monthly.optimistic} decimals={0} /></p>
+							</div>
+						</div>
 					</div>
 					<div class="flex justify-between text-sm">
 						<span class="text-muted-foreground">{m.compass_gap_breakdown_company()}</span>

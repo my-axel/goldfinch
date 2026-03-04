@@ -36,7 +36,7 @@ export interface GapScenarios {
 }
 
 export interface GapBreakdown {
-	state_monthly: number;
+	state_monthly: GapScenarios;
 	company_monthly: number;
 	insurance_monthly: number;
 	etf_projected: GapScenarios;
@@ -46,12 +46,13 @@ export interface GapBreakdown {
 export interface GapAnalysisResult {
 	member_id: number;
 	needed_monthly: number;
+	needed_monthly_at_retirement: number;
 	uses_override: boolean;
-	monthly_pension_income: number;
-	remaining_monthly_gap: number;
-	required_capital: number;
+	monthly_pension_income: GapScenarios;
+	remaining_monthly_gap: GapScenarios;
+	required_capital: GapScenarios;
 	years_to_retirement: number;
-	required_capital_adjusted: number;
+	required_capital_adjusted: GapScenarios;
 	projected_capital: GapScenarios;
 	gap: GapScenarios;
 	breakdown: GapBreakdown;

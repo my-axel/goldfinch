@@ -135,7 +135,7 @@ def update_all_etf_prices() -> None:
     and to skip weekends when markets are closed and data is still fresh.
     Mirrors how exchange rates are updated at 16:30 UTC.
     """
-    from app.crud.update_tracking import update_tracking
+    from app.crud import update_tracking
     logger.info("Starting daily ETF price update")
     db = SessionLocal()
     try:

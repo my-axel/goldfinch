@@ -38,7 +38,7 @@ class GapScenarios(BaseModel):
 
 
 class GapBreakdown(BaseModel):
-    state_monthly: Decimal
+    state_monthly: GapScenarios
     company_monthly: Decimal
     insurance_monthly: Decimal
     etf_projected: GapScenarios
@@ -48,12 +48,13 @@ class GapBreakdown(BaseModel):
 class GapAnalysisResult(BaseModel):
     member_id: int
     needed_monthly: Decimal
+    needed_monthly_at_retirement: Decimal
     uses_override: bool
-    monthly_pension_income: Decimal
-    remaining_monthly_gap: Decimal
-    required_capital: Decimal
+    monthly_pension_income: GapScenarios
+    remaining_monthly_gap: GapScenarios
+    required_capital: GapScenarios
     years_to_retirement: float
-    required_capital_adjusted: Decimal
+    required_capital_adjusted: GapScenarios
     projected_capital: GapScenarios
     gap: GapScenarios
     breakdown: GapBreakdown

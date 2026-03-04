@@ -46,7 +46,7 @@
 
 	const statusLabel = $derived.by(() => {
 		if (!analysis) return null;
-		const status = gapStatusFor(analysis.gap.realistic, analysis.required_capital_adjusted);
+		const status = gapStatusFor(analysis.gap.realistic, analysis.required_capital_adjusted.realistic);
 		if (status === 'on_track')
 			return {
 				label: m.compass_gap_on_track(),
@@ -141,7 +141,7 @@
 								<div class="flex justify-between">
 									<span>{m.compass_gap_breakdown_state()}</span>
 									<span class="font-medium text-foreground">
-										<FormattedCurrency value={analysis.breakdown.state_monthly} decimals={0} />
+										<FormattedCurrency value={analysis.breakdown.state_monthly.realistic} decimals={0} />
 									</span>
 								</div>
 								<div class="flex justify-between">
@@ -163,7 +163,7 @@
 						<Explanation title={m.compass_explanation_capital_note_title()}>
 							<p>{m.compass_explanation_capital_note_text()}</p>
 							<p class="font-medium text-foreground mt-1">
-								<FormattedCurrency value={analysis.required_capital_adjusted} decimals={0} />
+								<FormattedCurrency value={analysis.required_capital_adjusted.realistic} decimals={0} />
 							</p>
 						</Explanation>
 					{/snippet}

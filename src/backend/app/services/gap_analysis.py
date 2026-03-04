@@ -27,6 +27,7 @@ from app.crud.settings import settings as settings_crud
 from app.models.enums import PensionStatus
 from app.schemas.retirement_gap import GapAnalysisResult, GapBreakdown, GapScenarios
 from app.services.pension_series_projection import PensionSeriesProjectionService
+from app.services.pension_state_projection import PensionStateProjectionService
 
 
 class GapAnalysisService:
@@ -67,27 +68,53 @@ class GapAnalysisService:
             needed_monthly = Decimal(str(config.net_monthly_income)) * Decimal(str(config.replacement_rate))
             uses_override = False
 
-        # --- Step 2: Monthly pension income from ACTIVE plans ---
-        state_monthly = self._state_monthly(db, member_id)
-        company_monthly = self._company_monthly(db, member_id, member.retirement_age_planned)
-        insurance_monthly = self._insurance_monthly(db, member_id)
-        monthly_pension_income = state_monthly + company_monthly + insurance_monthly
-
-        # --- Step 3: Remaining monthly gap ---
-        remaining_monthly_gap = needed_monthly - monthly_pension_income
-
-        # --- Step 4: Required capital via SWR, inflation-adjusted ---
-        withdrawal_rate = Decimal(str(config.withdrawal_rate))
-        if remaining_monthly_gap > Decimal("0"):
-            required_capital = (remaining_monthly_gap * Decimal("12")) / withdrawal_rate
-        else:
-            required_capital = Decimal("0")
-
+        # Inflation factor used to project today's values to retirement date
         if not retirement_already_reached and years_to_retirement > 0:
             inflation_factor = (Decimal("1") + inflation_rate / Decimal("100")) ** Decimal(str(years_to_retirement))
-            required_capital_adjusted = required_capital * inflation_factor
         else:
-            required_capital_adjusted = required_capital
+            inflation_factor = Decimal("1")
+
+        # Project needed_monthly to retirement date (future nominal euros).
+        # Pension incomes are already in future nominal euros, so the gap must be
+        # computed on the same basis — both sides in the same time frame.
+        needed_monthly_at_retirement = (needed_monthly * inflation_factor).quantize(Decimal("0.01"))
+
+        # --- Step 2: Monthly pension income from ACTIVE plans ---
+        state_scenarios = self._state_monthly_scenarios(db, member_id, member, app_settings, retirement_date)
+        company_monthly = self._company_monthly(db, member_id, member.retirement_age_planned)
+        insurance_monthly = self._insurance_monthly(db, member_id)
+        fixed_income = company_monthly + insurance_monthly
+        monthly_pension_income = GapScenarios(
+            pessimistic=(state_scenarios.pessimistic + fixed_income).quantize(Decimal("0.01")),
+            realistic=(state_scenarios.realistic + fixed_income).quantize(Decimal("0.01")),
+            optimistic=(state_scenarios.optimistic + fixed_income).quantize(Decimal("0.01")),
+        )
+
+        # --- Step 3: Remaining monthly gap in future nominal euros (per scenario) ---
+        remaining_monthly_gap = GapScenarios(
+            pessimistic=(needed_monthly_at_retirement - monthly_pension_income.pessimistic).quantize(Decimal("0.01")),
+            realistic=(needed_monthly_at_retirement - monthly_pension_income.realistic).quantize(Decimal("0.01")),
+            optimistic=(needed_monthly_at_retirement - monthly_pension_income.optimistic).quantize(Decimal("0.01")),
+        )
+
+        # --- Step 4: Required capital via SWR (per scenario) ---
+        # The gap is already in future nominal euros, so required_capital is directly the
+        # capital needed at retirement. No additional inflation adjustment is required.
+        withdrawal_rate = Decimal(str(config.withdrawal_rate))
+
+        def _required_capital(gap: Decimal) -> Decimal:
+            if gap > Decimal("0"):
+                return (gap * Decimal("12")) / withdrawal_rate
+            return Decimal("0")
+
+        required_capital = GapScenarios(
+            pessimistic=_required_capital(remaining_monthly_gap.pessimistic).quantize(Decimal("0.01")),
+            realistic=_required_capital(remaining_monthly_gap.realistic).quantize(Decimal("0.01")),
+            optimistic=_required_capital(remaining_monthly_gap.optimistic).quantize(Decimal("0.01")),
+        )
+        # required_capital_adjusted equals required_capital: inflation is already
+        # embedded in needed_monthly_at_retirement, so there is no separate step.
+        required_capital_adjusted = required_capital
 
         # --- Step 5: Projected capital at retirement (ETF + Savings) ---
         etf_projected, savings_projected = self._projected_capital(db, member_id, app_settings, retirement_date)
@@ -98,27 +125,31 @@ class GapAnalysisService:
             optimistic=(etf_projected.optimistic + savings_projected.optimistic).quantize(Decimal("0.01")),
         )
 
-        # --- Step 6: Final gap ---
-        adj = required_capital_adjusted
+        # --- Step 6: Final gap (per scenario) ---
         gap = GapScenarios(
-            pessimistic=(adj - projected_capital.pessimistic).quantize(Decimal("0.01")),
-            realistic=(adj - projected_capital.realistic).quantize(Decimal("0.01")),
-            optimistic=(adj - projected_capital.optimistic).quantize(Decimal("0.01")),
+            pessimistic=(required_capital_adjusted.pessimistic - projected_capital.pessimistic).quantize(Decimal("0.01")),
+            realistic=(required_capital_adjusted.realistic - projected_capital.realistic).quantize(Decimal("0.01")),
+            optimistic=(required_capital_adjusted.optimistic - projected_capital.optimistic).quantize(Decimal("0.01")),
         )
 
         return GapAnalysisResult(
             member_id=member_id,
             needed_monthly=needed_monthly.quantize(Decimal("0.01")),
+            needed_monthly_at_retirement=needed_monthly_at_retirement,
             uses_override=uses_override,
-            monthly_pension_income=monthly_pension_income.quantize(Decimal("0.01")),
-            remaining_monthly_gap=remaining_monthly_gap.quantize(Decimal("0.01")),
-            required_capital=required_capital.quantize(Decimal("0.01")),
+            monthly_pension_income=monthly_pension_income,
+            remaining_monthly_gap=remaining_monthly_gap,
+            required_capital=required_capital,
             years_to_retirement=round(years_to_retirement, 2),
-            required_capital_adjusted=required_capital_adjusted.quantize(Decimal("0.01")),
+            required_capital_adjusted=required_capital_adjusted,
             projected_capital=projected_capital,
             gap=gap,
             breakdown=GapBreakdown(
-                state_monthly=state_monthly.quantize(Decimal("0.01")),
+                state_monthly=GapScenarios(
+                    pessimistic=state_scenarios.pessimistic.quantize(Decimal("0.01")),
+                    realistic=state_scenarios.realistic.quantize(Decimal("0.01")),
+                    optimistic=state_scenarios.optimistic.quantize(Decimal("0.01")),
+                ),
                 company_monthly=company_monthly.quantize(Decimal("0.01")),
                 insurance_monthly=insurance_monthly.quantize(Decimal("0.01")),
                 etf_projected=etf_projected,
@@ -129,19 +160,37 @@ class GapAnalysisService:
 
     # ── Monthly income helpers ────────────────────────────────────────────────
 
-    def _state_monthly(self, db: Session, member_id: int) -> Decimal:
-        """Sum latest projected_monthly_amount across all ACTIVE state pensions."""
+    def _state_monthly_scenarios(
+        self,
+        db: Session,
+        member_id: int,
+        member,
+        app_settings,
+        retirement_date: Optional[date],
+    ) -> GapScenarios:
+        """
+        Project state pension monthly amounts at retirement per scenario.
+        Uses PensionStateProjectionService with compound growth rates.
+        """
         pensions = state_crud.get_multi(db, filters={"member_id": member_id})
-        total = Decimal("0")
+        pess = real = opt = Decimal("0")
+        state_svc = PensionStateProjectionService()
         for p in pensions:
             if p.status != PensionStatus.ACTIVE:
                 continue
             if not p.statements:
                 continue
-            latest = max(p.statements, key=lambda s: s.statement_date)
-            if latest.projected_monthly_amount is not None:
-                total += Decimal(str(latest.projected_monthly_amount))
-        return total
+            projection = state_svc.calculate_scenarios(p, member, app_settings)
+            planned = projection.planned
+            if not planned:
+                continue
+            if "pessimistic" in planned and planned["pessimistic"].monthly_amount is not None:
+                pess += planned["pessimistic"].monthly_amount
+            if "realistic" in planned and planned["realistic"].monthly_amount is not None:
+                real += planned["realistic"].monthly_amount
+            if "optimistic" in planned and planned["optimistic"].monthly_amount is not None:
+                opt += planned["optimistic"].monthly_amount
+        return GapScenarios(pessimistic=pess, realistic=real, optimistic=opt)
 
     def _company_monthly(self, db: Session, member_id: int, retirement_age: int) -> Decimal:
         """Sum monthly payouts from ACTIVE company pensions at the planned retirement age."""

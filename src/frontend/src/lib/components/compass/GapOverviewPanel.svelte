@@ -46,7 +46,7 @@
 	});
 
 	function memberStatus(analysis: GapAnalysisResult) {
-		const statusKey = gapStatusFor(analysis.gap.realistic, analysis.required_capital_adjusted);
+		const statusKey = gapStatusFor(analysis.gap.realistic, analysis.required_capital_adjusted.realistic);
 		if (statusKey === 'on_track')
 			return {
 				label: m.compass_gap_on_track(),
@@ -169,7 +169,7 @@
 								<p class="text-xs text-muted-foreground">{m.compass_overview_capital_retirement()}</p>
 								<p class="text-sm font-medium">
 									<FormattedCurrency
-										value={memberAnalysis.required_capital_adjusted}
+										value={memberAnalysis.required_capital_adjusted.realistic}
 										decimals={0}
 									/>
 								</p>

@@ -13,8 +13,8 @@
 	let { result }: { result: GapAnalysisResult } = $props();
 
 	/** Color class based on gap relative to required capital */
-	function gapColorClass(gap: number): string {
-		const status = gapStatusFor(gap, result.required_capital_adjusted);
+	function gapColorClass(gap: number, requiredCapital: number): string {
+		const status = gapStatusFor(gap, requiredCapital);
 		if (status === 'on_track') return 'text-green-600 dark:text-green-400';
 		if (status === 'needs_attention') return 'text-yellow-600 dark:text-yellow-400';
 		return 'text-red-600 dark:text-red-400';
@@ -24,24 +24,27 @@
 		return gap <= 0 ? m.compass_gap_surplus() : m.compass_gap_shortfall();
 	}
 
-	const monthlyGap = $derived(toGapDisplayValue(result.remaining_monthly_gap));
+	const monthlyGap = $derived(toGapDisplayValue(result.remaining_monthly_gap.realistic));
 	const scenarios = $derived([
 		{
 			label: m.settings_pessimistic(),
 			gap: Number(result.gap.pessimistic),
 			projected: Number(result.projected_capital.pessimistic),
+			requiredCapital: Number(result.required_capital_adjusted.pessimistic),
 			display: toGapDisplayValue(result.gap.pessimistic)
 		},
 		{
 			label: m.settings_realistic(),
 			gap: Number(result.gap.realistic),
 			projected: Number(result.projected_capital.realistic),
+			requiredCapital: Number(result.required_capital_adjusted.realistic),
 			display: toGapDisplayValue(result.gap.realistic)
 		},
 		{
 			label: m.settings_optimistic(),
 			gap: Number(result.gap.optimistic),
 			projected: Number(result.projected_capital.optimistic),
+			requiredCapital: Number(result.required_capital_adjusted.optimistic),
 			display: toGapDisplayValue(result.gap.optimistic)
 		}
 	]);
@@ -59,17 +62,20 @@
 		<div class="space-y-0.5">
 			<p class="text-xs text-muted-foreground">{m.compass_gap_needed_monthly()}</p>
 			<p class="text-base font-semibold">
-				<FormattedCurrency value={result.needed_monthly} decimals={0} />
+				<FormattedCurrency value={result.needed_monthly_at_retirement} decimals={0} />
 				{#if result.uses_override}
 					<span class="ml-1 text-xs font-normal text-muted-foreground">({m.compass_gap_uses_override()})</span>
 				{/if}
+			</p>
+			<p class="text-xs text-muted-foreground">
+				<FormattedCurrency value={result.needed_monthly} decimals={0} /> {m.compass_gap_needed_monthly_today()}
 			</p>
 		</div>
 
 		<div class="space-y-0.5">
 			<p class="text-xs text-muted-foreground">{m.compass_gap_pension_income()}</p>
 			<p class="text-base font-semibold">
-				<FormattedCurrency value={result.monthly_pension_income} decimals={0} />
+				<FormattedCurrency value={result.monthly_pension_income.realistic} decimals={0} />
 			</p>
 		</div>
 
@@ -103,19 +109,17 @@
 						<FormattedCurrency value={scenario.projected} decimals={0} />
 					</p>
 					{#if scenario.display}
-						<p class="text-sm font-bold {gapColorClass(scenario.display.raw)}">
+						<p class="text-sm font-bold {gapColorClass(scenario.display.raw, scenario.requiredCapital)}">
 							{#if scenario.display.isSurplus}+{/if}<FormattedCurrency value={scenario.display.absolute} decimals={0} />
 						</p>
-						<p class="text-xs {gapColorClass(scenario.display.raw)}">{gapLabel(scenario.display.raw)}</p>
+						<p class="text-xs {gapColorClass(scenario.display.raw, scenario.requiredCapital)}">{gapLabel(scenario.display.raw)}</p>
 					{/if}
+					<p class="text-xs text-muted-foreground pt-0.5">
+						{m.compass_gap_required_capital_adjusted()}:
+						<span class="font-medium text-foreground"><FormattedCurrency value={scenario.requiredCapital} decimals={0} /></span>
+					</p>
 				</div>
 			{/each}
 		</div>
-		<p class="text-xs text-muted-foreground mt-3">
-			{m.compass_gap_required_capital_adjusted()}:
-			<span class="font-medium text-foreground">
-				<FormattedCurrency value={result.required_capital_adjusted} decimals={0} />
-			</span>
-		</p>
 	</div>
 </div>

@@ -657,7 +657,8 @@
 	"compass_gap_setup_description": "Gib deine Einkommensdaten ein, um deine persönliche Rentenlücke zu berechnen.",
 	"compass_gap_no_config": "Noch keine Konfiguration.",
 	"compass_gap_no_config_cta": "Gib oben deine Einkommensdaten ein, um deine Rentenlücke zu sehen.",
-	"compass_gap_needed_monthly": "Benötigtes Monatseinkommen",
+	"compass_gap_needed_monthly": "Benötigtes Monatseinkommen bei Renteneintritt",
+	"compass_gap_needed_monthly_today": "heute",
 	"compass_gap_uses_override": "Manuelles Rentenziel aktiv",
 	"compass_gap_pension_income": "Monatliche Renteneinkünfte",
 	"compass_gap_monthly_gap": "Monatliche Lücke",
@@ -712,6 +713,13 @@
 	"dashboard_retirement_gap_range": "Bandbreite: {pessimistic} – {optimistic}",
 	"dashboard_retirement_gap_horizon": "Alle Werte beziehen sich auf den Zeitpunkt des Renteneintritts.",
 	"dashboard_retirement_gap_view_details": "Details anzeigen →",
+
+	"dashboard_scenario_projection_title": "Szenario-Projektion",
+	"dashboard_scenario_projection_description": "Prognostizierter Portfoliowert in drei Szenarien",
+	"dashboard_scenario_projection_no_data": "Noch keine Projektionsdaten vorhanden",
+	"dashboard_scenario_projection_historical": "Historischer Wert",
+	"dashboard_scenario_projection_today": "Heute",
+	"dashboard_scenario_projection_retirement_label": "Rente {name}",
 
 	"settings_data_sources_title": "Datenquellen",
 	"settings_data_sources_description": "Verwalte Quellen für Kurs- und ETF-Daten. Die Reihenfolge bestimmt, welche Quelle bei Preiskonflikten Vorrang hat.",

@@ -9,6 +9,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import HouseholdSwitcher from '$lib/components/dashboard/HouseholdSwitcher.svelte';
 	import RetirementGapChartCard from '$lib/components/dashboard/RetirementGapChartCard.svelte';
+	import ScenarioProjectionChart from '$lib/components/dashboard/ScenarioProjectionChart.svelte';
 	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionStore } from '$lib/stores/pension.svelte';
@@ -296,40 +297,19 @@
 			<div class="space-y-4">
 				<RetirementGapChartCard />
 
-				<Card title="Scenario Analysis" description="Explore possible futures">
-					<ul class="list-disc pl-4 space-y-2">
-						<li class="text-muted-foreground">Area chart showing scenarios:</li>
-						<ul class="list-[circle] pl-4 space-y-1">
-							<li class="text-muted-foreground">Conservative (lower bound)</li>
-							<li class="font-bold">Expected (middle path)</li>
-							<li class="text-muted-foreground">Optimistic (upper bound)</li>
-						</ul>
-						<li class="text-muted-foreground">Adjustable assumptions</li>
-						<li class="text-muted-foreground">Risk factor highlighting</li>
-						<li class="text-muted-foreground">Integration with Payout Strategy</li>
-					</ul>
+				<Card title={m.dashboard_scenario_projection_title()} description={m.dashboard_scenario_projection_description()}>
+					<ScenarioProjectionChart loading={dashboardStore.seriesLoading} members={data.members} />
 				</Card>
 
 				<!-- Additional Insights -->
-				<div class="grid gap-4 grid-cols-1">
-					<Card title="Action Items" description="Improve your outlook">
-						<ul class="list-disc pl-4 space-y-2 text-sm">
-							<li class="font-bold text-red-800/70">Personalized recommendations</li>
-							<li class="text-muted-foreground">Quick wins identification</li>
-							<li class="text-muted-foreground">Risk mitigation steps</li>
-							<li class="text-muted-foreground">Links to relevant tools</li>
-						</ul>
-					</Card>
-
-					<Card title="Market Context" description="External factors to consider">
-						<ul class="list-disc pl-4 space-y-2 text-sm">
-							<li class="text-muted-foreground">Current market conditions</li>
-							<li class="text-muted-foreground">Interest rate impact</li>
-							<li class="text-muted-foreground">Inflation considerations</li>
-							<li class="text-muted-foreground">Economic indicators</li>
-						</ul>
-					</Card>
-				</div>
+				<Card title="Action Items" description="Improve your outlook">
+					<ul class="list-disc pl-4 space-y-2 text-sm">
+						<li class="font-bold text-red-800/70">Personalized recommendations</li>
+						<li class="text-muted-foreground">Quick wins identification</li>
+						<li class="text-muted-foreground">Risk mitigation steps</li>
+						<li class="text-muted-foreground">Links to relevant tools</li>
+					</ul>
+				</Card>
 			</div>
 		</div>
 	</div>

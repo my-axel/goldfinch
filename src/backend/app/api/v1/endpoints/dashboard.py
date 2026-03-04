@@ -12,6 +12,7 @@ sparse statement data to a common date axis, then sums across all pensions.
 Projection series sums each pension's monthly scenario projections for
 pessimistic, realistic, and optimistic scenarios.
 """
+import bisect
 from datetime import date
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
@@ -65,7 +66,6 @@ def _locf_fill(
     point_map: Dict[date, Decimal] = {p.date: p.value for p in sorted_points}
     sorted_known_dates = sorted(point_map.keys())
 
-    import bisect
     result: Dict[date, Decimal] = {}
     for d in all_dates:
         idx = bisect.bisect_right(sorted_known_dates, d) - 1
@@ -83,8 +83,15 @@ def _sum_scenario_series(
     """
     Sum multiple ScenarioSeries into one by adding values at each date.
 
-    Uses LOCF within each series for date gaps. Dates not present in a
-    series get value 0 (the pension isn't contributing beyond its retirement date).
+    Uses LOCF within each series: after a pension's last projection date (i.e.
+    its member's retirement date), the final accumulated value is carried forward
+    instead of dropping to 0. This ensures that when household members have
+    different retirement dates, the aggregate projection remains coherent — a
+    member who retires earlier still contributes their built-up capital to the
+    household total for the remaining timeline.
+
+    Dates before a pension's first projection point contribute 0.
+    Empty series (e.g. retirement already reached) are skipped.
     """
     pess: Dict[date, Decimal] = {d: Decimal("0") for d in all_dates}
     real: Dict[date, Decimal] = {d: Decimal("0") for d in all_dates}
@@ -93,9 +100,15 @@ def _sum_scenario_series(
     for series in series_list:
         for scenario_name, target in [("pessimistic", pess), ("realistic", real), ("optimistic", opt)]:
             points = getattr(series, scenario_name)
+            if not points:
+                continue
+            sorted_dates = sorted(p.date for p in points)
             point_map = {p.date: p.value for p in points}
             for d in all_dates:
-                target[d] = target[d] + point_map.get(d, Decimal("0"))
+                idx = bisect.bisect_right(sorted_dates, d) - 1
+                if idx >= 0:
+                    target[d] = target[d] + point_map[sorted_dates[idx]]
+                # else: d is before this pension's first projection point → contribute 0
 
     return ScenarioSeries(
         pessimistic=[ProjectionDataPoint(date=d, value=pess[d]) for d in all_dates],
