@@ -60,24 +60,33 @@ class GapAnalysisService:
         years_to_retirement = max(days_to_retirement / 365.25, 0.0)
         retirement_already_reached = retirement_date is None or retirement_date <= today
 
+        # Salary growth factor: projects current net income to retirement date.
+        # Captures both inflation and real wage growth (career progression, raises).
+        salary_growth_rate = Decimal(str(config.annual_salary_growth_rate)) / Decimal("100")
+        if not retirement_already_reached and years_to_retirement > 0:
+            salary_growth_factor = (Decimal("1") + salary_growth_rate) ** Decimal(str(years_to_retirement))
+        else:
+            salary_growth_factor = Decimal("1")
+
+        # Projected net salary at retirement in future nominal euros (always computed for display).
+        salary_at_retirement = (Decimal(str(config.net_monthly_income)) * salary_growth_factor).quantize(Decimal("0.01"))
+
         # --- Step 1: Monthly retirement need ---
         if config.desired_monthly_pension is not None:
+            # Manual override: user specifies today's-euros target — inflate with inflation rate.
             needed_monthly = Decimal(str(config.desired_monthly_pension))
             uses_override = True
+            if not retirement_already_reached and years_to_retirement > 0:
+                inflation_factor = (Decimal("1") + inflation_rate / Decimal("100")) ** Decimal(str(years_to_retirement))
+            else:
+                inflation_factor = Decimal("1")
+            needed_monthly_at_retirement = (needed_monthly * inflation_factor).quantize(Decimal("0.01"))
         else:
-            needed_monthly = Decimal(str(config.net_monthly_income)) * Decimal(str(config.replacement_rate))
+            # Normal calculation: apply replacement rate to projected salary at retirement.
+            # salary_at_retirement is already in future nominal euros, so no extra inflation factor needed.
+            needed_monthly = (salary_at_retirement * Decimal(str(config.replacement_rate))).quantize(Decimal("0.01"))
             uses_override = False
-
-        # Inflation factor used to project today's values to retirement date
-        if not retirement_already_reached and years_to_retirement > 0:
-            inflation_factor = (Decimal("1") + inflation_rate / Decimal("100")) ** Decimal(str(years_to_retirement))
-        else:
-            inflation_factor = Decimal("1")
-
-        # Project needed_monthly to retirement date (future nominal euros).
-        # Pension incomes are already in future nominal euros, so the gap must be
-        # computed on the same basis — both sides in the same time frame.
-        needed_monthly_at_retirement = (needed_monthly * inflation_factor).quantize(Decimal("0.01"))
+            needed_monthly_at_retirement = needed_monthly
 
         # --- Step 2: Monthly pension income from ACTIVE plans ---
         state_scenarios = self._state_monthly_scenarios(db, member_id, member, app_settings, retirement_date)
@@ -89,6 +98,16 @@ class GapAnalysisService:
             realistic=(state_scenarios.realistic + fixed_income).quantize(Decimal("0.01")),
             optimistic=(state_scenarios.optimistic + fixed_income).quantize(Decimal("0.01")),
         )
+
+        # Apply optional pension deduction rate (taxes/social contributions on pension income).
+        # If set, converts gross pension amounts to net by applying (1 - deduction_rate).
+        if config.pension_deduction_rate is not None and config.pension_deduction_rate > 0:
+            net_factor = Decimal("1") - Decimal(str(config.pension_deduction_rate)) / Decimal("100")
+            monthly_pension_income = GapScenarios(
+                pessimistic=(monthly_pension_income.pessimistic * net_factor).quantize(Decimal("0.01")),
+                realistic=(monthly_pension_income.realistic * net_factor).quantize(Decimal("0.01")),
+                optimistic=(monthly_pension_income.optimistic * net_factor).quantize(Decimal("0.01")),
+            )
 
         # --- Step 3: Remaining monthly gap in future nominal euros (per scenario) ---
         remaining_monthly_gap = GapScenarios(
@@ -136,6 +155,7 @@ class GapAnalysisService:
             member_id=member_id,
             needed_monthly=needed_monthly.quantize(Decimal("0.01")),
             needed_monthly_at_retirement=needed_monthly_at_retirement,
+            salary_at_retirement=salary_at_retirement,
             uses_override=uses_override,
             monthly_pension_income=monthly_pension_income,
             remaining_monthly_gap=remaining_monthly_gap,

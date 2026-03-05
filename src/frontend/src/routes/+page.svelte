@@ -10,6 +10,7 @@
 	import HouseholdSwitcher from '$lib/components/dashboard/HouseholdSwitcher.svelte';
 	import RetirementGapChartCard from '$lib/components/dashboard/RetirementGapChartCard.svelte';
 	import ScenarioProjectionChart from '$lib/components/dashboard/ScenarioProjectionChart.svelte';
+	import FixedIncomeCard from '$lib/components/dashboard/FixedIncomeCard.svelte';
 	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionStore } from '$lib/stores/pension.svelte';
@@ -72,6 +73,30 @@
 			mom: momVal && momVal > 0 ? ((current - momVal) / momVal) * 100 : null,
 			yoy: yoyVal && yoyVal > 0 ? ((current - yoyVal) / yoyVal) * 100 : null
 		};
+	});
+
+	// ─── Type Breakdown ────────────────────────────────────────────────────────
+
+	/** Current value summed per pension type, in display order */
+	const typeBreakdown = $derived.by(() => {
+		const order = [PensionType.ETF_PLAN, PensionType.SAVINGS, PensionType.INSURANCE, PensionType.COMPANY, PensionType.STATE];
+		const totals = new Map<PensionType, number>();
+		for (const p of dashboardStore.selectedPensions) {
+			let val = 0;
+			if (p.type === PensionType.STATE) val = Number(p.latest_current_value ?? 0);
+			else if (p.type === PensionType.SAVINGS) val = Number(p.latest_balance ?? 0);
+			else val = Number(p.current_value ?? 0);
+			totals.set(p.type, (totals.get(p.type) ?? 0) + val);
+		}
+		return order.filter((t) => totals.has(t)).map((t) => ({ type: t, value: totals.get(t)! }));
+	});
+
+	const typeAllocation = $derived.by(() => {
+		const etfVal = typeBreakdown.find((t) => t.type === PensionType.ETF_PLAN)?.value ?? 0;
+		const savingsVal = typeBreakdown.find((t) => t.type === PensionType.SAVINGS)?.value ?? 0;
+		const total = etfVal + savingsVal;
+		if (total === 0) return null;
+		return { etfPct: Math.round((etfVal / total) * 100), savingsPct: Math.round((savingsVal / total) * 100) };
 	});
 
 	let etfStats = $state<ETFPensionStatistics | null>(null);
@@ -256,24 +281,59 @@
 					<HistoricalPerformanceChart
 						contributionHistory={etfStats?.contribution_history ?? []}
 						valueHistory={etfStats?.value_history ?? []}
+						savingsHistory={dashboardStore.seriesData?.by_type?.['SAVINGS']?.historical ?? []}
 						loading={etfStatsLoading || dashboardStore.loading}
 					/>
 				</Card>
 
-				<Card title="Plan Performance Comparison" description="How each plan has performed">
-					<div class="h-[300px]">
-						<ul class="list-disc pl-4 space-y-2">
-							<li class="text-muted-foreground">Multi-line chart showing:</li>
-							<ul class="list-[circle] pl-4 space-y-1">
-								<li class="text-muted-foreground">Individual plan growth</li>
-								<li class="text-muted-foreground">Toggle absolute/percentage view</li>
-								<li class="text-muted-foreground">Plan type grouping</li>
-							</ul>
-							<li class="text-muted-foreground">Highlight specific plans</li>
-							<li class="text-muted-foreground">Performance metrics table</li>
-							<li class="text-muted-foreground">Risk/return comparison</li>
-						</ul>
-					</div>
+				<Card title={m.dashboard_card_breakdown_title()} description={m.dashboard_card_breakdown_description()}>
+					{#if dashboardStore.loading}
+						<div class="space-y-2 animate-pulse">
+							<div class="h-4 bg-muted rounded w-3/4"></div>
+							<div class="h-4 bg-muted rounded w-1/2"></div>
+							<div class="h-4 bg-muted rounded w-2/3"></div>
+						</div>
+					{:else if typeBreakdown.length === 0}
+						<p class="text-sm text-muted-foreground">{m.dashboard_portfolio_no_data()}</p>
+					{:else}
+						<div class="space-y-2">
+							{#each typeBreakdown as { type, value }}
+								<div class="flex justify-between items-center text-sm">
+									<span class="text-muted-foreground">
+										{type === PensionType.ETF_PLAN ? m.pension_type_etf() :
+										 type === PensionType.SAVINGS ? m.pension_type_savings() :
+										 type === PensionType.INSURANCE ? m.pension_type_insurance() :
+										 type === PensionType.COMPANY ? m.pension_type_company() :
+										 m.pension_type_state()}
+									</span>
+									<span class="font-medium">{formatCurrency(value, settingsStore.current.number_locale, settingsStore.current.currency, 0)}</span>
+								</div>
+							{/each}
+							<hr class="border-border" />
+							<div class="flex justify-between items-center text-sm font-semibold">
+								<span>{m.dashboard_card_performance_title()}</span>
+								<span>{formatCurrency(dashboardStore.selectedTotal, settingsStore.current.number_locale, settingsStore.current.currency, 0)}</span>
+							</div>
+							{#if typeAllocation}
+								<hr class="border-border" />
+								<div class="space-y-1.5">
+									<p class="text-xs text-muted-foreground">{m.dashboard_breakdown_allocation()}</p>
+									<div class="flex h-2 rounded-full overflow-hidden">
+										{#if typeAllocation.etfPct > 0}
+											<div style="flex: {typeAllocation.etfPct}; background: hsl(263, 70%, 50%)"></div>
+										{/if}
+										{#if typeAllocation.savingsPct > 0}
+											<div style="flex: {typeAllocation.savingsPct}; background: hsl(35, 85%, 50%)"></div>
+										{/if}
+									</div>
+									<div class="flex justify-between text-xs text-muted-foreground">
+										<span>{m.pension_type_etf()} {typeAllocation.etfPct}%</span>
+										<span>{typeAllocation.savingsPct}% {m.pension_type_savings()}</span>
+									</div>
+								</div>
+							{/if}
+						</div>
+					{/if}
 				</Card>
 			</div>
 		</div>
@@ -300,6 +360,8 @@
 				<Card title={m.dashboard_scenario_projection_title()} description={m.dashboard_scenario_projection_description()}>
 					<ScenarioProjectionChart loading={dashboardStore.seriesLoading} members={data.members} />
 				</Card>
+
+				<FixedIncomeCard />
 
 				<!-- Additional Insights -->
 				<Card title="Action Items" description="Improve your outlook">

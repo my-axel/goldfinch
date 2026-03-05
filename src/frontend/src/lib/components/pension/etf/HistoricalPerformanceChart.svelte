@@ -12,7 +12,7 @@
 	import { settingsStore } from '$lib/stores/settings.svelte';
 	import { themeStore } from '$lib/stores/theme.svelte';
 	import { formatCurrency } from '$lib/utils/format';
-	import type { ETFContributionHistory, ETFValueHistory } from '$lib/types/pension';
+	import type { ETFContributionHistory, ETFValueHistory, HistoricalDataPoint } from '$lib/types/pension';
 	import { Chart } from 'svelte-echarts';
 	import { init, graphic } from 'echarts';
 	import { Expand, Shrink } from '@lucide/svelte';
@@ -20,10 +20,12 @@
 	let {
 		contributionHistory,
 		valueHistory,
+		savingsHistory = [],
 		loading = false
 	}: {
 		contributionHistory: ETFContributionHistory[];
 		valueHistory: ETFValueHistory[];
+		savingsHistory?: HistoricalDataPoint[];
 		loading?: boolean;
 	} = $props();
 
@@ -93,7 +95,8 @@
 
 	const chartColors = {
 		value: 'hsl(263, 70%, 50%)',
-		contributions: 'hsl(173, 58%, 45%)'
+		contributions: 'hsl(173, 58%, 45%)',
+		savings: 'hsl(35, 85%, 50%)'
 	} as const;
 
 	// Theme-aware colors
@@ -136,27 +139,53 @@
 		const contributionsData = chartData.map(
 			(d) => [d.date.getTime(), d.contributions] as [number, number]
 		);
+		const savingsData = savingsHistory
+			.slice()
+			.sort((a, b) => a.date.localeCompare(b.date))
+			.map((d) => [new Date(d.date).getTime(), Number(d.value)] as [number, number]);
+
+		const xMin = Math.min(
+			...valueData.map((d) => d[0]),
+			...contributionsData.map((d) => d[0]),
+			...(savingsData.length > 1 ? savingsData.map((d) => d[0]) : [])
+		) || undefined;
 
 		const withAlpha = (hsl: string, alpha: number) =>
 			hsl.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`);
 
-		const makeSeries = (
+		const makeStackedSeries = (
 			name: string,
 			data: [number, number][],
 			color: string,
-			areaOpacity: number
+			areaOpacity: number,
+			showLine = true
 		) => ({
 			name,
 			type: 'line',
+			stack: 'total',
 			data,
 			itemStyle: { color, borderWidth: 0 },
-			lineStyle: { width: 2, color },
+			lineStyle: { width: showLine ? 2 : 0, color },
 			areaStyle: {
 				color: new graphic.LinearGradient(0, 0, 0, 1, [
 					{ offset: 0, color: withAlpha(color, areaOpacity) },
 					{ offset: 1, color: withAlpha(color, 0) }
 				])
 			},
+			showSymbol: false,
+			smooth: true
+		});
+
+		const makeReferenceLine = (
+			name: string,
+			data: [number, number][],
+			color: string
+		) => ({
+			name,
+			type: 'line',
+			data,
+			itemStyle: { color, borderWidth: 0 },
+			lineStyle: { width: 1.5, color, type: 'dashed' as const },
 			showSymbol: false,
 			smooth: true
 		});
@@ -192,6 +221,7 @@
 			xAxis: {
 				type: 'time' as const,
 				minInterval: 60 * 24 * 3600 * 1000,
+				...(xMin !== undefined ? { min: xMin } : {}),
 				axisLabel: {
 					hideOverlap: true,
 					rotate: -45,
@@ -217,8 +247,9 @@
 				splitLine: { lineStyle: { color: tc.splitLine } }
 			},
 			series: [
-				makeSeries(m.etf_historical_value(), valueData, chartColors.value, 0.35),
-				makeSeries(m.etf_contributions(), contributionsData, chartColors.contributions, 0.2)
+				makeStackedSeries(m.etf_historical_value(), valueData, chartColors.value, 0.35),
+				...(savingsData.length > 1 ? [makeStackedSeries(m.dashboard_chart_savings_balance(), savingsData, chartColors.savings, 0.3, false)] : []),
+				makeReferenceLine(m.etf_contributions(), contributionsData, chartColors.contributions)
 			]
 		};
 	});
@@ -226,7 +257,7 @@
 
 <div class="space-y-2">
 	<div class="flex items-center justify-between gap-2">
-		<div class="flex items-center gap-3">
+		<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 			<div class="flex items-center gap-1.5">
 				<div class="h-3 w-3 rounded-full" style="background-color: {chartColors.value}"></div>
 				<span class="text-xs text-muted-foreground">{m.etf_historical_value()}</span>
@@ -235,6 +266,12 @@
 				<div class="h-3 w-3 rounded-full" style="background-color: {chartColors.contributions}"></div>
 				<span class="text-xs text-muted-foreground">{m.etf_contributions()}</span>
 			</div>
+			{#if savingsHistory.length > 1}
+				<div class="flex items-center gap-1.5">
+					<div class="h-3 w-3 rounded-full" style="background-color: {chartColors.savings}"></div>
+					<span class="text-xs text-muted-foreground">{m.dashboard_chart_savings_balance()}</span>
+				</div>
+			{/if}
 		</div>
 		<button
 			type="button"
@@ -252,7 +289,7 @@
 
 	{#if loading}
 		<div class="animate-pulse bg-muted rounded-lg" style="height: {height}px"></div>
-	{:else if chartData.length === 0 || (valueHistory.length <= 1 && contributionHistory.length === 0)}
+	{:else if chartData.length === 0 && savingsHistory.length <= 1}
 		<div
 			class="flex items-center justify-center text-sm text-muted-foreground"
 			style="height: {height}px"

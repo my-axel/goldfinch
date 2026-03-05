@@ -9,6 +9,8 @@ class RetirementGapConfigCreate(BaseModel):
     desired_monthly_pension: Optional[Decimal] = Field(None, gt=0)
     replacement_rate: Decimal = Field(Decimal("0.80"), ge=Decimal("0.50"), le=Decimal("1.00"))
     withdrawal_rate: Decimal = Field(Decimal("0.04"), ge=Decimal("0.02"), le=Decimal("0.06"))
+    annual_salary_growth_rate: Decimal = Field(Decimal("2.0"), ge=Decimal("0"), le=Decimal("10"))
+    pension_deduction_rate: Optional[Decimal] = Field(None, ge=Decimal("0"), le=Decimal("50"))
 
 
 class RetirementGapConfigUpdate(BaseModel):
@@ -16,6 +18,8 @@ class RetirementGapConfigUpdate(BaseModel):
     desired_monthly_pension: Optional[Decimal] = None  # null = clear override
     replacement_rate: Optional[Decimal] = Field(None, ge=Decimal("0.50"), le=Decimal("1.00"))
     withdrawal_rate: Optional[Decimal] = Field(None, ge=Decimal("0.02"), le=Decimal("0.06"))
+    annual_salary_growth_rate: Optional[Decimal] = Field(None, ge=Decimal("0"), le=Decimal("10"))
+    pension_deduction_rate: Optional[Decimal] = Field(None, ge=Decimal("0"), le=Decimal("50"))
 
 
 class RetirementGapConfigResponse(BaseModel):
@@ -25,6 +29,8 @@ class RetirementGapConfigResponse(BaseModel):
     desired_monthly_pension: Optional[Decimal]
     replacement_rate: Decimal
     withdrawal_rate: Decimal
+    annual_salary_growth_rate: Decimal
+    pension_deduction_rate: Optional[Decimal]
     created_at: datetime
     updated_at: datetime
 
@@ -49,6 +55,7 @@ class GapAnalysisResult(BaseModel):
     member_id: int
     needed_monthly: Decimal
     needed_monthly_at_retirement: Decimal
+    salary_at_retirement: Decimal
     uses_override: bool
     monthly_pension_income: GapScenarios
     remaining_monthly_gap: GapScenarios

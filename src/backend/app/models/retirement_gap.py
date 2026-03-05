@@ -13,6 +13,8 @@ class RetirementGapConfig(Base):
     desired_monthly_pension = Column(Numeric(12, 2), nullable=True)
     replacement_rate = Column(Numeric(5, 4), nullable=False, default=0.80)
     withdrawal_rate = Column(Numeric(5, 4), nullable=False, default=0.04)
+    annual_salary_growth_rate = Column(Numeric(5, 2), nullable=False, default=2.0)
+    pension_deduction_rate = Column(Numeric(5, 2), nullable=True)  # optional, e.g. 15.0 = 15%
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

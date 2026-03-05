@@ -1,9 +1,9 @@
 <!--
 @file src/lib/components/dashboard/ScenarioProjectionChart.svelte
 @kind component
-@purpose Visualisiert historischen Portfoliowert und Zukunftsprojektionen (pessimistisch/realistisch/optimistisch) als Area-Chart auf dem Dashboard.
-@contains Lokaler Komponentenstatus und abgeleitete Werte werden reaktiv im Script-Block verwaltet.
-@contains Das Template verbindet Props/Bindings mit UI-Abschnitten und der ECharts-Visualisierung.
+@purpose Zeigt die Projektion der beeinflussbaren Altersvorsorge (ETF + Savings) in drei Szenarien.
+  Nur Pensionspläne, die der Nutzer direkt steuern kann. Zeigt eine horizontale Ziel-Linie
+  (required_capital_adjusted) aus der Kompass-Analyse.
 -->
 
 <script lang="ts">
@@ -14,11 +14,12 @@
 	import { dashboardStore } from '$lib/stores/dashboard.svelte';
 	import { scenarioColors } from '$lib/utils/scenario-colors';
 	import { formatCurrency } from '$lib/utils/format';
+	import { compassApi } from '$lib/api/compass';
+	import type { HouseholdMember } from '$lib/types/household';
+	import type { SeriesProjectionDataPoint } from '$lib/types/pension';
 	import { Chart } from 'svelte-echarts';
 	import { init, graphic } from 'echarts';
 	import { Expand, Shrink } from '@lucide/svelte';
-	import type { HouseholdMember } from '$lib/types/household';
-	import { compassApi } from '$lib/api/compass';
 
 	let {
 		loading = false,
@@ -28,15 +29,48 @@
 		members?: HouseholdMember[];
 	} = $props();
 
+	// ── Compass data: configured member IDs + goal capital ───────────────────
+
 	let configuredMemberIds = $state<Set<number>>(new Set());
+	let goalCapital = $state<number | null>(null);
+	let loadSeq = 0;
 
 	$effect(() => {
-		compassApi.getAllConfigs().then((configs) => {
+		const memberId = dashboardStore.selectedMemberId;
+		const seq = ++loadSeq;
+
+		compassApi.getAllConfigs().then(async (configs) => {
+			if (seq !== loadSeq) return;
 			configuredMemberIds = new Set(configs.map((c) => c.member_id));
+
+			if (configs.length === 0) { goalCapital = null; return; }
+
+			try {
+				if (memberId !== undefined) {
+					const config = configs.find((c) => c.member_id === memberId);
+					if (!config) { goalCapital = null; return; }
+					const analysis = await compassApi.getAnalysis(memberId);
+					if (seq !== loadSeq) return;
+					goalCapital = Number(analysis.required_capital_adjusted.realistic);
+				} else {
+					const analyses = await Promise.all(
+						configs.map((c) => compassApi.getAnalysis(c.member_id).catch(() => null))
+					);
+					if (seq !== loadSeq) return;
+					const total = analyses.reduce((sum, a) => sum + Number(a?.required_capital_adjusted?.realistic ?? 0), 0);
+					goalCapital = total > 0 ? total : null;
+				}
+			} catch {
+				if (seq !== loadSeq) return;
+				goalCapital = null;
+			}
 		}).catch(() => {
 			configuredMemberIds = new Set();
+			goalCapital = null;
 		});
 	});
+
+	// ── Chart state ──────────────────────────────────────────────────────────
 
 	let isExpanded = $state(false);
 	const height = $derived(isExpanded ? 600 : 300);
@@ -72,7 +106,8 @@
 					tooltipText: 'hsl(210, 20%, 98%)',
 					axisLabel: 'hsl(0, 0%, 63%)',
 					splitLine: 'hsl(0, 0%, 18%)',
-					axisLine: 'hsl(0, 0%, 15%)'
+					axisLine: 'hsl(0, 0%, 15%)',
+					goalLine: 'hsl(0, 72%, 55%)'
 				}
 			: {
 					tooltipBg: 'hsl(0, 0%, 100%)',
@@ -80,28 +115,74 @@
 					tooltipText: 'hsl(0, 0%, 9%)',
 					axisLabel: 'hsl(0, 0%, 45%)',
 					splitLine: 'hsl(0, 0%, 89%)',
-					axisLine: 'hsl(0, 0%, 89%)'
+					axisLine: 'hsl(0, 0%, 89%)',
+					goalLine: 'hsl(0, 72%, 51%)'
 				};
 	});
 
-	const hasProjectionData = $derived(
-		(dashboardStore.seriesData?.projection?.realistic?.length ?? 0) > 0
-	);
+	// ── Merge ETF + Savings projections ──────────────────────────────────────
+
+	/**
+	 * Combines two projection arrays by summing values at each date.
+	 * Uses LOCF for dates that exist in one series but not the other.
+	 */
+	function mergeProjectionArrays(
+		a: SeriesProjectionDataPoint[],
+		b: SeriesProjectionDataPoint[]
+	): SeriesProjectionDataPoint[] {
+		if (a.length === 0) return b;
+		if (b.length === 0) return a;
+
+		const aMap = new Map(a.map((d) => [d.date, Number(d.value)]));
+		const bMap = new Map(b.map((d) => [d.date, Number(d.value)]));
+		const allDates = [...new Set([...a.map((d) => d.date), ...b.map((d) => d.date)])].sort();
+
+		let lastA = 0;
+		let lastB = 0;
+		return allDates.map((date) => {
+			if (aMap.has(date)) lastA = aMap.get(date)!;
+			if (bMap.has(date)) lastB = bMap.get(date)!;
+			return { date, value: lastA + lastB };
+		});
+	}
+
+	const combinedProjection = $derived.by(() => {
+		const byType = dashboardStore.seriesData?.by_type;
+		if (!byType) return null;
+
+		const etf = byType['ETF_PLAN'];
+		const savings = byType['SAVINGS'];
+
+		if (!etf && !savings) return null;
+		const etfProj = etf?.projection;
+		const savingsProj = savings?.projection;
+
+		return {
+			pessimistic: mergeProjectionArrays(etfProj?.pessimistic ?? [], savingsProj?.pessimistic ?? []),
+			realistic: mergeProjectionArrays(etfProj?.realistic ?? [], savingsProj?.realistic ?? []),
+			optimistic: mergeProjectionArrays(etfProj?.optimistic ?? [], savingsProj?.optimistic ?? [])
+		};
+	});
+
+	const hasProjectionData = $derived((combinedProjection?.realistic?.length ?? 0) > 0);
 
 	const withAlpha = (hsl: string, alpha: number) =>
 		hsl.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`);
+
+	// ── ECharts options ───────────────────────────────────────────────────────
 
 	const echartsOptions = $derived.by(() => {
 		const _fmt = currencyFmt;
 		const _dateFmt = headerDateFmt;
 		const _l = locale;
 		const tc = themeColors;
-		const seriesData = dashboardStore.seriesData;
-
-		if (!seriesData) return {};
-
-		// Which members to show retirement lines for — only those with a compass gap config
+		const proj = combinedProjection;
+		const _goalCapital = goalCapital;
 		const _configuredIds = configuredMemberIds;
+
+		if (!proj) return {};
+
+		// Retirement markLines — only for members with compass config
 		const visibleMembers = (dashboardStore.selectedMemberId === undefined
 			? members
 			: members.filter((mb) => mb.id === dashboardStore.selectedMemberId)
@@ -121,20 +202,19 @@
 				}
 			}));
 
-		// Extend the x-axis ~5 months past the latest retirement line so the label isn't clipped
 		const maxRetirementTs = retirementMarkLines.length > 0
 			? Math.max(...retirementMarkLines.map((l) => l.xAxis))
 			: null;
 		const MS_PER_MONTH = 30.44 * 24 * 60 * 60 * 1000;
 		const xAxisMax = maxRetirementTs ? maxRetirementTs + 5 * MS_PER_MONTH : undefined;
 
-		const pessimisticData = (seriesData.projection?.pessimistic ?? []).map(
+		const pessimisticData = proj.pessimistic.map(
 			(d) => [new Date(d.date).getTime(), d.value] as [number, number]
 		);
-		const realisticData = (seriesData.projection?.realistic ?? []).map(
+		const realisticData = proj.realistic.map(
 			(d) => [new Date(d.date).getTime(), d.value] as [number, number]
 		);
-		const optimisticData = (seriesData.projection?.optimistic ?? []).map(
+		const optimisticData = proj.optimistic.map(
 			(d) => [new Date(d.date).getTime(), d.value] as [number, number]
 		);
 
@@ -162,6 +242,26 @@
 			...extra
 		});
 
+		// Goal line (horizontal) + retirement vertical lines on realistic series
+		const realisticExtra: Record<string, any> = {};
+		const markLineData: any[] = [...retirementMarkLines];
+		if (_goalCapital !== null) {
+			markLineData.push({
+				yAxis: _goalCapital,
+				lineStyle: { color: tc.goalLine, type: 'dashed', width: 1.5 },
+				label: {
+					show: true,
+					position: 'insideEndTop',
+					formatter: `${m.dashboard_scenario_projection_goal()}: ${_fmt(_goalCapital)}`,
+					color: tc.goalLine,
+					fontSize: 11
+				}
+			});
+		}
+		if (markLineData.length > 0) {
+			realisticExtra.markLine = { silent: true, symbol: 'none', data: markLineData };
+		}
+
 		return {
 			backgroundColor: 'transparent',
 			animation: true,
@@ -178,13 +278,12 @@
 					let html = `<div style="font-weight:600;margin-bottom:6px">${dateStr}</div>`;
 					for (const p of params) {
 						if (p.value[1] == null) continue;
-						const val = _fmt(p.value[1]);
 						html += `<div style="display:flex;justify-content:space-between;gap:16px;margin-top:3px">
 							<span style="display:flex;align-items:center;gap:6px">
 								<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>
 								${p.seriesName}
 							</span>
-							<span style="font-weight:500">${val}</span>
+							<span style="font-weight:500">${_fmt(p.value[1])}</span>
 						</div>`;
 					}
 					return html;
@@ -210,27 +309,14 @@
 			},
 			yAxis: {
 				type: 'value' as const,
-				axisLabel: {
-					formatter: (val: number) => _fmt(val),
-					color: tc.axisLabel
-				},
+				axisLabel: { formatter: (val: number) => _fmt(val), color: tc.axisLabel },
 				axisLine: { show: false },
 				splitLine: { lineStyle: { color: tc.splitLine } }
 			},
 			series: [
 				makeAreaSeries(m.settings_pessimistic(), pessimisticData, scenarioColors.pessimistic, 1, 0.12),
 				makeAreaSeries(m.settings_optimistic(), optimisticData, scenarioColors.optimistic, 1, 0.12),
-				makeAreaSeries(m.settings_realistic(), realisticData, scenarioColors.realistic, 2.5, 0.22,
-				retirementMarkLines.length > 0
-					? {
-						markLine: {
-							silent: true,
-							symbol: 'none',
-							data: retirementMarkLines
-						}
-					}
-					: {}
-			)
+				makeAreaSeries(m.settings_realistic(), realisticData, scenarioColors.realistic, 2.5, 0.22, realisticExtra)
 			]
 		};
 	});
