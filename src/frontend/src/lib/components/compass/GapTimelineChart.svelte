@@ -20,11 +20,13 @@
 	let {
 		timelines,
 		analyses,
-		members
+		members,
+		householdOnly = false
 	}: {
 		timelines: (GapTimeline | null)[];
 		analyses: (GapAnalysisResult | null)[];
 		members: HouseholdMember[];
+		householdOnly?: boolean;
 	} = $props();
 
 	// Filter to members with timelines
@@ -49,6 +51,9 @@
 	});
 
 	// ── Household aggregation ───────────────────────────────────────────────────
+
+	// Backend Decimal fields serialize as strings in JSON — always coerce to number.
+	const n = (v: unknown): number => Number(v) || 0;
 
 	function aggregateTimelines(): GapTimeline | null {
 		const valid = timelines.filter((t): t is GapTimeline => t !== null);
@@ -79,23 +84,23 @@
 
 				// Only add required pension up to and including retirement year
 				if (year <= tl.retirement_year) {
-					requiredMonthly += pt.required_monthly;
+					requiredMonthly += n(pt.required_monthly);
 				} else {
 					// Past retirement: use last required value
 					const lastPt = tl.points[tl.points.length - 1];
-					requiredMonthly += lastPt ? lastPt.required_monthly : 0;
+					requiredMonthly += lastPt ? n(lastPt.required_monthly) : 0;
 				}
 
-				pensionPess += pt.pension_income.pessimistic;
-				pensionReal += pt.pension_income.realistic;
-				pensionOpt += pt.pension_income.optimistic;
-				statePess += pt.state_income.pessimistic;
-				stateReal += pt.state_income.realistic;
-				stateOpt += pt.state_income.optimistic;
-				fixedIncome += pt.fixed_income;
-				capPess += pt.capital_income.pessimistic;
-				capReal += pt.capital_income.realistic;
-				capOpt += pt.capital_income.optimistic;
+				pensionPess += n(pt.pension_income.pessimistic);
+				pensionReal += n(pt.pension_income.realistic);
+				pensionOpt += n(pt.pension_income.optimistic);
+				statePess += n(pt.state_income.pessimistic);
+				stateReal += n(pt.state_income.realistic);
+				stateOpt += n(pt.state_income.optimistic);
+				fixedIncome += n(pt.fixed_income);
+				capPess += n(pt.capital_income.pessimistic);
+				capReal += n(pt.capital_income.realistic);
+				capOpt += n(pt.capital_income.optimistic);
 			}
 
 			points.push({
@@ -117,9 +122,9 @@
 			points,
 			gap_at_retirement: last
 				? {
-						pessimistic: last.required_monthly - last.pension_income.pessimistic,
-						realistic: last.required_monthly - last.pension_income.realistic,
-						optimistic: last.required_monthly - last.pension_income.optimistic
+						pessimistic: n(last.required_monthly) - n(last.pension_income.pessimistic),
+						realistic: n(last.required_monthly) - n(last.pension_income.realistic),
+						optimistic: n(last.required_monthly) - n(last.pension_income.optimistic)
 					}
 				: { pessimistic: 0, realistic: 0, optimistic: 0 }
 		};
@@ -134,9 +139,9 @@
 			...valid[0],
 			member_id: -1,
 			remaining_monthly_gap: {
-				pessimistic: valid.reduce((s, a) => s + a.remaining_monthly_gap.pessimistic, 0),
-				realistic: valid.reduce((s, a) => s + a.remaining_monthly_gap.realistic, 0),
-				optimistic: valid.reduce((s, a) => s + a.remaining_monthly_gap.optimistic, 0)
+				pessimistic: valid.reduce((s, a) => s + n(a.remaining_monthly_gap.pessimistic), 0),
+				realistic: valid.reduce((s, a) => s + n(a.remaining_monthly_gap.realistic), 0),
+				optimistic: valid.reduce((s, a) => s + n(a.remaining_monthly_gap.optimistic), 0)
 			}
 		} as GapAnalysisResult;
 	}
@@ -196,14 +201,28 @@
 		const realisticData = tl.points.map((p) => p.pension_income.realistic);
 		const optimisticData = tl.points.map((p) => p.pension_income.optimistic);
 
-		const makeSeries = (name: string, data: number[], color: string, dashed = false) => ({
+		const makeSeries = (
+			name: string,
+			data: number[],
+			color: string,
+			dashed = false,
+			areaOpacity = 0
+		) => ({
 			name,
 			type: 'line',
 			data,
 			itemStyle: { color, borderWidth: 0 },
-			lineStyle: { width: 2, color, ...(dashed ? { type: 'dashed' } : {}) },
+			lineStyle: { width: dashed ? 1.5 : 2, color, ...(dashed ? { type: 'dashed' } : {}) },
 			showSymbol: false,
-			smooth: true
+			smooth: true,
+			...(areaOpacity > 0
+				? {
+						areaStyle: {
+							color,
+							opacity: areaOpacity
+						}
+					}
+				: {})
 		});
 
 		return {
@@ -253,9 +272,9 @@
 				splitLine: { lineStyle: { color: tc.splitLine } }
 			},
 			series: [
-				makeSeries(m.compass_timeline_required(), requiredData, requiredColor),
+				makeSeries(m.compass_timeline_required(), requiredData, requiredColor, false, 0.08),
 				makeSeries(m.compass_timeline_pessimistic(), pessimisticData, scenarioColors.pessimistic, true),
-				makeSeries(m.compass_timeline_realistic(), realisticData, scenarioColors.realistic, true),
+				makeSeries(m.compass_timeline_realistic(), realisticData, scenarioColors.realistic, true, 0.12),
 				makeSeries(m.compass_timeline_optimistic(), optimisticData, scenarioColors.optimistic, true)
 			]
 		};
@@ -284,7 +303,7 @@
 			: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800';
 	}
 
-	const hasMultipleMembers = $derived(configuredIndices.length > 1);
+	const hasMultipleMembers = $derived(!householdOnly && configuredIndices.length > 1);
 </script>
 
 <div class="space-y-4">
@@ -354,10 +373,10 @@
 			{/if}
 		</div>
 
-		<!-- Right panel: gap/surplus per scenario -->
+		<!-- Right panel: gap/surplus per scenario at retirement -->
 		<div class="flex flex-col gap-2 w-40 shrink-0 justify-center">
-			{#if activeAnalysis}
-				{@const gap = activeAnalysis.remaining_monthly_gap}
+			{#if activeTimeline}
+				{@const gap = activeTimeline.gap_at_retirement}
 				<!-- Optimistic (top) -->
 				<div class="rounded-lg border px-3 py-2 {bgClass(gap.optimistic)}">
 					<div class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">

@@ -1,23 +1,18 @@
 <!--
 @file src/routes/compass/+page.svelte
 @kind route
-@purpose Kompass page — interactive retirement gap analysis per household member.
+@purpose Kompass Übersichtsseite — Haushalt-Zusammenfassung, Timeline-Chart und kompakte Mitglieds-Karten.
 -->
 
 <script lang="ts">
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import GapOverviewPanel from '$lib/components/compass/GapOverviewPanel.svelte';
-	import GapMemberSection from '$lib/components/compass/GapMemberSection.svelte';
 	import GapTimelineChart from '$lib/components/compass/GapTimelineChart.svelte';
+	import GapMemberCard from '$lib/components/compass/GapMemberCard.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
-
-	// Look up config by member id (gapConfigs is page-load data)
-	function getConfig(memberId: number) {
-		return data.gapConfigs.find((c: { member_id: number }) => c.member_id === memberId) ?? null;
-	}
 </script>
 
 <div class="space-y-6">
@@ -29,10 +24,10 @@
 	{#if data.members.length === 0}
 		<p class="text-muted-foreground text-sm">{m.compass_gap_no_members()}</p>
 	{:else}
-		<!-- Household Overview (only shown when at least one member has analysis) -->
+		<!-- Household overview summary -->
 		<GapOverviewPanel analyses={data.analyses} members={data.members} />
 
-		<!-- Timeline chart (only shown when at least one member has a timeline) -->
+		<!-- Timeline chart — household aggregate, no per-member tabs -->
 		{#if data.timelines.some((t: unknown) => t !== null)}
 			<Card
 				title={m.compass_timeline_title()}
@@ -42,66 +37,22 @@
 					timelines={data.timelines}
 					analyses={data.analyses}
 					members={data.members}
+					householdOnly={true}
 				/>
 			</Card>
 		{/if}
 
-		<!-- Per-member sections — accordion container -->
-		<div class="rounded-xl border border-border divide-y divide-border overflow-hidden">
-			{#each data.members as member, i (member.id)}
-				<GapMemberSection
-					{member}
-					config={getConfig(member.id)}
-					analysis={data.analyses[i]}
-				/>
-			{/each}
+		<!-- Per-member cards -->
+		<div>
+			<h2 class="text-base font-semibold mb-4">{m.compass_household_summary_title()}</h2>
+			<div class="flex flex-wrap gap-4">
+				{#each data.members as member, i (member.id)}
+					<GapMemberCard
+						{member}
+						analysis={data.analyses[i] ?? null}
+					/>
+				{/each}
+			</div>
 		</div>
 	{/if}
-
-	<!-- Roadmap Cards — existing placeholders remain as feature outlook -->
-	<div class="border-t border-border pt-6">
-		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-			<Card
-				title="Gap Analysis"
-				description="Calculate and visualize the difference between your needed and current pension"
-			>
-				<ul class="list-disc pl-4 space-y-2">
-					<li class="font-bold flex items-center gap-2">
-						<span class="text-green-600">✓</span> Enter your current wage for baseline calculations
-					</li>
-					<li class="font-bold flex items-center gap-2">
-						<span class="text-green-600">✓</span> View your pension gap with real-time updates
-					</li>
-					<li class="text-muted-foreground">Automatic integration with household member data</li>
-					<li class="font-bold flex items-center gap-2">
-						<span class="text-green-600">✓</span> Compare with your existing pension plans
-					</li>
-				</ul>
-			</Card>
-
-			<Card
-				title="Smart Recommendations"
-				description="Get personalized suggestions to improve your pension health"
-			>
-				<ul class="list-disc pl-4 space-y-2">
-					<li class="font-bold text-red-800/70">Actionable steps to close your pension gap</li>
-					<li class="font-bold">Risk level assessment</li>
-					<li class="font-bold text-red-800/70">Savings adjustment recommendations</li>
-					<li class="text-muted-foreground">Investment strategy suggestions</li>
-				</ul>
-			</Card>
-
-			<Card
-				title="Interactive Planning"
-				description="Explore different scenarios and their impact on your retirement"
-			>
-				<ul class="list-disc pl-4 space-y-2">
-					<li class="font-bold">Adjust retirement age to see immediate impact</li>
-					<li class="text-muted-foreground">Toggle between lifestyle scenarios</li>
-					<li class="text-muted-foreground">Explore "What if" scenarios</li>
-					<li class="font-bold">View projected timeline visualization</li>
-				</ul>
-			</Card>
-		</div>
-	</div>
 </div>

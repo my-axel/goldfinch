@@ -32,6 +32,12 @@
 	let isExpanded = $state(false);
 	const height = $derived(isExpanded ? 600 : 300);
 
+	// Whether to show savings series in legend/chart (trimmed of leading LOCF zeros)
+	const hasSavingsData = $derived.by(() => {
+		const firstNonZeroIdx = savingsHistory.findIndex((d) => Number(d.value) > 0);
+		return firstNonZeroIdx >= 0 && savingsHistory.slice(firstNonZeroIdx).length > 1;
+	});
+
 	const locale = $derived(settingsStore.current.number_locale);
 	const currency = $derived(settingsStore.current.currency);
 
@@ -139,16 +145,33 @@
 		const contributionsData = chartData.map(
 			(d) => [d.date.getTime(), d.contributions] as [number, number]
 		);
-		const savingsData = savingsHistory
+		const rawSavingsData = savingsHistory
 			.slice()
 			.sort((a, b) => a.date.localeCompare(b.date))
 			.map((d) => [new Date(d.date).getTime(), Number(d.value)] as [number, number]);
+		// Trim leading zeros — LOCF artifacts from other pension types' statement dates
+		// (e.g. a Company pension Dec 2023 statement pulls the shared axis back years).
+		const firstNonZeroIdx = rawSavingsData.findIndex((d) => d[1] > 0);
+		const savingsData = firstNonZeroIdx >= 0 ? rawSavingsData.slice(firstNonZeroIdx) : [];
 
-		const xMin = Math.min(
-			...valueData.map((d) => d[0]),
-			...contributionsData.map((d) => d[0]),
-			...(savingsData.length > 1 ? savingsData.map((d) => d[0]) : [])
-		) || undefined;
+		// Build a merged date axis and LOCF-fill both series to it.
+		// This ensures ECharts only interpolates between known points — never extrapolates
+		// outside a series' range — eliminating the backward-bezier artifact that appears
+		// when two stacked series have different start dates.
+		function locfAlign(data: [number, number][], dates: number[]): [number, number][] {
+			let lastVal = 0, idx = 0;
+			return dates.map((ts) => {
+				while (idx < data.length && data[idx][0] <= ts) { lastVal = data[idx][1]; idx++; }
+				return [ts, lastVal] as [number, number];
+			});
+		}
+		const hasSavings = savingsData.length > 1;
+		const allDates = hasSavings
+			? [...new Set([...valueData.map((d) => d[0]), ...savingsData.map((d) => d[0])])].sort((a, b) => a - b)
+			: valueData.map((d) => d[0]);
+		const alignedEtfData = hasSavings ? locfAlign(valueData, allDates) : valueData;
+		const alignedSavingsData = hasSavings ? locfAlign(savingsData, allDates) : savingsData;
+		const xMin = allDates.length > 0 ? allDates[0] : undefined;
 
 		const withAlpha = (hsl: string, alpha: number) =>
 			hsl.replace('hsl(', 'hsla(').replace(')', `, ${alpha})`);
@@ -157,15 +180,14 @@
 			name: string,
 			data: [number, number][],
 			color: string,
-			areaOpacity: number,
-			showLine = true
+			areaOpacity: number
 		) => ({
 			name,
 			type: 'line',
 			stack: 'total',
 			data,
 			itemStyle: { color, borderWidth: 0 },
-			lineStyle: { width: showLine ? 2 : 0, color },
+			lineStyle: { width: 2, color },
 			areaStyle: {
 				color: new graphic.LinearGradient(0, 0, 0, 1, [
 					{ offset: 0, color: withAlpha(color, areaOpacity) },
@@ -178,7 +200,7 @@
 
 		const makeReferenceLine = (
 			name: string,
-			data: [number, number][],
+			data: any[],
 			color: string
 		) => ({
 			name,
@@ -187,8 +209,22 @@
 			itemStyle: { color, borderWidth: 0 },
 			lineStyle: { width: 1.5, color, type: 'dashed' as const },
 			showSymbol: false,
-			smooth: true
+			smooth: false,
+			z: 10
 		});
+
+		// Offset contributions by the savings baseline so the line sits correctly
+		// within the ETF stacked area. The tooltip still shows the raw ETF-only contribution.
+		const offsetContributionsData = contributionsData
+			.filter(([, val]) => val > 0)
+			.map(([ts, val]) => {
+				let savingsVal = 0;
+				for (const [sts, sv] of alignedSavingsData) {
+					if (sts <= ts) savingsVal = sv;
+					else break;
+				}
+				return { value: [ts, val + savingsVal] as [number, number], rawContrib: val };
+			});
 
 		return {
 			backgroundColor: 'transparent',
@@ -204,8 +240,9 @@
 					const dateStr = _headerDateFmt(new Date(ts));
 					let html = `<div style="font-weight:600;margin-bottom:6px">${dateStr}</div>`;
 					for (const p of params) {
-						if (p.value[1] == null) continue;
-						const val = _fmt(p.value[1]);
+						if (p.value[1] == null || p.value[1] === 0) continue;
+						const rawVal = (p.data && typeof p.data === 'object' && 'rawContrib' in p.data) ? p.data.rawContrib : p.value[1];
+						const val = _fmt(rawVal);
 						html += `<div style="display:flex;justify-content:space-between;gap:16px;margin-top:3px">
 							<span style="display:flex;align-items:center;gap:6px">
 								<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>
@@ -247,9 +284,9 @@
 				splitLine: { lineStyle: { color: tc.splitLine } }
 			},
 			series: [
-				makeStackedSeries(m.etf_historical_value(), valueData, chartColors.value, 0.35),
-				...(savingsData.length > 1 ? [makeStackedSeries(m.dashboard_chart_savings_balance(), savingsData, chartColors.savings, 0.3, false)] : []),
-				makeReferenceLine(m.etf_contributions(), contributionsData, chartColors.contributions)
+				...(hasSavings ? [makeStackedSeries(m.dashboard_chart_savings_balance(), alignedSavingsData, chartColors.savings, 0.2)] : []),
+				makeStackedSeries(m.etf_historical_value(), alignedEtfData, chartColors.value, 0.35),
+				makeReferenceLine(m.etf_contributions(), offsetContributionsData, chartColors.contributions)
 			]
 		};
 	});
@@ -266,7 +303,7 @@
 				<div class="h-3 w-3 rounded-full" style="background-color: {chartColors.contributions}"></div>
 				<span class="text-xs text-muted-foreground">{m.etf_contributions()}</span>
 			</div>
-			{#if savingsHistory.length > 1}
+			{#if hasSavingsData}
 				<div class="flex items-center gap-1.5">
 					<div class="h-3 w-3 rounded-full" style="background-color: {chartColors.savings}"></div>
 					<span class="text-xs text-muted-foreground">{m.dashboard_chart_savings_balance()}</span>
@@ -289,7 +326,7 @@
 
 	{#if loading}
 		<div class="animate-pulse bg-muted rounded-lg" style="height: {height}px"></div>
-	{:else if chartData.length === 0 && savingsHistory.length <= 1}
+	{:else if chartData.length === 0 && !hasSavingsData}
 		<div
 			class="flex items-center justify-center text-sm text-muted-foreground"
 			style="height: {height}px"
