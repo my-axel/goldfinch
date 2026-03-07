@@ -10,6 +10,7 @@ from app.schemas.retirement_gap import (
     RetirementGapConfigUpdate,
     RetirementGapConfigResponse,
     GapAnalysisResult,
+    GapTimeline,
 )
 from app.services.gap_analysis import gap_analysis_service
 
@@ -83,5 +84,19 @@ def get_gap_analysis(member_id: int, db: Session = Depends(deps.get_db)):
     """
     try:
         return gap_analysis_service.compute(db, member_id=member_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/gap-timeline/{member_id}", response_model=GapTimeline)
+def get_gap_timeline(member_id: int, db: Session = Depends(deps.get_db)):
+    """
+    Compute and return the year-by-year retirement gap timeline for a member.
+
+    Returns one data point per integer year from today to planned retirement,
+    showing required monthly pension and projected pension income per scenario.
+    """
+    try:
+        return gap_analysis_service.compute_timeline(db, member_id=member_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

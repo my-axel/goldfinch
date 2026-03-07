@@ -13,18 +13,31 @@ export const load = async ({ fetch }: { fetch: typeof globalThis.fetch }) => {
 
 	const [members, gapConfigs] = await Promise.all([householdApi.list(), compassApi.getAllConfigs()]);
 
-	// Pre-load analysis for members that already have a config
-	const analyses = await Promise.all(
-		members.map(async (member) => {
-			const hasConfig = gapConfigs.some((c) => c.member_id === member.id);
-			if (!hasConfig) return null;
-			try {
-				return await compassApi.getAnalysis(member.id);
-			} catch {
-				return null;
-			}
-		})
-	);
+	// Pre-load analysis + timeline for members that already have a config
+	const [analyses, timelines] = await Promise.all([
+		Promise.all(
+			members.map(async (member) => {
+				const hasConfig = gapConfigs.some((c) => c.member_id === member.id);
+				if (!hasConfig) return null;
+				try {
+					return await compassApi.getAnalysis(member.id);
+				} catch {
+					return null;
+				}
+			})
+		),
+		Promise.all(
+			members.map(async (member) => {
+				const hasConfig = gapConfigs.some((c) => c.member_id === member.id);
+				if (!hasConfig) return null;
+				try {
+					return await compassApi.getTimeline(member.id);
+				} catch {
+					return null;
+				}
+			})
+		)
+	]);
 
-	return { members, gapConfigs, analyses };
+	return { members, gapConfigs, analyses, timelines };
 };

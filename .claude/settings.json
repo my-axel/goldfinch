@@ -4,5 +4,29 @@
       "Bash(find:*)",
       "Bash(grep:*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -e '.tool_input.file_path | test(\"\\\\.env\")' && echo 'BLOCKED: .env files are protected' && exit 2 || exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -e '.tool_input.file_path | test(\"messages/\")' && cd /Users/axel/Coding/goldfinch-dev/src/frontend && npx paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide || exit 0"
+          }
+        ]
+      }
+    ]
   }
 }

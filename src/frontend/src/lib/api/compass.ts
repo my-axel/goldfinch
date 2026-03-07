@@ -9,7 +9,8 @@ import type {
 	RetirementGapConfig,
 	RetirementGapConfigCreate,
 	RetirementGapConfigUpdate,
-	GapAnalysisResult
+	GapAnalysisResult,
+	GapTimeline
 } from '$lib/types/compass';
 
 const BASE = '/api/v1/compass';
@@ -25,7 +26,9 @@ function buildCompassApi(client: ReturnType<typeof createApi>) {
 			client.put<RetirementGapConfig>(`${BASE}/gap-config/${memberId}`, data),
 		deleteConfig: (memberId: number) => client.delete<void>(`${BASE}/gap-config/${memberId}`),
 		getAnalysis: (memberId: number) =>
-			client.get<GapAnalysisResult>(`${BASE}/gap-analysis/${memberId}`)
+			client.get<GapAnalysisResult>(`${BASE}/gap-analysis/${memberId}`),
+		getTimeline: (memberId: number) =>
+			client.get<GapTimeline>(`${BASE}/gap-timeline/${memberId}`)
 	};
 }
 

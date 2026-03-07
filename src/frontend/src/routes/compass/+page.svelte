@@ -9,6 +9,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import GapOverviewPanel from '$lib/components/compass/GapOverviewPanel.svelte';
 	import GapMemberSection from '$lib/components/compass/GapMemberSection.svelte';
+	import GapTimelineChart from '$lib/components/compass/GapTimelineChart.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
@@ -30,6 +31,20 @@
 	{:else}
 		<!-- Household Overview (only shown when at least one member has analysis) -->
 		<GapOverviewPanel analyses={data.analyses} members={data.members} />
+
+		<!-- Timeline chart (only shown when at least one member has a timeline) -->
+		{#if data.timelines.some((t: unknown) => t !== null)}
+			<Card
+				title={m.compass_timeline_title()}
+				description={m.compass_timeline_description()}
+			>
+				<GapTimelineChart
+					timelines={data.timelines}
+					analyses={data.analyses}
+					members={data.members}
+				/>
+			</Card>
+		{/if}
 
 		<!-- Per-member sections — accordion container -->
 		<div class="rounded-xl border border-border divide-y divide-border overflow-hidden">

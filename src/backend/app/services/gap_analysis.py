@@ -25,7 +25,7 @@ from app.crud.pension_company import pension_company as company_crud
 from app.crud.pension_insurance import pension_insurance as insurance_crud
 from app.crud.settings import settings as settings_crud
 from app.models.enums import PensionStatus
-from app.schemas.retirement_gap import GapAnalysisResult, GapBreakdown, GapScenarios
+from app.schemas.retirement_gap import GapAnalysisResult, GapBreakdown, GapScenarios, GapTimeline, GapTimelinePoint
 from app.services.pension_series_projection import PensionSeriesProjectionService
 from app.services.pension_state_projection import PensionStateProjectionService
 
@@ -301,6 +301,214 @@ class GapAnalysisService:
             optimistic=sav_opt.quantize(Decimal("0.01")),
         )
         return etf_projected, savings_projected
+
+
+    def compute_timeline(self, db: Session, member_id: int) -> GapTimeline:
+        """
+        Compute year-by-year retirement gap timeline from today to planned retirement.
+
+        For each integer year Y (0 = today, 1 = one year from now, …):
+          - required_monthly: retirement need grown by salary growth (or inflation for override)
+          - state_income: state pension grown by per-scenario rates for Y years
+          - fixed_income: company + insurance (constant)
+          - capital_income: ETF + savings capital at year Y, converted to monthly via withdrawal rate
+          - pension_income: sum of above, net of optional deduction rate
+
+        Raises ValueError if member or config not found.
+        """
+        member = household_crud.get(db, id=member_id)
+        if member is None:
+            raise ValueError(f"Member {member_id} not found")
+
+        config = gap_crud.get_by_member_id(db, member_id=member_id)
+        if config is None:
+            raise ValueError(f"No gap config found for member {member_id}")
+
+        app_settings = settings_crud.get_settings(db)
+        inflation_rate = Decimal(str(app_settings.inflation_rate)) if app_settings else Decimal("2.0")
+
+        retirement_date = member.retirement_date_planned
+        today = date.today()
+
+        days_to_retirement = (retirement_date - today).days if retirement_date else 0
+        years_to_retirement = max(days_to_retirement / 365.25, 0.0)
+        retirement_already_reached = retirement_date is None or retirement_date <= today
+
+        if retirement_already_reached:
+            return GapTimeline(
+                member_id=member_id,
+                start_year=today.year,
+                retirement_year=today.year,
+                points=[],
+                gap_at_retirement=GapScenarios(
+                    pessimistic=Decimal("0"), realistic=Decimal("0"), optimistic=Decimal("0")
+                ),
+            )
+
+        withdrawal_rate = Decimal(str(config.withdrawal_rate))
+        replacement_rate = Decimal(str(config.replacement_rate))
+        salary_growth_rate = Decimal(str(config.annual_salary_growth_rate)) / Decimal("100")
+        net_monthly_income = Decimal(str(config.net_monthly_income))
+
+        # Deduction factor for gross→net conversion of pension income
+        if config.pension_deduction_rate is not None and config.pension_deduction_rate > 0:
+            net_factor = Decimal("1") - Decimal(str(config.pension_deduction_rate)) / Decimal("100")
+        else:
+            net_factor = Decimal("1")
+
+        # Required pension base and growth rate
+        if config.desired_monthly_pension is not None:
+            required_base = Decimal(str(config.desired_monthly_pension))
+            required_growth_rate = inflation_rate / Decimal("100")
+        else:
+            required_base = net_monthly_income * replacement_rate
+            required_growth_rate = salary_growth_rate
+
+        # Fixed income (company + insurance) — constant
+        company_monthly = self._company_monthly(db, member_id, member.retirement_age_planned)
+        insurance_monthly = self._insurance_monthly(db, member_id)
+        fixed_income = company_monthly + insurance_monthly
+
+        # State pension: collect base amounts and rates per active pension
+        state_bases = self._state_base_amounts_for_timeline(db, member_id, app_settings)
+
+        # ETF + Savings: build full monthly series, extract yearly snapshots
+        num_years = int(years_to_retirement) + 1
+        svc = PensionSeriesProjectionService()
+        etf_yearly = self._yearly_capital(
+            etf_crud.get_multi(db, filters={"member_id": member_id}),
+            "ETF_PLAN", svc, app_settings, retirement_date, num_years,
+        )
+        savings_yearly = self._yearly_capital(
+            savings_crud.get_multi(db, filters={"member_id": member_id}),
+            "SAVINGS", svc, app_settings, retirement_date, num_years,
+        )
+
+        start_year = today.year
+        retirement_year = retirement_date.year
+
+        points: list[GapTimelinePoint] = []
+        for y in range(num_years):
+            y_dec = Decimal(str(y))
+
+            required_monthly = (required_base * (Decimal("1") + required_growth_rate) ** y_dec).quantize(Decimal("0.01"))
+
+            # State pension at year Y
+            state_pess = state_real = state_opt = Decimal("0")
+            for base_pess, rate_pess, base_real, rate_real, base_opt, rate_opt in state_bases:
+                state_pess += base_pess * ((Decimal("1") + rate_pess / Decimal("100")) ** y_dec)
+                state_real += base_real * ((Decimal("1") + rate_real / Decimal("100")) ** y_dec)
+                state_opt += base_opt * ((Decimal("1") + rate_opt / Decimal("100")) ** y_dec)
+
+            # Capital income at year Y → monthly
+            cap_pess = (etf_yearly["pessimistic"][y] + savings_yearly["pessimistic"][y]) * withdrawal_rate / Decimal("12")
+            cap_real = (etf_yearly["realistic"][y] + savings_yearly["realistic"][y]) * withdrawal_rate / Decimal("12")
+            cap_opt = (etf_yearly["optimistic"][y] + savings_yearly["optimistic"][y]) * withdrawal_rate / Decimal("12")
+
+            # Total pension income (gross → net)
+            total_pess = (state_pess + fixed_income + cap_pess) * net_factor
+            total_real = (state_real + fixed_income + cap_real) * net_factor
+            total_opt = (state_opt + fixed_income + cap_opt) * net_factor
+
+            points.append(GapTimelinePoint(
+                year=start_year + y,
+                years_from_now=float(y),
+                required_monthly=required_monthly,
+                pension_income=GapScenarios(
+                    pessimistic=total_pess.quantize(Decimal("0.01")),
+                    realistic=total_real.quantize(Decimal("0.01")),
+                    optimistic=total_opt.quantize(Decimal("0.01")),
+                ),
+                state_income=GapScenarios(
+                    pessimistic=(state_pess * net_factor).quantize(Decimal("0.01")),
+                    realistic=(state_real * net_factor).quantize(Decimal("0.01")),
+                    optimistic=(state_opt * net_factor).quantize(Decimal("0.01")),
+                ),
+                fixed_income=(fixed_income * net_factor).quantize(Decimal("0.01")),
+                capital_income=GapScenarios(
+                    pessimistic=(cap_pess * net_factor).quantize(Decimal("0.01")),
+                    realistic=(cap_real * net_factor).quantize(Decimal("0.01")),
+                    optimistic=(cap_opt * net_factor).quantize(Decimal("0.01")),
+                ),
+            ))
+
+        last = points[-1] if points else None
+        if last:
+            gap_at_retirement = GapScenarios(
+                pessimistic=(last.required_monthly - last.pension_income.pessimistic).quantize(Decimal("0.01")),
+                realistic=(last.required_monthly - last.pension_income.realistic).quantize(Decimal("0.01")),
+                optimistic=(last.required_monthly - last.pension_income.optimistic).quantize(Decimal("0.01")),
+            )
+        else:
+            gap_at_retirement = GapScenarios(pessimistic=Decimal("0"), realistic=Decimal("0"), optimistic=Decimal("0"))
+
+        return GapTimeline(
+            member_id=member_id,
+            start_year=start_year,
+            retirement_year=retirement_year,
+            points=points,
+            gap_at_retirement=gap_at_retirement,
+        )
+
+    def _state_base_amounts_for_timeline(self, db: Session, member_id: int, app_settings) -> list:
+        """
+        Returns list of (base_pess, rate_pess, base_real, rate_real, base_opt, rate_opt)
+        for each active state pension with a statement, for use in compute_timeline().
+        """
+        pensions = state_crud.get_multi(db, filters={"member_id": member_id})
+        result = []
+        default_rates = {"pessimistic": Decimal("1.0"), "realistic": Decimal("1.5"), "optimistic": Decimal("2.0")}
+
+        for p in pensions:
+            if p.status != PensionStatus.ACTIVE:
+                continue
+            if not p.statements:
+                continue
+            latest = p.statements[0]
+            if latest.projected_monthly_amount is None:
+                continue
+            base = Decimal(str(latest.projected_monthly_amount))
+
+            rates = {}
+            for scenario in ["pessimistic", "realistic", "optimistic"]:
+                pension_rate = getattr(p, f"{scenario}_rate", None)
+                if pension_rate is not None:
+                    rates[scenario] = Decimal(str(pension_rate))
+                elif app_settings is not None and hasattr(app_settings, f"state_pension_{scenario}_rate"):
+                    rates[scenario] = Decimal(str(getattr(app_settings, f"state_pension_{scenario}_rate")))
+                else:
+                    rates[scenario] = default_rates[scenario]
+
+            result.append((base, rates["pessimistic"], base, rates["realistic"], base, rates["optimistic"]))
+        return result
+
+    def _yearly_capital(self, pensions, pension_type: str, svc: PensionSeriesProjectionService, app_settings, retirement_date, num_years: int) -> dict:
+        """
+        Build full monthly projection series for all active pensions of a type,
+        and extract capital values at yearly intervals (year 0 = today, year Y = Y*12 months).
+
+        Returns {scenario: {year_index: Decimal}} for pessimistic/realistic/optimistic.
+        """
+        result = {
+            s: {y: Decimal("0") for y in range(num_years)}
+            for s in ("pessimistic", "realistic", "optimistic")
+        }
+
+        for p in pensions:
+            if p.status != PensionStatus.ACTIVE:
+                continue
+            start_value, _ = svc._start_value_and_steps(p, pension_type)
+            series = svc.build_scenario_series(p, pension_type, app_settings, retirement_date)
+
+            for scenario in ("pessimistic", "realistic", "optimistic"):
+                pts = getattr(series, scenario)
+                result[scenario][0] += start_value
+                for y in range(1, num_years):
+                    idx = y * 12 - 1
+                    if pts:
+                        result[scenario][y] += pts[min(idx, len(pts) - 1)].value
+
+        return result
 
 
 gap_analysis_service = GapAnalysisService()

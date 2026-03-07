@@ -51,3 +51,4 @@ celerybeat-schedule*
 SCRATCHPAD.md
 .claude/settings.local.json
 .claude/*.local.json
+.claude/mcp.json

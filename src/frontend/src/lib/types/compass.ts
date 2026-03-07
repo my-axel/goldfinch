@@ -65,3 +65,21 @@ export interface GapAnalysisResult {
 	breakdown: GapBreakdown;
 	retirement_already_reached: boolean;
 }
+
+export interface GapTimelinePoint {
+	year: number;
+	years_from_now: number;
+	required_monthly: number;
+	pension_income: GapScenarios;
+	state_income: GapScenarios;
+	fixed_income: number;
+	capital_income: GapScenarios;
+}
+
+export interface GapTimeline {
+	member_id: number;
+	start_year: number;
+	retirement_year: number;
+	points: GapTimelinePoint[];
+	gap_at_retirement: GapScenarios;
+}

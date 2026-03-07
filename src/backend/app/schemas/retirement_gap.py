@@ -66,3 +66,21 @@ class GapAnalysisResult(BaseModel):
     gap: GapScenarios
     breakdown: GapBreakdown
     retirement_already_reached: bool
+
+
+class GapTimelinePoint(BaseModel):
+    year: int
+    years_from_now: float
+    required_monthly: Decimal
+    pension_income: GapScenarios
+    state_income: GapScenarios
+    fixed_income: Decimal
+    capital_income: GapScenarios
+
+
+class GapTimeline(BaseModel):
+    member_id: int
+    start_year: int
+    retirement_year: int
+    points: list[GapTimelinePoint]
+    gap_at_retirement: GapScenarios
