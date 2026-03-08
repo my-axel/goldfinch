@@ -125,39 +125,23 @@
 		</div>
 	</div>
 
-	<!-- Secondary: pessimistic + optimistic -->
-	<div class="grid grid-cols-2 gap-3">
-		<div class="rounded-lg border border-border bg-muted/10 px-3 py-2.5">
-			<p class="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
-				{m.settings_pessimistic()} · {s.state_pension_pessimistic_rate}% / {s.projection_pessimistic_rate}%
-			</p>
-			{#if pessimisticDisplay}
-				<p class="text-sm font-semibold" style="color: hsl(320, 65%, 55%)">
-					{#if pessimisticStatus === 'on_track'}+{/if}<FormattedCurrency
-						value={pessimisticDisplay.absolute}
-						decimals={0}
-					/>/Mo
-				</p>
-				<p class="text-xs text-muted-foreground">
-					{pessimisticStatus === 'on_track' ? m.compass_gap_surplus() : m.compass_gap_shortfall()}
-				</p>
-			{/if}
+	<!-- Secondary: pessimistic + optimistic (compact inline) -->
+	{#if pessimisticDisplay && optimisticDisplay}
+		<div class="flex items-center gap-6 text-sm text-muted-foreground">
+			<span>
+				{m.settings_pessimistic()}:
+				<span class="font-medium" style="color: hsl(320, 65%, 55%)">
+					{#if pessimisticStatus === 'on_track'}+{/if}<FormattedCurrency value={pessimisticDisplay.absolute} decimals={0} />/Mo
+				</span>
+				<span class="text-xs ml-1">{pessimisticStatus === 'on_track' ? m.compass_gap_surplus() : m.compass_gap_shortfall()}</span>
+			</span>
+			<span>
+				{m.settings_optimistic()}:
+				<span class="font-medium" style="color: hsl(142, 70%, 45%)">
+					{#if optimisticStatus === 'on_track'}+{/if}<FormattedCurrency value={optimisticDisplay.absolute} decimals={0} />/Mo
+				</span>
+				<span class="text-xs ml-1">{optimisticStatus === 'on_track' ? m.compass_gap_surplus() : m.compass_gap_shortfall()}</span>
+			</span>
 		</div>
-		<div class="rounded-lg border border-border bg-muted/10 px-3 py-2.5">
-			<p class="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
-				{m.settings_optimistic()} · {s.state_pension_optimistic_rate}% / {s.projection_optimistic_rate}%
-			</p>
-			{#if optimisticDisplay}
-				<p class="text-sm font-semibold" style="color: hsl(142, 70%, 45%)">
-					{#if optimisticStatus === 'on_track'}+{/if}<FormattedCurrency
-						value={optimisticDisplay.absolute}
-						decimals={0}
-					/>/Mo
-				</p>
-				<p class="text-xs text-muted-foreground">
-					{optimisticStatus === 'on_track' ? m.compass_gap_surplus() : m.compass_gap_shortfall()}
-				</p>
-			{/if}
-		</div>
-	</div>
+	{/if}
 </div>

@@ -14,6 +14,7 @@
 	import Explanation from '$lib/components/ui/Explanation.svelte';
 	import GapConfigForm from '$lib/components/compass/GapConfigForm.svelte';
 	import GapResultDisplay from '$lib/components/compass/GapResultDisplay.svelte';
+	import GapBreakdown from '$lib/components/compass/GapBreakdown.svelte';
 	import GapTimelineChart from '$lib/components/compass/GapTimelineChart.svelte';
 
 	let { data } = $props();
@@ -87,6 +88,7 @@
 		<ContentSection>
 			<Card title={m.compass_gap_results_card_title()}>
 				<GapResultDisplay result={analysis} />
+				<GapBreakdown result={analysis} />
 			</Card>
 
 			{#snippet aside()}

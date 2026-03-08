@@ -21,12 +21,14 @@
 		timelines,
 		analyses,
 		members,
-		householdOnly = false
+		householdOnly = false,
+		showSidePanel = true
 	}: {
 		timelines: (GapTimeline | null)[];
 		analyses: (GapAnalysisResult | null)[];
 		members: HouseholdMember[];
 		householdOnly?: boolean;
+		showSidePanel?: boolean;
 	} = $props();
 
 	// Filter to members with timelines
@@ -374,53 +376,55 @@
 		</div>
 
 		<!-- Right panel: gap/surplus per scenario at retirement -->
-		<div class="flex flex-col gap-2 w-40 shrink-0 justify-center">
-			{#if activeTimeline}
-				{@const gap = activeTimeline.gap_at_retirement}
-				<!-- Optimistic (top) -->
-				<div class="rounded-lg border px-3 py-2 {bgClass(gap.optimistic)}">
-					<div class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
-						{m.compass_timeline_optimistic()}
+		{#if showSidePanel}
+			<div class="flex flex-col gap-2 w-40 shrink-0 justify-center">
+				{#if activeTimeline}
+					{@const gap = activeTimeline.gap_at_retirement}
+					<!-- Optimistic (top) -->
+					<div class="rounded-lg border px-3 py-2 {bgClass(gap.optimistic)}">
+						<div class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
+							{m.compass_timeline_optimistic()}
+						</div>
+						<div class="text-sm font-semibold {gapClass(gap.optimistic)}">
+							<FormattedCurrency value={Math.abs(gap.optimistic)} decimals={0} />
+						</div>
+						<div class="text-[10px] text-muted-foreground">
+							{gap.optimistic <= 0 ? m.compass_timeline_surplus_label() : m.compass_timeline_gap_label()}
+							{m.compass_timeline_at_retirement()}
+						</div>
 					</div>
-					<div class="text-sm font-semibold {gapClass(gap.optimistic)}">
-						<FormattedCurrency value={Math.abs(gap.optimistic)} decimals={0} />
-					</div>
-					<div class="text-[10px] text-muted-foreground">
-						{gap.optimistic <= 0 ? m.compass_timeline_surplus_label() : m.compass_timeline_gap_label()}
-						{m.compass_timeline_at_retirement()}
-					</div>
-				</div>
 
-				<!-- Realistic (middle) -->
-				<div class="rounded-lg border px-3 py-2 {bgClass(gap.realistic)}">
-					<div class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
-						{m.compass_timeline_realistic()}
+					<!-- Realistic (middle) -->
+					<div class="rounded-lg border px-3 py-2 {bgClass(gap.realistic)}">
+						<div class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
+							{m.compass_timeline_realistic()}
+						</div>
+						<div class="text-sm font-semibold {gapClass(gap.realistic)}">
+							<FormattedCurrency value={Math.abs(gap.realistic)} decimals={0} />
+						</div>
+						<div class="text-[10px] text-muted-foreground">
+							{gap.realistic <= 0 ? m.compass_timeline_surplus_label() : m.compass_timeline_gap_label()}
+							{m.compass_timeline_at_retirement()}
+						</div>
 					</div>
-					<div class="text-sm font-semibold {gapClass(gap.realistic)}">
-						<FormattedCurrency value={Math.abs(gap.realistic)} decimals={0} />
-					</div>
-					<div class="text-[10px] text-muted-foreground">
-						{gap.realistic <= 0 ? m.compass_timeline_surplus_label() : m.compass_timeline_gap_label()}
-						{m.compass_timeline_at_retirement()}
-					</div>
-				</div>
 
-				<!-- Pessimistic (bottom) -->
-				<div class="rounded-lg border px-3 py-2 {bgClass(gap.pessimistic)}">
-					<div class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
-						{m.compass_timeline_pessimistic()}
+					<!-- Pessimistic (bottom) -->
+					<div class="rounded-lg border px-3 py-2 {bgClass(gap.pessimistic)}">
+						<div class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
+							{m.compass_timeline_pessimistic()}
+						</div>
+						<div class="text-sm font-semibold {gapClass(gap.pessimistic)}">
+							<FormattedCurrency value={Math.abs(gap.pessimistic)} decimals={0} />
+						</div>
+						<div class="text-[10px] text-muted-foreground">
+							{gap.pessimistic <= 0
+								? m.compass_timeline_surplus_label()
+								: m.compass_timeline_gap_label()}
+							{m.compass_timeline_at_retirement()}
+						</div>
 					</div>
-					<div class="text-sm font-semibold {gapClass(gap.pessimistic)}">
-						<FormattedCurrency value={Math.abs(gap.pessimistic)} decimals={0} />
-					</div>
-					<div class="text-[10px] text-muted-foreground">
-						{gap.pessimistic <= 0
-							? m.compass_timeline_surplus_label()
-							: m.compass_timeline_gap_label()}
-						{m.compass_timeline_at_retirement()}
-					</div>
-				</div>
-			{/if}
-		</div>
+				{/if}
+			</div>
+		{/if}
 	</div>
 </div>
