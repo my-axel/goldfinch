@@ -13,7 +13,7 @@
 	import logoIcon from '$lib/assets/logo-icon.svg';
 	import logoFull from '$lib/assets/logo-full.svg';
 	import { m } from '$lib/paraglide/messages.js';
-	import { LayoutDashboard, Users, PiggyBank, Compass, Wallet, Settings, ChevronsLeft } from '@lucide/svelte';
+	import { LayoutDashboard, Users, PiggyBank, ClipboardCheck, Settings, ChevronsLeft } from '@lucide/svelte';
 
 	let collapsed = $state(false);
 
@@ -21,16 +21,14 @@
 		{ key: 'dashboard' as const, href: '/', icon: LayoutDashboard },
 		{ key: 'household' as const, href: '/household', icon: Users },
 		{ key: 'pensions' as const, href: '/pension', icon: PiggyBank },
-		{ key: 'compass' as const, href: '/compass', icon: Compass },
-		{ key: 'payout' as const, href: '/payout-strategy', icon: Wallet }
+		{ key: 'plan' as const, href: '/plan', icon: ClipboardCheck }
 	];
 
 	const navLabels: Record<string, () => string> = {
 		dashboard: m.nav_dashboard,
 		household: m.nav_household,
 		pensions: m.nav_pensions,
-		compass: m.nav_compass,
-		payout: m.nav_payout
+		plan: m.nav_plan
 	};
 
 	function isActive(href: string): boolean {

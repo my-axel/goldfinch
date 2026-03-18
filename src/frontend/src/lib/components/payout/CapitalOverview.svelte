@@ -17,12 +17,14 @@
 		projectedCapital,
 		capitalIncome,
 		yearsToRetirement,
-		withdrawalYears = $bindable()
+		retirementAge,
+		withdrawalUntilAge = $bindable()
 	}: {
 		projectedCapital: GapScenarios;
 		capitalIncome: GapScenarios;
 		yearsToRetirement: number;
-		withdrawalYears: number;
+		retirementAge: number;
+		withdrawalUntilAge: number;
 	} = $props();
 </script>
 
@@ -56,7 +58,7 @@
 		{/each}
 	</div>
 
-	<!-- Years to retirement + withdrawal duration stepper -->
+	<!-- Years to retirement + withdrawal until age stepper -->
 	<div class="mt-5 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-4">
 		<div class="text-sm text-muted-foreground">
 			{m.payout_years_to_retirement_label()}:
@@ -66,11 +68,10 @@
 			</span>
 		</div>
 		<div class="flex items-center gap-3">
-			<span class="text-sm text-muted-foreground">{m.payout_withdrawal_years_label()}:</span>
-			<div class="w-36">
-				<StepperInput bind:value={withdrawalYears} min={10} max={40} step={1} />
+			<span class="text-sm text-muted-foreground">{m.payout_withdrawal_until_age_label()}:</span>
+			<div class="w-28">
+				<StepperInput bind:value={withdrawalUntilAge} min={retirementAge + 1} max={105} step={1} />
 			</div>
-			<span class="text-sm text-muted-foreground">{m.payout_years_suffix()}</span>
 		</div>
 	</div>
 </Card>

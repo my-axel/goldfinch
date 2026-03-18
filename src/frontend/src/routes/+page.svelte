@@ -11,6 +11,7 @@
 	import RetirementGapChartCard from '$lib/components/dashboard/RetirementGapChartCard.svelte';
 	import ScenarioProjectionChart from '$lib/components/dashboard/ScenarioProjectionChart.svelte';
 	import FixedIncomeCard from '$lib/components/dashboard/FixedIncomeCard.svelte';
+	import RetirementStatusBanner from '$lib/components/dashboard/RetirementStatusBanner.svelte';
 	import HistoricalPerformanceChart from '$lib/components/pension/etf/HistoricalPerformanceChart.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { pensionStore } from '$lib/stores/pension.svelte';
@@ -363,15 +364,8 @@
 
 				<FixedIncomeCard />
 
-				<!-- Additional Insights -->
-				<Card title="Action Items" description="Improve your outlook">
-					<ul class="list-disc pl-4 space-y-2 text-sm">
-						<li class="font-bold text-red-800/70">Personalized recommendations</li>
-						<li class="text-muted-foreground">Quick wins identification</li>
-						<li class="text-muted-foreground">Risk mitigation steps</li>
-						<li class="text-muted-foreground">Links to relevant tools</li>
-					</ul>
-				</Card>
+				<!-- Retirement Status -->
+				<RetirementStatusBanner />
 			</div>
 		</div>
 	</div>

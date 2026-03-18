@@ -1,7 +1,7 @@
 <!--
-@file src/routes/compass/+page.svelte
+@file src/routes/plan/+page.svelte
 @kind route
-@purpose Kompass Übersichtsseite — Haushalt-Zusammenfassung, Timeline-Chart und kompakte Mitglieds-Karten.
+@purpose Altersvorsorgeplan Übersichtsseite — Haushalt-Zusammenfassung, Timeline-Chart und kompakte Mitglieds-Karten.
 -->
 
 <script lang="ts">
@@ -44,8 +44,8 @@
 
 <div class="space-y-6">
 	<PageHeader
-		title={m.compass_gap_title()}
-		description={m.compass_gap_description()}
+		title={m.plan_title()}
+		description={m.plan_description()}
 	/>
 
 	{#if data.members.length === 0}

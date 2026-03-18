@@ -57,7 +57,7 @@ Shows status, gap details and link to detail page. Styled like PensionCard.
 {#if analysis && status}
 	<!-- Configured member card -->
 	<a
-		href="/compass/{member.id}"
+		href="/plan/{member.id}"
 		class="group bg-card rounded-xl border border-border shadow-sm w-[270px] min-h-[180px] flex flex-col hover:shadow-md hover:border-primary/30 transition-all duration-200"
 	>
 		<!-- Header -->
@@ -108,7 +108,7 @@ Shows status, gap details and link to detail page. Styled like PensionCard.
 {:else}
 	<!-- Not-configured member: dashed border card -->
 	<a
-		href="/compass/{member.id}"
+		href="/plan/{member.id}"
 		class="group flex flex-col items-center justify-center w-[270px] min-h-[180px] border-2 border-dashed border-border rounded-xl hover:border-primary/50 hover:bg-accent/20 transition-all duration-200"
 	>
 		<div class="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground mb-3">

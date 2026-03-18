@@ -1,7 +1,7 @@
 /**
- * @file src/routes/compass/+page.ts
+ * @file src/routes/plan/+page.ts
  * @kind loader
- * @purpose Loads household members and existing gap configs (+ analyses for configured members).
+ * @purpose Loads household members and existing gap configs (+ analyses/timelines for configured members).
  */
 
 import { createHouseholdApi } from '$lib/api/household';
@@ -13,7 +13,6 @@ export const load = async ({ fetch }: { fetch: typeof globalThis.fetch }) => {
 
 	const [members, gapConfigs] = await Promise.all([householdApi.list(), compassApi.getAllConfigs()]);
 
-	// Pre-load analysis + timeline for members that already have a config
 	const [analyses, timelines] = await Promise.all([
 		Promise.all(
 			members.map(async (member) => {

@@ -1,11 +1,13 @@
 /**
- * @file src/routes/compass/[member_id]/+page.ts
+ * @file src/routes/plan/[member_id]/+page.ts
  * @kind loader
- * @purpose Loads household member + gap config, analysis, and timeline for the compass detail page.
+ * @purpose Loads member, gap config/analysis/timeline, pensions, and settings for the unified retirement plan detail page.
  */
 
 import { createHouseholdApi } from '$lib/api/household';
 import { createCompassApi } from '$lib/api/compass';
+import { createPensionApi } from '$lib/api/pension';
+import { settingsApi } from '$lib/api/settings';
 import { error } from '@sveltejs/kit';
 
 export const load = async ({
@@ -20,6 +22,7 @@ export const load = async ({
 
 	const householdApi = createHouseholdApi(fetch);
 	const compassApi = createCompassApi(fetch);
+	const pensionApi = createPensionApi(fetch);
 
 	let member;
 	try {
@@ -28,12 +31,13 @@ export const load = async ({
 		throw error(404, 'Member not found');
 	}
 
-	let config = null;
-	try {
-		config = await compassApi.getConfig(memberId);
-	} catch {
-		config = null;
-	}
+	const [config, settings, allPensions] = await Promise.all([
+		compassApi.getConfig(memberId).catch(() => null),
+		settingsApi.get(),
+		pensionApi.listAll()
+	]);
+
+	const pensions = allPensions.filter((p) => p.member_id === memberId);
 
 	let analysis = null;
 	let timeline = null;
@@ -44,5 +48,5 @@ export const load = async ({
 		]);
 	}
 
-	return { member, config, analysis, timeline };
+	return { member, config, analysis, timeline, settings, pensions };
 };

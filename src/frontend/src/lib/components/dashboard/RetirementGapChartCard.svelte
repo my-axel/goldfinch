@@ -345,13 +345,13 @@
 
 			<p class="text-[11px] text-muted-foreground">{m.dashboard_retirement_gap_horizon()}</p>
 
-			<a href="/compass" class="text-sm text-primary hover:underline">{m.dashboard_retirement_gap_view_details()}</a>
+			<a href="/plan" class="text-sm text-primary hover:underline">{m.dashboard_retirement_gap_view_details()}</a>
 		</div>
 	{:else}
 		<div class="space-y-3">
 			<h3 class="text-lg font-semibold">{m.dashboard_retirement_gap_title()}</h3>
 			<p class="text-sm text-muted-foreground">{m.dashboard_retirement_gap_description()}</p>
-			<a href="/compass" class="inline-block text-sm font-medium text-primary hover:underline">
+			<a href="/plan" class="inline-block text-sm font-medium text-primary hover:underline">
 				{m.dashboard_retirement_gap_setup_cta()}
 			</a>
 		</div>
