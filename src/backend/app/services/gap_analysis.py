@@ -1,13 +1,18 @@
 """
 Service for computing the retirement gap analysis for a household member.
 
-Implements the 6-step calculation from the PRD:
+Implements the 6-step calculation:
   1. Monthly retirement need (net income × replacement rate, or manual override)
   2. Monthly pension income from ACTIVE plans (State + Company + Insurance)
   3. Remaining monthly gap after pension income
-  4. Required capital (via Safe Withdrawal Rate) adjusted for inflation
+  4. Required capital via annuity/perpetuity formula (per scenario growth rate)
   5. Projected capital at retirement (ETF + Savings, 3 scenarios)
   6. Final gap = required_capital_adjusted - projected_capital per scenario
+
+Capital calculation modes:
+  - capital_depletion=True  → Annuity: K = M × (1 - (1+r/12)^-N) / (r/12)
+  - capital_depletion=False → Perpetuity: K = M × 12 / r
+Where M = monthly gap, r = scenario growth rate, N = (withdrawal_until_age - retirement_age) × 12
 
 The result is reusable by other features (Payout Strategy, Recommendations, etc.)
 """
@@ -116,20 +121,32 @@ class GapAnalysisService:
             optimistic=(needed_monthly_at_retirement - monthly_pension_income.optimistic).quantize(Decimal("0.01")),
         )
 
-        # --- Step 4: Required capital via SWR (per scenario) ---
-        # The gap is already in future nominal euros, so required_capital is directly the
-        # capital needed at retirement. No additional inflation adjustment is required.
-        withdrawal_rate = Decimal(str(config.withdrawal_rate))
+        # --- Step 4: Required capital via annuity/perpetuity (per scenario) ---
+        # The gap is already in future nominal euros. Required capital is computed
+        # using the scenario-specific growth rate and the configured withdrawal horizon.
+        withdrawal_until_age = config.withdrawal_until_age
+        capital_depletion = config.capital_depletion
+        N = (withdrawal_until_age - member.retirement_age_planned) * 12  # months
 
-        def _required_capital(gap: Decimal) -> Decimal:
-            if gap > Decimal("0"):
-                return (gap * Decimal("12")) / withdrawal_rate
-            return Decimal("0")
+        pess_rate = Decimal(str(app_settings.projection_pessimistic_rate)) if app_settings else Decimal("4.0")
+        real_rate = Decimal(str(app_settings.projection_realistic_rate)) if app_settings else Decimal("6.0")
+        opt_rate = Decimal(str(app_settings.projection_optimistic_rate)) if app_settings else Decimal("8.0")
+
+        def _required_capital(gap: Decimal, annual_rate_pct: Decimal) -> Decimal:
+            if gap <= Decimal("0"):
+                return Decimal("0")
+            r = float(annual_rate_pct) / 100.0
+            r_m = r / 12.0
+            if capital_depletion:
+                factor = Decimal(str(self._annuity_factor(r_m, N)))
+            else:
+                factor = Decimal(str(12.0 / r)) if r > 0 else Decimal("999999")
+            return (gap * factor).quantize(Decimal("0.01"))
 
         required_capital = GapScenarios(
-            pessimistic=_required_capital(remaining_monthly_gap.pessimistic).quantize(Decimal("0.01")),
-            realistic=_required_capital(remaining_monthly_gap.realistic).quantize(Decimal("0.01")),
-            optimistic=_required_capital(remaining_monthly_gap.optimistic).quantize(Decimal("0.01")),
+            pessimistic=_required_capital(remaining_monthly_gap.pessimistic, pess_rate),
+            realistic=_required_capital(remaining_monthly_gap.realistic, real_rate),
+            optimistic=_required_capital(remaining_monthly_gap.optimistic, opt_rate),
         )
         # required_capital_adjusted equals required_capital: inflation is already
         # embedded in needed_monthly_at_retirement, so there is no separate step.
@@ -177,6 +194,18 @@ class GapAnalysisService:
             ),
             retirement_already_reached=retirement_already_reached,
         )
+
+    # ── Annuity helper ────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _annuity_factor(monthly_rate: float, num_months: int) -> float:
+        """
+        Present-value annuity factor: (1 - (1 + r)^-N) / r
+        Returns num_months when monthly_rate == 0 (limiting case).
+        """
+        if monthly_rate == 0:
+            return float(num_months)
+        return (1.0 - (1.0 + monthly_rate) ** (-num_months)) / monthly_rate
 
     # ── Monthly income helpers ────────────────────────────────────────────────
 
@@ -326,6 +355,9 @@ class GapAnalysisService:
 
         app_settings = settings_crud.get_settings(db)
         inflation_rate = Decimal(str(app_settings.inflation_rate)) if app_settings else Decimal("2.0")
+        pess_rate = Decimal(str(app_settings.projection_pessimistic_rate)) if app_settings else Decimal("4.0")
+        real_rate = Decimal(str(app_settings.projection_realistic_rate)) if app_settings else Decimal("6.0")
+        opt_rate = Decimal(str(app_settings.projection_optimistic_rate)) if app_settings else Decimal("8.0")
 
         retirement_date = member.retirement_date_planned
         today = date.today()
@@ -345,7 +377,6 @@ class GapAnalysisService:
                 ),
             )
 
-        withdrawal_rate = Decimal(str(config.withdrawal_rate))
         replacement_rate = Decimal(str(config.replacement_rate))
         salary_growth_rate = Decimal(str(config.annual_salary_growth_rate)) / Decimal("100")
         net_monthly_income = Decimal(str(config.net_monthly_income))
@@ -400,10 +431,22 @@ class GapAnalysisService:
                 state_real += base_real * ((Decimal("1") + rate_real / Decimal("100")) ** y_dec)
                 state_opt += base_opt * ((Decimal("1") + rate_opt / Decimal("100")) ** y_dec)
 
-            # Capital income at year Y → monthly
-            cap_pess = (etf_yearly["pessimistic"][y] + savings_yearly["pessimistic"][y]) * withdrawal_rate / Decimal("12")
-            cap_real = (etf_yearly["realistic"][y] + savings_yearly["realistic"][y]) * withdrawal_rate / Decimal("12")
-            cap_opt = (etf_yearly["optimistic"][y] + savings_yearly["optimistic"][y]) * withdrawal_rate / Decimal("12")
+            # Capital income at year Y → monthly (annuity or perpetuity, per scenario)
+            tl_N = (config.withdrawal_until_age - member.retirement_age_planned) * 12
+            tl_pess_r = float(pess_rate) / 100.0
+            tl_real_r = float(real_rate) / 100.0
+            tl_opt_r = float(opt_rate) / 100.0
+            if config.capital_depletion:
+                tl_pess_factor = self._annuity_factor(tl_pess_r / 12.0, tl_N)
+                tl_real_factor = self._annuity_factor(tl_real_r / 12.0, tl_N)
+                tl_opt_factor = self._annuity_factor(tl_opt_r / 12.0, tl_N)
+                cap_pess = (etf_yearly["pessimistic"][y] + savings_yearly["pessimistic"][y]) / Decimal(str(tl_pess_factor)) if tl_pess_factor else Decimal("0")
+                cap_real = (etf_yearly["realistic"][y] + savings_yearly["realistic"][y]) / Decimal(str(tl_real_factor)) if tl_real_factor else Decimal("0")
+                cap_opt = (etf_yearly["optimistic"][y] + savings_yearly["optimistic"][y]) / Decimal(str(tl_opt_factor)) if tl_opt_factor else Decimal("0")
+            else:
+                cap_pess = (etf_yearly["pessimistic"][y] + savings_yearly["pessimistic"][y]) * Decimal(str(tl_pess_r)) / Decimal("12") if tl_pess_r > 0 else Decimal("0")
+                cap_real = (etf_yearly["realistic"][y] + savings_yearly["realistic"][y]) * Decimal(str(tl_real_r)) / Decimal("12") if tl_real_r > 0 else Decimal("0")
+                cap_opt = (etf_yearly["optimistic"][y] + savings_yearly["optimistic"][y]) * Decimal(str(tl_opt_r)) / Decimal("12") if tl_opt_r > 0 else Decimal("0")
 
             # Total pension income (gross → net)
             total_pess = (state_pess + fixed_income + cap_pess) * net_factor

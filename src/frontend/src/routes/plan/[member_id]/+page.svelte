@@ -40,6 +40,7 @@
 	async function handleSave(savedConfig: RetirementGapConfig, savedAnalysis: GapAnalysisResult) {
 		localConfig = savedConfig;
 		localAnalysis = savedAnalysis;
+		withdrawalUntilAge = savedConfig.withdrawal_until_age;
 		try {
 			localTimeline = await compassApi.getTimeline(data.member.id);
 		} catch {
@@ -59,7 +60,9 @@
 	// "Until age" is the primary UX input; withdrawalYears is derived from it
 	// untrack: intentional initial-only read from reactive prop
 	const retirementAgePlanned = untrack(() => data.member.retirement_age_planned);
-	let withdrawalUntilAge = $state(Math.min(105, retirementAgePlanned + 25));
+	let withdrawalUntilAge = $state(
+		untrack(() => data.config?.withdrawal_until_age ?? Math.min(105, retirementAgePlanned + 25))
+	);
 	const withdrawalYears = $derived(Math.max(1, withdrawalUntilAge - retirementAgePlanned));
 
 	const capitalIncome = $derived.by(() => {
@@ -163,6 +166,7 @@
 			<Card title={m.compass_gap_setup_title()} description={m.compass_gap_setup_description()}>
 				<GapConfigForm
 					memberId={data.member.id}
+					retirementAge={retirementAgePlanned}
 					{config}
 					onSave={handleSave}
 					onDelete={handleDelete}
@@ -174,7 +178,7 @@
 					<p>{m.compass_explanation_formula()}</p>
 					<p class="mt-2">{m.compass_explanation_income()}</p>
 					<p class="mt-2">{m.compass_explanation_replacement_rate()}</p>
-					<p class="mt-2">{m.compass_explanation_withdrawal_rate()}</p>
+					<p class="mt-2">{m.compass_explanation_capital_plan()}</p>
 					{#if config?.desired_monthly_pension != null}
 						<p class="mt-2">{m.compass_explanation_desired_pension()}</p>
 					{/if}

@@ -8,17 +8,20 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
 	import PercentInput from '$lib/components/ui/PercentInput.svelte';
+	import StepperInput from '$lib/components/ui/StepperInput.svelte';
 	import { compassApi } from '$lib/api/compass';
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import type { RetirementGapConfig, RetirementGapConfigCreate, GapAnalysisResult } from '$lib/types/compass';
 
 	let {
 		memberId,
+		retirementAge,
 		config,
 		onSave,
 		onDelete
 	}: {
 		memberId: number;
+		retirementAge: number;
 		config: RetirementGapConfig | null;
 		onSave: (savedConfig: RetirementGapConfig, analysis: GapAnalysisResult) => void;
 		onDelete: () => void;
@@ -29,7 +32,8 @@
 	// but PercentInput expects decimal (0.02 = 2%) → divide/multiply by 100 on load/save.
 	let netMonthlyIncome = $state(0);
 	let replacementRate = $state(0.8);
-	let withdrawalRate = $state(0.04);
+	let withdrawalUntilAge = $state(90);
+	let capitalDepletion = $state(true);
 	let annualSalaryGrowthRate = $state(0.02); // decimal form for PercentInput
 	let hasPensionDeduction = $state(false);
 	let pensionDeductionRate = $state(0.15); // decimal form for PercentInput (15% default when enabled)
@@ -43,7 +47,8 @@
 	$effect(() => {
 		netMonthlyIncome = config?.net_monthly_income ?? 0;
 		replacementRate = config?.replacement_rate ?? 0.8;
-		withdrawalRate = config?.withdrawal_rate ?? 0.04;
+		withdrawalUntilAge = config?.withdrawal_until_age ?? Math.min(105, retirementAge + 25);
+		capitalDepletion = config?.capital_depletion ?? true;
 		annualSalaryGrowthRate = (config?.annual_salary_growth_rate ?? 2.0) / 100;
 		hasPensionDeduction = config?.pension_deduction_rate != null;
 		pensionDeductionRate = (config?.pension_deduction_rate ?? 15.0) / 100;
@@ -61,7 +66,8 @@
 			const payload: RetirementGapConfigCreate = {
 				net_monthly_income: netMonthlyIncome,
 				replacement_rate: replacementRate,
-				withdrawal_rate: withdrawalRate,
+				withdrawal_until_age: withdrawalUntilAge,
+				capital_depletion: capitalDepletion,
 				annual_salary_growth_rate: annualSalaryGrowthRate * 100,
 				pension_deduction_rate: hasPensionDeduction ? pensionDeductionRate * 100 : null,
 				desired_monthly_pension: hasDesiredPension ? desiredPensionAmount : null
@@ -114,11 +120,22 @@
 			<p class="text-xs text-muted-foreground mt-1">{m.compass_gap_salary_growth_rate_hint()}</p>
 		</div>
 
-		<!-- Withdrawal Rate -->
+		<!-- Withdrawal Until Age -->
 		<div>
-			<p class="text-sm font-medium mb-1.5">{m.compass_gap_withdrawal_rate_label()}</p>
-			<PercentInput bind:value={withdrawalRate} min={0.02} max={0.06} decimals={1} />
+			<p class="text-sm font-medium mb-1.5">{m.compass_gap_withdrawal_until_age_label()}</p>
+			<div class="w-36">
+				<StepperInput bind:value={withdrawalUntilAge} min={retirementAge + 1} max={105} step={1} />
+			</div>
 		</div>
+	</div>
+
+	<!-- Capital Depletion -->
+	<div>
+		<label class="flex items-center gap-2 cursor-pointer">
+			<input type="checkbox" bind:checked={capitalDepletion} class="rounded border-border" />
+			<span class="text-sm font-medium">{m.compass_gap_capital_depletion_label()}</span>
+		</label>
+		<p class="text-xs text-muted-foreground mt-1 ml-6">{m.compass_gap_capital_depletion_hint()}</p>
 	</div>
 
 	<!-- Pension Deduction Rate (optional) -->

@@ -10,7 +10,8 @@ export interface RetirementGapConfig {
 	net_monthly_income: number;
 	desired_monthly_pension: number | null;
 	replacement_rate: number; // e.g. 0.80 = 80%
-	withdrawal_rate: number; // e.g. 0.04 = 4%
+	withdrawal_until_age: number; // e.g. 90
+	capital_depletion: boolean; // true = annuity (deplete to zero), false = perpetuity (leave capital)
 	annual_salary_growth_rate: number; // e.g. 2.0 = 2% per year
 	pension_deduction_rate: number | null; // e.g. 15.0 = 15% gross-to-net deduction
 	created_at: string;
@@ -21,7 +22,8 @@ export interface RetirementGapConfigCreate {
 	net_monthly_income: number;
 	desired_monthly_pension?: number | null;
 	replacement_rate?: number;
-	withdrawal_rate?: number;
+	withdrawal_until_age?: number;
+	capital_depletion?: boolean;
 	annual_salary_growth_rate?: number;
 	pension_deduction_rate?: number | null;
 }
@@ -30,7 +32,8 @@ export interface RetirementGapConfigUpdate {
 	net_monthly_income?: number;
 	desired_monthly_pension?: number | null;
 	replacement_rate?: number;
-	withdrawal_rate?: number;
+	withdrawal_until_age?: number;
+	capital_depletion?: boolean;
 	annual_salary_growth_rate?: number;
 	pension_deduction_rate?: number | null;
 }
