@@ -106,60 +106,61 @@
 		<CurrencyInput bind:value={netMonthlyIncome} min={0} />
 	</div>
 
+	<!-- Retirement need: Replacement rate + Salary growth (clean 2-col) -->
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-		<!-- Replacement Rate -->
 		<div>
 			<p class="text-sm font-medium mb-1.5">{m.compass_gap_replacement_rate_label()}</p>
 			<PercentInput bind:value={replacementRate} min={0.5} max={1.0} decimals={0} />
 		</div>
-
-		<!-- Annual Salary Growth Rate -->
 		<div>
 			<p class="text-sm font-medium mb-1.5">{m.compass_gap_salary_growth_rate_label()}</p>
 			<PercentInput bind:value={annualSalaryGrowthRate} min={0} max={0.10} decimals={1} />
 			<p class="text-xs text-muted-foreground mt-1">{m.compass_gap_salary_growth_rate_hint()}</p>
 		</div>
+	</div>
 
-		<!-- Withdrawal Until Age -->
+	<!-- Withdrawal strategy: Age + Capital depletion (visually paired) -->
+	<div class="rounded-lg border border-border bg-muted/20 p-4 flex flex-wrap items-start gap-x-8 gap-y-4">
 		<div>
 			<p class="text-sm font-medium mb-1.5">{m.compass_gap_withdrawal_until_age_label()}</p>
 			<div class="w-36">
 				<StepperInput bind:value={withdrawalUntilAge} min={retirementAge + 1} max={105} step={1} />
 			</div>
 		</div>
+		<div class="pt-0.5">
+			<label class="flex items-center gap-2 cursor-pointer">
+				<input type="checkbox" bind:checked={capitalDepletion} class="rounded border-border" />
+				<span class="text-sm font-medium">{m.compass_gap_capital_depletion_label()}</span>
+			</label>
+			<p class="text-xs text-muted-foreground mt-1.5">{m.compass_gap_capital_depletion_hint()}</p>
+		</div>
 	</div>
 
-	<!-- Capital Depletion -->
-	<div>
-		<label class="flex items-center gap-2 cursor-pointer">
-			<input type="checkbox" bind:checked={capitalDepletion} class="rounded border-border" />
-			<span class="text-sm font-medium">{m.compass_gap_capital_depletion_label()}</span>
-		</label>
-		<p class="text-xs text-muted-foreground mt-1 ml-6">{m.compass_gap_capital_depletion_hint()}</p>
-	</div>
+	<!-- Optional adjustments (visually secondary) -->
+	<div class="space-y-3 pt-1 border-t border-border">
+		<!-- Pension Deduction Rate -->
+		<div class="pt-3">
+			<label class="flex items-center gap-2 mb-2 cursor-pointer">
+				<input type="checkbox" bind:checked={hasPensionDeduction} class="rounded border-border" />
+				<span class="text-sm text-muted-foreground font-medium">{m.compass_gap_pension_deduction_label()}</span>
+			</label>
+			{#if hasPensionDeduction}
+				<PercentInput bind:value={pensionDeductionRate} min={0} max={0.50} decimals={0} />
+				<p class="text-xs text-muted-foreground mt-1">{m.compass_gap_pension_deduction_hint()}</p>
+			{/if}
+		</div>
 
-	<!-- Pension Deduction Rate (optional) -->
-	<div>
-		<label class="flex items-center gap-2 mb-2 cursor-pointer">
-			<input type="checkbox" bind:checked={hasPensionDeduction} class="rounded border-border" />
-			<span class="text-sm font-medium">{m.compass_gap_pension_deduction_label()}</span>
-		</label>
-		{#if hasPensionDeduction}
-			<PercentInput bind:value={pensionDeductionRate} min={0} max={0.50} decimals={0} />
-			<p class="text-xs text-muted-foreground mt-1">{m.compass_gap_pension_deduction_hint()}</p>
-		{/if}
-	</div>
-
-	<!-- Desired Monthly Pension (optional override) -->
-	<div>
-		<label class="flex items-center gap-2 mb-2 cursor-pointer">
-			<input type="checkbox" bind:checked={hasDesiredPension} class="rounded border-border" />
-			<span class="text-sm font-medium">{m.compass_gap_desired_pension_label()}</span>
-		</label>
-		{#if hasDesiredPension}
-			<CurrencyInput bind:value={desiredPensionAmount} min={0} />
-			<p class="text-xs text-muted-foreground mt-1">{m.compass_gap_desired_pension_hint()}</p>
-		{/if}
+		<!-- Desired Monthly Pension override -->
+		<div>
+			<label class="flex items-center gap-2 mb-2 cursor-pointer">
+				<input type="checkbox" bind:checked={hasDesiredPension} class="rounded border-border" />
+				<span class="text-sm text-muted-foreground font-medium">{m.compass_gap_desired_pension_label()}</span>
+			</label>
+			{#if hasDesiredPension}
+				<CurrencyInput bind:value={desiredPensionAmount} min={0} />
+				<p class="text-xs text-muted-foreground mt-1">{m.compass_gap_desired_pension_hint()}</p>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Actions -->

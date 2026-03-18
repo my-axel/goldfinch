@@ -1,7 +1,7 @@
 <!--
 @file src/routes/plan/[member_id]/+page.svelte
 @kind route
-@purpose Unified retirement plan detail page — Tab 1: Analysis (config + results + timeline), Tab 2: Payout (capital + income + drawdown + pensions).
+@purpose Unified retirement plan detail page — collapsible config above tabs, Tab 1: Analysis (results + timeline), Tab 2: Payout (capital + income + drawdown + pensions).
 -->
 
 <script lang="ts">
@@ -11,9 +11,11 @@
 	import type { RetirementGapConfig, GapAnalysisResult, GapTimeline } from '$lib/types/compass';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import CollapsibleCard from '$lib/components/ui/CollapsibleCard.svelte';
 	import ContentSection from '$lib/components/ui/ContentSection.svelte';
 	import Explanation from '$lib/components/ui/Explanation.svelte';
 	import ExplanationAlert from '$lib/components/ui/ExplanationAlert.svelte';
+	import FormattedCurrency from '$lib/components/ui/FormattedCurrency.svelte';
 	import GapConfigForm from '$lib/components/compass/GapConfigForm.svelte';
 	import GapResultDisplay from '$lib/components/compass/GapResultDisplay.svelte';
 	import GapBreakdown from '$lib/components/compass/GapBreakdown.svelte';
@@ -28,6 +30,10 @@
 	// ── Tab state ────────────────────────────────────────────────────────────────
 	let activeTab = $state<'analysis' | 'payout'>('analysis');
 
+	// ── Config collapse state ────────────────────────────────────────────────────
+	// Collapsed when config exists (user already set it up), expanded when no config
+	let configCollapsed = $state(untrack(() => !!data.config));
+
 	// ── Local overrides (same pattern as compass detail) ─────────────────────────
 	let localConfig = $state<RetirementGapConfig | null | undefined>(undefined);
 	let localAnalysis = $state<GapAnalysisResult | null | undefined>(undefined);
@@ -41,6 +47,7 @@
 		localConfig = savedConfig;
 		localAnalysis = savedAnalysis;
 		withdrawalUntilAge = savedConfig.withdrawal_until_age;
+		configCollapsed = true;
 		try {
 			localTimeline = await compassApi.getTimeline(data.member.id);
 		} catch {
@@ -52,6 +59,7 @@
 		localConfig = null;
 		localAnalysis = null;
 		localTimeline = null;
+		configCollapsed = false;
 	}
 
 	// ── Payout tab derivations ───────────────────────────────────────────────────
@@ -131,6 +139,64 @@
 		description={m.plan_description()}
 	/>
 
+	<!-- ═══ CONFIG (above tabs, collapsible) ══════════════════════════════════ -->
+	<ContentSection>
+		<CollapsibleCard
+			title={m.compass_gap_setup_title()}
+			description={m.compass_gap_setup_description()}
+			bind:collapsed={configCollapsed}
+		>
+			{#snippet summary()}
+				{#if config}
+					<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-4">
+						<div>
+							<p class="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{m.plan_config_summary_net_income()}</p>
+							<FormattedCurrency value={config.net_monthly_income} decimals={0} class="text-sm font-semibold" />
+						</div>
+						<div>
+							<p class="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{m.plan_config_summary_replacement_rate()}</p>
+							<p class="text-sm font-semibold">{Math.round(config.replacement_rate * 100)}%</p>
+						</div>
+						<div>
+							<p class="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{m.plan_config_summary_until_age_label()}</p>
+							<p class="text-sm font-semibold">{m.plan_config_summary_until_age({ age: config.withdrawal_until_age })}</p>
+						</div>
+						<div>
+							<p class="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{m.plan_config_summary_capital_label()}</p>
+							<p class="text-sm font-semibold">{config.capital_depletion ? m.plan_config_summary_capital_depletion() : m.plan_config_summary_no_depletion()}</p>
+						</div>
+						<div>
+							<p class="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{m.plan_config_summary_salary_growth()}</p>
+							<p class="text-sm font-semibold">{config.annual_salary_growth_rate}% p.a.</p>
+						</div>
+					</div>
+				{/if}
+			{/snippet}
+
+			<GapConfigForm
+				memberId={data.member.id}
+				retirementAge={retirementAgePlanned}
+				{config}
+				onSave={handleSave}
+				onDelete={handleDelete}
+			/>
+		</CollapsibleCard>
+
+		{#if !configCollapsed}
+			{#snippet aside()}
+				<Explanation title={m.compass_explanation_title()}>
+					<p>{m.compass_explanation_formula()}</p>
+					<p class="mt-2">{m.compass_explanation_income()}</p>
+					<p class="mt-2">{m.compass_explanation_replacement_rate()}</p>
+					<p class="mt-2">{m.compass_explanation_capital_plan()}</p>
+					{#if config?.desired_monthly_pension != null}
+						<p class="mt-2">{m.compass_explanation_desired_pension()}</p>
+					{/if}
+				</Explanation>
+			{/snippet}
+		{/if}
+	</ContentSection>
+
 	<!-- Tab navigation -->
 	<div class="flex border-b border-border">
 		<button
@@ -161,33 +227,8 @@
 
 	<!-- ═══ TAB 1: ANALYSIS ═══════════════════════════════════════════════════ -->
 	{#if activeTab === 'analysis'}
-		<!-- Configuration section -->
-		<ContentSection>
-			<Card title={m.compass_gap_setup_title()} description={m.compass_gap_setup_description()}>
-				<GapConfigForm
-					memberId={data.member.id}
-					retirementAge={retirementAgePlanned}
-					{config}
-					onSave={handleSave}
-					onDelete={handleDelete}
-				/>
-			</Card>
-
-			{#snippet aside()}
-				<Explanation title={m.compass_explanation_title()}>
-					<p>{m.compass_explanation_formula()}</p>
-					<p class="mt-2">{m.compass_explanation_income()}</p>
-					<p class="mt-2">{m.compass_explanation_replacement_rate()}</p>
-					<p class="mt-2">{m.compass_explanation_capital_plan()}</p>
-					{#if config?.desired_monthly_pension != null}
-						<p class="mt-2">{m.compass_explanation_desired_pension()}</p>
-					{/if}
-				</Explanation>
-			{/snippet}
-		</ContentSection>
-
-		<!-- Results section -->
 		{#if analysis}
+			<!-- Results section -->
 			<ContentSection>
 				<Card title={m.compass_gap_results_card_title()}>
 					<GapResultDisplay result={analysis} />
@@ -201,17 +242,27 @@
 					</Explanation>
 				{/snippet}
 			</ContentSection>
-		{/if}
 
-		<!-- Timeline chart -->
-		{#if timeline}
-			<Card title={m.compass_timeline_title()} description={m.compass_timeline_description()}>
-				<GapTimelineChart
-					timelines={[timeline]}
-					analyses={[analysis]}
-					members={[data.member]}
-					householdOnly={true}
-				/>
+			<!-- Timeline chart -->
+			{#if timeline}
+				<Card title={m.compass_timeline_title()} description={m.compass_timeline_description()}>
+					<GapTimelineChart
+						timelines={[timeline]}
+						analyses={[analysis]}
+						members={[data.member]}
+						householdOnly={true}
+					/>
+				</Card>
+			{/if}
+		{:else}
+			<Card title={m.compass_gap_results_card_title()}>
+				<p class="text-sm text-muted-foreground">{m.compass_gap_no_config_cta()}</p>
+				<button
+					class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+					onclick={() => (configCollapsed = false)}
+				>
+					{m.compass_gap_setup_title()} →
+				</button>
 			</Card>
 		{/if}
 
@@ -224,9 +275,9 @@
 					<p class="text-sm text-muted-foreground">{m.payout_no_data_description()}</p>
 					<button
 						class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-						onclick={() => (activeTab = 'analysis')}
+						onclick={() => (configCollapsed = false)}
 					>
-						{m.plan_tab_analysis()} →
+						{m.compass_gap_setup_title()} →
 					</button>
 				</Card>
 
