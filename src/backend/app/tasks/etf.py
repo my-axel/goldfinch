@@ -139,7 +139,7 @@ def update_all_etf_prices() -> None:
     logger.info("Starting daily ETF price update")
     db = SessionLocal()
     try:
-        etfs = db.query(ETF).filter(ETF.is_active == True).all()  # noqa: E712
+        etfs = db.query(ETF).all()
         logger.info(f"Checking prices for {len(etfs)} active ETFs")
         triggered = 0
         for etf in etfs:
