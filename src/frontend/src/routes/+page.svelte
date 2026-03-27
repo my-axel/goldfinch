@@ -175,7 +175,7 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-end justify-between gap-4 mb-8">
+	<div class="flex items-end justify-between gap-4 mb-8 animate-fade-in-up">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">{m.dashboard_title()}</h1>
 			<p class="text-muted-foreground mt-2">{m.dashboard_description()}</p>
@@ -186,7 +186,7 @@
 	<!-- Main content container -->
 	<div class="grid grid-cols-1 md:grid-cols-13 gap-6">
 		<!-- Left Column - Current Position & History -->
-		<div class="md:col-span-6 space-y-6">
+		<div class="md:col-span-6 space-y-6 animate-fade-in-up" style="--stagger: 100ms">
 			<h2 class="text-2xl font-bold tracking-tight">{m.dashboard_current_position()}</h2>
 
 			<!-- Key Metrics -->
@@ -237,7 +237,9 @@
 							{dashboardStore.selectedPensions.length !== 1 ? m.dashboard_portfolio_plan_plural() : m.dashboard_portfolio_plan_singular()}
 						</p>
 					{:else if pensionStore.error}
-						<p class="text-destructive text-sm">Error: {pensionStore.error}</p>
+						<div class="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+							<p class="text-destructive text-sm">{pensionStore.error}</p>
+						</div>
 					{:else}
 						<p class="text-muted-foreground text-sm">{m.dashboard_portfolio_no_data()}</p>
 					{/if}
@@ -269,7 +271,9 @@
 							{/if}
 						</div>
 					{:else if dashboardStore.seriesError}
-						<p class="text-destructive text-sm">{m.dashboard_error_loading()}</p>
+						<div class="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+							<p class="text-destructive text-sm">{m.dashboard_error_loading()}</p>
+						</div>
 					{:else}
 						<p class="text-muted-foreground text-sm">{m.dashboard_contributions_no_data()}</p>
 					{/if}
@@ -340,7 +344,7 @@
 		</div>
 
 		<!-- Middle Column - Today divider (hidden on mobile) -->
-		<div class="hidden md:block md:col-span-1 text-center relative h-full">
+		<div class="hidden md:block md:col-span-1 text-center relative h-full animate-fade-in-up" style="--stagger: 200ms">
 			<h2
 				class="text-sm font-medium text-muted-foreground uppercase tracking-wider h-10 flex items-center justify-center"
 			>
@@ -352,7 +356,7 @@
 		</div>
 
 		<!-- Right Column - Future Projections -->
-		<div class="md:col-span-6 space-y-6">
+		<div class="md:col-span-6 space-y-6 animate-fade-in-up" style="--stagger: 200ms">
 			<h2 class="text-2xl font-bold tracking-tight text-right">{m.dashboard_future_projections()}</h2>
 
 			<div class="space-y-4">

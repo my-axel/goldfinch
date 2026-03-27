@@ -20,7 +20,8 @@
 	import ConfirmDeleteDialog from '$lib/components/ui/ConfirmDeleteDialog.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { m } from '$lib/paraglide/messages.js';
-	import { CirclePlus } from '@lucide/svelte';
+	import { CirclePlus, Users } from '@lucide/svelte';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -110,14 +111,32 @@
 	/>
 
 	{#if loading}
-		<p class="text-center text-muted-foreground py-8">{m.pension_loading()}</p>
+		<div class="space-y-8">
+			<div class="space-y-4">
+				<div class="h-6 w-40 bg-muted rounded animate-pulse"></div>
+				<div class="flex flex-wrap gap-4">
+					<div class="w-[270px] min-h-[300px] rounded-xl bg-muted animate-pulse"></div>
+					<div class="w-[270px] min-h-[300px] rounded-xl bg-muted animate-pulse"></div>
+				</div>
+			</div>
+			<div class="space-y-4">
+				<div class="h-6 w-36 bg-muted rounded animate-pulse"></div>
+				<div class="flex flex-wrap gap-4">
+					<div class="w-[270px] min-h-[300px] rounded-xl bg-muted animate-pulse"></div>
+				</div>
+			</div>
+		</div>
 	{:else if error}
 		<div class="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
 			<p>{error}</p>
 			<button onclick={loadData} class="mt-2 text-sm underline">{m.pension_try_again()}</button>
 		</div>
 	{:else if members.length === 0}
-		<p class="text-muted-foreground text-sm">{m.pension_no_members()}</p>
+		<EmptyState icon={Users} title={m.pension_no_members()}>
+			{#snippet action()}
+				<a href="/household" class="text-sm font-medium text-primary hover:underline">{m.nav_household()}</a>
+			{/snippet}
+		</EmptyState>
 	{:else}
 		<div class="space-y-8">
 			{#each members as member (member.id)}

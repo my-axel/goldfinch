@@ -7,6 +7,8 @@
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
 	import FormattedCurrency from '$lib/components/ui/FormattedCurrency.svelte';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
+	import { Target } from '@lucide/svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { dashboardStore } from '$lib/stores/dashboard.svelte';
 	import { compassApi } from '$lib/api/compass';
@@ -201,12 +203,16 @@
 		</div>
 	{:else}
 		<!-- No data / not configured -->
-		<p class="text-sm text-muted-foreground mb-3">{m.dashboard_status_no_data()}</p>
-		<a
-			href="/plan"
-			class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+		<EmptyState
+			icon={Target}
+			title={m.dashboard_status_no_data()}
+			compact
 		>
-			{m.dashboard_status_setup_cta()}
-		</a>
+			{#snippet action()}
+				<a href="/plan" class="text-sm font-medium text-primary hover:underline">
+					{m.dashboard_status_setup_cta()}
+				</a>
+			{/snippet}
+		</EmptyState>
 	{/if}
 </Card>

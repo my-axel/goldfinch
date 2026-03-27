@@ -19,7 +19,8 @@
 	import type { SeriesProjectionDataPoint } from '$lib/types/pension';
 	import { Chart } from 'svelte-echarts';
 	import { init, graphic } from 'echarts';
-	import { Expand, Shrink } from '@lucide/svelte';
+	import { Expand, Shrink, TrendingUp } from '@lucide/svelte';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 
 	let {
 		loading = false,
@@ -352,18 +353,20 @@
 		</button>
 	</div>
 
-	{#if loading}
-		<div class="animate-pulse bg-muted rounded-lg" style="height: {height}px"></div>
-	{:else if !hasProjectionData}
-		<div
-			class="flex items-center justify-center text-sm text-muted-foreground"
-			style="height: {height}px"
-		>
-			{m.dashboard_scenario_projection_no_data()}
-		</div>
-	{:else}
-		<div style="height: {height}px">
-			<Chart {init} options={echartsOptions as any} />
-		</div>
-	{/if}
+	<div
+		class="overflow-hidden rounded-lg"
+		style="height: {height}px; transition: height 0.3s cubic-bezier(0.25, 1, 0.5, 1)"
+	>
+		{#if loading}
+			<div class="animate-pulse bg-muted h-full rounded-lg"></div>
+		{:else if !hasProjectionData}
+			<div class="h-full flex items-center justify-center">
+				<EmptyState icon={TrendingUp} title={m.dashboard_scenario_projection_no_data()} compact />
+			</div>
+		{:else}
+			<div class="h-full">
+				<Chart {init} options={echartsOptions as any} />
+			</div>
+		{/if}
+	</div>
 </div>

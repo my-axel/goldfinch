@@ -95,7 +95,11 @@
 
 	<!-- Content -->
 	{#if loading}
-		<p class="text-center text-muted-foreground py-8">{m.household_loading()}</p>
+		<div class="flex flex-wrap gap-4">
+			<div class="w-[270px] min-h-[200px] rounded-xl bg-muted animate-pulse"></div>
+			<div class="w-[270px] min-h-[200px] rounded-xl bg-muted animate-pulse"></div>
+			<div class="w-[270px] min-h-[200px] rounded-xl bg-muted animate-pulse"></div>
+		</div>
 	{:else if error}
 		<div class="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
 			<p>{error}</p>

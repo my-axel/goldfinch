@@ -2,6 +2,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Animation tokens ──────────────────────────────────────────────────── */
+
+:root {
+	--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Light theme */
 :root {
 	--background: hsl(0 0% 97%);
@@ -144,5 +151,61 @@
 	}
 	dialog::backdrop {
 		background-color: rgba(0, 0, 0, 0.5);
+	}
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+
+@keyframes fade-in-up {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes dialog-in {
+	from {
+		opacity: 0;
+		transform: scale(0.88) translateY(20px);
+	}
+}
+
+@keyframes backdrop-in {
+	from {
+		opacity: 0;
+	}
+}
+
+/* ── Dialog open animation ─────────────────────────────────────────────── */
+
+dialog[open] {
+	animation: dialog-in 0.3s var(--ease-out-expo);
+}
+
+dialog[open]::backdrop {
+	animation: backdrop-in 0.25s ease-out;
+}
+
+/* ── Staggered entrance utility ────────────────────────────────────────── */
+
+.animate-fade-in-up {
+	animation: fade-in-up 0.5s var(--ease-out-quart) both;
+	animation-delay: var(--stagger, 0ms);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
 	}
 }

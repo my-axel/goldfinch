@@ -20,6 +20,8 @@
 		normalizeGapAnalysis,
 		toGapDisplayValue
 	} from '$lib/utils/retirement-gap';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
+	import { Compass } from '@lucide/svelte';
 	import { Chart } from 'svelte-echarts';
 	import { init } from 'echarts';
 
@@ -287,7 +289,12 @@
 
 <div class="bg-card rounded-xl border border-border shadow-sm p-5">
 	{#if loading}
-		<div class="flex items-center justify-center h-24 text-muted-foreground text-sm">…</div>
+		<div class="space-y-3 animate-pulse">
+			<div class="h-5 w-1/3 bg-muted rounded"></div>
+			<div class="h-8 w-1/2 bg-muted rounded mx-auto"></div>
+			<div class="h-[54px] bg-muted rounded"></div>
+			<div class="h-4 w-2/3 bg-muted rounded mx-auto"></div>
+		</div>
 	{:else if summary && realisticDisplay && scale}
 		<div class="space-y-2">
 			<h3 class="text-lg font-semibold">{m.dashboard_retirement_gap_title()}</h3>
@@ -348,12 +355,17 @@
 			<a href="/plan" class="text-sm text-primary hover:underline">{m.dashboard_retirement_gap_view_details()}</a>
 		</div>
 	{:else}
-		<div class="space-y-3">
-			<h3 class="text-lg font-semibold">{m.dashboard_retirement_gap_title()}</h3>
-			<p class="text-sm text-muted-foreground">{m.dashboard_retirement_gap_description()}</p>
-			<a href="/plan" class="inline-block text-sm font-medium text-primary hover:underline">
-				{m.dashboard_retirement_gap_setup_cta()}
-			</a>
-		</div>
+		<h3 class="text-lg font-semibold mb-1">{m.dashboard_retirement_gap_title()}</h3>
+		<EmptyState
+			icon={Compass}
+			title={m.dashboard_retirement_gap_description()}
+			compact
+		>
+			{#snippet action()}
+				<a href="/plan" class="text-sm font-medium text-primary hover:underline">
+					{m.dashboard_retirement_gap_setup_cta()}
+				</a>
+			{/snippet}
+		</EmptyState>
 	{/if}
 </div>

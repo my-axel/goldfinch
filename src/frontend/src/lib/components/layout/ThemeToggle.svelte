@@ -11,6 +11,8 @@
 	import { themeStore } from '$lib/stores/theme.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { Moon, Sun } from '@lucide/svelte';
+	import { scale } from 'svelte/transition';
+	import { browser } from '$app/environment';
 
 	let {
 		collapsed = false
@@ -19,6 +21,9 @@
 	} = $props();
 
 	let showMenu = $state(false);
+
+	const reducedMotion = browser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const motionDuration = reducedMotion ? 0 : 250;
 
 	const themeValues = ['light', 'dark', 'system'] as const;
 
@@ -62,6 +67,7 @@
 		></button>
 
 		<div
+			transition:scale={{ start: 0.85, duration: motionDuration, opacity: 0 }}
 			class="absolute z-50 rounded-lg border border-border bg-popover shadow-lg py-1 min-w-[120px]"
 			class:bottom-full={true}
 			class:left-0={!collapsed}
