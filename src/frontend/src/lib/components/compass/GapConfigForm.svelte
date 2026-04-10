@@ -6,6 +6,7 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import Button from '$lib/components/ui/Button.svelte';
 	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
 	import PercentInput from '$lib/components/ui/PercentInput.svelte';
 	import StepperInput from '$lib/components/ui/StepperInput.svelte';
@@ -165,22 +166,14 @@
 
 	<!-- Actions -->
 	<div class="flex items-center gap-3 pt-2">
-		<button
-			onclick={handleSave}
-			disabled={saving}
-			class="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-		>
+		<Button onclick={handleSave} disabled={saving}>
 			{saving ? '…' : m.compass_gap_save()}
-		</button>
+		</Button>
 
 		{#if config}
-			<button
-				onclick={handleDelete}
-				disabled={deleting}
-				class="px-4 py-2 rounded-lg border border-destructive text-destructive text-sm font-medium hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-			>
+			<Button variant="destructive" onclick={handleDelete} disabled={deleting}>
 				{deleting ? '…' : m.compass_gap_delete()}
-			</button>
+			</Button>
 		{/if}
 	</div>
 </div>

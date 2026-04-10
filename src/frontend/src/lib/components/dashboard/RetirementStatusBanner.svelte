@@ -108,18 +108,18 @@
 		if (key === 'on_track')
 			return {
 				label: m.compass_gap_on_track(),
-				cls: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-				dotCls: 'bg-green-500'
+				cls: 'bg-success-subtle text-success-foreground dark:text-success',
+				dotCls: 'bg-success'
 			};
 		if (key === 'needs_attention')
 			return {
 				label: m.compass_gap_needs_attention(),
-				cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+				cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/16 dark:text-yellow-300',
 				dotCls: 'bg-yellow-500'
 			};
 		return {
 			label: m.compass_gap_critical(),
-			cls: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+			cls: 'bg-red-100 text-red-800 dark:bg-red-500/16 dark:text-red-300',
 			dotCls: 'bg-red-500'
 		};
 	});
@@ -144,7 +144,7 @@
 	{:else if data && status && realisticDisplay}
 		<!-- Status + link row -->
 		<div class="flex items-center justify-between mb-4">
-			<span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium {status.cls}">
+			<span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md font-medium {status.cls}">
 				<span class="w-2 h-2 rounded-full {status.dotCls}"></span>
 				{status.label}
 			</span>
@@ -192,7 +192,7 @@
 			</div>
 			<div class="h-2.5 rounded-full bg-muted overflow-hidden">
 				<div
-					class="h-full rounded-full transition-all duration-500 {progressPct >= 100 ? 'bg-green-500' : progressPct >= 75 ? 'bg-yellow-500' : 'bg-red-500'}"
+					class="h-full rounded-full transition-all duration-500 {progressPct >= 100 ? 'bg-success' : progressPct >= 75 ? 'bg-yellow-500' : 'bg-red-500'}"
 					style="width: {progressPct}%"
 				></div>
 			</div>

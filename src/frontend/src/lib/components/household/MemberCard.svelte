@@ -34,7 +34,7 @@
 	);
 </script>
 
-<div class="bg-card rounded-xl border border-border shadow-sm w-[270px]">
+<div class="bg-card rounded-xl border border-border shadow-subtle w-[270px]">
 	<div class="flex items-center justify-between px-4 pt-4 pb-2">
 		<h3 class="font-semibold text-card-foreground">{formatMemberName(member)}</h3>
 		<div class="flex gap-1">

@@ -18,6 +18,7 @@
 	import type { ETFPension, ContributionStep, ETFPensionStatistics } from '$lib/types/pension';
 	import { calculateCombinedScenarios } from '$lib/utils/projection';
 	import { formatCurrency, formatPercent, formatDate, formatNumber } from '$lib/utils/format';
+	import Button from '$lib/components/ui/Button.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import ContentSection from '$lib/components/ui/ContentSection.svelte';
@@ -243,21 +244,12 @@
 	<div class="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:space-y-0 sm:items-center">
 		<PageHeader title={m.etf_pension_edit_title()} description={m.etf_pension_edit_description()} />
 		<div class="flex space-x-4 shrink-0">
-			<button
-				type="button"
-				onclick={() => history.back()}
-				class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			<Button variant="secondary" onclick={() => history.back()}>
 				{m.cancel()}
-			</button>
-			<button
-				type="submit"
-				form="etf-pension-form"
-				disabled={submitting}
-				class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-			>
+			</Button>
+			<Button type="submit" form="etf-pension-form" disabled={submitting}>
 				{m.etf_pension_save()}
-			</button>
+			</Button>
 		</div>
 	</div>
 
@@ -546,13 +538,9 @@
 			{/snippet}
 			<ContributionHistoryCard contributions={statistics?.contribution_history ?? []}>
 				{#snippet headerActions()}
-					<button
-						type="button"
-						onclick={() => (showOneTimeModal = true)}
-						class="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-medium transition-colors"
-					>
+					<Button variant="secondary" size="sm" onclick={() => (showOneTimeModal = true)}>
 						{m.etf_add_one_time_investment()}
-					</button>
+					</Button>
 				{/snippet}
 			</ContributionHistoryCard>
 		</ContentSection>

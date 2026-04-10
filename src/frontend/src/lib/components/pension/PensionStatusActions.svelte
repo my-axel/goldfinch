@@ -9,6 +9,7 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { CirclePause, CirclePlay } from '@lucide/svelte';
 	import { todayIsoDate } from '$lib/utils/date-only';
 
@@ -65,7 +66,7 @@
 </script>
 
 <div class="flex items-center gap-3">
-	<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {status === 'ACTIVE' ? 'bg-primary/10 text-primary' : 'bg-secondary text-secondary-foreground'}">
+	<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium {status === 'ACTIVE' ? 'bg-primary/10 text-primary' : 'bg-secondary text-secondary-foreground'}">
 		{status === 'ACTIVE' ? m.pension_status_active() : m.pension_status_paused()}
 	</span>
 
@@ -106,22 +107,12 @@
 			</label>
 		</div>
 		<div class="mt-4 flex justify-end gap-2">
-				<button
-					type="button"
-					onclick={() => showPauseDialog = false}
-					disabled={submitting}
-					class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			<Button variant="secondary" onclick={() => showPauseDialog = false} disabled={submitting}>
 				{m.cancel()}
-			</button>
-				<button
-					type="button"
-					onclick={handlePauseConfirm}
-					disabled={submitting}
-					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			</Button>
+			<Button onclick={handlePauseConfirm} disabled={submitting}>
 				{m.confirm()}
-			</button>
+			</Button>
 		</div>
 	</div>
 </dialog>
@@ -148,22 +139,12 @@
 			</label>
 		</div>
 		<div class="mt-4 flex justify-end gap-2">
-				<button
-					type="button"
-					onclick={() => showResumeDialog = false}
-					disabled={submitting}
-					class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			<Button variant="secondary" onclick={() => showResumeDialog = false} disabled={submitting}>
 				{m.cancel()}
-			</button>
-				<button
-					type="button"
-					onclick={handleResumeConfirm}
-					disabled={submitting}
-					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			</Button>
+			<Button onclick={handleResumeConfirm} disabled={submitting}>
 				{m.confirm()}
-			</button>
+			</Button>
 		</div>
 	</div>
 </dialog>

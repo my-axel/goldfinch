@@ -15,6 +15,7 @@
 	} from '$lib/types/household';
 	import { validateMemberForm } from '$lib/types/household';
 	import { m } from '$lib/paraglide/messages.js';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let {
 		member,
@@ -140,18 +141,11 @@
 	</div>
 
 	<div class="flex justify-end gap-2 pt-2">
-		<button
-			type="button"
-			onclick={onCancel}
-			class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-		>
+		<Button variant="secondary" onclick={onCancel}>
 			{m.household_cancel()}
-		</button>
-		<button
-			type="submit"
-			class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
-		>
+		</Button>
+		<Button type="submit">
 			{member ? m.household_save() : m.household_add()}
-		</button>
+		</Button>
 	</div>
 </form>

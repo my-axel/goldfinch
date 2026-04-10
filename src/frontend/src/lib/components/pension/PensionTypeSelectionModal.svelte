@@ -9,6 +9,7 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { PensionType } from '$lib/types/pension';
 	import type { HouseholdMember } from '$lib/types/household';
 	import { formatMemberName } from '$lib/types/household';
@@ -89,19 +90,12 @@
 				{/each}
 			</div>
 			<div class="mt-4 flex justify-end gap-2">
-				<button
-					onclick={onCancel}
-					class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-				>
+				<Button variant="secondary" onclick={onCancel}>
 					{m.pension_cancel()}
-				</button>
-				<button
-					onclick={() => { /* selectedMemberId triggers step change via $derived */ }}
-					disabled={!selectedMemberId}
-					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-				>
+				</Button>
+				<Button onclick={() => { /* selectedMemberId triggers step change via $derived */ }} disabled={!selectedMemberId}>
 					{m.pension_continue()}
-				</button>
+				</Button>
 			</div>
 		{:else}
 			<h2 class="text-lg font-semibold">{m.pension_select_type()}</h2>
@@ -122,27 +116,17 @@
 			</div>
 			<div class="mt-4 flex justify-end gap-2">
 				{#if members.length > 1}
-					<button
-						onclick={() => { selectedMemberId = null; selectedType = null; }}
-						class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-					>
+					<Button variant="secondary" onclick={() => { selectedMemberId = null; selectedType = null; }}>
 						{m.pension_cancel()}
-					</button>
+					</Button>
 				{:else}
-					<button
-						onclick={onCancel}
-						class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-					>
+					<Button variant="secondary" onclick={onCancel}>
 						{m.pension_cancel()}
-					</button>
+					</Button>
 				{/if}
-				<button
-					onclick={handleConfirm}
-					disabled={!selectedType}
-					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-				>
+				<Button onclick={handleConfirm} disabled={!selectedType}>
 					{m.pension_continue()}
-				</button>
+				</Button>
 			</div>
 		{/if}
 	</div>

@@ -15,6 +15,7 @@
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import { PensionType } from '$lib/types/pension';
 	import type { CompanyPension, ContributionStep, ContributionFrequency } from '$lib/types/pension';
+	import Button from '$lib/components/ui/Button.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import ContentSection from '$lib/components/ui/ContentSection.svelte';
@@ -229,21 +230,12 @@
 			description={m.company_pension_edit_description()}
 		/>
 		<div class="flex space-x-4 shrink-0">
-			<button
-				type="button"
-				onclick={() => history.back()}
-				class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			<Button variant="secondary" onclick={() => history.back()}>
 				{m.cancel()}
-			</button>
-			<button
-				type="submit"
-				form="company-pension-form"
-				disabled={submitting}
-				class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-			>
+			</Button>
+			<Button type="submit" form="company-pension-form" disabled={submitting}>
 				{m.company_pension_save()}
-			</button>
+			</Button>
 		</div>
 	</div>
 

@@ -177,7 +177,7 @@
 <div class="space-y-6">
 	<div class="flex items-end justify-between gap-4 mb-8 animate-fade-in-up">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">{m.dashboard_title()}</h1>
+			<h1 class="text-sub-heading">{m.dashboard_title()}</h1>
 			<p class="text-muted-foreground mt-2">{m.dashboard_description()}</p>
 		</div>
 		<HouseholdSwitcher members={data.members} bind:selectedMemberId={dashboardStore.selectedMemberId} />
@@ -187,7 +187,7 @@
 	<div class="grid grid-cols-1 md:grid-cols-13 gap-6">
 		<!-- Left Column - Current Position & History -->
 		<div class="md:col-span-6 space-y-6 animate-fade-in-up" style="--stagger: 100ms">
-			<h2 class="text-2xl font-bold tracking-tight">{m.dashboard_current_position()}</h2>
+			<h2 class="text-feature-title">{m.dashboard_current_position()}</h2>
 
 			<!-- Key Metrics -->
 			<div class="grid gap-4 grid-cols-2">
@@ -357,7 +357,7 @@
 
 		<!-- Right Column - Future Projections -->
 		<div class="md:col-span-6 space-y-6 animate-fade-in-up" style="--stagger: 200ms">
-			<h2 class="text-2xl font-bold tracking-tight text-right">{m.dashboard_future_projections()}</h2>
+			<h2 class="text-feature-title text-right">{m.dashboard_future_projections()}</h2>
 
 			<div class="space-y-4">
 				<RetirementGapChartCard />

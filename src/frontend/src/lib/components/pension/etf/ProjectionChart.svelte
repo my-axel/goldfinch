@@ -77,20 +77,20 @@
 		const dark = isDark;
 		return dark
 			? {
-					tooltipBg: 'hsl(0, 0%, 11%)',
-					tooltipBorder: 'hsl(0, 0%, 15%)',
-					tooltipText: 'hsl(210, 20%, 98%)',
-					axisLabel: 'hsl(0, 0%, 63%)',
-					splitLine: 'hsl(0, 0%, 18%)',
-					axisLine: 'hsl(0, 0%, 15%)'
+					tooltipBg: '#161821',
+					tooltipBorder: '#262835',
+					tooltipText: '#e8e9ed',
+					axisLabel: '#686b82',
+					splitLine: '#1e2028',
+					axisLine: '#262835'
 				}
 			: {
-					tooltipBg: 'hsl(0, 0%, 100%)',
-					tooltipBorder: 'hsl(0, 0%, 89%)',
-					tooltipText: 'hsl(0, 0%, 9%)',
-					axisLabel: 'hsl(0, 0%, 45%)',
-					splitLine: 'hsl(0, 0%, 89%)',
-					axisLine: 'hsl(0, 0%, 89%)'
+					tooltipBg: '#ffffff',
+					tooltipBorder: '#dedee5',
+					tooltipText: '#101114',
+					axisLabel: '#9497a9',
+					splitLine: '#dedee5',
+					axisLine: '#dedee5'
 				};
 	});
 

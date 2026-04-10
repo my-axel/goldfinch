@@ -25,18 +25,18 @@
 		if (statusKey === 'on_track')
 			return {
 				label: m.compass_gap_on_track(),
-				cls: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-				valueClass: 'text-green-600 dark:text-green-400'
+				cls: 'bg-success-subtle text-success-foreground dark:text-success',
+				valueClass: 'text-success dark:text-success'
 			};
 		if (statusKey === 'needs_attention')
 			return {
 				label: m.compass_gap_needs_attention(),
-				cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+				cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/16 dark:text-yellow-300',
 				valueClass: 'text-yellow-600 dark:text-yellow-400'
 			};
 		return {
 			label: m.compass_gap_critical(),
-			cls: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+			cls: 'bg-red-100 text-red-800 dark:bg-red-500/16 dark:text-red-300',
 			valueClass: 'text-red-600 dark:text-red-400'
 		};
 	});
@@ -79,7 +79,7 @@
 							</div>
 						{/if}
 					</div>
-					<span class="text-xs px-2.5 py-1 rounded-full font-medium {householdStatus.cls}">
+					<span class="text-xs px-2.5 py-1 rounded-md font-medium {householdStatus.cls}">
 						{householdStatus.label}
 					</span>
 				</div>

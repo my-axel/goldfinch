@@ -24,7 +24,7 @@
 			in:fly={{ x: 80, duration }}
 			out:fly={{ x: 80, duration: exitDuration }}
 			class="px-4 py-3 rounded-xl shadow-lg text-sm font-medium border {toast.type === 'success'
-				? 'bg-card text-foreground border-primary/30'
+				? 'bg-card text-foreground border-success/30'
 				: 'bg-card text-destructive border-destructive/30'}"
 		>
 			{toast.message}

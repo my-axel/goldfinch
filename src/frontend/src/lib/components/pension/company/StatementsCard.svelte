@@ -9,6 +9,7 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { Plus, Trash2, ChevronDown, ChevronRight } from '@lucide/svelte';
 	import { pensionApi } from '$lib/api/pension';
 	import { compareIsoDate, todayIsoDate } from '$lib/utils/date-only';
@@ -223,18 +224,12 @@
 		<h2 class="text-lg font-semibold">{m.company_pension_delete_statement_title()}</h2>
 		<p class="mt-2 text-sm text-muted-foreground">{m.company_pension_delete_statement_confirm()}</p>
 		<div class="mt-4 flex justify-end gap-2">
-			<button
-				onclick={() => deletingIndex = null}
-				class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			<Button variant="secondary" onclick={() => deletingIndex = null}>
 				{m.cancel()}
-			</button>
-			<button
-				onclick={() => { if (deletingIndex !== null) handleRemoveStatement(deletingIndex); }}
-				class="px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			</Button>
+			<Button variant="destructive" onclick={() => { if (deletingIndex !== null) handleRemoveStatement(deletingIndex); }}>
 				{m.delete_action()}
-			</button>
+			</Button>
 		</div>
 	</div>
 </dialog>

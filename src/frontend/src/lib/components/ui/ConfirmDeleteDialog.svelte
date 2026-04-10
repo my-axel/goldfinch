@@ -9,6 +9,7 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let {
 		open,
@@ -64,22 +65,12 @@
 			{descriptionBefore} <strong class="text-foreground">{itemName}</strong>{descriptionAfter}
 		</p>
 		<div class="mt-4 flex justify-end gap-2">
-			<button
-				type="button"
-				onclick={onCancel}
-				disabled={submitting}
-				class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			<Button variant="secondary" onclick={onCancel} disabled={submitting}>
 				{cancelLabel}
-			</button>
-			<button
-				type="button"
-				onclick={handleConfirm}
-				disabled={submitting}
-				class="px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm font-medium transition-colors"
-			>
+			</Button>
+			<Button variant="destructive" onclick={handleConfirm} disabled={submitting}>
 				{confirmLabel}
-			</button>
+			</Button>
 		</div>
 	</div>
 </dialog>

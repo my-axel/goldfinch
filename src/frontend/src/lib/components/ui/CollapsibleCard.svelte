@@ -25,7 +25,7 @@
 	} = $props();
 </script>
 
-<div class="bg-card rounded-xl border border-border shadow-sm">
+<div class="bg-card rounded-xl border border-border shadow-subtle">
 	<!-- Header (always visible) -->
 	<button
 		type="button"

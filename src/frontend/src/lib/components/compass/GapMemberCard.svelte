@@ -32,20 +32,20 @@ Shows status, gap details and link to detail page. Styled like PensionCard.
 			return {
 				key: 'on_track' as const,
 				label: m.compass_gap_on_track(),
-				badgeCls: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-				valueCls: 'text-green-600 dark:text-green-400'
+				badgeCls: 'bg-success-subtle text-success-foreground dark:text-success',
+				valueCls: 'text-success dark:text-success'
 			};
 		if (s === 'needs_attention')
 			return {
 				key: 'needs_attention' as const,
 				label: m.compass_gap_needs_attention(),
-				badgeCls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+				badgeCls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/16 dark:text-yellow-300',
 				valueCls: 'text-yellow-600 dark:text-yellow-400'
 			};
 		return {
 			key: 'critical' as const,
 			label: m.compass_gap_critical(),
-			badgeCls: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+			badgeCls: 'bg-red-100 text-red-800 dark:bg-red-500/16 dark:text-red-300',
 			valueCls: 'text-red-600 dark:text-red-400'
 		};
 	});
@@ -58,7 +58,7 @@ Shows status, gap details and link to detail page. Styled like PensionCard.
 	<!-- Configured member card -->
 	<a
 		href="/plan/{member.id}"
-		class="group bg-card rounded-xl border border-border shadow-sm w-[270px] min-h-[180px] flex flex-col hover:shadow-md hover:border-primary/30 transition-all duration-200"
+		class="group bg-card rounded-xl border border-border shadow-subtle w-[270px] min-h-[180px] flex flex-col hover:shadow-md hover:border-primary/30 transition-all duration-200"
 	>
 		<!-- Header -->
 		<div class="flex items-center justify-between px-4 pt-4 pb-2">
@@ -66,7 +66,7 @@ Shows status, gap details and link to detail page. Styled like PensionCard.
 				<Compass class="w-4 h-4 shrink-0 text-muted-foreground" />
 				<h3 class="font-semibold text-card-foreground truncate">{member.first_name} {member.last_name}</h3>
 			</div>
-			<span class="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ml-2 {status.badgeCls}">
+			<span class="text-[10px] px-2 py-0.5 rounded-md font-medium shrink-0 ml-2 {status.badgeCls}">
 				{status.label}
 			</span>
 		</div>

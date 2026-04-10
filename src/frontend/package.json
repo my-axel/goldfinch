@@ -23,6 +23,7 @@
 		"vite": "^7.3.2"
 	},
 	"dependencies": {
+		"@fontsource-variable/inter": "^5.2.8",
 		"@inlang/paraglide-js": "^2.12.0",
 		"@lucide/svelte": "^0.574.0",
 		"date-fns": "^4.1.0",

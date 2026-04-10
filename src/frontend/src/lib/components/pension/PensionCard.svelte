@@ -65,13 +65,13 @@
 	let TypeIcon = $derived(typeIcons[pension.type]);
 </script>
 
-<div class="bg-card rounded-xl border border-border shadow-sm w-[270px] min-h-[300px] {isInactive ? 'opacity-60' : ''}">
+<div class="bg-card rounded-xl border border-border shadow-subtle w-[270px] min-h-[300px] {isInactive ? 'opacity-60' : ''}">
 	<div class="flex items-center justify-between px-4 pt-4 pb-2">
 		<div class="flex items-center gap-2 min-w-0">
 			<TypeIcon class="w-4 h-4 shrink-0 text-muted-foreground" />
 			<h3 class="font-semibold text-card-foreground truncate {isInactive ? 'text-muted-foreground' : ''}">{pension.name}</h3>
 			{#if isInactive}
-				<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground shrink-0">
+				<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground shrink-0">
 					{m.pension_status_paused()}
 				</span>
 			{/if}

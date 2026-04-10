@@ -20,7 +20,7 @@
 	} = $props();
 </script>
 
-<div class="bg-card rounded-xl border border-border shadow-sm p-6">
+<div class="bg-card rounded-xl border border-border shadow-subtle p-6">
 	{#if title || headerActions}
 		<div class="flex justify-between items-start pb-6">
 			<div class="space-y-1.5">

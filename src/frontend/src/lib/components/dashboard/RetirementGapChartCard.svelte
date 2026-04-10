@@ -115,25 +115,25 @@
 					tick: 'hsl(0, 0%, 70%)',
 					rangeFill: 'hsla(0, 0%, 70%, 0.2)',
 					rangeStroke: 'hsl(0, 0%, 35%)',
-					tooltipBg: 'hsl(0, 0%, 11%)',
-					tooltipBorder: 'hsl(0, 0%, 15%)',
-					tooltipText: 'hsl(210, 20%, 98%)'
+					tooltipBg: '#161821',
+					tooltipBorder: '#262835',
+					tooltipText: '#e8e9ed'
 				}
 			: {
 					line: 'hsl(0, 0%, 56%)',
 					tick: 'hsl(0, 0%, 30%)',
 					rangeFill: 'hsla(0, 0%, 52%, 0.18)',
 					rangeStroke: 'hsl(0, 0%, 78%)',
-					tooltipBg: 'hsl(0, 0%, 100%)',
-					tooltipBorder: 'hsl(0, 0%, 89%)',
-					tooltipText: 'hsl(0, 0%, 9%)'
+					tooltipBg: '#ffffff',
+					tooltipBorder: '#dedee5',
+					tooltipText: '#101114'
 				};
 	});
 
 	const gapColorClass = $derived.by(() => {
 		if (!summary) return '';
 		const status = gapStatusFor(summary.realistic, summary.totalRequired);
-		if (status === 'on_track') return 'text-green-600 dark:text-green-400';
+		if (status === 'on_track') return 'text-success dark:text-success';
 		if (status === 'needs_attention') return 'text-yellow-600 dark:text-yellow-400';
 		return 'text-red-600 dark:text-red-400';
 	});
@@ -287,7 +287,7 @@
 	});
 </script>
 
-<div class="bg-card rounded-xl border border-border shadow-sm p-5">
+<div class="bg-card rounded-xl border border-border shadow-subtle p-5">
 	{#if loading}
 		<div class="space-y-3 animate-pulse">
 			<div class="h-5 w-1/3 bg-muted rounded"></div>

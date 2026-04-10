@@ -9,6 +9,7 @@
 
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { pensionApi } from '$lib/api/pension';
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import CurrencyInput from '$lib/components/ui/CurrencyInput.svelte';
@@ -133,21 +134,12 @@
 			</div>
 
 			<div class="flex justify-end gap-2 pt-2">
-				<button
-					type="button"
-					onclick={onClose}
-					disabled={submitting}
-					class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-sm font-medium transition-colors"
-				>
+				<Button variant="secondary" onclick={onClose} disabled={submitting}>
 					{m.cancel()}
-				</button>
-				<button
-					type="submit"
-					disabled={submitting}
-					class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-				>
+				</Button>
+				<Button type="submit" disabled={submitting}>
 					{m.etf_one_time_submit()}
-				</button>
+				</Button>
 			</div>
 		</div>
 	</form>
