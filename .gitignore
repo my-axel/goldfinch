@@ -49,6 +49,8 @@ celerybeat-schedule*
 
 # Claude Code
 SCRATCHPAD.md
+Suggestion.md
+Veroeffentlichung.md
 .claude/settings.local.json
 .claude/*.local.json
 .claude/mcp.json
