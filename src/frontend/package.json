@@ -27,7 +27,7 @@
 		"@inlang/paraglide-js": "^2.20.0",
 		"@lucide/svelte": "^1.20.0",
 		"date-fns": "^4.4.0",
-		"echarts": "^5.6.0",
+		"echarts": "^6.1.0",
 		"svelte-echarts": "^1.0.0"
 	},
 	"overrides": {
